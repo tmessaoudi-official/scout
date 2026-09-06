@@ -2753,12 +2753,12 @@ tool/guard) and say which ones the fix covers.**
 | 3 | 6-A3 ListingMapper miss instrumentation + tenureField on the JSON path — COMPLETED at 8e3fe80: C2 r5 found 4 configured keys (rent, rent_hc, url, tenure_field) still counting nothing, so `certified` overclaimed | L | done | 8e3fe80 | src/php/Rent/Adapters/ListingMapper.php |
 | 4 | 6-A3 half 3 — RULING REVERSED at 8e3fe80: the mapped path carries NO band (both bounds erased evidence a `!== null` guard needed; the scan keeps its band) | M | done | 8e3fe80 | src/php/Rent/Adapters/ListingMapper.php src/php/Rent/Adapters/Payload.php |
 | 5 | 6-A4 brand `autres` bypass — make_model_unknown_pattern | M | certified | 0ae6cd0 test:2026-09-04 | src/php/Car/VehicleSourceLoader.php config/car/sources.json |
-| 6 | 6-A5 score-floor batching + weight recalibration | L | done | 5a04756 | src/php/Rent/Cli/DigestBatch.php config/rent/criteria.json |
+| 6 | 6-A5 score-floor batching + weight recalibration | L | certified | 5a04756 test:2026-09-06 | src/php/Rent/Cli/DigestBatch.php config/rent/criteria.json |
 | 7 | 6-A6 SeLoger surface read out of a base64url tracking token | M | certified | 9ea9d77 test:2026-09-04 | src/php/Rent/Adapters/EmailAlertSource.php |
 | 8 | 6-A7 F28 one-shot victims report (read-only, gitignored output) | S | done | - | - |
-| 9 | 6-B1 CapCar email source | L | done | 618b065 | config/car/sources.json tests/php/Car/CapCarFixtureTest.php |
+| 9 | 6-B1 CapCar email source | L | certified | 618b065 test:2026-09-06 | config/car/sources.json tests/php/Car/CapCarFixtureTest.php |
 | 10 | 6-B2 La Centrale email source | L | done | 21117b7 | config/car/sources.json tests/php/Car/LaCentraleFixtureTest.php tools/scrub-eml.php |
-| 11 | 6-B3 Agorastore email source (optional third) | M | done | 74d15d1 | config/car/sources.json tests/php/Car/AgorastoreFixtureTest.php |
+| 11 | 6-B3 Agorastore email source (optional third) | M | certified | 74d15d1 test:2026-09-06 | config/car/sources.json tests/php/Car/AgorastoreFixtureTest.php |
 | 12 | 6-B4 AutoScout24 — no alert has ever arrived | M | blocked | - | config/car/sources.json |
 | 13 | 6-C1 register and docs say what the tree says | M | done | ede198e | docs/plans/scout-unified-execution.plan.md |
 | 14 | 6-C2 r1 F2 (P0) — both segmentation guards read both separator keys | M | certified | be8eba7 test:2026-09-04 | src/php/Rent/Config/ConfigLoader.php tests/php/Rent/Config/ConfigTest.php |
@@ -2783,19 +2783,19 @@ tool/guard) and say which ones the fix covers.**
 | 33 | Deep — doc drift: WARN_FLAKY, card_separator_pattern refusals, 4 stale Core paths | M | done | 38f64bb | CLAUDE.md docs/OPEN-QUESTIONS.md |
 | 34 | Deep — plan track sections stale for Tracks 0 1 2-step0 4 and 6-A1/A2/A3 | M | done | 38f64bb | docs/plans/scout-unified-execution.plan.md |
 | 35 | 6-C2 — the TWO CONSECUTIVE CLEAN rounds the bar requires; rounds 1-3 each found real defects, cap is 5 then ask | L | todo | - | src/php |
-| 36 | Processed alert emails are marked \Seen — run only, after the store recorded the source; doctor/dump stay read-only | M | done | 766edd7 | src/php/Adapters/Mail/ImapMailbox.php src/php/Adapters/Mail/Mailbox.php src/php/Rent/Cli/Pipeline.php src/php/Car/VehiclePipeline.php |
-| 37 | B-common — content-addressed identity for VehicleEmailSource (no-information floor, price out of the key, in-message duplicate announced) | M | done | 7e1d54b | src/php/Car/VehicleEmailSource.php src/php/Car/VehicleSourceLoader.php |
-| 38 | B-common — per-segment labelled field reader for VehicleEmailSource (the CapCar shape) | M | done | 7e1d54b | src/php/Car/VehicleEmailSource.php src/php/Car/VehicleSourceLoader.php |
+| 36 | Processed alert emails are marked \Seen — run only, after the store recorded the source; doctor/dump stay read-only | M | certified | 766edd7 test:2026-09-06 | src/php/Adapters/Mail/ImapMailbox.php src/php/Adapters/Mail/Mailbox.php src/php/Rent/Cli/Pipeline.php src/php/Car/VehiclePipeline.php |
+| 37 | B-common — content-addressed identity for VehicleEmailSource (no-information floor, price out of the key, in-message duplicate announced) | M | certified | 7e1d54b test:2026-09-06 | src/php/Car/VehicleEmailSource.php src/php/Car/VehicleSourceLoader.php |
+| 38 | B-common — per-segment labelled field reader for VehicleEmailSource (the CapCar shape) | M | certified | 7e1d54b test:2026-09-06 | src/php/Car/VehicleEmailSource.php src/php/Car/VehicleSourceLoader.php |
 | 39 | B3 prerequisite — a NARROW scrubber stripper for a base64 JSON-array identity blob, all refusal guarantees kept | M | done | 74d15d1 | tools/scrub-eml.php tests/test-scrub-eml.sh |
-| 40 | F20 / Q39 — a repair route for a durably-excluded row: ruling (command vs stored distinction), then build | M | done | 2553c94 | src/php/Rent/Store/Store.php src/php/Rent/Cli/RentScout.php |
-| 41 | Round-5 P2 — a selector drifting onto a 5-digit field extracts cleanly and health stays ok: ruling (build vs accept), then build | M | done | 2553c94 | src/php/Core/SameFilterWarning.php src/php/Rent/Cli/Pipeline.php src/php/Car/VehiclePipeline.php |
+| 40 | F20 / Q39 — a repair route for a durably-excluded row: ruling (command vs stored distinction), then build | M | certified | 2553c94 test:2026-09-06 | src/php/Rent/Store/Store.php src/php/Rent/Cli/RentScout.php |
+| 41 | Round-5 P2 — a selector drifting onto a 5-digit field extracts cleanly and health stays ok: ruling (build vs accept), then build | M | certified | 2553c94 test:2026-09-06 | src/php/Core/SameFilterWarning.php src/php/Rent/Cli/Pipeline.php src/php/Car/VehiclePipeline.php |
 | 42 | Register + Known-issues bookkeeping — F1b, F3, F6 closers; three stale bullets | S | done | - | docs/plans/scout-unified-execution.plan.md |
 | 43 | Fresh test record at HEAD, then the freeze for row 35 | S | done | b692570 | docs/plans/scout-unified-execution.plan.md |
-| 46 | C2 round 6 — three lenses NOT CLEAN (RES P1+P2, COR P1+P2, COMP P0+P2+P3); every finding fixed with tests and ledger cases | L | done | 1c9f8aa | src/php/Rent/Cli/RentScout.php src/php/Car/Cli/CarScout.php src/php/Core/RecoverableForms.php src/php/Rent/Notify/Formatter.php |
-| 47 | The source audit the developer asked for: per-source NULL rates on both domains + a live doctor each — an RFC-legal single-digit Date was refused (PAP lost observedAt AND its feed verdict), ParuVendu read one of three facts shapes | L | done | 1c9f8aa | src/php/Adapters/Mail/EmailMessage.php config/car/sources.json tests/fixtures/rent/pap/2026-09-05-005-date-jour-un-chiffre.eml |
+| 46 | C2 round 6 — three lenses NOT CLEAN (RES P1+P2, COR P1+P2, COMP P0+P2+P3); every finding fixed with tests and ledger cases | L | certified | 1c9f8aa test:2026-09-06 | src/php/Rent/Cli/RentScout.php src/php/Car/Cli/CarScout.php src/php/Core/RecoverableForms.php src/php/Rent/Notify/Formatter.php |
+| 47 | The source audit the developer asked for: per-source NULL rates on both domains + a live doctor each — an RFC-legal single-digit Date was refused (PAP lost observedAt AND its feed verdict), ParuVendu read one of three facts shapes | L | certified | 1c9f8aa test:2026-09-06 | src/php/Adapters/Mail/EmailMessage.php config/car/sources.json tests/fixtures/rent/pap/2026-09-05-005-date-jour-un-chiffre.eml |
 | 48 | The nightly ledger completed none of its last eight runs — shard it six ways, one aggregating alert job | M | done | 1c9f8aa | .github/workflows/ci.yml tests/sabotage-check.sh tests/test-ci-workflow.sh |
-| 44 | In'li answers HTTP 302 on ~2 of 5 passes (seen 2026-09-05 00:30, source reports broken) — measure the redirect, rule, fix or record | M | done | 2553c94 | src/php/Rent/Adapters/HtmlSource.php src/php/Rent/Adapters/HttpJsonSource.php |
-| 45 | CI RED for two days (12 pushes, since 46546bc): a PCRE2 ≥ 10.43 lookbehind in criteria.json and a trace test assuming the development ini — fix at the root, add a portability guard, re-run the nightly ledger on demand | M | done | 4f0559d | config/rent/criteria.json tests/php/Repo/PortablePatternsTest.php tests/php/Repo/CredentialsNeverReachATraceTest.php |
+| 44 | In'li answers HTTP 302 on ~2 of 5 passes (seen 2026-09-05 00:30, source reports broken) — measure the redirect, rule, fix or record | M | certified | 2553c94 test:2026-09-06 | src/php/Rent/Adapters/HtmlSource.php src/php/Rent/Adapters/HttpJsonSource.php |
+| 45 | CI RED for two days (12 pushes, since 46546bc): a PCRE2 ≥ 10.43 lookbehind in criteria.json and a trace test assuming the development ini — fix at the root, add a portability guard, re-run the nightly ledger on demand | M | certified | 4f0559d test:2026-09-06 | config/rent/criteria.json tests/php/Repo/PortablePatternsTest.php tests/php/Repo/CredentialsNeverReachATraceTest.php |
 <!-- /progress-block -->
 ### Blocked
 
