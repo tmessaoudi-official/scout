@@ -776,6 +776,56 @@ final class TenureClassifierTest extends TestCase
      * PLS listings are caught by the explicit-label rule at 90bp, which does not depend on the flag
      * or on hydration — but they are only VISIBLE once the page is read, which is the whole point.
      */
+    /**
+     * THE ROUTING BACKSTOP, PINNED DIRECTLY — because nothing can reach it through `classify()`.
+     *
+     * `route()` ends `$source->mixedTenure && !$detailRead ? DIGEST : MATCH`, mirroring the
+     * fail-closed rule above it. That mirror is UNREACHABLE while the rule stands: every `Tenure`
+     * is exactly one of eligible, excluded or UNKNOWN, so reaching that line at all means the
+     * tenure is eligible and below the floor — the rule's own condition — and the rule has already
+     * rewritten the tenure to UNKNOWN, which `route()` answers three branches earlier.
+     *
+     * So the ledger case "the fail-closed rule stops requiring the detail page to have been read"
+     * could not detect its own second expression: mutating a masked backstop changes nothing
+     * observable. Measured on 2026-09-06 — that expression ALONE left the suite green across all
+     * 2963 tests, the 130-case corpus and the surface matrix included.
+     *
+     * The line is not dead code, and that is the reason to pin it rather than delete it: it becomes
+     * live exactly when someone removes or weakens the rule above, which is the §1 change most
+     * worth surviving. Reflection is the only way in, and asserting through `classify()` would
+     * assert the RULE a second time instead — the mirror's whole value is being independent of it.
+     *
+     * The counterweight is the second half: a card whose detail page WAS read routes to MATCH on
+     * the same thin signal, which is the In'li ruling — an examined listing on a source whose
+     * social stock declares itself is not the same as an unexamined one.
+     */
+    public function testTheRoutingMirrorDigestsAnUnreadCardOnAMixedSourceIndependentlyOfTheRule(): void
+    {
+        $route = (new \ReflectionClass(TenureClassifier::class))->getMethod('route');
+        $classifier = new TenureClassifier();
+        $mixed = new SourceProfile(name: 'inli', defaultTenure: Tenure::LLI, mixedTenure: true);
+        $pure = new SourceProfile(name: 'pap', defaultTenure: Tenure::LIBRE, mixedTenure: false);
+        $thin = TenureClassifier::FLOOR_BP - 1;
+
+        self::assertSame(
+            Outcome::DIGEST,
+            $route->invoke($classifier, Tenure::LLI, $thin, $mixed, false),
+            'an unread card on a mixed source, below the floor, is not established — even if the '
+                . 'fail-closed rule above ever stops saying so',
+        );
+
+        self::assertSame(
+            Outcome::MATCH,
+            $route->invoke($classifier, Tenure::LLI, $thin, $mixed, true),
+            'a card whose own detail page was read and said nothing excluding HAS been examined',
+        );
+        self::assertSame(
+            Outcome::MATCH,
+            $route->invoke($classifier, Tenure::LLI, $thin, $pure, false),
+            'a source that publishes no social stock has nothing to confuse a thin signal with',
+        );
+    }
+
     public function testReadingTheDetailPageNeverLicensesAnExcludedListing(): void
     {
         $source = new SourceProfile(name: 'inli', defaultTenure: Tenure::LLI, mixedTenure: true);

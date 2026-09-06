@@ -490,6 +490,15 @@ run_sabotage "fail-closed downgrade removed (mixed source keeps an eligible tenu
 # weakly-labelled listing on a mixed source match before its detail page has ever been read — which
 # is the disarmed state In'li shipped in, now reachable by deleting four words instead of by
 # believing a source's own description of itself.
+# BOTH LAYERS MEASURED INDIVIDUALLY (2026-09-06). The second expression's site — `route()`'s
+# `mixedTenure && !$detailRead ? DIGEST` mirror — is MASKED by the rule the first one mutates:
+# every Tenure is exactly one of eligible, excluded or UNKNOWN, so reaching that line means
+# eligible-and-below-floor, which is the rule's own condition, and the rule has already rewritten
+# the tenure to UNKNOWN. Isolated, that expression left the whole suite green — a joined case
+# reporting `ok` on its first expression says nothing about the second, which is why each was run
+# alone rather than inferred from the pair. `TenureClassifierTest::testTheRoutingMirrorDigests...`
+# now pins the mirror through reflection, and the isolated expression reddens. The mirror is kept
+# rather than deleted: it goes live exactly when someone weakens the rule above it.
 run_sabotage "the fail-closed rule stops requiring the detail page to have been read" \
   src/php/Rent/Core/TenureClassifier.php \
   's/\&\& !$detailRead) {/) {/;s/$source->mixedTenure \&\& !$detailRead ? Outcome::DIGEST/$source->mixedTenure \&\& false ? Outcome::DIGEST/'
