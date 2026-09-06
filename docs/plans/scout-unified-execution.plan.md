@@ -1599,6 +1599,22 @@ read-only) and the merged prose as one review deep.
   that paced its first request and burst through the rest would have passed. The count is asserted.
   `HtmlSource`'s own page-walk `usleep` is left unwired and recorded under Known issues.
 
+- [2026-09-06 15:20] RECORD (**A MASKED BACKSTOP IS NOT A COVERED ONE — found by the 6C advisor
+  pass, which the ledger structurally cannot find**). Joining the §1 case's second expression in
+  (`6a596d0`) made the case complete and proved nothing about the arm it added: expression 1 still
+  reddens the suite, so the case reports `ok` either way. Measured alone, expression 2 left the
+  WHOLE suite green — 2963 tests, the 130-case corpus and the surface matrix included. The arm is
+  `route()`'s `mixedTenure && !$detailRead ? DIGEST` mirror, and it is unreachable through
+  `classify()`: every `Tenure` is exactly one of eligible, excluded or UNKNOWN, so reaching that
+  line means eligible-and-below-floor — the fail-closed rule's own condition — and the rule has
+  already rewritten the tenure to UNKNOWN, which `route()` answers three branches earlier. **Kept
+  and pinned rather than deleted**: it goes live exactly when someone weakens the rule above it,
+  which is the §1 change most worth surviving. Reflection is the only way in — asserting through
+  `classify()` would assert the RULE a second time, and the mirror's value is being independent of
+  it. Isolated expression verified green before and red after. **The general lesson: a compound
+  case's verdict is its FIRST detecting expression, so each must be measured alone or the joined
+  case reports coverage the later expressions do not have.**
+
 ---
 
 ## Fragile implementations register (the developer asked; keep this list honest)
@@ -2833,7 +2849,8 @@ tool/guard) and say which ones the fix covers.**
 | 44 | In'li answers HTTP 302 on ~2 of 5 passes (seen 2026-09-05 00:30, source reports broken) — measure the redirect, rule, fix or record | M | certified | 2553c94 test:2026-09-06 | src/php/Rent/Adapters/HtmlSource.php src/php/Rent/Adapters/HttpJsonSource.php |
 | 45 | CI RED for two days (12 pushes, since 46546bc): a PCRE2 ≥ 10.43 lookbehind in criteria.json and a trace test assuming the development ini — fix at the root, add a portability guard, re-run the nightly ledger on demand | M | certified | 4f0559d test:2026-09-06 | config/rent/criteria.json tests/php/Repo/PortablePatternsTest.php tests/php/Repo/CredentialsNeverReachATraceTest.php |
 | 49 | The 2026-09-06 nightly's five undetected guarantees: three tests, and two cases that seeded half their mutation (`run_sabotage` reads only `$3`) — one of them §1 | M | certified | 6a596d0 test:2026-09-06 | tests/sabotage-check.sh tests/php/Car/AutoheroFixtureTest.php tests/php/Repo/CredentialsNeverReachATraceTest.php tests/php/Rent/Cli/RentScoutTest.php |
-| 50 | The dispatched ledger's survivor: detail pacing was asserted by wall-clock, which a slow machine satisfies with the sleep deleted — an injected sleeper, and the per-hydration count asserted | S | done | 8ee959b | src/php/Rent/Adapters/DetailHydrator.php src/php/Rent/Adapters/HtmlSource.php tests/php/Rent/Adapters/HtmlSourceDetailTest.php tests/sabotage-check.sh |
+| 50 | The dispatched ledger's survivor: detail pacing was asserted by wall-clock, which a slow machine satisfies with the sleep deleted — an injected sleeper, and the per-hydration count asserted | S | certified | 8ee959b test:2026-09-06 | src/php/Rent/Adapters/DetailHydrator.php src/php/Rent/Adapters/HtmlSource.php tests/php/Rent/Adapters/HtmlSourceDetailTest.php tests/sabotage-check.sh |
+| 51 | The §1 case's second expression was seeded but uncovered — the routing mirror is masked by the rule it mirrors, so it is pinned by reflection and each expression measured alone | S | certified | 243cb1d test:2026-09-06 | tests/php/Rent/Core/TenureClassifierTest.php tests/sabotage-check.sh |
 <!-- /progress-block -->
 ### Blocked
 
