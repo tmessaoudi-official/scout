@@ -466,16 +466,29 @@ final class HtmlSourceDetailTest extends TestCase
             detailMap: new FieldMap(description: ['.description']),
         );
 
-        $source = $this->source(new DetailHttpClient(), $definition, static fn (RawListing $l): bool => $l->commune === 'HOUILLES');
+        // ASSERT THE SLEEP WAS REQUESTED, NOT THAT TIME PASSED. This measured elapsed wall-clock
+        // against a 50 ms floor, and a slow machine clears that floor with the `usleep` deleted —
+        // so the guarantee was only detectable on a fast runner. It flipped on 2026-09-06: the
+        // ledger case detected at `3422225` and reported `undetected` at `59b413e`, on the one
+        // shard that took two hours where its siblings took seventy minutes. A lower-bound timing
+        // assertion cannot tell "it waited" apart from "everything was slow".
+        $slept = [];
+        $source = $this->source(
+            new DetailHttpClient(),
+            $definition,
+            static fn (RawListing $l): bool => $l->commune === 'HOUILLES',
+            sleeper: static function (int $us) use (&$slept): void { $slept[] = $us; },
+        );
 
-        $started = microtime(true);
         $source->fetch();
-        $elapsed = (microtime(true) - $started) * 1000;
 
-        self::assertGreaterThanOrEqual(
-            50.0,
-            $elapsed,
-            'one hydration must wait rate_limit_ms before its request — an unpaced detail walk is '
+        // ONE PER DETAIL REQUEST, and the count is half the guarantee. The elapsed-time version
+        // was satisfied by a SINGLE pause however many pages were fetched, so a walk that paced its
+        // first request and then burst through the rest would have passed it.
+        self::assertSame(
+            [60_000, 60_000, 60_000],
+            $slept,
+            'every hydration must wait rate_limit_ms before its request — an unpaced detail walk is '
                 . 'the burst that gets an IP banned, and it presents as every source going quiet',
         );
     }
@@ -579,6 +592,7 @@ final class HtmlSourceDetailTest extends TestCase
         ?Robots $robots = null,
         ?Store $store = null,
         ?string $nowIso = null,
+        ?\Closure $sleeper = null,
     ): HtmlSource {
         return new HtmlSource(
             $definition,
@@ -587,6 +601,7 @@ final class HtmlSourceDetailTest extends TestCase
             $robots ?? Robots::parse(''),
             $priority,
             $nowIso,
+            sleeper: $sleeper,
         );
     }
 

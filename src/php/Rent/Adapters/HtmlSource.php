@@ -110,6 +110,14 @@ final readonly class HtmlSource implements CountsPatternMisses, Source
          * queries.
          */
         private PatternMissLog $patternMisses = new PatternMissLog(),
+        /**
+         * Forwarded to {@see DetailHydrator} — see its own note. NOT applied to this class's own
+         * page-walk `usleep` below, which has no sabotage case and no test at all; that is a known
+         * gap, recorded rather than half-closed here.
+         *
+         * @var ?\Closure(int): void $sleeper
+         */
+        private ?\Closure $sleeper = null,
     ) {
         // Built here rather than injected, because this class already holds every dependency it
         // needs — so injecting one would add a construction site to every caller and every test in
@@ -129,6 +137,7 @@ final readonly class HtmlSource implements CountsPatternMisses, Source
             $detailPriority,
             $nowIso,
             $this->patternMisses,
+            $sleeper,
         );
     }
 

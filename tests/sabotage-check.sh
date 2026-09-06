@@ -2489,7 +2489,7 @@ run_sabotage "robots is checked for the search page only, never for the detail p
 
 run_sabotage "detail fetches stop being paced (a per-listing burst, hard rule 5)" \
   src/php/Rent/Adapters/DetailHydrator.php \
-  '/private function withDetail/,$ s%usleep($this->definition->rateLimitMs \* 1000);%%'
+  '/private function withDetail/,$ s%($this->sleeper ?? static fn (int $us): mixed => usleep($us))($this->definition->rateLimitMs \* 1000);%%'
 
 run_sabotage "a {page} url template is fetched literally, so page one is never real" \
   src/php/Rent/Adapters/HtmlSource.php \

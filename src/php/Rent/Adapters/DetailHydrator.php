@@ -111,6 +111,21 @@ final readonly class DetailHydrator
          * hydrator built without one must behave exactly as before.
          */
         private ?PatternMissLog $patternMisses = null,
+        /**
+         * THE PACING SEAM, injected for the same reason {@see \Scout\Core\Pacer} injects one: the
+         * guarantee is that a sleep is REQUESTED, and wall-clock cannot assert that.
+         *
+         * `HtmlSourceDetailTest` measured elapsed time against a 50 ms floor, which a slow machine
+         * satisfies with the `usleep` deleted — so detection depended on the runner being fast. It
+         * flipped on 2026-09-06: the case detected at `3422225` and reported `undetected` at
+         * `59b413e` on a shard that took two hours against its siblings' seventy minutes. A
+         * lower-bound timing assertion cannot distinguish "it waited" from "everything was slow".
+         *
+         * `null` keeps the real `usleep`, so production is unchanged.
+         *
+         * @var ?\Closure(int): void $sleeper microseconds, as `usleep` takes them
+         */
+        private ?\Closure $sleeper = null,
     ) {}
 
     private function name(): string
@@ -316,7 +331,7 @@ final readonly class DetailHydrator
         }
 
         if ($this->definition->rateLimitMs > 0) {
-            usleep($this->definition->rateLimitMs * 1000);
+            ($this->sleeper ?? static fn (int $us): mixed => usleep($us))($this->definition->rateLimitMs * 1000);
         }
 
         try {
