@@ -307,6 +307,54 @@ final class HtmlSourceTest extends TestCase
         self::assertSame([null, '2', '3'], $client->pages, 'page one carries no page param');
     }
 
+    /**
+     * Hard rule 5's polite-pacing half, on the one sleep in this class that had no test at all.
+     * `PacedSource` wraps ONE `fetch()`, so every page after the first is inside it and unpaced by
+     * anything else — without this pause a four-page walk is four requests back to back, which is
+     * the burst that gets an IP banned, and a banned IP presents as every source going quiet at
+     * once: exactly what a slow rental market looks like.
+     *
+     * THE COUNT IS THE ASSERTION, not the fact that it slept. Three pages are fetched and two
+     * sleeps are expected, which is what says page one is NOT paced here — asserting merely that a
+     * pause happened would pass just as well if this class paced the first request too, which would
+     * double every source's own gap and is the opposite mistake. A wall-clock lower bound was the
+     * shape the DETAIL pacing test used until 2026-09-06, and a slow machine satisfies one of those
+     * with the `usleep` deleted [measured: the case reported `ok` on the shard that took two hours].
+     */
+    public function testThePageWalkPausesBetweenPagesAndNotBeforeTheFirst(): void
+    {
+        $slept = [];
+        $client = new PagedHttpClient([
+            1 => self::page(['a', 'b'], 5),
+            2 => self::page(['c', 'd'], 5),
+            3 => self::page(['e'], 5),
+        ]);
+
+        $this->paged($client, ['rateLimitMs' => 750], static function (int $us) use (&$slept): void {
+            $slept[] = $us;
+        })->fetch();
+
+        self::assertSame([null, '2', '3'], $client->pages, 'premise: three pages are fetched');
+        self::assertSame(
+            [750_000, 750_000],
+            $slept,
+            'one pause per page AFTER the first, at rate_limit_ms — never before page one',
+        );
+    }
+
+    /** A source that declares no rate limit must not pause at all; the guard is a real branch. */
+    public function testAWalkWithNoRateLimitDoesNotPause(): void
+    {
+        $slept = [];
+        $client = new PagedHttpClient([1 => self::page(['a', 'b'], 3), 2 => self::page(['c'], 3)]);
+
+        $this->paged($client, [], static function (int $us) use (&$slept): void {
+            $slept[] = $us;
+        })->fetch();
+
+        self::assertSame([], $slept, 'rate_limit_ms 0 means no pause, not a zero-length one');
+    }
+
     public function testTheWalkStopsAtTheFirstPageWithNoListings(): void
     {
         $client = new PagedHttpClient([1 => self::page(['a'], 1)]);
@@ -448,7 +496,7 @@ final class HtmlSourceTest extends TestCase
     }
 
     /** @param array<string, mixed> $overrides */
-    private function paged(PagedHttpClient $client, array $overrides = []): HtmlSource
+    private function paged(PagedHttpClient $client, array $overrides = [], ?\Closure $sleeper = null): HtmlSource
     {
         $definition = new SourceDefinition(
             name: 'inli',
@@ -469,13 +517,14 @@ final class HtmlSourceTest extends TestCase
             ),
             pageParam: array_key_exists('pageParam', $overrides) ? $overrides['pageParam'] : 'page',
             totalSelector: '.sf-results-head h5',
-            // Zero, so the suite does not actually sleep between pages. The delay itself is a
-            // production concern (see the walk); what these tests pin is the walk's shape.
+            // Zero by default, so the suite does not actually sleep between pages: what most of
+            // these tests pin is the walk's SHAPE. The pacing test overrides it and injects a
+            // sleeper, which is the only way to assert the pause without paying for it.
             maxPages: $overrides['maxPages'] ?? 20,
-            rateLimitMs: 0,
+            rateLimitMs: $overrides['rateLimitMs'] ?? 0,
         );
 
-        return new HtmlSource($definition, $this->store(), $client, Robots::parse(''));
+        return new HtmlSource($definition, $this->store(), $client, Robots::parse(''), sleeper: $sleeper);
     }
 
     // ---------------------------------------------------------------- helpers

@@ -111,9 +111,13 @@ final readonly class HtmlSource implements CountsPatternMisses, Source
          */
         private PatternMissLog $patternMisses = new PatternMissLog(),
         /**
-         * Forwarded to {@see DetailHydrator} — see its own note. NOT applied to this class's own
-         * page-walk `usleep` below, which has no sabotage case and no test at all; that is a known
-         * gap, recorded rather than half-closed here.
+         * The pacing seam, applied to BOTH sleeps this class is responsible for: its own page-walk
+         * pause below, and the per-listing one it forwards to {@see DetailHydrator}. It covers both
+         * deliberately — a seam on one of two symmetric sites is this repo's named recurring defect,
+         * and it was committed here for a day: the hydration sleep gained a test while the page walk
+         * thirty lines away kept a bare `usleep` that no test and no ledger case could reach.
+         *
+         * `null` means the real `usleep`, so production is unchanged and only a test injects.
          *
          * @var ?\Closure(int): void $sleeper
          */
@@ -343,7 +347,9 @@ final readonly class HtmlSource implements CountsPatternMisses, Source
             // `fetch()`, and every page after the first is inside it. Without this a four-page walk
             // is four requests back to back, which is the burst hard rule 5 forbids.
             if ($this->definition->rateLimitMs > 0) {
-                usleep($this->definition->rateLimitMs * 1000);
+                ($this->sleeper ?? static fn (int $us): mixed => usleep($us))(
+                    $this->definition->rateLimitMs * 1000,
+                );
             }
 
             if ($urlTemplate || $pagePath !== null) {

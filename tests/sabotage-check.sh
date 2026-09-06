@@ -2500,6 +2500,15 @@ run_sabotage "detail fetches stop being paced (a per-listing burst, hard rule 5)
   src/php/Rent/Adapters/DetailHydrator.php \
   '/private function withDetail/,$ s%($this->sleeper ?? static fn (int $us): mixed => usleep($us))($this->definition->rateLimitMs \* 1000);%%'
 
+# The SIBLING of the case above, and it went unwritten for a day while that one was fixed: the
+# hydration sleep gained a seam and a test while this class's own page-walk sleep, thirty lines from
+# it, kept a bare `usleep` no test and no case could reach. A fix landing on one of two symmetric
+# surfaces is this repo's named recurring defect. The mutation flips the guard rather than deleting
+# the call, so it stays valid code and the walk simply never pauses.
+run_sabotage "the page walk stops pausing between pages (a burst against one host, hard rule 5)" \
+  src/php/Rent/Adapters/HtmlSource.php \
+  's%$this->definition->rateLimitMs > 0%$this->definition->rateLimitMs < 0%'
+
 run_sabotage "a {page} url template is fetched literally, so page one is never real" \
   src/php/Rent/Adapters/HtmlSource.php \
   's%$firstUrl = $urlTemplate ? str_replace(.{page}., .1., $url) : $url;%$firstUrl = $url;%'

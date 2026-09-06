@@ -2862,6 +2862,8 @@ tool/guard) and say which ones the fix covers.**
 | 49 | The 2026-09-06 nightly's five undetected guarantees: three tests, and two cases that seeded half their mutation (`run_sabotage` reads only `$3`) — one of them §1 | M | certified | 6a596d0 test:2026-09-06 | tests/sabotage-check.sh tests/php/Car/AutoheroFixtureTest.php tests/php/Repo/CredentialsNeverReachATraceTest.php tests/php/Rent/Cli/RentScoutTest.php |
 | 50 | The dispatched ledger's survivor: detail pacing was asserted by wall-clock, which a slow machine satisfies with the sleep deleted — an injected sleeper, and the per-hydration count asserted | S | certified | 8ee959b test:2026-09-06 | src/php/Rent/Adapters/DetailHydrator.php src/php/Rent/Adapters/HtmlSource.php tests/php/Rent/Adapters/HtmlSourceDetailTest.php tests/sabotage-check.sh |
 | 51 | The §1 case's second expression was seeded but uncovered — the routing mirror is masked by the rule it mirrors, so it is pinned by reflection and each expression measured alone | S | certified | 243cb1d test:2026-09-06 | tests/php/Rent/Core/TenureClassifierTest.php tests/sabotage-check.sh |
+| 52 | C2 round 7 — three lenses NOT CLEAN (2 P0, 3 P1, 10 P2, 8 P3); every finding fixed with a test that reddens on its removal | L | done | 676602a | src/php/Rent/Cli/DigestBatch.php src/php/Car/Cli/CarScout.php src/php/Rent/Cli/RentScout.php .github/workflows/ci.yml |
+| 53 | The page-walk sleep was the symmetric surface of the detail one — same seam, count asserted, ledger case | S | done | - | src/php/Rent/Adapters/HtmlSource.php tests/php/Rent/Adapters/HtmlSourceTest.php tests/sabotage-check.sh |
 <!-- /progress-block -->
 ### Blocked
 
@@ -2895,16 +2897,11 @@ tool/guard) and say which ones the fix covers.**
 
 ### Known issues
 
-- **`HtmlSource`'s page-walk `usleep` has no test and no sabotage case** (2026-09-06, found while
-  closing the detail-pacing one). `DetailHydrator` now paces through an injected sleeper, so its
-  guarantee is asserted rather than timed; the search-page walk at `HtmlSource` still calls
-  `usleep` directly, nothing asserts it, and the ledger has never had a case for it. It is the
-  symmetric surface of a hard-rule-5 guarantee — this repo's named recurring defect — and it is
-  recorded rather than half-closed: a case needs its own seam and its own test, not a copied line.
-- **Row 35 is UNMET and paused-then-resumed by ruling** (2026-09-04 23:29): the two-clean counter
-  is 0, the cap was reached at round 5, and the next freeze happens only after rows 6, 9–11 and
-  36–43 land. The recorded resume point `792eb3a` will be superseded by that freeze; do not run a
-  round before it.
+- **Row 35 is UNMET and IN FLIGHT** (round 8, frozen 2026-09-06): the two-clean counter is 0 —
+  rounds 1–7 each found real defects, round 7 alone 23 of them. The rows that gated the resume
+  (6, 9–11, 36–43) have all landed and the old resume point `792eb3a` is superseded. Round 8's
+  freeze is the commit that closes this bullet's own row; a clean round moves the counter to 1,
+  and TWO are required, so even a clean round 8 does not close row 35.
 - **Round-5 P2, recorded not fixed** (row 41): with no band on the mapped path, a selector drifting
   onto a 5-digit field extracts `95240` cleanly, `max_rent_cc` rejects every card, `rent` counts
   zero misses and health stays `ok`. The ParuVendu `autres` class one layer over; it wants a
