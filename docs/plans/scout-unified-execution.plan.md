@@ -1563,6 +1563,27 @@ read-only) and the merged prose as one review deep.
   Two of the nine are round-6's own and are already closed by the round-7 work. They are being
   re-run at HEAD one by one; each survivor needs a test, which is exactly what `undetected` means.
 
+- [2026-09-06 11:55] RECORD (**THE LEDGER'S FIVE — AND TWO OF THEM WERE THE LEDGER LYING TO
+  ITSELF**). Run 34019773860 at `3422225`, six shards, all reporting: **754 detected / 5
+  undetected**. Three were real gaps and got tests. Two were BROKEN CASES, which is the more useful
+  half: `run_sabotage()` binds `expr="$3"` and reads no further, so a case written as two quoted
+  expressions seeds only the first. The quoted-printable case had additionally stopped naming its
+  own guarantee when the cascade moved to `Core\RecoverableForms` on 2026-09-05 — it mutated an
+  ASSERTION in `FixtureSecretsTest` into `assertContains($content, $forms)`, trivially true — and
+  `tests/test-sabotage-applies.sh` could not see it, because the string still MATCHED. The other
+  was a **§1 case** reporting `ok` on its first expression while the `mixedTenure && !$detailRead`
+  arm was never seeded at all. `run_sabotage()` now ABORTS on a fourth argument, the same rule it
+  already applies to a shard spec that selects nothing. Retargeting the first also needed BOTH
+  decodes removed: `$headersUnfolded` equals `$message` when no header is folded, which is exactly
+  the self-test's content, so removing one leaves the identical form in `$forms`. **Two premises
+  earned their keep and one first attempt was wrong in the way this file keeps recording**: the
+  robots test's premise caught that `allows()` takes a path and not a URL (a URL answers `true` for
+  everything, so both premises would have passed for the wrong reason), and the doctor assertion
+  asserted the WORD `--watch` first — satisfied by the startup-refusal note and the rollup line, so
+  it reported `undetected` until it asserted the CLAUSE. Each of the five verified red then green
+  individually. The tracing JIT aborted a scratch baseline again mid-run: ledger runs here need
+  `PHP_INI_SCAN_DIR` with an `opcache.jit=off` overlay BESIDE the phpbrew dir, never replacing it.
+
 ---
 
 ## Fragile implementations register (the developer asked; keep this list honest)
@@ -2796,6 +2817,7 @@ tool/guard) and say which ones the fix covers.**
 | 48 | The nightly ledger completed none of its last eight runs — shard it six ways, one aggregating alert job | M | done | 1c9f8aa | .github/workflows/ci.yml tests/sabotage-check.sh tests/test-ci-workflow.sh |
 | 44 | In'li answers HTTP 302 on ~2 of 5 passes (seen 2026-09-05 00:30, source reports broken) — measure the redirect, rule, fix or record | M | certified | 2553c94 test:2026-09-06 | src/php/Rent/Adapters/HtmlSource.php src/php/Rent/Adapters/HttpJsonSource.php |
 | 45 | CI RED for two days (12 pushes, since 46546bc): a PCRE2 ≥ 10.43 lookbehind in criteria.json and a trace test assuming the development ini — fix at the root, add a portability guard, re-run the nightly ledger on demand | M | certified | 4f0559d test:2026-09-06 | config/rent/criteria.json tests/php/Repo/PortablePatternsTest.php tests/php/Repo/CredentialsNeverReachATraceTest.php |
+| 49 | The 2026-09-06 nightly's five undetected guarantees: three tests, and two cases that seeded half their mutation (`run_sabotage` reads only `$3`) — one of them §1 | M | certified | 6a596d0 test:2026-09-06 | tests/sabotage-check.sh tests/php/Car/AutoheroFixtureTest.php tests/php/Repo/CredentialsNeverReachATraceTest.php tests/php/Rent/Cli/RentScoutTest.php |
 <!-- /progress-block -->
 ### Blocked
 
