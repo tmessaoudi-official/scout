@@ -1626,6 +1626,21 @@ read-only) and the merged prose as one review deep.
   moves the two-clean counter to **1**; any finding resets it to **0** and round 9 needs a new
   freeze. Reviewers are spawned UNNAMED and probe in pinned worktrees, never the live tree.
 
+- [2026-09-06 16:35] RECORD (**THE ADVISOR PASS RAN FIRST AND MOVED THE FREEZE TWICE**). Three
+  pre-spawn checks, in the order it gave them. (1) **Round 7's 23 findings all have a disposition**
+  — every P2 and P3 named in `676602a`'s message against the three reports' own headings — but the
+  commit itself **had no plan row**, so the largest fix of the round was invisible to every count
+  this plan reports; row 52 now carries it. (2) **`HtmlSource` held a `$sleeper` it never used**,
+  thirty lines from its own bare page-walk `usleep`: the seam was added for the DETAIL sleep and
+  the symmetric surface was recorded as a known issue rather than closed. Closed now (row 53) —
+  and the count is the assertion, because a test that merely proves a pause happened passes just
+  as well if page one is paced too, which doubles every source's gap. (3) **12 of the 759 ledger
+  cases are compound**, 24 sub-expressions in all; each is being measured ALONE in a `cp -a` copy,
+  because a compound case's verdict is its FIRST detecting expression. That sweep is in flight and
+  is a COVERAGE question about the ledger, not a correctness question about the span — its
+  findings are round-9 material, and the lenses are told so rather than left to re-find it.
+  **Freeze moves to this commit.**
+
 ---
 
 ## Fragile implementations register (the developer asked; keep this list honest)
