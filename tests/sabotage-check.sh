@@ -78,6 +78,20 @@ skipped=0
 
 # Each entry: label :: file :: sed expression that breaks the guarantee
 run_sabotage() {
+  # A FOURTH ARGUMENT IS A SILENTLY DISCARDED MUTATION. `expr="$3"` reads no further, so a case
+  # written as two quoted expressions seeds only the first and reports on a guarantee it never
+  # touched. Two were in this file (2026-09-06): the quoted-printable case, which reported
+  # `undetected` for four nightlies with half its mutation applied, and the fail-closed §1 case at
+  # "the fail-closed rule stops requiring the detail page to have been read", which reported `ok`
+  # on its first expression while the `mixedTenure` arm was never seeded at all. Neither is visible
+  # to `tests/test-sabotage-applies.sh`, which is handed `$3` and so checks exactly what ran.
+  # Compound mutations are joined with `;` into ONE argument. Refusing is the same rule this script
+  # already applies to a shard spec that selects nothing: a silently-ignored instruction is worse
+  # than a loud refusal, because it reports coverage it does not have.
+  if (( $# > 3 )); then
+    printf '\n  ABORT  %s: %d arguments — join compound sed expressions with `;` into one.\n\n' "$1" "$#"
+    exit 1
+  fi
   local label="$1" target="$2" expr="$3"
 
   # Counted for EVERY case, before any skip, so a shard is a stable slice of this file.
@@ -478,8 +492,7 @@ run_sabotage "fail-closed downgrade removed (mixed source keeps an eligible tenu
 # believing a source's own description of itself.
 run_sabotage "the fail-closed rule stops requiring the detail page to have been read" \
   src/php/Rent/Core/TenureClassifier.php \
-  's/\&\& !$detailRead) {/) {/' \
-  's/$source->mixedTenure \&\& !$detailRead ? Outcome::DIGEST/$source->mixedTenure \&\& false ? Outcome::DIGEST/'
+  's/\&\& !$detailRead) {/) {/;s/$source->mixedTenure \&\& !$detailRead ? Outcome::DIGEST/$source->mixedTenure \&\& false ? Outcome::DIGEST/'
 
 # And its mirror: hydration must not become a licence. If `detailRead` were allowed to short-circuit
 # the EXCLUSION rules rather than only the source-default floor, reading a page would turn an
@@ -4392,9 +4405,24 @@ run_sabotage "the car heartbeat reads health without the clock (a silent feed co
 
 # The fixture-secrets guard decodes quoted-printable before it looks; without that, a JWT in any real
 # .eml fixture reads `=3DeyJ…` and `\beyJ` never matches.
+# THE EXPRESSION USED TO MUTATE THE ASSERTION, NOT THE CASCADE (2026-09-06). It read
+# `s%quoted_printable_decode($content)%$content%` against FixtureSecretsTest, which turned that
+# test's own assertion into `assertContains($content, $forms)` — trivially true, since the raw
+# bytes are always scanned. So it seeded nothing and reported `undetected` on four nightlies.
+# `tests/test-sabotage-applies.sh` could not see it: the string still MATCHED, it had simply
+# stopped naming the guarantee once the cascade moved to `Core\RecoverableForms` (2026-09-05) —
+# the "extracting a class orphans its sabotage" lesson, in the shape that survives the check for it.
+#
+# BOTH decodes must go, JOINED BY `;` INTO ONE ARGUMENT — `run_sabotage` binds `expr="$3"` and
+# reads no further, so a second quoted expression is silently DISCARDED and the case reports
+# `undetected` with half the mutation applied. Measured while writing this: two arguments left the
+# suite green for exactly that reason.
+# `$headersUnfolded` equals `$message` for any content with no folded
+# headers — which is exactly the self-test's content — so removing line 41 alone leaves the
+# identical quoted-printable form in `$forms` via line 42, and the assertion stays green.
 run_sabotage "the fixture-secrets guard is blind to quoted-printable again" \
-  tests/php/Repo/FixtureSecretsTest.php \
-  's%quoted_printable_decode(\$content)%$content%'
+  src/php/Core/RecoverableForms.php \
+  's%quoted_printable_decode(\$message)%$message%;s%quoted_printable_decode(\$headersUnfolded)%$headersUnfolded%'
 
 # ── The twin fact is PERSISTED (schema v12, 2026-08-30, panel round 2) ─────────────────────────
 # A veto living only in the pass's harvest lapsed the moment the twin was not fetched: the pass

@@ -464,6 +464,16 @@ final class RentScoutTest extends TestCase
         // config key.
         self::assertStringContainsString('sur demande', $r['out'], 'Q34: doctor must state the cadence that actually runs');
         self::assertStringContainsString('plancher quotidien', $r['out'], 'Q34: the daily floor now runs and must be named');
+        // THE SCOPE TRAVELS WITH THE PROMISE. The floor runs under `--watch` ONLY, so a cron-driven
+        // `--once` deployment has the two event-driven paths and no floor. Naming the floor without
+        // naming its scope is the hard-rule-2 shape one narrower: an operator reads a daily rollup
+        // they will never receive. Asserted separately from the floor itself, because the ledger
+        // proved deleting the clause leaves every other assertion on this line green.
+        // THE FRAGMENT, NOT THE WORD. A bare '`--watch`' is satisfied by other lines of this same
+        // report — the startup-refusal note and the rollup line both name the flag — so the
+        // sabotage deleted the clause from the digest line and this assertion stayed green.
+        // Measured: it reported `undetected` with the word asserted and red with the clause.
+        self::assertStringContainsString('en `--watch` (Q34)', $r['out'], 'Q34: the floor is --watch only and doctor must say so');
         self::assertStringContainsString('8h', $r['out'], 'the configured hour is shown');
         self::assertStringContainsString(
             'silencieux si rien',

@@ -16,6 +16,9 @@ use Scout\Adapters\SourceError;
 use Scout\Car\SitemapVehicleSource;
 use Scout\Car\VehicleSourceDefinition;
 use Scout\Car\VehicleSourceLoader;
+use Scout\Car\VehiclePipeline;
+use Scout\Car\VehicleCriteriaLoader;
+use Scout\Core\Notify\Notifier;
 use Scout\Car\VehicleStore;
 
 /**
@@ -108,6 +111,77 @@ final class AutoheroFixtureTest extends TestCase
         $this->expectExceptionMessageMatches('~robots~');
 
         $this->source($this->client(), budget: 2, robots: Robots::parse("User-agent: *\nDisallow: /fr/\n"))->fetch();
+    }
+
+    /**
+     * THE LOT LOOP RE-CHECKS ROBOTS, AND ONLY AN ASYMMETRIC FILE PROVES IT.
+     *
+     * `testEveryRequestIsRobotsCheckedAndARefusalIsLoud` disallows `/fr/`, which covers the sitemap
+     * itself — so it proves the check on the INDEX fetch and stops there. The lot loop's own check
+     * was therefore untested, and the nightly ledger said so: "the sitemap source stops checking
+     * robots.txt for lot pages" reported `undetected`, because deleting that line left the index
+     * refusal — and every other assertion in this class — untouched.
+     *
+     * A lot fetch is one request PER LISTING against a path the index merely advertises; the index
+     * being allowed says nothing about them. So the file here ALLOWS the sitemap and disallows the
+     * lot pattern, which is the only shape that can distinguish the two call sites.
+     */
+    public function testALotPageIsRefusedEvenWhenTheIndexItselfIsAllowed(): void
+    {
+        $robots = Robots::parse("User-agent: *\nDisallow: /fr/*/id/\n");
+        // `allows()` takes a PATH — `Robots::pathOf()` is what the source applies before asking, and
+        // handing it a full URL answers `true` for everything, which would make both premises pass
+        // for the wrong reason and the test vacuous.
+        self::assertTrue($robots->allows(Robots::pathOf(self::SITEMAP)), 'premise: the index must be reachable, or this proves the other call site');
+        self::assertFalse($robots->allows(Robots::pathOf(self::NISSAN)), 'premise: the lot pattern must be refused');
+
+        $this->expectException(SourceError::class);
+        $this->expectExceptionMessageMatches('~robots~');
+
+        $this->source($this->client(), budget: 2, robots: $robots)->fetch();
+    }
+
+    /**
+     * THE PIPELINE BASELINES HEALTH ON THE INDEX, NOT ON THE NOVEL SLICE — and only the pipeline
+     * can be asked that. `testTheNoveltyGateAndTheBudgetBoundTheFetch` asserts the SOURCE exposes
+     * `lastIndexSize()`; nothing asserted that `VehiclePipeline` then RECORDS it, so the nightly
+     * ledger reported "the car pipeline baselines a sitemap source's health on its novel lots, not
+     * its index" as undetected — the conditional could be flattened to `count($listings)` with the
+     * whole suite green.
+     *
+     * That is a hard-rule-2 failure with a delay fuse. A sitemap source's novel count FALLS to near
+     * zero once the catalogue is watched — that is the novelty gate working — so a health baseline
+     * built on it decays every pass until the source reports `broken` on a feed that never stopped.
+     * The index size is the one figure that measures the FEED.
+     *
+     * Novel < index is forced with the BUDGET (1 of 5) rather than by seeding the store, so the
+     * gap is created by the source's own economics and no fixture has to be pre-recorded.
+     *
+     * `Cli/CarScout.php:185` carries the same conditional for `doctor` — a second symmetric
+     * surface, which is the shape this repo keeps paying for. It is not covered here.
+     */
+    public function testTheRecordedItemCountIsTheIndexSizeNotTheNovelLotCount(): void
+    {
+        $store = VehicleStore::open(':memory:');
+        $source = $this->source($this->client(), budget: 1, store: $store);
+        $pipeline = new VehiclePipeline(
+            VehicleCriteriaLoader::fromArray(VehicleCriteriaTest::minimal()),
+            $store,
+            new Notifier([new CarRecordingChannel()]),
+        );
+
+        $result = $pipeline->runOnce([$source], '2026-08-29T10:00:00Z');
+
+        self::assertSame([], $result->errors, 'premise: the pass must succeed, or the count below is not the one under test');
+        self::assertSame(5, $source->lastIndexSize(), 'premise: the index really does hold five lots');
+
+        $health = $store->runs()->health('autohero', '2026-08-29T10:05:00Z');
+        self::assertSame(
+            5,
+            $health->lastCount,
+            'the feed is five lots; one of them was novel under the budget. Recording 1 makes the '
+            . 'baseline decay to zero as the catalogue is watched, and the source reports broken.',
+        );
     }
 
     public function testABrokenLotPageIsWarnedAndSkippedNeverAnEmptyPass(): void

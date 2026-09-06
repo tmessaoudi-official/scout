@@ -6,6 +6,7 @@ namespace Scout\Tests\Repo;
 
 use PHPUnit\Framework\TestCase;
 use Scout\Adapters\Mail\ImapMailbox;
+use Scout\Core\Notify\ChannelError;
 use Scout\Core\Notify\SmtpTransport;
 
 /**
@@ -150,6 +151,92 @@ final class CredentialsNeverReachATraceTest extends TestCase
     }
 
     /**
+     * THE SWALLOW IN `writeCredential()` IS THE GUARANTEE, AND NO TEST COULD REACH IT.
+     *
+     * `testTheSmtpAuthLinesPutNoCredentialInATrace` drives a CLOSED stream: `@fwrite` on one emits
+     * a warning and returns `false`, so the `catch (\Throwable)` is never entered and the `try` is
+     * dead weight under that test. The nightly ledger said so — "the SMTP credential write stops
+     * swallowing the raise (fwrite's own frame carries it)" reported undetected, because turning
+     * the swallow into `catch (\Throwable $e) { throw $e; }` changes nothing on a path that never
+     * throws.
+     *
+     * A userland stream wrapper is the way in: an exception raised in `stream_write()` propagates
+     * out of `fwrite` — `@` suppresses diagnostics, not throws — and `fwrite`'s own frame carries
+     * `$line`, which IS the base64 credential. That is why the swallow exists at all.
+     *
+     * TWO PREMISES BEFORE THE GUARANTEE, because this test is worthless if either fails: the raise
+     * must actually cross `@fwrite`, and the credential must actually be in that trace on this
+     * runtime. Without them a green result is indistinguishable from a runtime that prints no
+     * arguments (CI ships the production ini), which is row 45's exact shape. The runtime is SET
+     * here rather than found, for the same reason.
+     */
+    public function testTheCredentialWriteSwallowsARaiseFromTheSocket(): void
+    {
+        $ignore = ini_set('zend.exception_ignore_args', '0');
+        $budget = ini_set('zend.exception_string_param_max_len', '15');
+
+        if (in_array('scoutthrows', stream_get_wrappers(), true)) {
+            stream_wrapper_unregister('scoutthrows');
+        }
+        stream_wrapper_register('scoutthrows', ThrowingStreamWrapper::class);
+
+        try {
+            $encoded = base64_encode(self::PASSWORD);
+
+            // PREMISE 1 + 2 — the raise crosses `@fwrite`, and it carries the written line with it.
+            $leaked = null;
+            try {
+                @fwrite(self::throwingStream(), $encoded . "\r\n");
+                self::fail('premise: a raise from stream_write() must cross @fwrite, or the swallow guards nothing');
+            } catch (\RuntimeException $e) {
+                $leaked = $e->getMessage() . "\n" . $e->getTraceAsString();
+            }
+            self::assertStringContainsString(
+                substr($encoded, 0, 15),
+                (string) $leaked,
+                'premise: the credential must reach an unguarded trace on this runtime, or the guarantee below is free',
+            );
+
+            // THE GUARANTEE — the raise is swallowed and re-stated as a ChannelError, whose message
+            // is masked. Under the sabotage the RuntimeException above arrives here instead.
+            $r = new \ReflectionClass(SmtpTransport::class);
+            $transport = $r->newInstanceWithoutConstructor();
+            $r->getProperty('user')->setValue($transport, self::USER);
+            $r->getProperty('password')->setValue($transport, self::PASSWORD);
+
+            try {
+                $r->getMethod('writeCredential')->invoke($transport, self::throwingStream(), true);
+                self::fail('writeCredential must refuse a socket it could not write to');
+            } catch (\Throwable $e) {
+                self::assertInstanceOf(
+                    ChannelError::class,
+                    $e,
+                    'the raise must be swallowed and re-stated — rethrowing it hands fwrite\'s own frame to the caller',
+                );
+
+                $seen = $e->getMessage() . "\n" . $e->getTraceAsString();
+                foreach ([self::PASSWORD, base64_encode(self::PASSWORD), self::USER, base64_encode(self::USER)] as $needle) {
+                    self::assertStringNotContainsString($needle, $seen, 'leaked ' . substr($needle, 0, 6));
+                }
+                self::assertStringNotContainsString(substr(base64_encode(self::PASSWORD), 0, 15), $seen, 'nor the truncated prefix');
+            }
+        } finally {
+            stream_wrapper_unregister('scoutthrows');
+            ini_set('zend.exception_ignore_args', (string) $ignore);
+            ini_set('zend.exception_string_param_max_len', (string) $budget);
+        }
+    }
+
+    /** @return resource */
+    private static function throwingStream(): mixed
+    {
+        $stream = fopen('scoutthrows://credential', 'w');
+        self::assertIsResource($stream);
+
+        return $stream;
+    }
+
+    /**
      * THE CONSTRUCTOR IS A SURFACE NO PER-SITE FIX REACHED, and it leaks the most of any of them.
      *
      * Three call sites were repaired one at a time and a review panel then found this one. Each
@@ -269,5 +356,39 @@ final class CredentialsNeverReachATraceTest extends TestCase
         fclose($stream);
 
         return $stream;
+    }
+}
+
+/**
+ * A stream whose every write RAISES. `@fwrite` suppresses diagnostics, not exceptions, so this is
+ * the only way to reach `SmtpTransport::writeCredential()`'s `catch` — a closed stream returns
+ * `false` without ever throwing, which is why that branch had no test for as long as it existed.
+ */
+final class ThrowingStreamWrapper
+{
+    /** @var resource|null */
+    public $context;
+
+    public function stream_open(string $path, string $mode, int $options, ?string &$openedPath): bool
+    {
+        return true;
+    }
+
+    public function stream_write(string $data): int
+    {
+        throw new \RuntimeException('the socket went away mid-write');
+    }
+
+    public function stream_close(): void {}
+
+    public function stream_eof(): bool
+    {
+        return true;
+    }
+
+    /** @return array<string, int> */
+    public function stream_stat(): array
+    {
+        return [];
     }
 }
