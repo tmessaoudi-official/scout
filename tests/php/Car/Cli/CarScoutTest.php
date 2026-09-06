@@ -237,6 +237,30 @@ final class CarScoutTest extends TestCase
     }
 
     /**
+     * C2 ROUND 8 P1, THE CAR HALF — the remainder line, inverted.
+     *
+     * Round 7 fixed the over-report (counting only `$entries` left every retry reported as still
+     * pending) and introduced the under-report in the same change: the arithmetic subtracted every
+     * retry whether or not the channel took it, while `pushRetries()` leaves a refused one queued
+     * by design. With no `push_min_score` — where every queued row is a retry — a drain against a
+     * dead channel claimed the backlog was empty when nothing had moved.
+     *
+     * The counterweight is `testARefusedRetryIsLeftQueuedAndSaidOutLoud` plus the delivered path
+     * above: a retry the channel TOOK must claim no remainder.
+     */
+    public function testARefusedCarRetryIsStillReportedAsARemainder(): void
+    {
+        $this->queueACarOverTheGate();
+        $channel = new CarRecordingChannel();
+        $channel->down = true;
+
+        $r = $this->scout(['--domain=car', 'rollup'], $channel);
+
+        self::assertSame(1, \Scout\Car\VehicleStore::open($this->db)->pendingRollupCount(), 'premise: it did not drain');
+        self::assertStringContainsString('1 autre(s) en attente', $r['out'] . $r['err']);
+    }
+
+    /**
      * A COMPUTED `REJECT` IS AN ANSWER, AND THE DRAIN USED TO DISCARD IT.
      *
      * The re-judge kept `$verdict = null` on a rejection and fell back to the STORED score, so a

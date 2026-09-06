@@ -1502,7 +1502,7 @@ read-only) and the merged prose as one review deep.
 
 - [2026-09-05 13:45] AGREED (**three rulings in one `AskUserQuestion`, each on a measurement**).
   **(1) The nightly ledger is SHARDED, not merely given a bigger budget.** Measured: not one
-  completed run in eight days — four CANCELLED at the 240-minute cap (258 → 527 → 750 cases in three
+  completed run in eight days — four CANCELLED at the 240-minute cap (258 → 527 → 764 cases in three
   weeks) and four failed on the row-45 CI cause; seven issues open and none closable. GitHub's
   hosted ceiling is 360, so raising had nowhere left to go. Six-way matrix on the case index,
   `fail-fast: false` (one shard's finding must not cancel five others), each shard uploading its log,
@@ -1634,12 +1634,53 @@ read-only) and the merged prose as one review deep.
   thirty lines from its own bare page-walk `usleep`: the seam was added for the DETAIL sleep and
   the symmetric surface was recorded as a known issue rather than closed. Closed now (row 53) —
   and the count is the assertion, because a test that merely proves a pause happened passes just
-  as well if page one is paced too, which doubles every source's gap. (3) **12 of the 759 ledger
+  as well if page one is paced too, which doubles every source's gap. (3) **12 of the 764 ledger
   cases are compound**, 24 sub-expressions in all; each is being measured ALONE in a `cp -a` copy,
   because a compound case's verdict is its FIRST detecting expression. That sweep is in flight and
   is a COVERAGE question about the ledger, not a correctness question about the span — its
   findings are round-9 material, and the lenses are told so rather than left to re-find it.
   **Freeze moves to this commit.**
+
+- [2026-09-06 18:10] RECORD (**C2 ROUND 8 — THREE OPUS LENSES, NOT CLEAN, AND ALL THREE LANDED ON
+  THE DIGEST DRAIN**). Span `b692570..dfc49e8`, frozen; reports in `var/claude/c2-round8-*.md`.
+  Correctness 1 P0 / 1 P1 / 1 P2 / 5 P3, resilience 1 P0 / 1 P2 / 3 P3, completeness 1 P0 / 1 P1 /
+  3 P2 / 2 P3. **The two-clean counter stays at 0.**
+  **P0 — §1 IS JUDGED FROM EVERY PERSISTED READING, AND THE DRAIN READ ONE OF THREE.** Round 7
+  lifted the group and twin vetoes above the retry/rollup split and left two things behind. (a) The
+  row's OWN reading stayed below the snapshot-less arm's `continue`, so two arms of one loop gave
+  opposite answers to the same row and a flat stored `PLS` whose payload will not encode was pushed
+  as an individual MATCH and marked `notified_as = 'MATCH'`, which cannot be demoted. Resilience
+  established the part that decides the fix: before round 7 that row went out as a demotable
+  `ROLLUP`, so the span made an existing announcement PERMANENT rather than creating one — the
+  routing is pinned by a ledger case and must not be reverted; the decode moves up instead.
+  (b) `Store::excludedDwellings()` — the THIRD route `Pipeline` reads, and the only one that catches
+  a portal RE-ADVERTISING a flat under a new ad id (no group edge, no twin, so the other two see
+  nothing) — had `Pipeline`'s two call sites as its only consumers. Completeness executed it:
+  `excludedDwellings()==1`, `groupVeto==NULL`, `twin==NULL`, and `digest` pushed `[MATCH] inli
+  51/100` for a flat recorded `PLS` one row away on the same source. **The matcher is now
+  `Rent/Core/ExcludedDwellings`, called by BOTH surfaces** — a second implementation of §1's rule is
+  how they drift again, which is the whole shape of this finding.
+  **P1 — the remainder line, inverted.** Round 7 fixed the over-report and introduced the
+  under-report in the same change: `overflow()` subtracted every retry while `pushRetries()` leaves
+  a refused one queued by design, so a drain against a dead channel claimed `0 autre(s) en attente`
+  for a backlog that had not moved. `overflow()` now REQUIRES the drained key count — no default,
+  because both defaults are a lie in one direction — and it follows that the line is printed AFTER
+  the retries are attempted. One implementation per domain, both call sites through it. Nothing in
+  the tree exercised `count()` with a non-empty retry list: both existing assertions set
+  `push_min_score => 100`.
+  **Two things the author got wrong and the lenses caught.** The panel briefing described
+  `EmailMessage.php` as carrying the `Date:` widening and `config/car/sources.json` the
+  `facts_pattern` reshape; in THIS span both are docblock- and indentation-only — described from the
+  plan's narrative instead of read from the diff, which is this repo's named failure, committed in a
+  briefing about it. And `test-ci-workflow.sh` was reported 60/60 when it measures 59/60 under load;
+  completeness re-ran the failing check green twice standalone and recorded it as the known flake
+  while refusing to claim a green for that script.
+  **The extraction orphaned four ledger expressions**, exactly as the `RunStore` split did on
+  2026-09-01: moving the dwelling loop into `ExcludedDwellings` and the remainder lines into their
+  own methods left four cases matching nothing, caught by `tests/test-sabotage-applies.sh`. One new
+  case was then a byte-identical DUPLICATE of a retargeted one and was dropped rather than kept for
+  the count, and one seeded `$this->lastRetries`, a property that does not exist — invalid code
+  tests nothing, so it moved to the call site where the real defect lives.
 
 ---
 
@@ -2878,7 +2919,11 @@ tool/guard) and say which ones the fix covers.**
 | 50 | The dispatched ledger's survivor: detail pacing was asserted by wall-clock, which a slow machine satisfies with the sleep deleted — an injected sleeper, and the per-hydration count asserted | S | certified | 8ee959b test:2026-09-06 | src/php/Rent/Adapters/DetailHydrator.php src/php/Rent/Adapters/HtmlSource.php tests/php/Rent/Adapters/HtmlSourceDetailTest.php tests/sabotage-check.sh |
 | 51 | The §1 case's second expression was seeded but uncovered — the routing mirror is masked by the rule it mirrors, so it is pinned by reflection and each expression measured alone | S | certified | 243cb1d test:2026-09-06 | tests/php/Rent/Core/TenureClassifierTest.php tests/sabotage-check.sh |
 | 52 | C2 round 7 — three lenses NOT CLEAN (2 P0, 3 P1, 10 P2, 8 P3); every finding fixed with a test that reddens on its removal | L | done | 676602a | src/php/Rent/Cli/DigestBatch.php src/php/Car/Cli/CarScout.php src/php/Rent/Cli/RentScout.php .github/workflows/ci.yml |
-| 53 | The page-walk sleep was the symmetric surface of the detail one — same seam, count asserted, ledger case | S | done | - | src/php/Rent/Adapters/HtmlSource.php tests/php/Rent/Adapters/HtmlSourceTest.php tests/sabotage-check.sh |
+| 53 | The page-walk sleep was the symmetric surface of the detail one — same seam, count asserted, ledger case | S | done | 7134f16 | src/php/Rent/Adapters/HtmlSource.php tests/php/Rent/Adapters/HtmlSourceTest.php tests/sabotage-check.sh |
+| 54 | The 2026-09-06 nightly's triage — six shadowed layers re-run at HEAD, three real gaps given tests | M | done | 3422225 | tests/sabotage-check.sh tests/php/Rent/Cli/PipelineRunTest.php tests/php/Core/RecoverableFormsTest.php |
+| 55 | C2 round 8 P0 — §1's own reading was below the split and its THIRD persisted route was read by nobody but Pipeline | L | done | - | src/php/Rent/Core/ExcludedDwellings.php src/php/Rent/Cli/RentScout.php src/php/Rent/Cli/Pipeline.php tests/php/Rent/Cli/RentScoutDigestTest.php |
+| 56 | C2 round 8 P1 — a refused retry counted as drained, so the remainder line went silent on both domains | M | done | - | src/php/Rent/Cli/DigestBatch.php src/php/Rent/Cli/RentScout.php src/php/Car/Cli/CarScout.php tests/php/Car/Cli/CarScoutTest.php |
+| 57 | C2 round 8 P2/P3 — drifted ledger counts, three classes absent from both Core inventories, a de-indented declaration | S | done | - | CLAUDE.md .github/workflows/ci.yml tests/test-ci-workflow.sh src/php/Car/Cli/CarScout.php |
 <!-- /progress-block -->
 ### Blocked
 

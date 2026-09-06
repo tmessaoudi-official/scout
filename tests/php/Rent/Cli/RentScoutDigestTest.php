@@ -452,6 +452,33 @@ final class RentScoutDigestTest extends TestCase
         self::assertSame(1, $store->pendingLowScoreCount(), 'still queued for the next drain');
     }
 
+    /**
+     * C2 ROUND 8 P1 — THE REMAINDER LINE, INVERTED.
+     *
+     * Round 7 fixed the OVER-report (`overflow()` counted every queued row against the rollup list
+     * alone, so a drained retry read as still pending) and introduced the UNDER-report in the same
+     * change: it now subtracts every retry whether or not the channel took it, while
+     * `pushRetries()` leaves a refused one queued BY DESIGN. On a deployment with no
+     * `push_min_score` — where every queued row is a retry — a drain against a dead channel says
+     * `0 autre(s) en attente` for a backlog that did not move at all.
+     *
+     * Both existing assertions set `push_min_score => 100`, so nothing in the tree exercised
+     * `count()` or `overflow()` with a non-empty retry list. The counterweight — a DELIVERED retry
+     * claims no remainder — is `testADrainThatEmptiedTheQueueClaimsNoRemainder` above.
+     */
+    public function testARefusedRetryIsStillReportedAsARemainder(): void
+    {
+        $root = $this->tempRoot();
+        $this->seedQueuedMatch($root, $this->queueable('inli', 'REFUSED-REM'));
+
+        $channel = $this->delivering();
+        $channel->refuses = [NotificationKind::MATCH];
+        $result = $this->scout($root, ['digest'], $channel);
+
+        self::assertSame(1, Store::open($root . '/state/rent-watch.sqlite3')->pendingLowScoreCount(), 'premise: it did not drain');
+        self::assertStringContainsString('1 autre(s) en attente', $result['out'] . $result['err']);
+    }
+
     // ── C2 round 7 (2026-09-05): §1 IS JUDGED FROM EVERY PERSISTED READING, not from this row ────
 
     /**
@@ -499,6 +526,88 @@ final class RentScoutDigestTest extends TestCase
     }
 
     /** The group veto is durable and cluster-wide: an excluded SIBLING stops the drain announcing the survivor. */
+    /**
+     * §1, C2 ROUND 8 P0 (a) — TWO ARMS OF ONE LOOP GAVE OPPOSITE ANSWERS TO THE SAME ROW.
+     *
+     * Round 7 lifted the group and twin vetoes above the retry/rollup split, for the reason its own
+     * comment gives: both arms announce, so a guard inside `pushRetries()` would be *a fix landing
+     * on one of two symmetric surfaces*. It then left the row's OWN `tenure` reading below the
+     * snapshot branch — and that branch `continue`s, so a row stored `PLS` whose payload will not
+     * encode was queued as a match, pushed individually, and marked `notified_as = 'MATCH'`, which
+     * cannot be demoted. The row left the queue for ever.
+     *
+     * Reached with no forged state: `reclassify --reopen` clears `tenure` while `outcome` stays
+     * `MATCH`, and the unencodable-payload row is the documented production shape.
+     */
+    public function testASnapshotLessRowIsRefusedOnItsOwnExcludedReading(): void
+    {
+        $root = $this->tempRoot();
+        $key = $this->seedQueuedMatch($root, $this->queueable('inli', 'NOSNAP-PLS'));
+        $this->stripSnapshot($root, $key);
+        $this->pdo($root)
+            ->prepare('UPDATE listings SET tenure = :t WHERE dedup_key = :key')
+            ->execute(['t' => 'PLS', 'key' => $key]);
+
+        $channel = $this->delivering();
+        $result = $this->scout($root, ['digest'], $channel);
+
+        self::assertSame([], $channel->sent, 'a PLS row must not be announced because its payload would not encode');
+        self::assertStringContainsString('incompatible avec un MATCH', $result['out'] . $result['err']);
+        self::assertFalse(
+            Store::open($root . '/state/rent-watch.sqlite3')->wasNotifiedAs($key, 'MATCH'),
+            'and it must stay in the queue rather than be marked undemotably',
+        );
+    }
+
+    /**
+     * §1, C2 ROUND 8 P0 (b) — THE THIRD PERSISTED ROUTE, WHICH THE DRAIN NEVER READ.
+     *
+     * `Pipeline` judges §1 from THREE persisted readings; round 7 gave this drain two of them.
+     * `Store::excludedDwellings()` is the third, and it is the only one that catches a portal
+     * RE-ADVERTISING the same flat under a new ad id: there is no group edge and no twin, so the
+     * other two see nothing at all. Its only consumers were `Pipeline`'s two call sites.
+     *
+     * The counterweight is in the test below — an unrelated excluded row must not veto anything,
+     * or this guard is satisfied by refusing the whole queue.
+     */
+    public function testAFlatRecordedExcludedUnderAnotherAdIdVetoesTheDrain(): void
+    {
+        $root = $this->tempRoot();
+        $key = $this->seedQueuedMatch($root, $this->queueable('inli', 'READVERT-NEW'));
+        $this->seedExcludedDwelling($root, $this->queueable('inli', 'READVERT-OLD'), Tenure::PLS);
+
+        $channel = $this->delivering();
+        $result = $this->scout($root, ['digest'], $channel);
+
+        self::assertSame([], $channel->sent, 'the same flat is on record as PLS under its previous ad id');
+        self::assertStringContainsString('même logement', $result['out'] . $result['err'], 'the DWELLING route, not the group or twin one');
+        self::assertFalse(Store::open($root . '/state/rent-watch.sqlite3')->wasNotifiedAs($key, 'MATCH'));
+    }
+
+    /** THE COUNTERWEIGHT: a stored PLS row that is a DIFFERENT flat must veto nothing. */
+    public function testAnUnrelatedExcludedRowDoesNotVetoTheDrain(): void
+    {
+        $root = $this->tempRoot();
+        $other = new RawListing(
+            sourceName: 'inli',
+            externalId: 'ELSEWHERE-1',
+            title: 'Appartement 2 pièces',
+            commune: 'Dourdan',
+            postcode: '91410',
+            rentCc: 700,
+            surfaceM2: 41.0,
+            rooms: 2,
+        );
+        $key = $this->seedQueuedMatch($root, $this->queueable('inli', 'UNRELATED-NEW'));
+        $this->seedExcludedDwelling($root, $other, Tenure::PLS);
+
+        $channel = $this->delivering();
+        $this->scout($root, ['digest'], $channel);
+
+        self::assertCount(1, $channel->sent, 'a PLS flat in another commune is not this flat');
+        self::assertTrue(Store::open($root . '/state/rent-watch.sqlite3')->wasNotifiedAs($key, 'MATCH'));
+    }
+
     public function testAnExcludedSiblingInTheClusterVetoesTheDrain(): void
     {
         $root = $this->tempRoot();
@@ -785,6 +894,17 @@ final class RentScoutDigestTest extends TestCase
      * listing whose own text is not valid UTF-8 cannot be snapshotted, so its verdict is stored
      * without one while its outcome is recorded normally.
      */
+    /** A row on record with an EXCLUDED tenure and a snapshot — what `excludedDwellings()` returns. */
+    private function seedExcludedDwelling(string $root, RawListing $listing, Tenure $tenure): string
+    {
+        $store = Store::open($root . '/state/rent-watch.sqlite3');
+        $sighting = $store->record($listing, $listing->effectiveRentCc(), self::NOW);
+        $store->recordVerdict($sighting->dedupKey, $tenure->value, 90, ['régime exclu relevé'], $listing);
+        $store->recordOutcome($sighting->dedupKey, 'REJECT');
+
+        return $sighting->dedupKey;
+    }
+
     private function stripSnapshot(string $root, string $key): void
     {
         $this->pdo($root)

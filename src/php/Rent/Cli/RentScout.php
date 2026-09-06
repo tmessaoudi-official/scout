@@ -40,6 +40,7 @@ use Scout\Core\Pacer;
 use Scout\Rent\Core\RawListing;
 use Scout\Rent\Core\SourceProfile;
 use Scout\Rent\Core\Dedup;
+use Scout\Rent\Core\ExcludedDwellings;
 use Scout\Rent\Core\DigestCause;
 use Scout\Rent\Core\Classification;
 use Scout\Rent\Core\Outcome;
@@ -1173,17 +1174,9 @@ final readonly class RentScout
             $this->line($unreadable . ' instantané(s) illisible(s) — voir les avertissements ci-dessus.');
         }
 
-        if ($batch->overflow() > 0) {
-            // Said out loud, because a capped batch that stayed silent about the remainder would
-            // look like the whole backlog — and the operator would stop running the command.
-            $this->line(sprintf(
-                '%d autre(s) en attente — relancer `scout --domain=rent digest` pour la suite (lot de %d).',
-                $batch->overflow(),
-                Store::DIGEST_BATCH,
-            ));
-        }
-
         if ($dryRun) {
+            // Nothing was attempted, so nothing drained.
+            $this->reportRemainder($batch, 0);
             $this->line('--dry-run : rien n\'a été envoyé, rien n\'a été marqué comme émis.');
 
             return 0;
@@ -1204,7 +1197,12 @@ final readonly class RentScout
 
         $now = $this->nowIso ?? date('c');
         // The retries first, as the individual pushes they are (C2 round 6, resilience P2).
-        $this->pushRetries($notifier, $store, $batch->retries, $now);
+        //
+        // AND THE REMAINDER IS REPORTED AFTER THEM, never before (C2 round 8, P1): a refused retry
+        // stays queued by design, so a line printed before the attempt cannot know whether the
+        // backlog moved and claimed it had.
+        $drainedKeys = $this->pushRetries($notifier, $store, $batch->retries, $now);
+        $this->reportRemainder($batch, $drainedKeys);
 
         if ($entries === [] && $batch->lowScore === []) {
             return 0;
@@ -1340,6 +1338,15 @@ final readonly class RentScout
             $engine = new CriteriaEngine($criteria);
             $pushMin = $criteria->notify->pushMinScore;
 
+            // THE THIRD PERSISTED ROUTE (C2 round 8, completeness P0). `Pipeline` judges §1 from
+            // three readings; round 7 gave this drain the group and the twin and stopped there.
+            // This one is the only route that catches a portal RE-ADVERTISING the same flat under
+            // a NEW ad id: there is no group edge and no twin, so the other two see nothing at all,
+            // and the flat is announced as a match while an excluded reading of the same dwelling
+            // sits one row away. Loaded ONCE — it is one indexed scan of the excluded rows.
+            $excludedDwellings = $store->excludedDwellings();
+            $dwellingDedup = new Dedup();
+
             foreach ($store->pendingLowScore() as $row) {
                 $key = $row['dedup_key'];
                 /** @var list<string> $storedReasons */
@@ -1383,6 +1390,24 @@ final readonly class RentScout
                     continue;
                 }
 
+                // THE ROW'S OWN READING, AND IT BELONGS ABOVE THE SPLIT WITH THE OTHER TWO (C2
+                // round 8, correctness + resilience P0). It used to sit ten lines below, past the
+                // snapshot-less arm's `continue` — so two arms of one loop gave opposite answers to
+                // the same row, and a flat stored `PLS` whose payload will not encode was pushed as
+                // an individual MATCH and marked `notified_as = 'MATCH'`, which cannot be demoted.
+                // Round 7 lifted the group and twin vetoes for exactly this reason and left the
+                // third behind: *a fix landing on one of two symmetric surfaces*, in the fix for it.
+                //
+                // The ROUTING below is deliberately unchanged — a ledger case pins it, and before
+                // round 7 this row went out as a demotable ROLLUP rather than a permanent MATCH.
+                $tenure = is_string($row['tenure']) ? Tenure::tryFrom($row['tenure']) : null;
+                if ($tenure === null || $tenure->isExcluded() || $tenure === Tenure::UNKNOWN) {
+                    // A MATCH outcome beside a tenure that could not have produced one is a row
+                    // nobody should announce from here; `reclassify` owns it.
+                    $warnings[] = sprintf('%s : régime stocké « %s » incompatible avec un MATCH — laissée en attente', $key, (string) $row['tenure']);
+                    continue;
+                }
+
                 try {
                     $listing = $store->evidence($key);
                 } catch (\JsonException | \InvalidArgumentException $e) {
@@ -1411,11 +1436,15 @@ final readonly class RentScout
                     continue;
                 }
 
-                $tenure = is_string($row['tenure']) ? Tenure::tryFrom($row['tenure']) : null;
-                if ($tenure === null || $tenure->isExcluded() || $tenure === Tenure::UNKNOWN) {
-                    // A MATCH outcome beside a tenure that could not have produced one is a row
-                    // nobody should announce from here; `reclassify` owns it.
-                    $warnings[] = sprintf('%s : régime stocké « %s » incompatible avec un MATCH — laissée en attente', $key, (string) $row['tenure']);
+                $dwellingVeto = ExcludedDwellings::match($listing, $excludedDwellings, $dwellingDedup);
+                if ($dwellingVeto !== null) {
+                    $warnings[] = sprintf(
+                        '%s : régime exclu (%s) déjà relevé sur le même logement — %s — laissée en attente, `scout --domain=rent reclassify` la revoit',
+                        $key,
+                        $dwellingVeto['tenure']->value,
+                        $dwellingVeto['source'] . ' ' . $dwellingVeto['externalId'],
+                    );
+
                     continue;
                 }
 
@@ -1556,9 +1585,30 @@ final readonly class RentScout
      *
      * @return int pushes confirmed delivered
      */
+    /**
+     * The remainder line — ONE implementation, called by the verb and by the daily floor.
+     *
+     * Said out loud, because a capped batch that stayed silent about the remainder would look like
+     * the whole backlog and the operator would stop running the command; silent when there is none,
+     * because a line claiming a backlog it has just emptied is how they learn to stop reading it.
+     * Both directions have cost a round.
+     */
+    private function reportRemainder(DigestBatch $batch, int $drainedKeys): void
+    {
+        $remaining = $batch->overflow($drainedKeys);
+        if ($remaining > 0) {
+            $this->line(sprintf(
+                '%d autre(s) en attente — relancer `scout --domain=rent digest` pour la suite (lot de %d).',
+                $remaining,
+                Store::DIGEST_BATCH,
+            ));
+        }
+    }
+
     private function pushRetries(Notifier $notifier, Store $store, array $retries, string $now): int
     {
         $delivered = 0;
+        $drainedKeys = 0;
         foreach ($retries as $entry) {
             $failures = $notifier->send((new Formatter())->match($entry['listing'], $entry['verdict']));
             foreach ($failures as $failure) {
@@ -1570,6 +1620,7 @@ final readonly class RentScout
             }
             foreach ($entry['keys'] as $key) {
                 $store->markNotified($key, $now, 'MATCH');
+                ++$drainedKeys;
             }
             ++$delivered;
         }
@@ -1577,7 +1628,10 @@ final readonly class RentScout
             $this->line(sprintf('%d correspondance(s) réémise(s) individuellement — au niveau du seuil ou sans seuil, jamais « score bas » (%d délivrée(s)).', count($retries), $delivered));
         }
 
-        return $delivered;
+        // KEYS, not entries: a collapsed twin leaves the queue as two rows, and the remainder line
+        // is counted in rows. `$delivered` stays the ENTRY count because that is what the message
+        // above says out loud — one push, however many keys it retires.
+        return $drainedKeys;
     }
 
     /**
@@ -2429,7 +2483,7 @@ final readonly class RentScout
         // has been down it turns a backlog of N queued matches into N individual pushes at 50 per
         // quarter-hour, where the pre-A5 behaviour was one capped mail per drain. `Pacer` covers
         // source fetches, not notification sends, so there is no jitter between them.
-        $this->pushRetries($notifier, $store, $batch->retries, $now);
+        $drainedKeys = $this->pushRetries($notifier, $store, $batch->retries, $now);
 
         if ($batch->entries === [] && $batch->lowScore === []) {
             return;
@@ -2463,10 +2517,11 @@ final readonly class RentScout
         $this->line(sprintf(
             'récapitulatif quotidien « à vérifier » : %d annonce(s) émise(s)%s.',
             $batch->count(),
-            $batch->overflow() > 0
+            $batch->overflow($drainedKeys) > 0
                 // Named, like every other cap in this file. A floor that drains one batch a day
-                // without saying so reads as the whole backlog having been dealt with.
-                ? sprintf(' — %d autre(s) en attente (lot de %d)', $batch->overflow(), Store::DIGEST_BATCH)
+                // without saying so reads as the whole backlog having been dealt with — and it is
+                // counted AFTER the retries were attempted, because a refused one stays queued.
+                ? sprintf(' — %d autre(s) en attente (lot de %d)', $batch->overflow($drainedKeys), Store::DIGEST_BATCH)
                 : '',
         ));
 

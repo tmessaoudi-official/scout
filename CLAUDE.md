@@ -90,7 +90,7 @@ closed one, so issues #1 and #2 stood open for days after the regression they re
 pushed, and an alert nobody retracts becomes furniture. Both halves are pinned by
 `tests/test-ci-workflow.sh` — by step NAME *and* by the API call that does the work, since a name
 alone survives the body being gutted. **THE LEDGER IS SHARDED SIX WAYS since 2026-09-05** (developer
-ruling), because one job could no longer finish it: 258 → 527 → 759 cases in three weeks, four of
+ruling), because one job could no longer finish it: 258 → 527 → 764 cases in three weeks, four of
 the last eight nightlies CANCELLED at the 240-minute cap and four failed on row 45's CI cause —
 eight days with no completed detection proof and seven issues nobody could close. GitHub's hosted
 ceiling is 360, so a bigger budget had nowhere left to go. `SABOTAGE_SHARD=<i>/<n>` selects by case
@@ -1671,7 +1671,7 @@ impossible by design rather than by omission (`docs/PHORJ-REQUIREMENTS.md`).
 | Layer | Path | Responsibility |
 |---|---|---|
 | Entry point | `src/php/Cli/` | `Scout` — the `--domain=<slug>` dispatcher, which NEVER defaults — plus `Domains` (the registry: a new domain is one entry), `WatchLoop`, `ChannelFactory`. `bin/scout --domain=rent …` / `--domain=car …` |
-| Core (generic) | `src/php/Core/` | What no domain owns: `Text`, `Redact` (masks secrets in adapter error text), `RecoverableForms` (the ONE decode cascade the fixture scrubber and its CI guard share), `Pacer`, `Heartbeat`, `health` (`SourceHealth` + `SourceStatus`), **`RunStore`** (the run log, health verdicts, feed silence and alert cooldowns — see below), `Offline`, and the Notify channels/transports |
+| Core (generic) | `src/php/Core/` | What no domain owns: `Text`, `Redact` (masks secrets in adapter error text), `RecoverableForms` (the ONE decode cascade the fixture scrubber and its CI guard share), `Pacer`, `Heartbeat`, `health` (`SourceHealth` + `SourceStatus`), **`RunStore`** (the run log, health verdicts, feed silence and alert cooldowns — see below), `Offline`, `SameFilterWarning` (every card of a source failing one filter), `MalformedText`, `MutableByDesign`, and the Notify channels/transports |
 | Rent domain | `src/php/Rent/{Core,Config,Adapters,Store,Enrich,Notify,Cli}/` · later `src/phorj/core/` | Everything housing-bound: `models`, `tenure` (the classifier), `criteria` (score + hard disqualifiers), `dedup`, the SQLite store, the field maps and source contract, transit enrichment, the rent formatter and `Cli/RentScout` |
 | Car domain | `src/php/Car/` | The vehicle twin — `Vehicle*` listing, classifier, criteria, scorer, store, sources, pipeline, formatter — and `Cli/CarScout` |
 | Store | `src/php/Rent/Store/` | SQLite seen-set, price history and the schema-v4 cross-portal `group_key`. The run log and health are DELEGATED to `Core/RunStore`, which it composes on its own PDO handle. **PHP-only** — it touches a database, so phorj will not transpile it. |
@@ -2082,7 +2082,10 @@ src/php/Core/               the GENERIC core: Text, Redact, Pacer, Heartbeat, so
                             PatternMissLog + CountsPatternMisses (extraction-miss counting and its
                             read side — moved out of Rent/Adapters 2026-09-01, because a portal
                             changing its template is neither a housing fact nor a vehicle one)
-                            (run log + health, owned by no domain), the Notify channels
+                            (run log + health, owned by no domain), SameFilterWarning (every card
+                            of a source failing ONE hard filter — a drifted selector reads as a
+                            quiet market), MalformedText, MutableByDesign, ExcludedDwellings' rent
+                            twin lives under Rent/Core, and the Notify channels
 src/php/Rent/               the rent domain — Core (models, tenure classifier, criteria, dedup), Config, Adapters,
                             Store, Enrich, Notify (Formatter), Cli/RentScout
 src/php/Car/                the car domain — the Vehicle* classes and Cli/CarScout

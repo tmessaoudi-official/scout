@@ -14,6 +14,7 @@ use Scout\Rent\Config\Criteria;
 use Scout\Rent\Core\Classification;
 use Scout\Rent\Core\CriteriaEngine;
 use Scout\Rent\Core\Dedup;
+use Scout\Rent\Core\ExcludedDwellings;
 use Scout\Rent\Notify\Formatter;
 use Scout\Core\Notify\Notifier;
 use Scout\Rent\Core\Outcome;
@@ -1148,33 +1149,25 @@ final readonly class Pipeline
             return $survivor;
         }
 
-        foreach ($excludedDwellings as $candidate) {
-            // A row never vetoes itself: its own durable reading is what covers that, and a
-            // self-match would name this very listing as the evidence against it.
-            if ($candidate['source'] === $listing->sourceName && $candidate['externalId'] === $listing->externalId) {
-                continue;
-            }
-
-            $reason = $this->dedup->sameDwellingReason($listing, $candidate['listing']);
-            if ($reason === null) {
-                continue;
-            }
-
-            return new Classification(
-                tenure: $candidate['tenure'],
-                confidenceBp: 100,
-                signals: [new TenureSignal(
-                    tier: 1,
-                    tenure: $candidate['tenure'],
-                    reason: 'régime exclu (' . $candidate['tenure']->value . ') déjà relevé sur le même logement — '
-                        . $candidate['source'] . ' ' . $candidate['externalId'] . ' (' . $reason . ')',
-                    evidence: $candidate['tenure']->value,
-                )],
-                outcome: Outcome::REJECT,
-            );
+        // ONE matcher, shared with the digest drain (C2 round 8, completeness P0): that surface
+        // read only two of the three persisted routes because this rule lived here alone.
+        $candidate = ExcludedDwellings::match($listing, $excludedDwellings, $this->dedup);
+        if ($candidate === null) {
+            return $survivor;
         }
 
-        return $survivor;
+        return new Classification(
+            tenure: $candidate['tenure'],
+            confidenceBp: 100,
+            signals: [new TenureSignal(
+                tier: 1,
+                tenure: $candidate['tenure'],
+                reason: 'régime exclu (' . $candidate['tenure']->value . ') déjà relevé sur le même logement — '
+                    . $candidate['source'] . ' ' . $candidate['externalId'] . ' (' . $candidate['reason'] . ')',
+                evidence: $candidate['tenure']->value,
+            )],
+            outcome: Outcome::REJECT,
+        );
     }
 
     private function clusterClassification(Classification $survivor, ?Tenure $groupTenure): Classification

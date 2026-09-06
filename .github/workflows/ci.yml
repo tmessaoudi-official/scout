@@ -190,7 +190,7 @@ jobs:
   sabotage:
     name: sabotage ledger ${{ matrix.shard }}/6 (detection proof)
     runs-on: ubuntu-latest
-    # SHARDED (2026-09-05, developer ruling). One job could not finish any more: 258 -> 527 -> 750
+    # SHARDED (2026-09-05, developer ruling). One job could not finish any more: 258 -> 527 -> 764
     # cases in three weeks, and FOUR of the last eight nightlies were cut off at the 240-minute cap
     # while the other four failed for the PCRE2/ini reason fixed in row 45 — eight days with no
     # completed detection proof and seven open issues nobody could close. Raising the budget had

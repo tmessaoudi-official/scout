@@ -713,15 +713,9 @@ final readonly class CarScout
                 $this->line($line);
             }
         }
-        // THE RETRIES LEFT THE QUEUE TOO (C2 round 7, P1 on two lenses). `$waiting` is
-        // `pendingRollupCount()` — every queued row, retries included — so counting only
-        // `$entries` reported a phantom remainder on every drain that produced a retry, which on a
-        // deployment with no gate is every drain there can be. A line that claims a backlog it has
-        // just emptied is how an operator learns to stop reading it.
-        if ($waiting > count($entries) + count($retries)) {
-            $this->line(sprintf('%d autre(s) en attente — relancer `scout --domain=car rollup` pour la suite.', $waiting - count($entries) - count($retries)));
-        }
         if ($dryRun) {
+            // Nothing was attempted, so nothing drained.
+            $this->reportRollupRemainder($waiting, $entries, 0);
             $this->line('--dry-run : rien n\'a été envoyé, rien n\'a été marqué comme émis.');
 
             return 0;
@@ -731,7 +725,8 @@ final readonly class CarScout
         if ($fatal !== null) {
             return $this->fail($fatal);
         }
-        $this->pushRetries($notifier, $store, $retries, $this->now());
+        $drained = $this->pushRetries($notifier, $store, $retries, $this->now());
+        $this->reportRollupRemainder($waiting, $entries, $drained);
         if ($entries === []) {
             return 0;
         }
@@ -766,7 +761,7 @@ final readonly class CarScout
      * landing zone still empties. The two drains differ deliberately — the car domain has no §1
      * landing zone to keep open — and now both say so.
      */
-private function collectRollup(VehicleStore $store): array
+    private function collectRollup(VehicleStore $store): array
     {
         $entries = [];
         $retries = [];
@@ -838,6 +833,29 @@ private function collectRollup(VehicleStore $store): array
      *
      * @param list<array{car: VehicleListing, verdict: VehicleVerdict, key: string}> $retries
      */
+    /**
+     * The remainder line — ONE implementation, called by the verb and by the daily floor.
+     *
+     * `$waiting` is `pendingRollupCount()`, which counts every queued row including the retries, so
+     * both what this mail announced AND what the retries actually drained have to come off it.
+     *
+     * **`$drained` IS WHAT THE CHANNEL TOOK, not what was attempted** (C2 round 8, P1). Round 7
+     * fixed the over-report — counting only `$entries` reported a phantom backlog on every drain
+     * that produced a retry — and introduced the under-report in the same change by subtracting
+     * every retry whether or not it was delivered, while `pushRetries()` leaves a refused one
+     * queued by design. Both directions are a line the operator learns to stop reading, and it
+     * follows that this must be called AFTER the retries are attempted, never before.
+     *
+     * @param list<array<string, mixed>> $entries
+     */
+    private function reportRollupRemainder(int $waiting, array $entries, int $drained): void
+    {
+        $remaining = $waiting - count($entries) - $drained;
+        if ($remaining > 0) {
+            $this->line(sprintf('%d autre(s) en attente — relancer `scout --domain=car rollup` pour la suite.', $remaining));
+        }
+    }
+
     private function pushRetries(Notifier $notifier, VehicleStore $store, array $retries, string $now): int
     {
         $delivered = 0;
@@ -876,7 +894,7 @@ private function collectRollup(VehicleStore $store): array
         }
         // Retries first, as individual pushes — the floor is the only automatic drain under
         // `--watch`, so a failed push is recovered here or nowhere (the verb does the same).
-        $this->pushRetries($notifier, $store, $retries, $now);
+        $drained = $this->pushRetries($notifier, $store, $retries, $now);
         if ($entries === []) {
             return;
         }
@@ -898,7 +916,8 @@ private function collectRollup(VehicleStore $store): array
             count($entries),
             // Retries counted here too — same reason as the verb's line above.
             $waiting > count($entries) + count($retries)
-                ? sprintf(' — %d autre(s) en attente', $waiting - count($entries) - count($retries))
+                // AFTER the retries were attempted: a refused one stays queued (C2 round 8, P1).
+                ? sprintf(' — %d autre(s) en attente', $waiting - count($entries) - $drained)
                 : '',
         ));
     }

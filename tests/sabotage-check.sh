@@ -1363,7 +1363,7 @@ run_sabotage "the digest batch loses its cap (one all-or-nothing send that grows
 
 run_sabotage "a capped digest stops naming the remainder (the bin reads as empty)" \
   src/php/Rent/Cli/RentScout.php \
-  's%if ($batch->overflow() > 0) {%if (false) {%'
+  's%if ($remaining > 0) {%if (false) {%'
 
 # --- the cluster veto must survive every path -----------------------------------------------------
 
@@ -2049,7 +2049,7 @@ run_sabotage "the remainder line counts a drained retry as still pending (a phan
 
 run_sabotage "the car remainder line counts a drained retry as still pending" \
   src/php/Car/Cli/CarScout.php \
-  's%if (\$waiting > count(\$entries) + count(\$retries)) {%if ($waiting > count($entries)) {%'
+  's%if ($remaining > 0) {%if (false) {%'
 
 # ── C2 round 6 (2026-09-05): the drain a run mode ACTUALLY has ─────────────────────────────────
 #
@@ -2505,6 +2505,28 @@ run_sabotage "detail fetches stop being paced (a per-listing burst, hard rule 5)
 # it, kept a bare `usleep` no test and no case could reach. A fix landing on one of two symmetric
 # surfaces is this repo's named recurring defect. The mutation flips the guard rather than deleting
 # the call, so it stays valid code and the walk simply never pauses.
+# ── C2 round 8 (2026-09-06): §1 from EVERY persisted reading, on the drain too ──────────────────
+# Round 7 lifted the group and twin vetoes above the retry/rollup split and left two things behind:
+# the row's OWN reading (below the snapshot arm's `continue`, so two arms of one loop answered the
+# same row differently) and `excludedDwellings()` — the third route `Pipeline` reads, and the only
+# one that catches a portal re-advertising a flat under a new ad id.
+
+run_sabotage "the drain stops reading the row's own excluded tenure (the snapshot-less arm)" \
+  src/php/Rent/Cli/RentScout.php \
+  's%if ($tenure === null || $tenure->isExcluded() || $tenure === Tenure::UNKNOWN) {%if (false) {%'
+
+run_sabotage "the drain stops reading the re-advertised-flat veto (§1's third persisted route)" \
+  src/php/Rent/Cli/RentScout.php \
+  's%$dwellingVeto = ExcludedDwellings::match($listing, $excludedDwellings, $dwellingDedup);%$dwellingVeto = null;%'
+
+run_sabotage "a refused retry is counted as drained, so the rent remainder line goes silent" \
+  src/php/Rent/Cli/DigestBatch.php \
+  's%$drained = $retriesDrained;%$drained = \\count($this->retries);%'
+
+run_sabotage "a refused retry is counted as drained, so the car remainder line goes silent" \
+  src/php/Car/Cli/CarScout.php \
+  's%$this->reportRollupRemainder($waiting, $entries, $drained);%$this->reportRollupRemainder($waiting, $entries, count($retries));%'
+
 run_sabotage "the page walk stops pausing between pages (a burst against one host, hard rule 5)" \
   src/php/Rent/Adapters/HtmlSource.php \
   's%$this->definition->rateLimitMs > 0%$this->definition->rateLimitMs < 0%'
@@ -3714,9 +3736,9 @@ run_sabotage "a counting source's miss log accumulates across passes" \
 # §1, which is a fact about the DWELLING. Proven end to end through the real pipeline: one pass, one
 # portal, one flat -- the first copy rejected because the store says PLS, the second pushed as a
 # MATCH with that PLS one row away on disk.
-run_sabotage "a re-advertised flat no longer inherits the stored exclusion (new ad id, same dwelling)" \
-  src/php/Rent/Cli/Pipeline.php \
-  "s%\\\$reason = \\\$this->dedup->sameDwellingReason(\\\$listing, \\\$candidate\['listing'\]);%\\\$reason = null;%"
+run_sabotage "the shared dwelling matcher stops matching — BOTH surfaces lose the re-advertised-flat veto" \
+  src/php/Rent/Core/ExcludedDwellings.php \
+  's%$reason = $dedup->sameDwellingReason($listing, $candidate\[.listing.\]);%$reason = null;%'
 
 # THE SAME GUARANTEE FROM THE STORE END. An emptied candidate set is the shape a well-meaning
 # performance edit takes, and it leaves the veto present, called, and permanently silent.
@@ -3728,7 +3750,7 @@ run_sabotage "the stored excluded-dwelling set comes back empty" \
 # positive-evidence bar makes every stored exclusion veto every listing -- §1 satisfied by switching
 # the tool off, which is the In'li lesson and the direction this repo keeps having to re-learn.
 run_sabotage "the stored-dwelling veto ignores its positive-evidence bar (rejects a different flat)" \
-  src/php/Rent/Cli/Pipeline.php \
+  src/php/Rent/Core/ExcludedDwellings.php \
   "s%if (\\\$reason === null) {%if (false) {%"
 
 # ── tier 4: the income-ceiling band (2026-08-26) ──────────────────────────────

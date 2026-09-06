@@ -70,10 +70,18 @@ final readonly class DigestBatch
         return $this->entries === [] && $this->lowScore === [] && $this->retries === [];
     }
 
-    /** Entries carried by this batch — the tenure bin, the rollup and the retries: all THREE lists. */
+    /**
+     * What THIS MAIL announces — the tenure bin plus the rollup, and deliberately NOT the retries.
+     *
+     * The retries are individual pushes with their own line, printed by `pushRetries()` and
+     * carrying its own delivered count. Adding them here counted them a second time, and counted
+     * them as *« émise(s) »* before any channel had accepted one — so a drain against a dead
+     * channel reported them as emitted (C2 round 8, P3 on two lenses). `isEmpty()` still knows all
+     * three lists: *is there anything to do* and *what did this mail say* are different questions.
+     */
     public function count(): int
     {
-        return \count($this->entries) + \count($this->lowScore) + \count($this->retries);
+        return \count($this->entries) + \count($this->lowScore);
     }
 
     /**
@@ -93,11 +101,19 @@ final readonly class DigestBatch
      *
      * A COLLAPSED TWIN COUNTS FOR EVERY KEY IT DRAINED, not for one: the pair leaves the queue
      * together, so counting the entry once would report the other route as a remainder for ever.
+     *
+     * **`$retriesDrained` IS REQUIRED, AND IT IS THE KEY COUNT THE CHANNEL ACTUALLY TOOK** (C2
+     * round 8, P1 on two lenses). Round 7 fixed the over-report and introduced the under-report in
+     * the same change: this method subtracted EVERY retry, while `pushRetries()` leaves a refused
+     * one queued by design — so a drain against a dead channel claimed `0 autre(s) en attente` for
+     * a backlog that had not moved. There is no default, because both defaults are a lie in one
+     * direction and the caller is the only thing that knows which happened. It follows that the
+     * remainder line must be printed AFTER the retries are attempted, never before.
      */
-    public function overflow(): int
+    public function overflow(int $retriesDrained): int
     {
-        $drained = 0;
-        foreach ([...$this->lowScore, ...$this->retries] as $entry) {
+        $drained = $retriesDrained;
+        foreach ($this->lowScore as $entry) {
             $drained += \count($entry['keys']);
         }
 
