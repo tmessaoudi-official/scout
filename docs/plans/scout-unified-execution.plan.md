@@ -1584,6 +1584,21 @@ read-only) and the merged prose as one review deep.
   individually. The tracing JIT aborted a scratch baseline again mid-run: ledger runs here need
   `PHP_INI_SCAN_DIR` with an `opcache.jit=off` overlay BESIDE the phpbrew dir, never replacing it.
 
+- [2026-09-06 14:10] RECORD (**THE DISPATCHED LEDGER CONFIRMED THE FIVE AND EXPOSED A SIXTH THAT
+  HAD NEVER BEEN RELIABLY DETECTABLE**). Run 34026474165 at `59b413e`: **758 detected / 1
+  undetected**, all six shards reporting — every one of the morning's five now detects. The
+  survivor, *"detail fetches stop being paced"*, had reported `ok` at `3422225`, so it looked like
+  a regression and was not one: `HtmlSourceDetailTest` asserted `elapsed >= 50ms` around a fetch,
+  and a slow machine clears that floor with the `usleep` deleted. It flipped on the ONE shard that
+  took two hours where its five siblings took seventy minutes. **A timed-out case lands in the same
+  `failed_labels` list the alert renders as `undetected`**, so the shard log was read before
+  concluding anything — it says `SUITE STAYED GREEN`, which is the opposite verdict from the
+  timeout the two-hour runtime suggested. `DetailHydrator` takes an injected sleeper now, the same
+  seam `Core\Pacer` has, and the rewrite found the assertion weak a second way: the real behaviour
+  is THREE sleeps, one per hydration, and a lower bound is satisfied by any one of them — so a walk
+  that paced its first request and burst through the rest would have passed. The count is asserted.
+  `HtmlSource`'s own page-walk `usleep` is left unwired and recorded under Known issues.
+
 ---
 
 ## Fragile implementations register (the developer asked; keep this list honest)
@@ -2818,6 +2833,7 @@ tool/guard) and say which ones the fix covers.**
 | 44 | In'li answers HTTP 302 on ~2 of 5 passes (seen 2026-09-05 00:30, source reports broken) — measure the redirect, rule, fix or record | M | certified | 2553c94 test:2026-09-06 | src/php/Rent/Adapters/HtmlSource.php src/php/Rent/Adapters/HttpJsonSource.php |
 | 45 | CI RED for two days (12 pushes, since 46546bc): a PCRE2 ≥ 10.43 lookbehind in criteria.json and a trace test assuming the development ini — fix at the root, add a portability guard, re-run the nightly ledger on demand | M | certified | 4f0559d test:2026-09-06 | config/rent/criteria.json tests/php/Repo/PortablePatternsTest.php tests/php/Repo/CredentialsNeverReachATraceTest.php |
 | 49 | The 2026-09-06 nightly's five undetected guarantees: three tests, and two cases that seeded half their mutation (`run_sabotage` reads only `$3`) — one of them §1 | M | certified | 6a596d0 test:2026-09-06 | tests/sabotage-check.sh tests/php/Car/AutoheroFixtureTest.php tests/php/Repo/CredentialsNeverReachATraceTest.php tests/php/Rent/Cli/RentScoutTest.php |
+| 50 | The dispatched ledger's survivor: detail pacing was asserted by wall-clock, which a slow machine satisfies with the sleep deleted — an injected sleeper, and the per-hydration count asserted | S | done | 8ee959b | src/php/Rent/Adapters/DetailHydrator.php src/php/Rent/Adapters/HtmlSource.php tests/php/Rent/Adapters/HtmlSourceDetailTest.php tests/sabotage-check.sh |
 <!-- /progress-block -->
 ### Blocked
 
@@ -2851,6 +2867,12 @@ tool/guard) and say which ones the fix covers.**
 
 ### Known issues
 
+- **`HtmlSource`'s page-walk `usleep` has no test and no sabotage case** (2026-09-06, found while
+  closing the detail-pacing one). `DetailHydrator` now paces through an injected sleeper, so its
+  guarantee is asserted rather than timed; the search-page walk at `HtmlSource` still calls
+  `usleep` directly, nothing asserts it, and the ledger has never had a case for it. It is the
+  symmetric surface of a hard-rule-5 guarantee — this repo's named recurring defect — and it is
+  recorded rather than half-closed: a case needs its own seam and its own test, not a copied line.
 - **Row 35 is UNMET and paused-then-resumed by ruling** (2026-09-04 23:29): the two-clean counter
   is 0, the cap was reached at round 5, and the next freeze happens only after rows 6, 9–11 and
   36–43 land. The recorded resume point `792eb3a` will be superseded by that freeze; do not run a
