@@ -1176,7 +1176,7 @@ final readonly class RentScout
 
         if ($dryRun) {
             // Nothing was attempted, so nothing drained.
-            $this->reportRemainder($batch, 0);
+            $this->reportRemainder($batch, 0, false);
             $this->line('--dry-run : rien n\'a été envoyé, rien n\'a été marqué comme émis.');
 
             return 0;
@@ -1202,9 +1202,11 @@ final readonly class RentScout
         // stays queued by design, so a line printed before the attempt cannot know whether the
         // backlog moved and claimed it had.
         $drainedKeys = $this->pushRetries($notifier, $store, $batch->retries, $now);
-        $this->reportRemainder($batch, $drainedKeys);
 
         if ($entries === [] && $batch->lowScore === []) {
+            // Nothing to send, so nothing can land: the retries are the whole story.
+            $this->reportRemainder($batch, $drainedKeys, false);
+
             return 0;
         }
 
@@ -1224,10 +1226,16 @@ final readonly class RentScout
             // Nothing marked. Marking first would consume the batch permanently on a failed send,
             // and these entries have no other route to the developer — the same asymmetry the
             // pipeline's digest branch is built on.
+            // AND THE REMAINDER SAYS SO. It used to be printed before the send, subtracting every
+            // announced and rolled-up row unconditionally — so a refused mail marked nothing, left
+            // the whole batch queued, and reported it as drained (C2 milestone panel, P2).
+            $this->reportRemainder($batch, $drainedKeys, false);
             $this->warn('récapitulatif non délivré — rien n\'a été marqué comme émis, il sera réessayé.');
 
             return 1;
         }
+
+        $this->reportRemainder($batch, $drainedKeys, true);
 
         foreach ($entries as $entry) {
             $store->markNotified($entry['key'], $now, 'DIGEST');
@@ -1338,8 +1346,10 @@ final readonly class RentScout
             $engine = new CriteriaEngine($criteria);
             $pushMin = $criteria->notify->pushMinScore;
 
-            // THE THIRD PERSISTED ROUTE (C2 round 8, completeness P0). `Pipeline` judges §1 from
-            // three readings; round 7 gave this drain the group and the twin and stopped there.
+            // THE FOURTH PERSISTED ROUTE (C2 round 8, completeness P0; renumbered by the C2
+            // milestone panel, which found this comment and `Store::excludedDwellings()` disagreeing
+            // on the count). `Pipeline` judges §1 from FOUR readings — the row's own durable one,
+            // the group, the twin and this; round 7 gave this drain the group and the twin only.
             // This one is the only route that catches a portal RE-ADVERTISING the same flat under
             // a NEW ad id: there is no group edge and no twin, so the other two see nothing at all,
             // and the flat is announced as a match while an excluded reading of the same dwelling
@@ -1593,9 +1603,9 @@ final readonly class RentScout
      * because a line claiming a backlog it has just emptied is how they learn to stop reading it.
      * Both directions have cost a round.
      */
-    private function reportRemainder(DigestBatch $batch, int $drainedKeys): void
+    private function reportRemainder(DigestBatch $batch, int $drainedKeys, bool $delivered): void
     {
-        $remaining = $batch->overflow($drainedKeys);
+        $remaining = $batch->overflow($drainedKeys, $delivered);
         if ($remaining > 0) {
             $this->line(sprintf(
                 '%d autre(s) en attente — relancer `scout --domain=rent digest` pour la suite (lot de %d).',
@@ -1742,22 +1752,39 @@ final readonly class RentScout
                 return $this->fail('--reopen : aucune annonce ne porte la clé ' . $reopen . ' — rien n\'a été touché');
             }
             $twin = $provenance['twin'];
+            $dwelling = $provenance['dwelling'];
             $this->line(sprintf(
-                '%s %s — lecture propre : %s · jumeau : %s · groupe : %s',
+                '%s %s — lecture propre : %s · jumeau : %s · groupe : %s · même logement : %s',
                 $dryRun ? 'réouverture (simulation, rien n\'est effacé)' : 'réouverture',
                 $reopen,
                 $provenance['own']?->value ?? 'aucune',
                 $twin === null ? 'aucun' : $twin['tenure']->value . ' (' . $twin['source'] . ')',
                 $provenance['group']?->value ?? 'aucun',
+                $dwelling === null
+                    ? 'aucun'
+                    : $dwelling['tenure']->value . ' (' . $dwelling['source'] . ' ' . $dwelling['externalId'] . ')',
             ));
             if ($provenance['group'] !== null) {
                 $this->warn('le veto de groupe vient des lectures propres des annonces liées et n\'est PAS effacé : '
                     . 'la prochaine passe rejettera de nouveau cette annonce tant qu\'une annonce liée dit ' . $provenance['group']->value);
             }
+            if ($dwelling !== null) {
+                // Same shape as the group warning, and for the same reason: this reading belongs to
+                // ANOTHER row. Without it `--reopen` looks like it worked and the next pass rejects
+                // the row again with nothing said — the repair verb's own silent failure.
+                $this->warn('le régime exclu relevé sur le même logement (' . $dwelling['source'] . ' ' . $dwelling['externalId']
+                    . ') vient de la lecture propre de CETTE annonce-là et n\'est PAS effacé : rouvrez-la aussi si elle est erronée');
+            }
         }
 
         $criteria = $this->criteria();
         $rows = $store->staleVerdicts();
+
+        // Read ONCE, above the loop, exactly as the digest drain reads it: the candidate set is a
+        // property of the store, not of the row being judged, and re-querying per row would make
+        // this command's cost quadratic in a backlog that is already the largest thing it touches.
+        $excludedDwellings = $store->excludedDwellings();
+        $dwellingDedup = new Dedup();
 
         if ($rows === []) {
             $this->line('Aucun verdict indéterminé à revoir.');
@@ -1877,6 +1904,28 @@ final readonly class RentScout
                 continue;
             }
 
+            // THE FOURTH PERSISTED ROUTE — the same dwelling on record under ANOTHER ad id.
+            //
+            // `ExcludedDwellings` said it "has TWO callers that must never disagree", meaning the
+            // pipeline and the digest drain. It has THREE: this command forms a verdict, promotes
+            // `DIGEST -> MATCH` and pushes it. The route is precisely the one the two vetoes above
+            // cannot see — a portal re-advertising a flat under a new ad id acquires no group edge
+            // (same source, so `Dedup` refuses one) and no twin — so this surface was the only one
+            // of the three left judging §1 on three readings out of four.
+            //
+            // Worse than an ordinary gap while it stood: the drain REFUSES such a row with a
+            // warning naming this command as the remedy, so the documented repair route was the
+            // one that pushed it. And it is terminal — after a push the row holds a resolved
+            // tenure and `outcome = MATCH`, so neither `staleVerdicts()` nor `pendingDigest()`
+            // ever returns it again.
+            $dwellingVeto = ExcludedDwellings::match($evidence, $excludedDwellings, $dwellingDedup);
+
+            if ($dwellingVeto !== null) {
+                ++$vetoed;
+
+                continue;
+            }
+
             $classification = $classifier->classify($evidence, $profile);
             $before = $store->outcome($key);
 
@@ -1963,8 +2012,9 @@ final readonly class RentScout
             // Counted out loud, because a silent skip is indistinguishable from a bug — and this
             // one skips a listing the operator can see sitting in the store as undetermined.
             $this->line(sprintf(
-                '%d annonce(s) écartée(s) par un doublon ou un jumeau (autre voie) au régime exclu ou indéterminé — leur verdict a été formé '
-                . 'sur la preuve du groupe, que leur propre instantané ne contient pas.',
+                '%d annonce(s) écartée(s) par un doublon, un jumeau (autre voie) ou le même logement relevé sous une autre '
+                . 'référence, au régime exclu ou indéterminé — leur verdict a été formé sur une preuve que leur propre '
+                . 'instantané ne contient pas.',
                 $vetoed,
             ));
         }
@@ -2517,11 +2567,11 @@ final readonly class RentScout
         $this->line(sprintf(
             'récapitulatif quotidien « à vérifier » : %d annonce(s) émise(s)%s.',
             $batch->count(),
-            $batch->overflow($drainedKeys) > 0
+            $batch->overflow($drainedKeys, true) > 0
                 // Named, like every other cap in this file. A floor that drains one batch a day
                 // without saying so reads as the whole backlog having been dealt with — and it is
                 // counted AFTER the retries were attempted, because a refused one stays queued.
-                ? sprintf(' — %d autre(s) en attente (lot de %d)', $batch->overflow($drainedKeys), Store::DIGEST_BATCH)
+                ? sprintf(' — %d autre(s) en attente (lot de %d)', $batch->overflow($drainedKeys, true), Store::DIGEST_BATCH)
                 : '',
         ));
 

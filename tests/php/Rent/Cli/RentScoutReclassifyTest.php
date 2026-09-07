@@ -504,6 +504,104 @@ final class RentScoutReclassifyTest extends TestCase
         self::assertStringContainsString('écartée(s) par un doublon', $r['out']);
         self::assertNotSame('MATCH', $this->outcomeOf($root, $key), 'a doubt on the other track blocks promotion');
     }
+    /**
+     * THE FOURTH PERSISTED ROUTE, and `reclassify` is the third surface that ANNOUNCES.
+     *
+     * `ExcludedDwellings`'s docblock said it "has TWO callers that must never disagree" — the
+     * pipeline and the digest drain. There are three: this command FORMS a verdict, promotes
+     * `DIGEST -> MATCH` and pushes it. The dwelling route is precisely the one with no group edge
+     * and no twin — a portal re-advertising the same flat under a new ad id, same source, so
+     * `Dedup` refuses the edge — which is why the two vetoes above cannot see it.
+     *
+     * The drain's own warning tells the operator to run this command. Before this test it was the
+     * documented remedy for a row it would then push.
+     *
+     * Terminal, which is why it is P0 rather than a lost digest: after the push the row holds a
+     * resolved tenure (out of `staleVerdicts()`) and `outcome = MATCH` (out of `pendingDigest()`),
+     * so no command reaches it again.
+     */
+    public function testAFlatOnRecordAsExcludedUnderAnotherAdIdIsNotPromoted(): void
+    {
+        $root = $this->tempRoot();
+        $key = $this->seed($root, $this->intermediateListing('READVERT-NEW'), 'UNKNOWN', 'DIGEST');
+        $this->seedExcludedDwelling($root, $this->intermediateListing('READVERT-OLD'), Tenure::PLS);
+
+        $delivering = $this->delivering();
+        $result = $this->scout($root, ['reclassify'], $delivering);
+
+        self::assertSame(0, $result['code']);
+        self::assertSame([], $delivering->sent, 'a flat on record as PLS under another ad id must not be pushed');
+        self::assertSame('DIGEST', $this->outcomeOf($root, $key), 'the row must stay in the digest backlog');
+        self::assertStringContainsString('écartée', $result['out']);
+    }
+
+    /**
+     * The counterweight, and it is what stops the fix being "veto everything".
+     *
+     * A DIFFERENT flat on record as PLS must not veto this one — otherwise a single excluded row
+     * anywhere in the store would freeze every promotion, which is §1 satisfied by switching the
+     * command off. Same seed as the case above, one dwelling apart.
+     */
+    public function testAnUnrelatedExcludedFlatDoesNotVetoAPromotion(): void
+    {
+        $root = $this->tempRoot();
+        $key = $this->seed($root, $this->intermediateListing('READVERT-NEW'), 'UNKNOWN', 'DIGEST');
+        $elsewhere = new RawListing(
+            sourceName: 'demo',
+            externalId: 'OTHER-FLAT',
+            title: 'Studio',
+            description: 'Un studio ailleurs.',
+            commune: 'Dourdan',
+            postcode: '91410',
+            rentCc: 700,
+            surfaceM2: 28.0,
+            rooms: 1,
+        );
+        $this->seedExcludedDwelling($root, $elsewhere, Tenure::PLS);
+
+        $delivering = $this->delivering();
+        $result = $this->scout($root, ['reclassify'], $delivering);
+
+        self::assertSame(0, $result['code']);
+        self::assertCount(1, $delivering->sent, 'an unrelated excluded flat must not veto this promotion');
+        self::assertSame('MATCH', $this->outcomeOf($root, $key));
+    }
+
+    /**
+     * `--reopen` reported THREE routes while `reclassify` judges by FOUR.
+     *
+     * On the population the fourth exists for — a flat re-advertised under a new ad id, which by
+     * construction has no group edge and no twin — the line read `jumeau : aucun · groupe : aucun`
+     * and so told the operator nothing linked the row. The dwelling reading is NOT cleared, for the
+     * group veto's exact reason: it is another listing's own reading, and clearing it here would
+     * delete a §1 fact belonging to a row the operator did not name.
+     */
+    public function testReopenNamesTheSameDwellingRouteAndDoesNotClearIt(): void
+    {
+        $root = $this->tempRoot();
+        $key = $this->seed($root, $this->intermediateListing('REOPEN-NEW'), 'PLS', 'REJECT');
+        $this->seedExcludedDwelling($root, $this->intermediateListing('REOPEN-OLD'), Tenure::PLS);
+
+        $delivering = $this->delivering();
+        $result = $this->scout($root, ['reclassify', '--reopen=' . $key], $delivering);
+
+        self::assertSame(0, $result['code'], $result['err']);
+        self::assertStringContainsString('même logement : PLS', $result['out'], 'the fourth route must be named');
+        self::assertStringContainsString('PAS effacé', $result['err'], 'and the operator must be told it survives');
+        self::assertSame([], $delivering->sent, 'reopening must not push a flat the dwelling route still vetoes');
+    }
+
+    /** A row on record with an EXCLUDED tenure and a snapshot — what `excludedDwellings()` returns. */
+    private function seedExcludedDwelling(string $root, RawListing $listing, Tenure $tenure): string
+    {
+        $store = Store::open($root . '/state/rent-watch.sqlite3');
+        $sighting = $store->record($listing, $listing->effectiveRentCc(), self::NOW);
+        $store->recordVerdict($sighting->dedupKey, $tenure->value, 90, ['régime exclu relevé'], $listing);
+        $store->recordOutcome($sighting->dedupKey, 'REJECT');
+
+        return $sighting->dedupKey;
+    }
+
     public function testAClusteredListingWithEligibleSiblingsIsStillRejudged(): void
     {
         $root = $this->tempRoot();

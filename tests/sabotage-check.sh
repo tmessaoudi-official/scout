@@ -1423,9 +1423,47 @@ run_sabotage "a capped digest stops naming the remainder (the bin reads as empty
 
 # --- the cluster veto must survive every path -----------------------------------------------------
 
+# THE FOURTH PERSISTED ROUTE ON THE THIRD ANNOUNCING SURFACE (C2 milestone panel, P0 — all three
+# lenses reproduced it independently). `reclassify` FORMS a verdict, promotes DIGEST -> MATCH and
+# PUSHES it, and it read three of the four persisted §1 readings: the dwelling route — the same flat
+# on record under another ad id — was the one it could not see, and by construction that row has no
+# group edge and no twin. Terminal once it fires: the pushed row holds a resolved tenure and
+# outcome = MATCH, so nothing returns it again.
+run_sabotage "reclassify ignores the same dwelling on record under another ad id (§1, and it pushes)" \
+  src/php/Rent/Cli/RentScout.php \
+  '/private function reclassify(/,$ s%\$dwellingVeto = ExcludedDwellings::match(\$evidence, \$excludedDwellings, \$dwellingDedup);%\$dwellingVeto = null;%'
+
+# The counterweight half: --reopen must still NAME the route it does not clear. Without this the
+# repair verb silently declines on exactly the population the veto above is for.
+run_sabotage "--reopen stops reporting the same-dwelling route (the repair verb goes silent)" \
+  src/php/Rent/Store/Store.php \
+  's%: ExcludedDwellings::match(\$evidence, \$this->excludedDwellings(), new Dedup()),%: null,%'
+
+# THE CAR DAILY FLOOR kept the round-7 guard while its value took the round-8 fix, so any refused
+# retry silenced the backlog clause under a summary reading `N véhicule(s) émis` (C2 milestone
+# panel, P1 on all three lenses). The verb's own case is above; this is the deployed surface.
+run_sabotage "the car FLOOR reports a refused retry as drained (the deployed rollup goes quiet)" \
+  src/php/Car/Cli/CarScout.php \
+  's%return \$waiting - count(\$entries) - \$drained;%return $waiting - count($entries) - $waiting;%'
+
+# A REFUSED DIGEST MAIL DRAINED NOTHING, and `digest` reported the whole batch as gone: the
+# remainder was printed BEFORE the send and subtracted every announced and rolled-up row
+# unconditionally (C2 milestone panel, P2). The rent floor was already right; only the verb was not.
+run_sabotage "the rent digest remainder counts a refused mail as delivered" \
+  src/php/Rent/Cli/DigestBatch.php \
+  's%\$announced = \$rollupDelivered ? \\count(\$this->entries) : 0;%$announced = \\count($this->entries);%'
+
+# THE SEAM: the real verdict feeding the real alert loop. Every other health case proves one side —
+# `RunStoreFailureStreakTest` the verdict, the Pipeline health tests the loop with an INJECTED
+# SourceHealth — and the live flap lived exactly between them (C2 milestone panel, P2).
+run_sabotage "one failed run is a broken source again (the flap, through the real verdict)" \
+  src/php/Core/RunStore.php \
+  's%\$observed = self::observedRuns(\$runs);%$observed = $runs;%'
+
+# SCOPED to reclassify(), for the reason on the drain's own pair above.
 run_sabotage "reclassify stops consulting the group (it resurrects a listing the cluster vetoed)" \
   src/php/Rent/Cli/RentScout.php \
-  's%\$groupVeto = \$store->groupExcludedTenure(\$key);%\$groupVeto = null;%'
+  '/private function reclassify(/,$ s%\$groupVeto = \$store->groupExcludedTenure(\$key);%\$groupVeto = null;%'
 
 run_sabotage "the group veto reads eligible tenures as excluded (every clustered row is skipped)" \
   src/php/Rent/Store/Store.php \
@@ -2083,13 +2121,17 @@ run_sabotage "GPL ou GNL leaves the closed fuel list (a stated fuel becomes part
 # MATCH, which cannot be demoted. The car twin is the same shape one domain over: a re-judge that
 # says REJECT, discarded, and the row announced on the stored score with a reason line that lies.
 
+# SCOPED to collectDigest(), because `reclassify()` carries a byte-identical line and `sed` without
+# /g still applies to EVERY matching line — so this case and its reclassify twin below were ONE
+# mutation wearing two labels, and neither proved the surface on its label (C2 milestone panel, P3).
 run_sabotage "the rent drain ignores the OTHER TRACK's excluded reading (a PLS twin is pushed)" \
   src/php/Rent/Cli/RentScout.php \
-  's%\$twin = \$store->twinTenure(\$key);%$twin = null;%'
+  '/private function collectDigest/,/private function reclassify(/ s%\$twin = \$store->twinTenure(\$key);%$twin = null;%'
 
+# SCOPED to collectDigest() — see the note above; `reclassify()` carries the same line.
 run_sabotage "the rent drain ignores its cluster's excluded member (§1 across the group)" \
   src/php/Rent/Cli/RentScout.php \
-  's%\$groupVeto = \$store->groupExcludedTenure(\$key);%$groupVeto = null;%'
+  '/private function collectDigest/,/private function reclassify(/ s%\$groupVeto = \$store->groupExcludedTenure(\$key);%$groupVeto = null;%'
 
 run_sabotage "the car drain announces a car today's rules REJECT (the excluded vehicle set)" \
   src/php/Car/Cli/CarScout.php \
@@ -2571,7 +2613,7 @@ run_sabotage "the drain stops reading the row's own excluded tenure (the snapsho
   src/php/Rent/Cli/RentScout.php \
   's%if ($tenure === null || $tenure->isExcluded() || $tenure === Tenure::UNKNOWN) {%if (false) {%'
 
-run_sabotage "the drain stops reading the re-advertised-flat veto (§1's third persisted route)" \
+run_sabotage "the drain stops reading the re-advertised-flat veto (§1's fourth persisted route)" \
   src/php/Rent/Cli/RentScout.php \
   's%$dwellingVeto = ExcludedDwellings::match($listing, $excludedDwellings, $dwellingDedup);%$dwellingVeto = null;%'
 
@@ -4532,9 +4574,10 @@ run_sabotage "an excluded twin fact is overwritten by a later eligible reading (
   src/php/Rent/Store/Store.php \
   's%if (\$current !== null \&\& \$current\[.tenure.\]->isExcluded()) {%if (false) {%'
 
+# SCOPED to reclassify() — see the drain's pair above.
 run_sabotage "reclassify re-judges a row its twin vetoed, on a snapshot the twin cannot appear in" \
   src/php/Rent/Cli/RentScout.php \
-  's%\$twin = \$store->twinTenure(\$key);%$twin = null;%'
+  '/private function reclassify(/,$ s%\$twin = \$store->twinTenure(\$key);%$twin = null;%'
 
 # The encoding after quoted-printable: a base64 BODY hides the token in opaque 76-column lines.
 # Retargeted 2026-09-05 (C2 round 6): the block scan moved into the shared cascade.

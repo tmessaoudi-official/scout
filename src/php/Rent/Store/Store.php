@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Scout\Rent\Store;
 
+use Scout\Rent\Core\Dedup;
+use Scout\Rent\Core\ExcludedDwellings;
 use Scout\Rent\Core\ListingSnapshot;
 use Scout\Rent\Core\RawListing;
 use Scout\Core\Redact;
@@ -1856,12 +1858,22 @@ final readonly class Store
             return null;
         }
 
+        // FOUR ROUTES, because `reclassify` judges §1 by four. Reporting three read as "nothing
+        // links this row" on exactly the population the fourth exists for — a flat re-advertised
+        // under a new ad id, which by construction has no group edge and no twin.
+        $evidence = $this->evidence($dedupKey);
         $provenance = [
             'own' => $this->tenure($dedupKey),
             'twin' => $this->twinTenure($dedupKey),
             'group' => $this->groupExcludedTenure($dedupKey),
+            'dwelling' => $evidence === null
+                ? null
+                : ExcludedDwellings::match($evidence, $this->excludedDwellings(), new Dedup()),
         ];
 
+        // The DWELLING route is deliberately not cleared, for the group veto's exact reason: it is
+        // another row's own reading, and a row that really says PLS keeps saying it. Clearing it
+        // here would delete a §1 fact belonging to a listing the operator did not name.
         if (!$dryRun) {
             $this->pdo->prepare('UPDATE listings SET tenure = NULL, twin_tenure = NULL, twin_source = NULL WHERE dedup_key = :key')
                 ->execute(['key' => $dedupKey]);

@@ -2993,6 +2993,68 @@ tool/guard) and say which ones the fix covers.**
     watched decline to fire; and `CarScout`'s alert loop was READ, not RUN, this session.
   - **Bar**: any finding resets the two-clean counter and needs a new freeze; cap 5 rounds, then ask.
 
+- [2026-09-07 15:13] AGREED (**milestone panel round 1 at `67e7bb1`: NOT CLEAN — 9 findings, the
+  two-clean counter resets to 0**). Three UNNAMED lenses, each probing its own `cp -a` copy with
+  `vendor/` copied. The live tree was never touched during the round and `git status` was empty
+  before, during and after — verified by two of the three lenses independently.
+
+  **Convergence is the headline: the P0 and the first P1 were reproduced by ALL THREE lenses, each
+  with its own probe.** That has not happened in any previous round here.
+
+  - **P0 · §1 · `RentScout::reclassify()` was the THIRD announcing surface and read three of the
+    four persisted readings.** `ExcludedDwellings`'s docblock said it *"has TWO callers that must
+    never disagree"*; there are three — `Pipeline`, the digest drain, and `reclassify`, which FORMS
+    a verdict, promotes `DIGEST → MATCH` and PUSHES it. The dwelling route is by construction the
+    one with no group edge and no twin (same source, so `Dedup` refuses an edge), so the two vetoes
+    it did read could never see it. **The drain REFUSES such a row with a warning naming
+    `reclassify` as the remedy** — the documented repair route was the one that pushed it. Terminal:
+    after the push the row holds a resolved tenure and `outcome = MATCH`, so neither
+    `staleVerdicts()` nor `pendingDigest()` returns it again. Fixed, with a counterweight asserting
+    an UNRELATED excluded flat does not veto — otherwise the fix is "switch the command off".
+    `--reopen` reported three of four routes on exactly this population and now names the fourth,
+    warning that it is NOT cleared (the group veto's rule: it is another row's own reading).
+  - **P1 · the car daily FLOOR — the deployed drain — kept the round-7 remainder guard while its
+    VALUE took the round-8 fix.** `$waiting > count($entries) + count($retries)` is false on every
+    uncapped drain, so ANY refused retry silenced the backlog clause under a summary reading
+    `N véhicule(s) émis`, which asserts the drain completed. The new test added for round 8 drives
+    the VERB and asserted around the gap. One arithmetic now serves guard and value.
+  - **P2 · `digest` reported a refused mail as delivered.** `reportRemainder()` ran BEFORE
+    `$notifier->send()` and `overflow()` subtracted every announced and rolled-up row
+    unconditionally, so a refused mail marked nothing, left the batch queued, and reported it gone.
+    `overflow()` now takes the delivery fact with NO default, for the same reason `$retriesDrained`
+    has none. **A first cut gated only the rollup half** — one mail carries both lists, so delivery
+    is one fact, and gating half would have left the other telling the same lie in the same line.
+  - **P3 · four ledger cases were two mutations wearing four labels.** `sed` without `/g` still
+    applies to every matching LINE, and `$twin = $store->twinTenure($key);` now appears in both
+    `collectDigest()` and `reclassify()`. Each expression is scoped to its own function, and each
+    was measured to change exactly one line where it previously changed two.
+  - Two documentation findings folded: `ExcludedDwellings` was filed under `src/php/Core/` in a
+    sentence that did not parse, and the claim *"`rollingMeanBefore()` filters on `ok = 1`; nothing
+    else did"* is refuted by `lastProductiveCount()` in the same file — a claim and its refutation
+    landed three commits apart.
+
+  **Three corrections to the coordinator's own live-data reading, all measured by the lenses:**
+  the rent `leboncoin broken` row is NOT attributable to this change (replayed under both
+  codebases: byte-identical detail strings at every instant; its failures sit before the streak, and
+  `FEED_SILENT` is structurally gated on `lastCount > 0` so a zero-count source can only be BROKEN);
+  `markAlerted()` upserts, so that row's `at` is the LAST send, not a first fire; and
+  `Pipeline::alertOnHealth()` is byte-identical across the span — the 43 changed lines in that file
+  are the `ExcludedDwellings` extraction. **The invented causal story was written in the same
+  message that named that failure shape.**
+
+  **What the round CONFIRMED, and it is the milestone's actual subject:** the health flap fix is
+  clean on the lens that owns it. Replaying every live run log, in'li's `alerting→OK` transitions go
+  **74 (old) → 3 (new)**, and none is announced on a run that itself failed; cdc_habitat 8→3,
+  seloger 8→4. Three hand-built hiding shapes all still alert, the all-failures fallback still
+  reports BROKEN at 1, 2 and 5 runs, `SourceHealth`'s new docblock is accurate field by field, and
+  all 12 production `health()` call sites pass a clock.
+
+  **And the live proof landed during the round**: seloger failed twice on the DEPLOYED image
+  (12:54:23, 13:23:45) with successful 564-listing passes on both sides — `source_alerts` holds zero
+  rows for it. Pre-fix that sequence is four emails. The send path has now been watched decline to
+  fire; what remains unwitnessed is only that a genuine three-failure outage still alerts, which is
+  verified by execution on the verdict and by reading on the send.
+
 <!-- progress-block v1 -->
 | # | Step | Size | State | Evidence | Files |
 |---|------|------|-------|----------|-------|

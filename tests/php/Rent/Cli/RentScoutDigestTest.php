@@ -560,7 +560,7 @@ final class RentScoutDigestTest extends TestCase
     }
 
     /**
-     * §1, C2 ROUND 8 P0 (b) — THE THIRD PERSISTED ROUTE, WHICH THE DRAIN NEVER READ.
+     * §1, C2 ROUND 8 P0 (b) — THE FOURTH PERSISTED ROUTE, WHICH THE DRAIN NEVER READ.
      *
      * `Pipeline` judges §1 from THREE persisted readings; round 7 gave this drain two of them.
      * `Store::excludedDwellings()` is the third, and it is the only one that catches a portal
@@ -852,6 +852,54 @@ final class RentScoutDigestTest extends TestCase
             surfaceM2: 88.0,
             rooms: 4,
         );
+    }
+
+    /**
+     * A REFUSED MAIL DRAINED NOTHING, AND THE REMAINDER SAID IT HAD.
+     *
+     * `digest` called `reportRemainder()` BEFORE `$notifier->send()`, and `overflow()` subtracted
+     * every announced and rolled-up row unconditionally — so against a dead channel the verb
+     * marked nothing, left the whole batch queued, and printed a remainder computed as though the
+     * batch had gone. The adjacent *"rien n'a été marqué"* warning is why this is P2 rather than
+     * P1, but a number that contradicts the warning beside it is how an operator learns to read
+     * neither.
+     *
+     * The rent daily floor was already right — it counts after marking — so this is the repo's
+     * *fix landing on one of two symmetric surfaces* once more, and the counterweight below pins
+     * the delivered direction so the fix cannot be "always report everything as waiting".
+     */
+    public function testARefusedDigestMailReportsTheWholeBatchAsStillWaiting(): void
+    {
+        $root = $this->tempRoot();
+        $this->seedDigestRow($root, $this->queueable('inli', 'PENDING-1'));
+
+        $channel = new DeliveringChannel();
+        $channel->refuses = [NotificationKind::DIGEST];
+        $result = $this->scout($root, ['digest'], $channel);
+
+        self::assertSame(1, $this->pendingDigestCount($root), 'premise: nothing was marked');
+        self::assertStringContainsString(
+            'autre(s) en attente',
+            $result['out'] . $result['err'],
+            'a refused mail drained nothing, and the remainder must say so',
+        );
+    }
+
+    /** The counterweight: a DELIVERED mail really did drain the batch, and claims no remainder. */
+    public function testADeliveredDigestMailClaimsNoRemainder(): void
+    {
+        $root = $this->tempRoot();
+        $this->seedDigestRow($root, $this->queueable('inli', 'PENDING-1'));
+
+        $result = $this->scout($root, ['digest'], new DeliveringChannel());
+
+        self::assertSame(0, $this->pendingDigestCount($root), 'premise: it really drained');
+        self::assertStringNotContainsString('autre(s) en attente', $result['out'], 'there is no suite');
+    }
+
+    private function pendingDigestCount(string $root): int
+    {
+        return Store::open($root . '/state/rent-watch.sqlite3')->pendingDigestCount();
     }
 
     private function seedQueuedMatch(string $root, RawListing $listing): string

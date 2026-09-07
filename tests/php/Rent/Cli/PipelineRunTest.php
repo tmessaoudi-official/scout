@@ -1433,6 +1433,67 @@ final class PipelineRunTest extends TestCase
         self::assertCount(1, $recoveries, 'exactly one — the third run must not re-announce it');
     }
 
+    /**
+     * THE FLAP, END TO END, THROUGH THE REAL VERDICT — the seam no test crossed.
+     *
+     * Every health test above INJECTS a `SourceHealth`, so they prove the alert loop and nothing
+     * that feeds it; `RunStoreFailureStreakTest` proves the verdict and never reaches the loop. The
+     * live defect lived exactly between them: `health()` returned BROKEN on ONE failed run, the next
+     * successful pass read as recovery, sent *rétablie* and CLEARED the cooldown — 77 emails in four
+     * days, 29 broken + 30 rétablie from in'li alone.
+     *
+     * THE FAILURE MUST BE THE RUN THE PASS ITSELF RECORDS. A failure seeded into history with a
+     * success after it is not the trailing run when `health()` is computed, so the flap cannot occur
+     * and the test passes with the fix removed — measured: the first version of this test was
+     * exactly that vacuous and stayed green under `$observed = $runs`.
+     */
+    public function testAnIsolatedFailedRunSendsNoAlertAndNoRecovery(): void
+    {
+        $store = $this->store();
+        $channel = new RecordingChannel();
+
+        // Counts match what the double fetches: a history far above it earns a legitimate WARN_DROP
+        // that has nothing to do with the seam under test.
+        foreach ([1, 2, 3] as $h) {
+            $store->recordRun('fake', 1, true, null, sprintf('2026-08-07T0%d:00:00+02:00', $h));
+        }
+
+        $this->pipeline($store, new Notifier([$channel]))->runOnce(
+            [new StoreBackedSource('fake', $store, [], new \RuntimeException('HTTP 302 depuis www.inli.fr'))],
+            self::NOW,
+        );
+
+        self::assertSame(
+            [],
+            array_values(array_filter($channel->sent, static fn (Notification $n): bool => \in_array(
+                $n->kind,
+                [NotificationKind::SOURCE_HEALTH, NotificationKind::SOURCE_RECOVERED],
+                true,
+            ))),
+            'an isolated failure is neither a breakage nor a recovery — that pair IS the flap',
+        );
+    }
+
+    /** The counterweight: a REAL outage still alerts, or the test above is the alert switched off. */
+    public function testAThreeFailureOutageStillAlertsThroughTheRealVerdict(): void
+    {
+        $store = $this->store();
+        $channel = new RecordingChannel();
+
+        $store->recordRun('fake', 1, true, null, '2026-08-07T01:00:00+02:00');
+        // Two seeded failures plus the one this pass records itself: three consecutive, trailing.
+        foreach ([2, 3] as $h) {
+            $store->recordRun('fake', 0, false, 'HTTP 503', sprintf('2026-08-07T0%d:00:00+02:00', $h));
+        }
+
+        $this->pipeline($store, new Notifier([$channel]))->runOnce(
+            [new StoreBackedSource('fake', $store, [], new \RuntimeException('HTTP 503'))],
+            self::NOW,
+        );
+
+        self::assertNotSame([], $this->healthAlerts($channel), 'three consecutive failures is an outage, and it must be said');
+    }
+
     public function testAFailedAlertSendDoesNotStartTheCooldown(): void
     {
         // A cooldown that began on a failed send would silence the alert for a day on the strength
@@ -3087,6 +3148,69 @@ final readonly class FreshFakeSource implements \Scout\Adapters\FeedFreshness, S
     public function health(?string $nowIso = null): SourceHealth
     {
         return new SourceHealth(sourceName: $this->name, status: SourceStatus::OK);
+    }
+}
+
+/**
+ * A source whose health is the STORE's real verdict, not an injected one.
+ *
+ * Every other health test here hands `FakeSource` a `SourceHealth` it made up, which exercises the
+ * alert loop and nothing that feeds it. The flap this milestone fixed lived in the SEAM: the verdict
+ * was proven by `RunStoreFailureStreakTest` and the loop by the tests above, and nothing joined them.
+ */
+final readonly class StoreBackedSource implements Source
+{
+    /** @param list<RawListing> $listings */
+    public function __construct(
+        private string $name,
+        private Store $store,
+        private array $listings = [],
+        private ?\Throwable $throw = null,
+    ) {}
+
+    public function name(): string
+    {
+        return $this->name;
+    }
+
+    public function family(): string
+    {
+        return 'institutional';
+    }
+
+    public function host(): ?string
+    {
+        return null;
+    }
+
+    public function defaultTenure(): ?Tenure
+    {
+        return Tenure::LLI;
+    }
+
+    public function mixedTenure(): bool
+    {
+        return false;
+    }
+
+    public function profile(): SourceProfile
+    {
+        return new SourceProfile($this->name, 'private', null, false);
+    }
+
+    /** @return list<RawListing> */
+    public function fetch(): array
+    {
+        if ($this->throw !== null) {
+            throw $this->throw;
+        }
+
+        return $this->listings;
+    }
+
+    public function health(?string $nowIso = null): SourceHealth
+    {
+        return $this->store->health($this->name, $nowIso);
     }
 }
 

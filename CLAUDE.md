@@ -2084,9 +2084,12 @@ src/php/Core/               the GENERIC core: Text, Redact, Pacer, Heartbeat, so
                             changing its template is neither a housing fact nor a vehicle one)
                             (run log + health, owned by no domain), SameFilterWarning (every card
                             of a source failing ONE hard filter — a drifted selector reads as a
-                            quiet market), MalformedText, MutableByDesign, ExcludedDwellings' rent
-                            twin lives under Rent/Core, and the Notify channels
-src/php/Rent/               the rent domain — Core (models, tenure classifier, criteria, dedup), Config, Adapters,
+                            quiet market), MalformedText, MutableByDesign, and the Notify channels
+src/php/Rent/               the rent domain — Core (models, tenure classifier, criteria, dedup —
+                            plus ExcludedDwellings, the §1 matcher for the SAME FLAT on record
+                            under another ad id: the fourth persisted route, and the ONE
+                            implementation its three announcing surfaces share — Pipeline, the
+                            digest drain and reclassify), Config, Adapters,
                             Store, Enrich, Notify (Formatter), Cli/RentScout
 src/php/Car/                the car domain — the Vehicle* classes and Cli/CarScout
 src/php/Core/Pacer.php      the Q37 cadence; clock, sleeper and RNG all injected so it is testable
@@ -2271,7 +2274,10 @@ var/claude/                 Reports, review outputs — gitignored scratch (hand
   reads as RECOVERY, so a source with a real standing alert announces itself recovered on a hiccup
   and re-alerts with its cooldown wiped. Both are **hard rule 9 at the health layer** — a failed
   run's zero is *unknown*, not *zero annonces*, and it is no more evidence of recovery than it is of
-  a drop. `rollingMeanBefore()` already knew that and filters on `ok = 1`; nothing else did. So the
+  a drop. `rollingMeanBefore()` already knew that and filters on `ok = 1`, as does
+  `lastProductiveCount()`; nothing that COUNTED did. (This sentence read *"nothing else did"* for a
+  day and was refuted by its own file — the C2 milestone panel found the claim and its refutation
+  three commits apart.) So the
   count-based verdicts judge the log with sub-threshold trailing failures REMOVED, while `STALE` and
   `WARN_FLAKY` keep the whole log on purpose — they are about ATTEMPTS, and a failure is a perfectly
   good attempt. Three things travel with it. **The strip needs an observation behind it**: a source

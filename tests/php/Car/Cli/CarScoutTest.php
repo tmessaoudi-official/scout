@@ -303,6 +303,35 @@ final class CarScoutTest extends TestCase
         self::assertFalse(\Scout\Car\VehicleStore::open($this->db)->wasNotified($key));
     }
 
+    /**
+     * THE FLOOR is the deployed drain, and it kept the round-7 arithmetic in its guard.
+     *
+     * `testARefusedCarRetryIsStillReportedAsARemainder` drives the VERB. The floor inlined the same
+     * clause with `$waiting > count($entries) + count($retries)` as its guard while its VALUE took
+     * the round-8 `$drained` fix — and that guard is false on every uncapped drain, so any refused
+     * retry silenced the clause under a summary reading `N véhicule(s) émis`. Found by all three
+     * lenses of the C2 milestone panel; the verb-side test asserted around it.
+     */
+    public function testTheCarFloorAlsoReportsARefusedRetryAsARemainder(): void
+    {
+        $this->queueACarOverTheGate();
+        $channel = new CarRecordingChannel();
+        // The rollup mail must LAND and an individual retry must be refused: a wholly-down
+        // channel short-circuits before the clause and would prove nothing.
+        $channel->refuseKind = \Scout\Core\Notify\NotificationKind::MATCH;
+        putenv('SCOUT_MAX_PASSES=1');
+        try {
+            $r = $this->scout(['--domain=car', 'run', '--watch', '--source=paruvendu'], $channel);
+        } finally {
+            putenv('SCOUT_MAX_PASSES');
+        }
+
+        // The floor runs a real pass, so it queues more rows than the one seeded — the premise is
+        // that the refused retry is STILL queued, not that it is alone.
+        self::assertGreaterThan(0, \Scout\Car\VehicleStore::open($this->db)->pendingRollupCount(), 'premise: it did not drain');
+        self::assertStringContainsString('autre(s) en attente', $r['out'] . $r['err'], 'the floor must say the backlog did not empty');
+    }
+
     /** And a drain that emptied the queue claims no remainder — the counterweight the line never had. */
     public function testACarDrainThatEmptiedTheQueueClaimsNoRemainder(): void
     {

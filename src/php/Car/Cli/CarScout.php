@@ -846,14 +846,28 @@ final readonly class CarScout
      * queued by design. Both directions are a line the operator learns to stop reading, and it
      * follows that this must be called AFTER the retries are attempted, never before.
      *
+     * THE FLOOR USED TO INLINE THIS, and kept the round-7 arithmetic in its GUARD while taking the
+     * round-8 fix in its VALUE (C2 milestone panel, P1 on all three lenses). `$waiting >
+     * count($entries) + count($retries)` is false on every uncapped drain, so ANY refused retry
+     * silenced the clause while rows stayed queued — under a summary line reading `N véhicule(s)
+     * émis`, which asserts the drain completed. The docblock above already claimed one
+     * implementation; now `remainingAfterDrain()` is it, and the two renderings differ only in
+     * whether the text is a line of its own or a clause appended to one.
+     *
      * @param list<array<string, mixed>> $entries
      */
     private function reportRollupRemainder(int $waiting, array $entries, int $drained): void
     {
-        $remaining = $waiting - count($entries) - $drained;
+        $remaining = $this->remainingAfterDrain($waiting, $entries, $drained);
         if ($remaining > 0) {
             $this->line(sprintf('%d autre(s) en attente — relancer `scout --domain=car rollup` pour la suite.', $remaining));
         }
+    }
+
+    /** @param list<array<string, mixed>> $entries */
+    private function remainingAfterDrain(int $waiting, array $entries, int $drained): int
+    {
+        return $waiting - count($entries) - $drained;
     }
 
     private function pushRetries(Notifier $notifier, VehicleStore $store, array $retries, string $now): int
@@ -914,10 +928,10 @@ final readonly class CarScout
         $this->line(sprintf(
             'récapitulatif quotidien « vérifié, score bas » : %d véhicule(s) émis%s.',
             count($entries),
-            // Retries counted here too — same reason as the verb's line above.
-            $waiting > count($entries) + count($retries)
-                // AFTER the retries were attempted: a refused one stays queued (C2 round 8, P1).
-                ? sprintf(' — %d autre(s) en attente', $waiting - count($entries) - $drained)
+            // ONE arithmetic for the guard AND the value — they disagreed until the C2 milestone
+            // panel, and the guard was the stale half. `$drained` is what the channel took.
+            $this->remainingAfterDrain($waiting, $entries, $drained) > 0
+                ? sprintf(' — %d autre(s) en attente', $this->remainingAfterDrain($waiting, $entries, $drained))
                 : '',
         ));
     }

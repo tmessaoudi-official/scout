@@ -109,15 +109,28 @@ final readonly class DigestBatch
      * a backlog that had not moved. There is no default, because both defaults are a lie in one
      * direction and the caller is the only thing that knows which happened. It follows that the
      * remainder line must be printed AFTER the retries are attempted, never before.
+     *
+     * **`$rollupDelivered` IS THE SAME RULE APPLIED TO THE MAIL** (C2 milestone panel, P2). The
+     * rolled-up rows were subtracted UNCONDITIONALLY while `digest` called this BEFORE
+     * `$notifier->send()` — so a refused mail marked nothing, left every row queued, and reported
+     * them as gone. The rent daily floor was already correct (it counts after marking); only the
+     * verb was wrong, which is this repo's *a fix landing on one of two symmetric surfaces* once
+     * more. No default here either, and for the same reason as above.
      */
-    public function overflow(int $retriesDrained): int
+    public function overflow(int $retriesDrained, bool $rollupDelivered): int
     {
+        // ONE mail carries both lists, so delivery is ONE fact and it governs both halves. A first
+        // cut gated only the rollup half and would have left the digest half telling the same lie
+        // in the same line — the very shape this finding is an instance of.
+        $announced = $rollupDelivered ? \count($this->entries) : 0;
         $drained = $retriesDrained;
-        foreach ($this->lowScore as $entry) {
-            $drained += \count($entry['keys']);
+        if ($rollupDelivered) {
+            foreach ($this->lowScore as $entry) {
+                $drained += \count($entry['keys']);
+            }
         }
 
-        return max(0, $this->waiting - \count($this->entries)) + max(0, $this->waitingLowScore - $drained);
+        return max(0, $this->waiting - $announced) + max(0, $this->waitingLowScore - $drained);
     }
 
     public function unreadable(): int
