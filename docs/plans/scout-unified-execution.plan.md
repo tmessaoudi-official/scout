@@ -2945,7 +2945,7 @@ tool/guard) and say which ones the fix covers.**
 | 57 | C2 round 8 P2/P3 — drifted ledger counts, three classes absent from both Core inventories, a de-indented declaration | S | done | 422e27a | CLAUDE.md .github/workflows/ci.yml tests/test-ci-workflow.sh src/php/Car/Cli/CarScout.php |
 | 58 | The health flap — one failed run was BROKEN and every recovery wiped the cooldown; a failed run's zero is no longer read as an observation | M | done | e3ec04d | src/php/Core/RunStore.php tests/php/Core/RunStoreFailureStreakTest.php tests/php/Rent/Store/StoreTest.php tests/php/Rent/Store/StoreFeedSilenceTest.php tests/sabotage-check.sh CLAUDE.md |
 | 59 | The trailing-only strip was refuted by the live store within the hour — a tolerated failure is dropped wherever it sits, the note counts the trailing streak, and the streak is indexed where it is counted | M | done | 366218e | src/php/Core/RunStore.php tests/php/Core/RunStoreFailureStreakTest.php tests/sabotage-check.sh CLAUDE.md |
-| 60 | The compound-expression triage — all 26 sub-expressions of the 15 compound ledger cases run ALONE; 11 undetected, 10 structural, 1 inert and removed, 0 coverage holes | M | done | - | tests/sabotage-check.sh |
+| 60 | The compound-expression triage — all 26 sub-expressions of the 15 compound ledger cases run ALONE; 11 undetected, 10 structural, 1 inert and removed, 0 coverage holes | M | done | 6f12f85 | tests/sabotage-check.sh |
 <!-- /progress-block -->
 ### Blocked
 
