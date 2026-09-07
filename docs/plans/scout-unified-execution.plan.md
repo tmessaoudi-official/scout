@@ -2956,7 +2956,7 @@ tool/guard) and say which ones the fix covers.**
 | 58 | The health flap — one failed run was BROKEN and every recovery wiped the cooldown; a failed run's zero is no longer read as an observation | M | done | e3ec04d | src/php/Core/RunStore.php tests/php/Core/RunStoreFailureStreakTest.php tests/php/Rent/Store/StoreTest.php tests/php/Rent/Store/StoreFeedSilenceTest.php tests/sabotage-check.sh CLAUDE.md |
 | 59 | The trailing-only strip was refuted by the live store within the hour — a tolerated failure is dropped wherever it sits, the note counts the trailing streak, and the streak is indexed where it is counted | M | done | 366218e | src/php/Core/RunStore.php tests/php/Core/RunStoreFailureStreakTest.php tests/sabotage-check.sh CLAUDE.md |
 | 60 | The compound-expression triage — all 26 sub-expressions of the 15 compound ledger cases run ALONE; 11 undetected, 10 structural, 1 inert and removed, 0 coverage holes | M | done | 6f12f85 | tests/sabotage-check.sh |
-| 61 | Round 9 (advisor) NOT CLEAN — the flaky windows had no counterweight test, so the obvious consistency edit would have silenced every flaky verdict on exactly the tolerated sources | M | done | - | tests/php/Core/RunStoreFailureStreakTest.php tests/sabotage-check.sh |
+| 61 | Round 9 (advisor) NOT CLEAN — the flaky windows had no counterweight test, so the obvious consistency edit would have silenced every flaky verdict on exactly the tolerated sources | M | done | 6bcbfd0 | tests/php/Core/RunStoreFailureStreakTest.php tests/sabotage-check.sh |
 <!-- /progress-block -->
 ### Blocked
 
