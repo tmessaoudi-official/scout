@@ -2909,6 +2909,25 @@ tool/guard) and say which ones the fix covers.**
   path against a throwaway store. The proof is one query — `SELECT * FROM source_alerts` plus the
   notification label — and **zero new in'li rows after a failed pass** is what closes it.
 
+- [2026-09-07 13:25] RECORD (**ROUND 10 CLEAN — the two-clean counter moves to 1**). `advisor()`
+  traced the whole span `c6e29e0..4ae6a4f` and found no defect: the flaky counterweight's arithmetic
+  (25/100 on the seven-day window, under 0.30; ~25/97 on the 24 h window, over 0.20 and above the
+  20-run floor; the tail tolerated so `$observed` drops all 25, which under `windowCounts($observed)`
+  is 0 failures and `OK`), the mixed-episode pin closing round 9's item 3 with an assertion rather
+  than a reading, and the ledger case proven red on a clean tree.
+
+  **Three non-blocking items are deferred to round 11 DELIBERATELY, because landing them moves the
+  freeze**: `CLAUDE.md:93`'s *"258 → 527 → 764 cases in three weeks"* is a DATED narrative of the
+  2026-09-05 sharding ruling, and the count sync rewrote it — it should be dated or dropped, not
+  bumped again (the sync was asked for in 6C, so this is the small distortion that request caused);
+  and `SourceHealth` carries `totalRuns` from `$runs` beside `consecutiveEmptyRuns` from `$observed`
+  with no docblock saying so.
+
+  **A STRUCTURAL CAVEAT ON THE NEXT GATE, recorded so it is not decided by momentum**: a second
+  `advisor()`-only round over an UNCHANGED span is one reviewer agreeing with itself, and the
+  two-consecutive-clean bar was written for FRESH-CONTEXT lenses. The tier is the developer's call
+  and is asked fresh either way; this note exists so the option descriptions say it.
+
 <!-- progress-block v1 -->
 | # | Step | Size | State | Evidence | Files |
 |---|------|------|-------|----------|-------|
