@@ -2928,6 +2928,22 @@ tool/guard) and say which ones the fix covers.**
   two-consecutive-clean bar was written for FRESH-CONTEXT lenses. The tier is the developer's call
   and is asked fresh either way; this note exists so the option descriptions say it.
 
+- [2026-09-07 13:30] AGREED (**round 11 tier: `advisor()` only, on the unchanged span**). Asked
+  fresh at this gate with the structural caveat stated FIRST in the option text — that a second
+  `advisor()`-only round over an unchanged span is one reviewer re-reading its own clean verdict,
+  and that the two-consecutive-clean bar was written for fresh-context lenses. The developer chose
+  it anyway, which is the ruling. **Freeze: unchanged at `4ae6a4f`** — the commits since are the
+  round-10 record and this entry, both plan-only, so no reviewed code has moved.
+
+  **What a clean round 11 therefore certifies, stated plainly rather than left to be inferred**:
+  two consecutive clean rounds by the SAME reviewer over substantially the same span, not two
+  independent reads. That is weaker than the ladder's MAXIMAL tier describes, and it is the
+  developer's call to make; recording it is what keeps the counter honest for whoever reads this
+  next. The three reviewer agents in `.claude/agents/` were offered and not chosen at this gate.
+
+  The three deferred non-blocking items (the dated `CLAUDE.md:93` count narrative, the
+  `SourceHealth` two-array docblock) stay deferred, deliberately, so the freeze does not move.
+
 <!-- progress-block v1 -->
 | # | Step | Size | State | Evidence | Files |
 |---|------|------|-------|----------|-------|
