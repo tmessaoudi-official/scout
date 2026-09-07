@@ -3472,20 +3472,33 @@ tool/guard) and say which ones the fix covers.**
 
 ### Known issues
 
-- **Row 35 is UNMET and IN FLIGHT** (three-lens milestone panel, round 4 frozen at `5b030fe`): the
-  two-clean counter is **0**. Rounds 10 and 11 were `advisor()` only — the same reviewer twice over
-  one span — and briefly carried row 35 to `certified`; **the panel retracted that.** Its rounds
-  found **9 (`67e7bb1`), 8 (`e3cfef0`), 17 (`c530d9a`) and 15 (`5b030fe`)**, and in every round the
-  majority were in the PREVIOUS round's fixes. **Round 5 is the CAP**, and the framework requires an
-  `AskUserQuestion` escalation there rather than a sixth round — that ask is owed if round 5 is not
-  clean. A clean round moves the counter to 1 and TWO are required.
-  **Anything that reads this plan mechanically should read row 35 as `doing`, never `certified`** —
-  it said `certified` in the same commit whose Decisions Log recorded the counter resetting to 0,
-  which is the one artefact a post-compact session trusts without reading the prose.
-- **Round-5 P2, recorded not fixed** (row 41): with no band on the mapped path, a selector drifting
-  onto a 5-digit field extracts `95240` cleanly, `max_rent_cc` rejects every card, `rent` counts
-  zero misses and health stays `ok`. The ParuVendu `autres` class one layer over; it wants a
-  plausibility instrument, and whether to build one is a ruling the row will ask for.
+- **Row 35 closed at its CAP by ruling, not by convergence** (three-lens milestone panel, span
+  `67e7bb1` → `dde4d8c`): the two-clean counter reached **0 of 2** and stayed there. The five rounds
+  found **9 (`67e7bb1`), 8 (`e3cfef0`), 17 (`c530d9a`), 15 (`5b030fe`) and ~28 (`dde4d8c`)**, and in
+  every round the majority of findings were in the PREVIOUS round's fixes — which is the fact that
+  made a sixth round the wrong instrument rather than the missing one. Round 5 is the CAP, the
+  framework's `AskUserQuestion` escalation ran there as the bar requires, and the developer chose
+  **"land the narrow fix, then close"** (`8055943`, recorded `2c8317a`). Round 5 found **zero MATCH
+  bypasses**, which is the one claim this gate exists to make; it makes no claim that a sixth round
+  would have found nothing.
+  **The instruction that stood here — read row 35 as `doing`, never `certified` — is RETIRED**, and
+  the block is now the artefact to trust: it reads `done`. That is deliberate and not a downgrade
+  left half-done. `certified` is what convergence earns, the two-clean bar was never met, and a row
+  closed by ruling must not wear the badge that would have said otherwise. Rounds 10 and 11 were
+  `advisor()` only — the same reviewer twice over one span — and briefly carried this row to
+  `certified`; **the panel retracted that**, and the retraction is why the distinction is written
+  down rather than assumed.
+- **Round-5 P2 is BUILT** (row 41 — `Core/SameFilterWarning`, `2553c94`, `test:2026-09-06`). This
+  bullet read *"recorded not fixed"* until 2026-09-07 and described the state before the ruling.
+  What the instrument covers: every judged card of one source (three or more) failing the SAME hard
+  filter raises one warning naming the source, the count and the filter, on both domains — with §1
+  and vehicle-set rejections left out on purpose, because a source whose every card is social
+  housing is the classifier working, not a drifted selector.
+  **Two residuals, stated rather than closed.** A PARTIAL drift is invisible to it, exactly as it is
+  to `PatternMissLog::total()`, which speaks only at 100 % — cityloger's 9 null surfaces of 60 is
+  the standing example. And the mapped path still carries NO plausibility band: that is row 4's
+  REVERSED ruling (`8e3fe80` — both bounds erased evidence a `!== null` guard needed), so it is a
+  decision on record, never an omission. The warning reaches the run output, never `SourceHealth`.
 - **The car domain has no `PacedSource`**, recorded not fixed with its trigger: the moment a second
   car web source without its own rate limiter exists, lift `PacedSource` into `Scout\Adapters`
   over a shared contract — never write a car twin.
