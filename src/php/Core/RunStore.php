@@ -526,16 +526,14 @@ final readonly class RunStore
         // The strip needs something BEHIND it: a source whose entire history is failures has no
         // observation to fall back on, and reporting OK there would hide a source misconfigured on
         // the day it was added. That is why an empty remainder is refused rather than accepted.
+        // A TOLERATED FAILURE IS DROPPED WHEREVER IT SITS, not only when it is the last run. The
+        // trailing-only version of this was measured against the live car store on 2026-09-07 and
+        // did NOT hold: leboncoin's failure sat THREE runs from the end, so it still truncated a
+        // 308-run empty streak to 3 — and the streak rebuilding through 1 and 2 reports OK, which
+        // is *retablie* plus a wiped cooldown, then BROKEN again at 3. The flap survived the fix
+        // for it, on the one source the fix was not about.
         $failedStreak = self::trailingFailedRuns($runs);
-        $observed = $runs;
-
-        if ($failedStreak > 0 && $failedStreak < self::EMPTY_RUNS_BEFORE_BROKEN) {
-            $behind = \array_slice($runs, 0, \count($runs) - $failedStreak);
-
-            if ($behind !== []) {
-                $observed = $behind;
-            }
-        }
+        $observed = self::observedRuns($runs);
 
         $last = $observed[array_key_last($observed)];
         $lastCount = (int) $last['item_count'];
@@ -592,11 +590,15 @@ final readonly class RunStore
         // alone -- and `testAFailedRunOutranksASilentFeed` proved what that costs: the source came
         // back FEED_SILENT and the exception was buried, which is the very thing that test's
         // docblock forbids. One surface, or it is forgotten on the next verdict added.
-        $tolerated = $observed === $runs ? '' : sprintf(
+        // THE TRAILING streak, never the cumulative count. Counting every failure ever dropped put
+        // "82 échec(s) toléré(s)" on in'li's healthy verdict when it was measured against the live
+        // store — true, and it reads as an incident on a source that is fine. The note exists to say
+        // one thing: a failure is being tolerated RIGHT NOW, and here is the bar it has not reached.
+        $tolerated = $failedStreak > 0 && $lastOk ? sprintf(
             ' — %d échec(s) récent(s) toléré(s), alerte à %d',
             $failedStreak,
             self::EMPTY_RUNS_BEFORE_BROKEN,
-        );
+        ) : '';
 
         $health = static fn (SourceStatus $status, string $detail): SourceHealth => new SourceHealth(
             sourceName: $sourceName,
@@ -622,8 +624,12 @@ final readonly class RunStore
         }
 
         if ($emptyStreak >= self::EMPTY_RUNS_BEFORE_BROKEN) {
-            $streakStart = \count($runs) - $emptyStreak;
-            $baseline = self::rollingMeanBefore($runs, $streakStart);
+            // INDEXED INTO `$observed`, because `$emptyStreak` is counted there. Mixing the two
+            // is not a style point: with the failure dropped, `\count($runs) - $emptyStreak` lands
+            // one row early and averages a run the streak already contains — a 25-listing baseline
+            // was reported as 12.5. `testAQuietRunBeforeTheStreakDoesNotZeroTheBaseline` caught it.
+            $streakStart = \count($observed) - $emptyStreak;
+            $baseline = self::rollingMeanBefore($observed, $streakStart);
 
             if ($baseline === null) {
                 // The rolling window before the streak is EMPTY — the machine was off, or the
@@ -632,7 +638,7 @@ final readonly class RunStore
                 // a source that broke after any gap longer than the window report OK forever: ten
                 // consecutive empty runs against a documented 25-listing history, status OK. So
                 // fall back to the last successful run of ANY age.
-                $baseline = self::lastProductiveCount($runs, $streakStart);
+                $baseline = self::lastProductiveCount($observed, $streakStart);
             }
 
             if ($baseline > 0.0) {
@@ -772,6 +778,53 @@ final readonly class RunStore
     }
 
     // ---- private helpers of the health cluster ----
+
+    /**
+     * The runs that count as OBSERVATIONS: every failure episode shorter than
+     * {@see EMPTY_RUNS_BEFORE_BROKEN} is dropped, and everything else is kept in order.
+     *
+     * A failed run's `item_count` of 0 is UNKNOWN, not "zero annonces" (hard rule 9), so the
+     * count-based verdicts must not read it — as a supply drop, as an empty run, or as RECOVERY.
+     * `STALE` and `WARN_FLAKY` deliberately keep the WHOLE log: they are about ATTEMPTS, and a
+     * failure is a perfectly good attempt. That division is what keeps this from being a hole —
+     * a source failing 30 % of the week is still `WARN_FLAKY` however isolated each failure is.
+     *
+     * An episode AT or OVER the threshold is kept, because that is a real outage and it should
+     * break an empty streak exactly as it always did.
+     *
+     * THE EMPTY REMAINDER IS REFUSED. A source whose entire history is short failure episodes has
+     * no observation to be judged against, and reporting it healthy would hide a source that was
+     * misconfigured on the day it was added — so it keeps the raw log and reports BROKEN.
+     *
+     * @param list<array{ok:int|string, ...}> $runs
+     * @return list<array{ok:int|string, ...}>
+     */
+    private static function observedRuns(array $runs): array
+    {
+        $observed = [];
+        $episode = [];
+
+        foreach ($runs as $run) {
+            if ((int) $run['ok'] !== 1) {
+                $episode[] = $run;
+
+                continue;
+            }
+
+            if (\count($episode) >= self::EMPTY_RUNS_BEFORE_BROKEN) {
+                array_push($observed, ...$episode);
+            }
+
+            $episode = [];
+            $observed[] = $run;
+        }
+
+        if (\count($episode) >= self::EMPTY_RUNS_BEFORE_BROKEN) {
+            array_push($observed, ...$episode);
+        }
+
+        return $observed === [] ? $runs : $observed;
+    }
 
     /**
      * How many of the most recent runs FAILED — the mirror of {@see trailingEmptyRuns()}, and the

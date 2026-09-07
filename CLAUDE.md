@@ -90,7 +90,7 @@ closed one, so issues #1 and #2 stood open for days after the regression they re
 pushed, and an alert nobody retracts becomes furniture. Both halves are pinned by
 `tests/test-ci-workflow.sh` — by step NAME *and* by the API call that does the work, since a name
 alone survives the body being gutted. **THE LEDGER IS SHARDED SIX WAYS since 2026-09-05** (developer
-ruling), because one job could no longer finish it: 258 → 527 → 764 cases in three weeks, four of
+ruling), because one job could no longer finish it: 258 → 527 → 771 cases in three weeks, four of
 the last eight nightlies CANCELLED at the 240-minute cap and four failed on row 45's CI cause —
 eight days with no completed detection proof and seven issues nobody could close. GitHub's hosted
 ceiling is 360, so a bigger budget had nowhere left to go. `SABOTAGE_SHARD=<i>/<n>` selects by case
@@ -2284,6 +2284,25 @@ var/claude/                 Reports, review outputs — gitignored scratch (hand
   feed's empty streak and bought it three more silent passes — on leboncoin, whose streak was in the
   hundreds. The threshold is `EMPTY_RUNS_BEFORE_BROKEN`, one constant for both shapes, so a future
   tuning cannot move one and forget the other.
+  **THE FIRST CUT DROPPED ONLY A TRAILING FAILURE, AND THE LIVE STORE REFUTED IT WITHIN THE HOUR** —
+  which is the half worth carrying. Run against a copy of the real car store, leboncoin's failure sat
+  THREE runs from the end, so a 308-run empty streak still truncated to 3; the streak rebuilding
+  through 1 and 2 reports `OK`, which is *rétablie* plus a wiped cooldown, then `BROKEN` again at 3.
+  **The flap survived its own fix, on the one source the fix was not about**, and no fixture reached
+  it because every test written for the change put the failure last. A tolerated failure is dropped
+  WHEREVER it sits now — `observedRuns()` drops each failure episode shorter than the threshold and
+  keeps the rest, so a real outage still breaks a streak. Two things came out of that same probe:
+  the note must count the TRAILING streak, never every failure ever dropped (the cumulative form put
+  *"82 échec(s) toléré(s)"* on in'li's healthy verdict — true, and it reads as an incident on a
+  source that is fine); and `$emptyStreak` counted in `$observed` must be INDEXED in `$observed`,
+  a mismatch that reported a 25-listing baseline as 12.5 and was caught by an existing test rather
+  than by review. **Verify a health change against a copy of the live store** —
+  `sqlite3 state/<db> ".backup <copy>"`, then call `health()` on the copy; never `doctor`, which
+  polls and writes a run into the baseline. Two costs are stated rather than left to be found:
+  the five IMAP timeouts on capcar, bienici and agorastore (all isolated, under 1 % of runs) are now
+  tolerated too, which is the intent; and because the strip refuses an empty remainder, a source
+  whose very first run fails still alerts once — a brand-new source has no observation to be judged
+  against, and hiding it would be the worse error.
 
 - **`RENT_FEED_SILENT_DAYS` should stay under `IMAP_SINCE_DAYS` — and `doctor` WARNS, it does not refuse.**
   This shipped as a hard startup refusal on 2026-08-28 and was demoted the next day, because **both

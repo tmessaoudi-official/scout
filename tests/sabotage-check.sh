@@ -688,11 +688,26 @@ run_sabotage "run threshold raised out of reach — empty AND failed (a dead sou
 
 run_sabotage "an isolated failure is announced again (the in'li flap returns)" \
   src/php/Core/RunStore.php \
-  's%if ($failedStreak > 0 && $failedStreak < self::EMPTY_RUNS_BEFORE_BROKEN) {%if (false) {%'
+  's%$observed = self::observedRuns($runs);%$observed = $runs;%'
 
 run_sabotage "every failure is tolerated for ever, however long the streak (a dead source stays OK)" \
   src/php/Core/RunStore.php \
-  's%$failedStreak > 0 && $failedStreak < self::EMPTY_RUNS_BEFORE_BROKEN%$failedStreak > 0%'
+  's%($episode) >= self::EMPTY_RUNS_BEFORE_BROKEN%($episode) >= 99%'
+
+# The trailing-only version of the rule, which is what shipped first and what the LIVE car store
+# refuted: leboncoin's failure sat three runs from the end, so a 308-run empty streak still
+# truncated to 3 — and a streak rebuilding through 1 and 2 reports OK, which is *retablie* plus a
+# wiped cooldown. The flap survived its own fix on the one source the fix was not about.
+# `$emptyStreak` is counted in `$observed`, so the streak's start index must be too. Mixing them
+# lands one row early and averages a run the streak already contains — a 25-listing baseline was
+# reported as 12.5, and it was an existing test that caught it, not review.
+run_sabotage "the empty streak is counted in one array and indexed in the other" \
+  src/php/Core/RunStore.php \
+  's%($observed) - $emptyStreak%($runs) - $emptyStreak%'
+
+run_sabotage "the strip is trailing-only again (an interior hiccup truncates a dead feed's streak)" \
+  src/php/Core/RunStore.php \
+  's%self::observedRuns($runs)%array_slice($runs, 0, count($runs) - $failedStreak)%'
 
 run_sabotage "a tolerated failure is no longer named, so another verdict buries the exception" \
   src/php/Core/RunStore.php \
@@ -724,7 +739,7 @@ run_sabotage "drop-below-mean warning threshold neutralised" \
 
 run_sabotage "unknown baseline treated as a zero baseline (broken-after-a-gap reads OK)" \
   src/php/Core/RunStore.php \
-  's%$baseline = self::lastProductiveCount($runs, $streakStart);%$baseline = 0.0;%'
+  's%$baseline = self::lastProductiveCount($observed, $streakStart);%$baseline = 0.0;%'
 
 run_sabotage "trailing Z no longer normalised (parsed in the host timezone)" \
   src/php/Core/RunStore.php \

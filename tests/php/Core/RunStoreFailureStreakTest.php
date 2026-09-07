@@ -182,6 +182,53 @@ final class RunStoreFailureStreakTest extends TestCase
     }
 
     /**
+     * THE CASE THE FIXTURES COULD NOT REACH, found by running the new verdict against a copy of the
+     * live car store on 2026-09-07 — not by any test.
+     *
+     * leboncoin's failure sat THREE runs from the end, so a trailing-only rule still let it truncate
+     * a 308-run empty streak to 3. That is not cosmetic: the streak rebuilding through 1 and 2
+     * reports OK, and OK is *rétablie* plus a wiped cooldown, then BROKEN again at 3 — the flap the
+     * whole change exists to remove, surviving on the one source it was not about.
+     *
+     * A tolerated failure is therefore dropped WHEREVER it sits, and the streak spans it.
+     */
+    public function testAnInteriorFailureDoesNotTruncateALongEmptyStreak(): void
+    {
+        $now = strtotime('2026-09-07T09:00:00Z');
+        $this->seed('leboncoin', [
+            ...self::healthy(5),
+            ...array_fill(0, 12, [0, true]),
+            [0, false],
+            ...array_fill(0, 3, [0, true]),
+        ], $now);
+
+        $health = $this->store->health('leboncoin', gmdate('Y-m-d\TH:i:s\Z', $now));
+
+        self::assertSame(SourceStatus::BROKEN, $health->status);
+        self::assertSame(15, $health->consecutiveEmptyRuns, 'the streak spans the tolerated failure rather than restarting after it');
+    }
+
+    /**
+     * THE COUNTERWEIGHT to the case above, and it is what stops "tolerate" becoming "ignore": a
+     * failure episode AT the threshold is a real outage, is kept, and breaks the streak exactly as
+     * it always did. Without this, dropping every failure everywhere would pass the test above.
+     */
+    public function testARealOutageStillBreaksTheEmptyStreak(): void
+    {
+        $now = strtotime('2026-09-07T09:00:00Z');
+        $this->seed('leboncoin', [
+            ...self::healthy(5),
+            ...array_fill(0, 12, [0, true]),
+            ...array_fill(0, 3, [0, false]),
+            ...array_fill(0, 3, [0, true]),
+        ], $now);
+
+        $health = $this->store->health('leboncoin', gmdate('Y-m-d\TH:i:s\Z', $now));
+
+        self::assertSame(3, $health->consecutiveEmptyRuns, 'three consecutive failures are an outage, not a hiccup, and the streak restarts after them');
+    }
+
+    /**
      * `doctor` must not say "165 annonces au dernier run" when the last run FAILED. The count is
      * real and it is the last one observed — the detail line has to say that is what it is, or this
      * change buys quiet by making the operator's own instrument lie.
