@@ -2954,7 +2954,14 @@ tool/guard) and say which ones the fix covers.**
   rounds by the SAME reviewer over the same frozen span, `advisor()` at the developer's ruling on
   both. That is weaker than the ladder's MAXIMAL tier, which asks for fresh-context lenses; the
   three reviewer agents were offered at both gates and declined at both. The suite record backing it
-  is `test:2026-09-07`, passing on the reviewed tree.
+  is `test:2026-09-07` — **which at the time meant the 13:32 record at `348271a`, a descendant of the
+  reviewed `4ae6a4f`; pinned to that sha on 2026-09-07 22:20 because the date alone had already
+  stopped meaning it.** A `test:<date>` ref resolves to the NEWEST record of that date, so this
+  pointer moved three minutes later (run3, `37258d3`) and again on the next same-day run
+  (`7193aa4`, 22:18). All three pass and all three descend from `4ae6a4f`, so the claim never became
+  untrue — only unmoored, which is the failure this plan keeps paying for in a different costume.
+  (Everything else in this 13:33 entry is SUPERSEDED by the entries below it: the panel retracted
+  rounds 10 and 11, and row 35 closed at its cap by ruling rather than by convergence.)
 
   **One line read and not run**: `CarScout`'s alert loop consumes this change through the shared
   `RunStore`, and the verdicts were verified on a live copy of the car store — but that loop itself
@@ -3374,6 +3381,36 @@ tool/guard) and say which ones the fix covers.**
   932/142 — no collapse, no explosion, and the digest branch exercised with the new gate in it. Car:
   6 sources, 248 annonces, 222 correspondances. Zero PHP diagnostics on either. The three stderr
   warnings are the same three SeLoger identity hashes the outgoing build emitted, so nothing new.
+
+- [2026-09-07 22:20] RECORD (**close-out bookkeeping — two Known-issues bullets had outlived the rows
+  they describe, and the deployed image had fallen one docblock behind**). Landed as `7193aa4`.
+  Row 35's bullet still read *"UNMET and IN FLIGHT, round 4 frozen at `5b030fe`"* and told any
+  mechanical reader to treat the row as `doing`, never `certified` — while the block itself read
+  `done` at `8055943`, closed at the cap by ruling. The bullet was instructing readers to distrust
+  the one artefact that had become right. Row 41's read *"recorded not fixed"* though
+  `Core/SameFilterWarning` has existed since `2553c94` with a test record; it now says what the
+  instrument covers and keeps only the two residuals that really are open.
+
+  **The redeploy exposed a wedge worth recording.** `f6fdbd4` touched
+  `src/php/Rent/Cli/DigestBatch.php` — verified comment-only, two docblocks merged, `+1 −2` — so
+  behaviour was already current while `tools/verify-deploy.sh`'s image-age question went red.
+  Rebuilding beat writing a caveat: a check that reports a problem which is *actually fine* is a
+  check that stops being read. A 300 s foreground `timeout` on `docker compose up -d` then SIGTERM'd
+  compose mid-recreate — the stop grace period is minutes — leaving both containers `created` and a
+  hex-prefixed leftover holding the car service's name. **That is the exact state the verifier was
+  written for, reproduced by accident**, and it caught it twice: once for the wedge, and again when
+  the recovery left the car watcher RUNNING under the leftover name, where the tool's own suggested
+  `docker rm -f` would have killed a live watcher rather than a corpse. Read that suggestion before
+  running it. A force-recreate of the one service reclaimed the name; all four questions are green.
+  **Run long compose operations detached (`setsid`), never under a foreground `timeout`** — Rule 15's
+  process-group hazard, met on a deploy rather than on a push.
+
+  Suite recorded at HEAD: `php tools/phpunit.phar`, pass, 70 s, `dirty=0`, at `7193aa4` — the first
+  record since `37258d3`, eight commits back. **No status row cites `test:2026-09-07`**, so that run
+  re-pointed no certification; the one PROSE reference that did is pinned to its sha above.
+  **No new status row was added for this.** It is bookkeeping on a plan already at 205 of 208 points,
+  and rows 8 and 42 show what such a row costs: `evidence: -`, which the collector reports as
+  `unverifiable` for ever. The commits are the record.
 
 <!-- progress-block v1 -->
 | # | Step | Size | State | Evidence | Files |
