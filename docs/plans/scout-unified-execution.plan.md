@@ -2883,6 +2883,16 @@ tool/guard) and say which ones the fix covers.**
   genuinely dead source is named ~30 minutes later than before. leboncoin is left alone by developer
   ruling — the portal has sent nothing since 26/27 August, so that verdict is honest.
 
+- [2026-09-07 12:43] AGREED (**round 9 tier: `advisor()` only; the compound triage lands FIRST**).
+  The developer's answers at this gate, both against the standing per-gate question. **Freeze:
+  `c6e29e0`.** Span under review is `dfc49e8..c6e29e0` — 7 commits, 16 files, +1026/−98: round 8's
+  own §1 fixes (`422e27a`), the health flap and its live-data correction, the ledger case that
+  reported detection it did not have, and the compound triage. Operational surfaces are touched
+  (`src/php/Core/RunStore.php`), so the mechanical carve-out does not apply — but the tier is the
+  developer's call and it is `advisor()`, not the panel. A clean round moves the two-clean counter
+  to **1**; any finding resets it to **0**. The triage was taken first for a stated reason: it is
+  ledger work, and landing it after the freeze would have reset the counter again.
+
 <!-- progress-block v1 -->
 | # | Step | Size | State | Evidence | Files |
 |---|------|------|-------|----------|-------|
