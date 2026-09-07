@@ -2864,6 +2864,25 @@ tool/guard) and say which ones the fix covers.**
   push. Only A7's read-only report looks backward.
 
 ## Status
+- [2026-09-07 10:06] AGREED (**a single failed run is no longer a broken source** — threshold 3,
+  and the count-based verdicts stop reading a failed run at all). The developer asked why in'li was
+  sending *broken* then *rétablie* many times a day, and asked for the CAUSE before the fix. Cause,
+  measured: **the portal's.** 44 of in'li's 59 failures are an HTTP 302 to its own `/maintenance`,
+  the rest host-specific TCP refusals; cityloger, logirep and seloger failed **0 times in 632+
+  runs** through the identical stack, and a live probe answered 200 three times running. Volume:
+  **29 broken + 30 rétablie from in'li in four days**, 77 flap emails across both domains, because
+  `if (!$lastOk)` fired on ONE failure and every recovery CLEARED the cooldown row.
+  **The advisor pass changed the shape of the fix before any code was written**, and it was right:
+  a threshold alone would have moved the noise, not removed it — `WARN_DROP` reads the failed run's
+  `item_count` of 0 against a mean of 165, and `!isAlerting()` reads it as RECOVERY, so a source
+  with a standing alert would announce itself recovered on a hiccup and re-alert with its cooldown
+  gone. Both are hard rule 9 at the health layer. So a sub-threshold trailing failure is not an
+  observation and is stripped from the count-based verdicts, while `STALE` and `WARN_FLAKY` keep the
+  whole log because they are about ATTEMPTS. Measured cost, from the live episode-length
+  distribution (42×1, 5×2, 4×3, 1×5 rent; 5×1 car): 57 alerting episodes become 5. Stated cost: a
+  genuinely dead source is named ~30 minutes later than before. leboncoin is left alone by developer
+  ruling — the portal has sent nothing since 26/27 August, so that verdict is honest.
+
 <!-- progress-block v1 -->
 | # | Step | Size | State | Evidence | Files |
 |---|------|------|-------|----------|-------|
@@ -2921,9 +2940,10 @@ tool/guard) and say which ones the fix covers.**
 | 52 | C2 round 7 — three lenses NOT CLEAN (2 P0, 3 P1, 10 P2, 8 P3); every finding fixed with a test that reddens on its removal | L | done | 676602a | src/php/Rent/Cli/DigestBatch.php src/php/Car/Cli/CarScout.php src/php/Rent/Cli/RentScout.php .github/workflows/ci.yml |
 | 53 | The page-walk sleep was the symmetric surface of the detail one — same seam, count asserted, ledger case | S | done | 7134f16 | src/php/Rent/Adapters/HtmlSource.php tests/php/Rent/Adapters/HtmlSourceTest.php tests/sabotage-check.sh |
 | 54 | The 2026-09-06 nightly's triage — six shadowed layers re-run at HEAD, three real gaps given tests | M | done | 3422225 | tests/sabotage-check.sh tests/php/Rent/Cli/PipelineRunTest.php tests/php/Core/RecoverableFormsTest.php |
-| 55 | C2 round 8 P0 — §1's own reading was below the split and its THIRD persisted route was read by nobody but Pipeline | L | done | - | src/php/Rent/Core/ExcludedDwellings.php src/php/Rent/Cli/RentScout.php src/php/Rent/Cli/Pipeline.php tests/php/Rent/Cli/RentScoutDigestTest.php |
-| 56 | C2 round 8 P1 — a refused retry counted as drained, so the remainder line went silent on both domains | M | done | - | src/php/Rent/Cli/DigestBatch.php src/php/Rent/Cli/RentScout.php src/php/Car/Cli/CarScout.php tests/php/Car/Cli/CarScoutTest.php |
-| 57 | C2 round 8 P2/P3 — drifted ledger counts, three classes absent from both Core inventories, a de-indented declaration | S | done | - | CLAUDE.md .github/workflows/ci.yml tests/test-ci-workflow.sh src/php/Car/Cli/CarScout.php |
+| 55 | C2 round 8 P0 — §1's own reading was below the split and its THIRD persisted route was read by nobody but Pipeline | L | done | 422e27a | src/php/Rent/Core/ExcludedDwellings.php src/php/Rent/Cli/RentScout.php src/php/Rent/Cli/Pipeline.php tests/php/Rent/Cli/RentScoutDigestTest.php |
+| 56 | C2 round 8 P1 — a refused retry counted as drained, so the remainder line went silent on both domains | M | done | 422e27a | src/php/Rent/Cli/DigestBatch.php src/php/Rent/Cli/RentScout.php src/php/Car/Cli/CarScout.php tests/php/Car/Cli/CarScoutTest.php |
+| 57 | C2 round 8 P2/P3 — drifted ledger counts, three classes absent from both Core inventories, a de-indented declaration | S | done | 422e27a | CLAUDE.md .github/workflows/ci.yml tests/test-ci-workflow.sh src/php/Car/Cli/CarScout.php |
+| 58 | The health flap — one failed run was BROKEN and every recovery wiped the cooldown; a failed run's zero is no longer read as an observation | M | done | - | src/php/Core/RunStore.php tests/php/Core/RunStoreFailureStreakTest.php tests/php/Rent/Store/StoreTest.php tests/php/Rent/Store/StoreFeedSilenceTest.php tests/sabotage-check.sh CLAUDE.md |
 <!-- /progress-block -->
 ### Blocked
 

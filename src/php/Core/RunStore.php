@@ -501,7 +501,43 @@ final readonly class RunStore
         // and `$nowIso` is used for exactly one thing below: STALE, which genuinely cannot be
         // derived without a clock. It never filters, reorders or discards a run.
 
-        $last = $runs[array_key_last($runs)];
+        // A TRAILING FAILED RUN BELOW THE THRESHOLD IS NOT AN OBSERVATION (2026-09-07).
+        //
+        // `if (!$lastOk)` fired on ONE failure while the empty path had required three since it was
+        // written, and `alertOnHealth()` reads the next successful pass as recovery: it sends
+        // *retablie* and CLEARS the cooldown row, so the cooldown could never damp anything.
+        // Measured over four days, in'li alone sent 29 broken + 30 retablie out of 428 runs while
+        // returning 165 annonces on the passes either side. The fault was the portal's -- 44 of its
+        // 59 failures are an HTTP 302 to its own /maintenance -- and three other sources failed 0
+        // times in 632+ runs through this same stack.
+        //
+        // A THRESHOLD ALONE WOULD HAVE MOVED THE NOISE, not removed it, because two branches below
+        // read the failed run's `item_count` of 0 as an observation: `WARN_DROP` fires at
+        // `lastCount < rollingMean * 0.3`, and `!isAlerting()` reads as RECOVERY -- so a source
+        // with a real standing alert would announce itself recovered on a hiccup and re-alert with
+        // its cooldown wiped. Both are hard rule 9 at this layer: a failed run's zero is UNKNOWN,
+        // not "zero annonces", and it is no more evidence of recovery than of a drop.
+        // `rollingMeanBefore()` already knew that and filters on `ok = 1`; nothing else did.
+        //
+        // So the count-based verdicts judge `$observed`. `STALE` and `WARN_FLAKY` keep the WHOLE
+        // log on purpose -- they are about ATTEMPTS, and a failure is a perfectly good attempt.
+        // Stripping also stops one hiccup resetting a long empty streak, which it did.
+        //
+        // The strip needs something BEHIND it: a source whose entire history is failures has no
+        // observation to fall back on, and reporting OK there would hide a source misconfigured on
+        // the day it was added. That is why an empty remainder is refused rather than accepted.
+        $failedStreak = self::trailingFailedRuns($runs);
+        $observed = $runs;
+
+        if ($failedStreak > 0 && $failedStreak < self::EMPTY_RUNS_BEFORE_BROKEN) {
+            $behind = \array_slice($runs, 0, \count($runs) - $failedStreak);
+
+            if ($behind !== []) {
+                $observed = $behind;
+            }
+        }
+
+        $last = $observed[array_key_last($observed)];
         $lastCount = (int) $last['item_count'];
         $lastOk = (int) $last['ok'] === 1;
 
@@ -543,18 +579,29 @@ final readonly class RunStore
             }
         }
 
-        $emptyStreak = self::trailingEmptyRuns($runs);
-        $rollingMean = self::rollingMeanBefore($runs, \count($runs) - 1);
+        $emptyStreak = self::trailingEmptyRuns($observed);
+        $rollingMean = self::rollingMeanBefore($observed, \count($observed) - 1);
         $edge = $nowIso === null ? null : self::epoch($nowIso);
         [$runsInWindow, $failedInWindow] = self::windowCounts($runs, $edge);
         // The SHORT window, computed from the same rows and bounded above by the same clock —
         // a future-stamped success must not dilute this one either (Track 6-A1).
         [$runsInShortWindow, $failedInShortWindow] = self::windowCounts($runs, $edge, self::FLAKY_SHORT_WINDOW_DAYS);
 
+        // A TOLERATED FAILURE IS SAID ON EVERY VERDICT, not just on OK. The note lives in the one
+        // place every status passes through, because the first version put it in the OK branch
+        // alone -- and `testAFailedRunOutranksASilentFeed` proved what that costs: the source came
+        // back FEED_SILENT and the exception was buried, which is the very thing that test's
+        // docblock forbids. One surface, or it is forgotten on the next verdict added.
+        $tolerated = $observed === $runs ? '' : sprintf(
+            ' — %d échec(s) récent(s) toléré(s), alerte à %d',
+            $failedStreak,
+            self::EMPTY_RUNS_BEFORE_BROKEN,
+        );
+
         $health = static fn (SourceStatus $status, string $detail): SourceHealth => new SourceHealth(
             sourceName: $sourceName,
             status: $status,
-            detail: $detail,
+            detail: $detail . $tolerated,
             consecutiveEmptyRuns: $emptyStreak,
             lastSuccessAt: $lastSuccessAt,
             lastFailureAt: $lastFailureAt,
@@ -567,7 +614,8 @@ final readonly class RunStore
 
         if (!$lastOk) {
             return $health(SourceStatus::BROKEN, sprintf(
-                'dernier run en échec (%s) : %s',
+                '%d run(s) consécutif(s) en échec — dernier (%s) : %s',
+                $failedStreak,
                 (string) $last['at'],
                 $last['error'] ?? 'erreur non renseignée',
             ));
@@ -724,6 +772,28 @@ final readonly class RunStore
     }
 
     // ---- private helpers of the health cluster ----
+
+    /**
+     * How many of the most recent runs FAILED — the mirror of {@see trailingEmptyRuns()}, and the
+     * reason both exist: "the source answered and had nothing" and "the source did not answer" are
+     * different diagnoses, so each gets its own streak and neither extends the other.
+     *
+     * @param list<array{ok:int|string, ...}> $runs
+     */
+    private static function trailingFailedRuns(array $runs): int
+    {
+        $streak = 0;
+
+        foreach (array_reverse($runs) as $run) {
+            if ((int) $run['ok'] === 1) {
+                break;
+            }
+
+            ++$streak;
+        }
+
+        return $streak;
+    }
 
     /**
      * How many of the most recent runs succeeded and returned nothing.

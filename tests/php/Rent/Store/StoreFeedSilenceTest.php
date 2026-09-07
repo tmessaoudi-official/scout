@@ -143,9 +143,31 @@ final class StoreFeedSilenceTest extends TestCase
     public function testAFailedRunOutranksASilentFeed(): void
     {
         $this->store->recordRun('leboncoin', 3, true, null, '2026-08-27T09:00:00Z', feedNewestAt: '2026-08-26T07:33:06Z');
-        $this->store->recordRun('leboncoin', 0, false, 'IMAP connection timed out', '2026-08-29T09:00:00Z', feedNewestAt: null);
+
+        // THREE failures, not one, since 2026-09-07: a single failed run is tolerated rather than
+        // announced. The ordering this test exists for is unchanged — once the failure is a verdict
+        // at all, it outranks the silence.
+        foreach (['2026-08-29T07:00:00Z', '2026-08-29T08:00:00Z', '2026-08-29T09:00:00Z'] as $at) {
+            $this->store->recordRun('leboncoin', 0, false, 'IMAP connection timed out', $at, feedNewestAt: null);
+        }
 
         self::assertSame(SourceStatus::BROKEN, $this->store->health('leboncoin', '2026-08-29T09:00:00Z', 3)->status);
+    }
+
+    /**
+     * THE OTHER HALF, and the one a tolerated failure could quietly take away: below the threshold
+     * the verdict is the feed's, but the exception is NOT buried. The note rides on every verdict,
+     * not just on OK — the first cut put it in the OK branch alone and this case is what caught it.
+     */
+    public function testAToleratedFailureIsStillNamedOnASilentFeedVerdict(): void
+    {
+        $this->store->recordRun('leboncoin', 3, true, null, '2026-08-27T09:00:00Z', feedNewestAt: '2026-08-26T07:33:06Z');
+        $this->store->recordRun('leboncoin', 0, false, 'IMAP connection timed out', '2026-08-29T09:00:00Z', feedNewestAt: null);
+
+        $health = $this->store->health('leboncoin', '2026-08-29T09:00:00Z', 3);
+
+        self::assertSame(SourceStatus::FEED_SILENT, $health->status);
+        self::assertStringContainsString('toléré', $health->detail, 'a tolerated failure must not vanish behind another verdict');
     }
 
     /**

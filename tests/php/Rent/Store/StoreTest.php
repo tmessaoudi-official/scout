@@ -468,16 +468,39 @@ final class StoreTest extends TestCase
         self::assertSame(SourceStatus::WARN_DROP, $this->store->health('inli')->status);
     }
 
-    /** A failed fetch is a failure, not an empty result — `CLAUDE.md` hard rule 3. */
+    /**
+     * A failed fetch is a failure, not an empty result — `CLAUDE.md` hard rule 3.
+     *
+     * Asserted at the THRESHOLD since 2026-09-07 (a single failure is tolerated), and the point is
+     * the PAIR: both shapes reach `BROKEN`, and each names its own cause. Collapsing them — an
+     * empty streak reported as an exception, or an exception reported as "rien trouvé" — is the
+     * confusion hard rule 3 exists to prevent, and only the two assertions together forbid it.
+     */
     public function testAFailedRunIsDistinguishedFromAnEmptyOne(): void
     {
         $this->store->recordRun('inli', 12, true, null, '2026-08-01T09:00:00+00:00');
-        $this->store->recordRun('inli', 0, false, 'HTTP 503', '2026-08-02T09:00:00+00:00');
 
-        $health = $this->store->health('inli');
+        foreach ([2, 3, 4] as $day) {
+            $this->store->recordRun('inli', 0, false, 'HTTP 503', sprintf('2026-08-%02dT09:00:00+00:00', $day));
+        }
 
-        self::assertSame(SourceStatus::BROKEN, $health->status);
-        self::assertStringContainsString('HTTP 503', $health->detail);
+        $failed = $this->store->health('inli');
+
+        self::assertSame(SourceStatus::BROKEN, $failed->status);
+        self::assertStringContainsString('HTTP 503', $failed->detail);
+        self::assertStringContainsString('en échec', $failed->detail);
+
+        $this->store->recordRun('quiet', 12, true, null, '2026-08-01T09:00:00+00:00');
+
+        foreach ([2, 3, 4] as $day) {
+            $this->store->recordRun('quiet', 0, true, null, sprintf('2026-08-%02dT09:00:00+00:00', $day));
+        }
+
+        $empty = $this->store->health('quiet');
+
+        self::assertSame(SourceStatus::BROKEN, $empty->status);
+        self::assertStringContainsString('à vide', $empty->detail);
+        self::assertStringNotContainsString('en échec', $empty->detail, 'an empty streak must not be reported as an exception');
     }
 
     // ── Identity details the fallback key depends on ──────────────────────────────────────────────
@@ -549,7 +572,15 @@ final class StoreTest extends TestCase
         self::assertSame([], $this->store->priceHistory('inli:id:never-recorded'));
     }
 
-    /** A failed run is not an empty run — the source did not answer, it did not answer "nothing". */
+    /**
+     * A failed run is not an empty run — the source did not answer, it did not answer "nothing".
+     *
+     * The streak counts the two EMPTY runs and stops there. Before 2026-09-07 this asserted `0`,
+     * which conflated two different facts: a tolerated failure neither EXTENDS the streak (that
+     * would be 3, and is what reading a failure as "nothing found" gives) nor RESETS it. Resetting
+     * was its own defect — it bought a dead feed three more passes of silence for every hiccup, on
+     * a source like leboncoin whose streak was in the hundreds.
+     */
     public function testAFailedRunDoesNotExtendTheEmptyStreak(): void
     {
         $this->store->recordRun('inli', 12, true, null, '2026-08-01T09:00:00+00:00');
@@ -557,7 +588,10 @@ final class StoreTest extends TestCase
         $this->store->recordRun('inli', 0, true, null, '2026-08-03T09:00:00+00:00');
         $this->store->recordRun('inli', 0, false, 'timeout', '2026-08-04T09:00:00+00:00');
 
-        self::assertSame(0, $this->store->health('inli')->consecutiveEmptyRuns);
+        $streak = $this->store->health('inli')->consecutiveEmptyRuns;
+
+        self::assertSame(2, $streak, 'the streak is the empty runs, and the failure is neither one of them nor a reset');
+        self::assertNotSame(3, $streak, 'a failed run counted as an empty one is hard rule 3 at the health layer');
     }
 
     /** A source that starts producing again is healthy again; the streak is trailing, not cumulative. */
@@ -1656,8 +1690,12 @@ final class StoreTest extends TestCase
         self::assertSame(SourceStatus::WARN_FLAKY, $quieted->status);
         self::assertTrue($quieted->status->isAlerting(), 'a late-committed success silenced the alert');
 
-        // …and one poll later the sharper verdict is back.
-        $this->store->recordRun('inli', 0, false, 'HTTP 502', '2026-08-10T09:45:00+00:00');
+        // …and three polls later the sharper verdict is back. THREE since 2026-09-07: one failure
+        // after a success is tolerated, so restoring `BROKEN` now takes a streak — which is the
+        // guarantee this half is really about, that the sharper verdict RETURNS.
+        foreach (['09:15:00', '09:30:00', '09:45:00'] as $time) {
+            $this->store->recordRun('inli', 0, false, 'HTTP 502', '2026-08-10T' . $time . '+00:00');
+        }
 
         $health = $this->store->health('inli', '2026-08-10T10:00:00+00:00');
 

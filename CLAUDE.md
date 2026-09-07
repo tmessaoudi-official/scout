@@ -2254,6 +2254,37 @@ var/claude/                 Reports, review outputs — gitignored scratch (hand
   `ok` with real counts. **The counterweight run is the load-bearing half of that sentence:** a
   verdict that fires on every source is indistinguishable from one that fires on none, and only a
   pass showing both outcomes at once separates them.
+- **A SINGLE FAILED RUN WAS A BROKEN SOURCE, AND THE COOLDOWN COULD NOT DAMP IT (2026-09-07).**
+  `RunStore::health()` returned `BROKEN` on ONE failed run, while the empty path had required three
+  since it was written. `Pipeline::alertOnHealth()` then read the next successful pass as recovery,
+  sent *rétablie* and CLEARED the cooldown row — so every isolated blip cost exactly two emails and
+  the cooldown could never apply to anything. Measured over four days: **in'li alone sent 29 broken
+  + 30 rétablie out of 428 runs**, while returning 165 annonces on the passes either side; 77 flap
+  emails across both domains. **The fault was the portal's, and that was measured rather than
+  assumed**: 44 of in'li's 59 failures are an HTTP 302 to its own `/maintenance`, the rest are
+  host-specific TCP refusals, and cityloger, logirep and seloger failed **0 times in 632+ runs**
+  through the identical stack — nothing on our side is that selective — while a live probe answered
+  200 three times running. **A THRESHOLD ALONE WOULD HAVE MOVED THE NOISE RATHER THAN REMOVED IT**,
+  and that is the half worth carrying: two branches downstream read the failed run's `item_count` of
+  0 as an observation. `WARN_DROP` fires at `lastCount < rollingMean * 0.3`, and 0 against a mean of
+  165 clears it, so the same flap continues under a different subject line; and `!isAlerting()`
+  reads as RECOVERY, so a source with a real standing alert announces itself recovered on a hiccup
+  and re-alerts with its cooldown wiped. Both are **hard rule 9 at the health layer** — a failed
+  run's zero is *unknown*, not *zero annonces*, and it is no more evidence of recovery than it is of
+  a drop. `rollingMeanBefore()` already knew that and filters on `ok = 1`; nothing else did. So the
+  count-based verdicts judge the log with sub-threshold trailing failures REMOVED, while `STALE` and
+  `WARN_FLAKY` keep the whole log on purpose — they are about ATTEMPTS, and a failure is a perfectly
+  good attempt. Three things travel with it. **The strip needs an observation behind it**: a source
+  whose entire history is failures still reports `BROKEN`, or one misconfigured on the day it was
+  added would hide. **The tolerated failure is named on EVERY verdict**, from the one funnel every
+  status passes through — the first cut put that note in the `OK` branch alone, and
+  `testAFailedRunOutranksASilentFeed` is what caught it: the source came back `FEED_SILENT` with the
+  exception buried, the exact thing that test's own docblock forbids. **And it closed a second flap
+  nobody had measured**: `trailingEmptyRuns()` stopped at a failed run, so one hiccup RESET a dead
+  feed's empty streak and bought it three more silent passes — on leboncoin, whose streak was in the
+  hundreds. The threshold is `EMPTY_RUNS_BEFORE_BROKEN`, one constant for both shapes, so a future
+  tuning cannot move one and forget the other.
+
 - **`RENT_FEED_SILENT_DAYS` should stay under `IMAP_SINCE_DAYS` — and `doctor` WARNS, it does not refuse.**
   This shipped as a hard startup refusal on 2026-08-28 and was demoted the next day, because **both
   of its legs broke under review**. Its premise was *"the newest message `SEARCH SINCE` can match is

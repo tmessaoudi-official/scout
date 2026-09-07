@@ -677,9 +677,34 @@ run_sabotage "a failed run extends the empty streak (failure read as 'nothing fo
   src/php/Core/RunStore.php \
   "s%(int) \$run\['ok'\] !== 1 || %%"
 
-run_sabotage "empty-run threshold raised out of reach (a dead source stays OK)" \
+run_sabotage "run threshold raised out of reach — empty AND failed (a dead source stays OK)" \
   src/php/Core/RunStore.php \
   's%self::EMPTY_RUNS_BEFORE_BROKEN%99%'
+
+# ---- a single failed run is not a broken source (2026-09-07) -------------------------------------
+#
+# in'li sent 29 broken + 30 retablie in four days, out of 428 runs, while returning 165 annonces on
+# the passes either side. Every guarantee below is one the flap walked through.
+
+run_sabotage "an isolated failure is announced again (the in'li flap returns)" \
+  src/php/Core/RunStore.php \
+  's%if ($failedStreak > 0 && $failedStreak < self::EMPTY_RUNS_BEFORE_BROKEN) {%if (false) {%'
+
+run_sabotage "every failure is tolerated for ever, however long the streak (a dead source stays OK)" \
+  src/php/Core/RunStore.php \
+  's%$failedStreak > 0 && $failedStreak < self::EMPTY_RUNS_BEFORE_BROKEN%$failedStreak > 0%'
+
+run_sabotage "a tolerated failure is no longer named, so another verdict buries the exception" \
+  src/php/Core/RunStore.php \
+  's%detail: $detail . $tolerated,%detail: $detail,%'
+
+run_sabotage "one hiccup resets a dead feed's empty streak, buying it three more silent passes" \
+  src/php/Core/RunStore.php \
+  's%self::trailingEmptyRuns($observed)%self::trailingEmptyRuns($runs)%'
+
+run_sabotage "the drop warning reads the failed run's zero again (the flap under a new subject)" \
+  src/php/Core/RunStore.php \
+  "s%\$lastCount = (int) \$last\['item_count'\];%\$lastCount = (int) \$runs[array_key_last(\$runs)]['item_count'];%"
 
 run_sabotage "zero-baseline check removed (a genuinely quiet source is cried wolf on)" \
   src/php/Core/RunStore.php \
