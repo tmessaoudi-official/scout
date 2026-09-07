@@ -2395,6 +2395,33 @@ var/claude/                 Reports, review outputs — gitignored scratch (hand
   directives are `PHP_INI_ALL`, restored in `finally`; the child probe likewise) instead of
   finding it. **Run `gh run list --limit 5` after every push** — the notification half of CI is
   the nightly ledger's issue, not the fast job's, and a red fast job is silent.
+- **§1 HAS ONE GATE NOW, AND THE REASON IT EXISTS IS THE SHAPE OF THREE ROUNDS OF FAILURE
+  (`Rent/Cli/SectionOneGate`, 2026-09-07).** §1 is judged from FOUR persisted routes — the row's own
+  durable reading, the group veto, the cross-track twin, the same dwelling under another ad id —
+  across THREE announcing surfaces (`Pipeline`, the digest drain, `reclassify`). A certification
+  panel ran three rounds against that matrix and found 9, then 8, then 17; in every round the
+  majority of defects were in the PREVIOUS round's fixes, and *a fix landing on one of two symmetric
+  surfaces* was committed **five times, three of them inside the fix for the one before**. The defect
+  was never the keystroke: patching one cell of a 4×3 matrix leaves eleven.
+  **The gate reads ALL four routes, FRESH, at the LAST moment before every send.** Nothing hoisted,
+  nothing cached — a hoist is exactly what both round-3 P0s were — and `Store::excludedDwellings()`
+  is ~19 ms, run once per ANNOUNCEMENT rather than per listing, so a 90-match pass spends under two
+  seconds against a 15-minute cadence. The per-route checks upstream STAY: they shape the verdict
+  (an excluded reading is recorded, a doubt becomes a digest) and short-circuit work. The gate does
+  not replace them; it makes their ordering stop mattering for §1.
+  **`tests/php/Repo/SectionOneGateCallSitesTest.php` is the half that prevents recurrence**: it
+  DISCOVERS every file that sends a `->match(` notification and fails when one does not consult the
+  gate. Enumerating surfaces in prose failed twice — `ExcludedDwellings`'s docblock said "TWO
+  callers", then "THREE", and each time the commit editing that line added the uncounted one.
+- **A TOLERANCE BAND IS NOT AN EQUIVALENCE RELATION, and assuming it is cost a reverted fix
+  (2026-09-07).** `Dedup::within()` matches on ±30 € / 3 %, so it is NOT TRANSITIVE: three ad ids of
+  one flat 30 € apart chain, and the third sits inside the second's band and OUTSIDE the first's. A
+  session investigated the `Pipeline` staleness, could not build a reaching case, concluded the hole
+  was unreachable on the reasoning that *"every route that excludes one copy excludes the other"*,
+  **reverted a correct fix and wrote the reasoning into the plan**. A panel lens then executed the
+  push on the live path. **Failing to find a reaching case is not evidence that none exists** — and
+  when the argument turns on a predicate, check whether that predicate is transitive before relying
+  on it. `SectionOneGateTest::testANonTransitiveChainStillRefuses` pins the chain.
 - **A HOISTED READ IS STALE THE MOMENT THE LOOP IT GUARDS WRITES TO WHAT IT READ (2026-09-07, §1
   P0).** `reclassify` loaded `excludedDwellings()` once above its judging loop, with a comment
   borrowed from `Pipeline`: *"the candidate set is a property of the store, not of the row being
@@ -2442,9 +2469,13 @@ var/claude/                 Reports, review outputs — gitignored scratch (hand
   run needs a delivering channel like every promotion. **TWO routes are reported and deliberately
   NOT cleared** — the GROUP veto and the SAME DWELLING under another ad id — for one reason: each
   lives on ANOTHER row's own reading, and a listing that really says `PLS` keeps saying it, so the
-  command tells you the next pass will reject again while that holds and which listing to reopen
-  instead. **`--reopen` is therefore not a universal undo**, and a row held by either of those two
-  is not reversible by this command alone. Never a
+  command tells you the next pass will reject again while that holds. **`--reopen` is therefore not
+  a universal undo**, and a row held by either of those two is not reversible by this command alone.
+  **What it can name differs by route, and the difference is not cosmetic**: the SAME-DWELLING
+  warning names the offending listing's source and external id, while the GROUP warning names no
+  listing at all — a cluster veto comes from the siblings' readings collectively. Neither prints the
+  `dedup_key` that `--reopen=` actually takes, so "reopen it too" is guidance, not a command line.
+  Never a
   pattern, never "all" — the cost of a wrong re-open is a social-housing flat pushed as a match.
   `--dry-run` reports and clears nothing; an unknown key is refused and touches nothing. This
   closes F20's *"repair route still owed"*; the *"this row said PLS vs something linked to it said

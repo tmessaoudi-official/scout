@@ -21,57 +21,107 @@ final class ExcludedDwellingsCallersTest extends TestCase
 {
     private const string MATCHER = 'src/php/Rent/Core/ExcludedDwellings.php';
 
+    /**
+     * METHOD granularity, not file granularity.
+     *
+     * The first version collected `basename($file)`, so `RentScout::collectDigest()` and
+     * `RentScout::reclassify()` collapsed to the single token `RentScout` — and a panel proved both
+     * directions: deleting the `collectDigest` bullet left it green, and adding a FIFTH call site
+     * inside `RentScout` left it green too. That is exactly the population this guard exists for:
+     * BOTH §1 P0s of this milestone were a call site added inside a class the docblock already
+     * named.
+     */
     public function testEveryCallSiteIsNamedInTheDocblock(): void
     {
         $root = \dirname(__DIR__, 3);
         $doc = self::callerList($root);
+        $sites = self::callSites($root);
 
-        $found = [];
-        foreach ($this->phpFilesUnder($root . '/src') as $file) {
-            $body = (string) file_get_contents($file);
-            if (!str_contains($body, 'ExcludedDwellings::match(')) {
-                continue;
-            }
-            // The class NAMES itself; it is not one of its own callers.
-            if (realpath($file) === realpath($root . '/' . self::MATCHER)) {
-                continue;
-            }
-            $found[] = basename($file, '.php');
-        }
-        $found = array_values(array_unique($found));
-        sort($found);
+        self::assertNotSame([], $sites, 'premise: the matcher has call sites at all');
 
-        self::assertNotSame([], $found, 'premise: the matcher has callers at all');
-
-        foreach ($found as $class) {
-            self::assertStringContainsString(
-                $class,
-                $doc,
-                sprintf('%s calls ExcludedDwellings::match() and is not named in the docblock caller list', $class),
+        foreach ($sites as $site) {
+            [$class, $method] = $site;
+            self::assertTrue(
+                str_contains($doc, $class . '::' . $method) || str_contains($doc, $class . '}'),
+                sprintf(
+                    '%s::%s() calls ExcludedDwellings::match() and no bullet names it. §1 is judged '
+                        . 'from four persisted routes; a call site the enumeration does not know '
+                        . 'about is how two rounds of this panel found a P0.',
+                    $class,
+                    $method,
+                ),
             );
         }
     }
 
-    public function testTheDocblockNamesNoCallerThatNoLongerCalls(): void
+    /**
+     * THE COUNTERWEIGHT: every bullet must name a call site that really exists.
+     *
+     * Without it the test above is satisfied by listing every method in the tree. The first version
+     * of this counterweight iterated a hardcoded `['Pipeline', 'RentScout', 'Store']`, so an
+     * invented bullet passed — a panel proved it by inserting `Formatter::nothing()` and watching
+     * the suite stay green. This derives the truth from the source instead, so an invented bullet
+     * fails whatever it is called.
+     */
+    public function testEveryBulletNamesARealCallSite(): void
     {
         $root = \dirname(__DIR__, 3);
-        $doc = self::callerList($root);
+        $real = [];
+        foreach (self::callSites($root) as [$class, $method]) {
+            $real[] = $class . '::' . $method;
+        }
 
-        // The counterweight. Without it the test above is satisfied by naming every class in the
-        // tree, which is the "assert around the gap" shape this panel keeps finding.
-        foreach (['Pipeline', 'RentScout', 'Store'] as $class) {
-            if (!str_contains($doc, $class)) {
+        preg_match_all('/([A-Za-z]+)::([A-Za-z]+)\\(\\)/', self::callerList($root), $m, PREG_SET_ORDER);
+        self::assertNotSame([], $m, 'premise: the enumeration is parseable');
+
+        foreach ($m as $bullet) {
+            self::assertContains(
+                $bullet[1] . '::' . $bullet[2],
+                $real,
+                sprintf('the docblock names %s::%s(), which calls nothing', $bullet[1], $bullet[2]),
+            );
+        }
+    }
+
+    /**
+     * Every `ExcludedDwellings::match()` call site under `src/`, as [class, enclosing method].
+     *
+     * @return list<array{0: string, 1: string}>
+     */
+    private static function callSites(string $root): array
+    {
+        $sites = [];
+        $it = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($root . '/src', \FilesystemIterator::SKIP_DOTS),
+        );
+        foreach ($it as $entry) {
+            if (!$entry instanceof \SplFileInfo || $entry->getExtension() !== 'php') {
                 continue;
             }
-            $calls = false;
-            foreach ($this->phpFilesUnder($root . '/src') as $file) {
-                if (basename($file, '.php') !== $class) {
+            if (realpath($entry->getPathname()) === realpath($root . '/' . self::MATCHER)) {
+                continue; // the class does not call itself
+            }
+            $lines = file($entry->getPathname(), \FILE_IGNORE_NEW_LINES);
+            if ($lines === false) {
+                continue;
+            }
+            $class = basename($entry->getPathname(), '.php');
+            foreach ($lines as $i => $line) {
+                if (!str_contains($line, 'ExcludedDwellings::match(')) {
                     continue;
                 }
-                $calls = $calls || str_contains((string) file_get_contents($file), 'ExcludedDwellings::match(');
+                // Walk back to the nearest enclosing declaration.
+                for ($j = $i; $j >= 0; --$j) {
+                    if (preg_match('/function\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(/', $lines[$j], $m) === 1) {
+                        $sites[] = [$class, $m[1]];
+                        break;
+                    }
+                }
             }
-            self::assertTrue($calls, $class . ' is named as a caller but no longer calls the matcher');
         }
+        sort($sites);
+
+        return $sites;
     }
 
     /**

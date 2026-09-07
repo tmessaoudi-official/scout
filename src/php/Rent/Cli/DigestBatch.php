@@ -140,6 +140,26 @@ final readonly class DigestBatch
         return max(0, $this->waiting - $announced) + max(0, $this->waitingLowScore - $drained);
     }
 
+    /**
+     * Every key the retries hold — what a DRY RUN accounts for, having printed them all.
+     *
+     * A dry run drains nothing, so `$retriesDrained` is `0` there and the retries counted as still
+     * waiting BEYOND the batch — under a line the operator reads immediately after the `[RETRY]`
+     * lines listing them (C2 round 3, P1 on all three lenses). Round 2 taught `overflow()` that a
+     * dry run accounts for the batch and stopped at `entries` + `lowScore`; the retries are the
+     * third list and they are printed too. On a deployment with no `push_min_score` every queued
+     * row is a retry, so that was the whole queue on every dry run.
+     */
+    public function retryKeyCount(): int
+    {
+        $keys = 0;
+        foreach ($this->retries as $entry) {
+            $keys += \count($entry['keys']);
+        }
+
+        return $keys;
+    }
+
     public function unreadable(): int
     {
         return \count($this->warnings);

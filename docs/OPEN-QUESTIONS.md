@@ -1306,9 +1306,12 @@ exists, do not describe either veto as one-line reversible.
 > **THIS ENTRY CLAIMED *"either veto is therefore reversible by one named command"* AND THAT WAS
 > ALWAYS TOO STRONG** (C2 milestone panel round 2, P2). What one command reverses is the row's OWN
 > reading and its TWIN's. A row held by its GROUP or by the SAME DWELLING is not reversible by
-> `--reopen` at all: the command reports the route and names the listing whose reading you would
-> have to reopen instead. Closed, but narrower than the closure claimed — and the narrowing is the
-> §1-safe direction, which is why it is not being widened.
+> `--reopen` at all: the command reports the route, and for the SAME-DWELLING route it names the
+> offending listing's source and external id. **For the GROUP route it names no listing** — a
+> cluster veto comes from the siblings' readings collectively — and neither route prints the
+> `dedup_key` that `--reopen=` takes, so what you get is guidance rather than a command line.
+> Closed, but narrower than the closure claimed — and the narrowing is the §1-safe direction, which
+> is why it is not being widened.
 
 > **THE MISATTRIBUTION HALF IS CLOSED (2026-09-04, F20); THE REPAIR ROUTE IS STILL OWED, and the
 > two are worth keeping apart.** The reason now reads *"régime exclu (PLS) retenu pour cette

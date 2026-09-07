@@ -15,8 +15,7 @@ namespace Scout\Core;
  * The failure fields were added after a reviewer pointed out the obvious: a source failing half its
  * fetches has no way to say so, because `status` reads only the LAST run and the streak resets on
  * any success. Data that cannot reach the verdict object cannot reach the user either.
- */
-/**
+ *
  * TWO OF THESE FIELDS ARE COUNTED OVER DIFFERENT SETS OF RUNS, and that is deliberate rather than an
  * oversight (2026-09-07). `totalRuns`, `runsInWindow` and `failedRunsInWindow` count ATTEMPTS, so
  * they read the whole log — a failed run is a perfectly good attempt, and the flaky verdicts depend

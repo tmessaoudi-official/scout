@@ -479,7 +479,9 @@ final class RentScoutDigestTest extends TestCase
         $result = $this->scout($root, ['digest'], $channel);
 
         self::assertSame(1, Store::open($root . '/state/rent-watch.sqlite3')->pendingLowScoreCount(), 'premise: it did not drain');
-        self::assertStringContainsString('1 autre(s) en attente', $result['out'] . $result['err']);
+        // ANCHORED: '1 autre(s)' is a SUBSTRING of '21 autre(s)'. The rule was written in round 2
+        // and applied to one assertion of three (C2 round 3, P3).
+        self::assertMatchesRegularExpression('/(?<![0-9])1 autre\\(s\\) en attente/', $result['out'] . $result['err']);
     }
 
     // ── C2 round 7 (2026-09-05): §1 IS JUDGED FROM EVERY PERSISTED READING, not from this row ────
@@ -898,6 +900,30 @@ final class RentScoutDigestTest extends TestCase
 
         self::assertSame(0, $this->pendingDigestCount($root), 'premise: it really drained');
         self::assertStringNotContainsString('autre(s) en attente', $result['out'], 'there is no suite');
+    }
+
+    /**
+     * A DRY RUN ACCOUNTS FOR THE RETRIES IT PRINTED, not just for the batch.
+     *
+     * Round 2 taught `overflow()` that a dry run accounts for the batch and stopped at `entries` +
+     * `lowScore`. The RETRIES are the third list, printed as `[RETRY]` lines on the same output, and
+     * `$retriesDrained` is `0` on a dry run — so every retry was listed and then counted as an
+     * *other* waiting beyond itself. On a deployment with no `push_min_score` every queued row is a
+     * retry, so that was the entire queue on every dry run. All three round-3 lenses found it.
+     */
+    public function testADryRunAccountsForTheRetriesItJustListed(): void
+    {
+        $root = $this->tempRoot();
+        $this->seedQueuedMatch($root, $this->queueable('inli', 'RETRY-1'));
+
+        $result = $this->scout($root, ['digest', '--dry-run']);
+
+        self::assertStringContainsString('[RETRY]', $result['out'], 'premise: the retry was listed');
+        self::assertStringNotContainsString(
+            'autre(s) en attente',
+            $result['out'],
+            'the row it just printed is not ALSO an "other" waiting beyond it',
+        );
     }
 
     private function pendingDigestCount(string $root): int

@@ -1861,7 +1861,7 @@ final readonly class Store
      *
      * @return array{own: ?Tenure, twin: ?array{tenure: Tenure, source: string}, group: ?Tenure,
      *         dwelling: ?array{key: string, source: string, externalId: string, tenure: Tenure,
-     *         listing: RawListing, reason: string}}|null
+     *         listing: RawListing, reason: string}, dwellingReadable: bool}|null
      *         the provenance, or `null` when no such row exists — nothing is touched then
      */
     public function reopen(string $dedupKey, bool $dryRun = false): ?array
@@ -1882,10 +1882,19 @@ final readonly class Store
         // with a raw stack trace, cleared nothing, and re-judged no other row either — on the verb
         // documented as the ONE way back for a durably-excluded row (C2 round 2, P1 on all three
         // lenses). The other two call sites both catch exactly this pair.
+        $dwellingReadable = true;
         try {
             $evidence = $this->evidence($dedupKey);
         } catch (\JsonException | \InvalidArgumentException) {
+            // COULD NOT CHECK is not CHECKED AND CLEAR (C2 round 3, P2 on two lenses). Reporting the
+            // fourth route as `aucun` here told the operator all four routes were clear on a row
+            // whose snapshot merely would not decode — and the row's own reading had just been
+            // CLEARED, so they act on it. `Store::evidence()`'s own docblock refuses exactly this
+            // trade ("degrading it to `null` would make data loss indistinguishable from a row that
+            // never had one"); this made it at the reporting layer instead. The caller now has a
+            // third state to render.
             $evidence = null;
+            $dwellingReadable = false;
         }
         $provenance = [
             'own' => $this->tenure($dedupKey),
@@ -1894,6 +1903,9 @@ final readonly class Store
             'dwelling' => $evidence === null
                 ? null
                 : ExcludedDwellings::match($evidence, $this->excludedDwellings(), new Dedup()),
+            // `false` means the route could not be consulted at all — distinct from `null`, which
+            // means it was consulted and found nothing.
+            'dwellingReadable' => $dwellingReadable,
         ];
 
         // The DWELLING route is deliberately not cleared, for the group veto's exact reason: it is

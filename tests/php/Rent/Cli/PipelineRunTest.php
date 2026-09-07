@@ -2696,6 +2696,65 @@ final class PipelineRunTest extends TestCase
      * commission — so there is no in-pass edge to travel along and the store is the only place the
      * `PLS` survives.
      */
+    /**
+     * THE ROUND-3 P0, ON THE LIVE PUSH PATH: the tolerance band is NOT transitive.
+     *
+     * `Dedup::within()` is a band (30 € / 3 %), so "both copies of one flat are caught by the same
+     * veto" is false. Three ad ids 30 € apart chain: the third is inside the second's band and
+     * OUTSIDE the first's. The per-pass `$excludedDwellings` set is loaded once while judged
+     * tenures are written inside the loop, so the second's exclusion — resolved during this very
+     * pass — was invisible to the third, which was PUSHED. A panel lens executed it.
+     *
+     * An earlier session reverted a fix for this on the reasoning that the hole could not exist,
+     * having failed to build a reaching case. The reasoning was wrong because it assumed a
+     * tolerance band is an equivalence relation. `SectionOneGate` reads all four routes fresh at
+     * the send, so no ordering and no staleness inside a pass can route around it.
+     */
+    public function testANonTransitiveDwellingChainIsNotPushed(): void
+    {
+        $store = $this->store();
+        $channel = new RecordingChannel();
+        $pipeline = $this->pipeline($store, new Notifier([$channel]));
+
+        // c1 states PLS and lands on disk first, exactly as an earlier pass would leave it.
+        $pipeline->runOnce([
+            new FakeSource('cdc_habitat', [$this->listing('c1', [
+                'source' => 'cdc_habitat',
+                'fields' => ['financement' => 'PLS'],
+                'description' => '4 pieces de 88 m2, ascenseur.',
+                'rentCc' => 1450,
+            ])], mixedTenure: true),
+        ], self::NOW);
+
+        $channel->sent = [];
+
+        // ONE pass: b1 at 1480 (inside c1's band) and b2 at 1510 (inside b1's, outside c1's).
+        $pipeline->runOnce([
+            new FakeSource('bienici', [
+                $this->listing('b1', [
+                    'source' => 'bienici',
+                    'family' => 'private',
+                    'fields' => [],
+                    'description' => '4 pieces de 88 m2, ascenseur.',
+                    'rentCc' => 1480,
+                ]),
+                $this->listing('b2', [
+                    'source' => 'bienici',
+                    'family' => 'private',
+                    'fields' => [],
+                    'description' => '4 pieces de 88 m2, ascenseur.',
+                    'rentCc' => 1510,
+                ]),
+            ], family: 'private'),
+        ], '2026-08-08T12:00:00+02:00');
+
+        self::assertNotContains(
+            NotificationKind::MATCH,
+            array_map(static fn ($n) => $n->kind, $channel->sent),
+            '§1: the chain link is inside b1 tolerance even though it is outside c1 tolerance',
+        );
+    }
+
     public function testAReadvertisedFlatInheritsTheStoredExclusionAfterTheExcludedCopyIsGone(): void
     {
         $store = $this->store();

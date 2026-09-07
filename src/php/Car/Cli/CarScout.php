@@ -714,9 +714,11 @@ final readonly class CarScout
             }
         }
         if ($dryRun) {
-            // Nothing was attempted, so nothing drained — but the batch WAS listed above, so it is
-            // accounted for and the remainder means "beyond what you were just shown".
-            $this->reportRollupRemainder($waiting, $entries, 0, true);
+            // Nothing was attempted, so nothing drained — but the batch AND the retries were both
+            // listed above, so both are accounted for and the remainder means "beyond what you were
+            // just shown". Passing `0` here reported every `[RETRY]` line it had just printed as
+            // still waiting (C2 round 3, P1 on all three lenses).
+            $this->reportRollupRemainder($waiting, $entries, count($retries), true);
             $this->line('--dry-run : rien n\'a été envoyé, rien n\'a été marqué comme émis.');
 
             return 0;

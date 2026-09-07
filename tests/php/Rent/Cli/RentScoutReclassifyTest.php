@@ -686,6 +686,59 @@ final class RentScoutReclassifyTest extends TestCase
         self::assertSame(0, $result['code'], $result['err']);
         self::assertStringContainsString('réouverture', $result['out']);
         self::assertNull($this->tenureOf($root, $key), 'the reading must still be cleared');
+        // AND THE REPORT SAYS THE ROUTE WAS NOT CHECKED. Printing `aucun` here asserted a negative
+        // the command never established, on a row whose own reading it had just cleared — so the
+        // operator is told all four routes are clear and acts on it (C2 round 3, P2 on two lenses).
+        self::assertStringContainsString(
+            'même logement : INDÉTERMINÉ',
+            $result['out'],
+            'could-not-check is not checked-and-clear',
+        );
+        self::assertStringNotContainsString('même logement : aucun', $result['out']);
+    }
+
+    /**
+     * THE GROUP ROUTE GOES STALE IN THE SAME LOOP, AND THE DWELLING FILTER CANNOT SEE IT.
+     *
+     * Round 2 re-checked promotions through `ExcludedDwellings::match()` only. `group_key` is a
+     * DIFFERENT predicate and a STICKY one — the repo's own rule is *"group_key is never cleared"* —
+     * while `sameFlatReason` is a tolerance band. So a rent drop past 30 € (an event this tool
+     * exists to detect) leaves the cluster edge standing while the dwelling predicate stops
+     * matching, and the round-2 filter misses precisely what the group would catch.
+     *
+     * `staleVerdicts()` orders `seen_epoch DESC`, so the newer ad is judged FIRST and its sibling
+     * resolves PLS afterwards — the ordering round 2's own comment names. Terminal once pushed.
+     */
+    public function testAClusterSiblingThatResolvesLaterInTheRunStillVetoesThePromotion(): void
+    {
+        $root = $this->tempRoot();
+
+        // The sibling states its PLS ceiling and is on a DIFFERENT source, so Dedup forms a real
+        // group edge — but its rent has since dropped 200 €, past the tolerance band.
+        $sibling = new RawListing(
+            sourceName: 'other',
+            externalId: 'DROP-OLD',
+            title: 'T4 lumineux',
+            description: 'Le logement est soumis au plafond de ressources PLS.',
+            commune: 'Sartrouville',
+            postcode: '78500',
+            rentCc: 1250,
+            surfaceM2: 88.0,
+            rooms: 4,
+        );
+        $siblingKey = $this->seed($root, $sibling, 'UNKNOWN', 'DIGEST');
+        $key = $this->seed($root, $this->intermediateListing('DROP-NEW'), 'UNKNOWN', 'DIGEST');
+
+        $store = Store::open($root . '/state/rent-watch.sqlite3');
+        $store->assignGroup([$key, $siblingKey]);
+        self::assertNull($store->groupExcludedTenure($key), 'premise: nothing is excluded yet when the run starts');
+
+        $delivering = $this->delivering();
+        $result = $this->scout($root, ['reclassify'], $delivering);
+
+        self::assertSame(0, $result['code'], $result['err']);
+        self::assertSame([], $delivering->sent, '§1: the cluster resolved PLS in this run and must veto the promotion');
+        self::assertSame('DIGEST', $this->outcomeOf($root, $key), 'and the row stays in the backlog');
     }
 
     /** A row on record with an EXCLUDED tenure and a snapshot — what `excludedDwellings()` returns. */

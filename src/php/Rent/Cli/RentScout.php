@@ -1177,8 +1177,10 @@ final readonly class RentScout
         if ($dryRun) {
             // Nothing was attempted, so nothing drained.
             // The batch was LISTED above, so it is accounted for; the remainder means "beyond what
-            // you were just shown". Passing `false` here reported the whole queue (C2 round 2, P2).
-            $this->reportRemainder($batch, 0, true);
+            // you were just shown". Passing `false` here reported the whole queue (C2 round 2, P2),
+            // and passing `0` retries reported every retry it had just printed (C2 round 3, P1) —
+            // the same defect on the third list, found by all three lenses.
+            $this->reportRemainder($batch, $batch->retryKeyCount(), true);
             $this->line('--dry-run : rien n\'a été envoyé, rien n\'a été marqué comme émis.');
 
             return 0;
@@ -1621,7 +1623,23 @@ final readonly class RentScout
     {
         $delivered = 0;
         $drainedKeys = 0;
+        // THE THIRD SEND SITE, gated like the other two. `collectDigest()` reads §1 upstream, but it
+        // reads it at COLLECT time and through three of the four routes; this is the last moment
+        // before the flat reaches a phone. Uniformity is the point — an announcing surface that is
+        // "already checked somewhere earlier" is how this milestone produced five findings.
+        $sectionOne = new SectionOneGate($store, new Dedup());
         foreach ($retries as $entry) {
+            $refusal = $sectionOne->refuses($entry['listing'], $entry['key']);
+            if ($refusal !== null) {
+                $this->warn(sprintf(
+                    '%s : §1 — %s (%s) — laissée en attente, `scout --domain=rent reclassify` la revoit',
+                    $entry['key'],
+                    $refusal['detail'],
+                    $refusal['route'],
+                ));
+
+                continue;
+            }
             $failures = $notifier->send((new Formatter())->match($entry['listing'], $entry['verdict']));
             foreach ($failures as $failure) {
                 $this->warn(Redact::text($failure->getMessage()));
@@ -1762,9 +1780,14 @@ final readonly class RentScout
                 $provenance['own']?->value ?? 'aucune',
                 $twin === null ? 'aucun' : $twin['tenure']->value . ' (' . $twin['source'] . ')',
                 $provenance['group']?->value ?? 'aucun',
-                $dwelling === null
-                    ? 'aucun'
-                    : $dwelling['tenure']->value . ' (' . $dwelling['source'] . ' ' . $dwelling['externalId'] . ')',
+                match (true) {
+                    // THREE states, not two: consulted-and-clear, consulted-and-excluded, and
+                    // NOT CONSULTABLE. Printing `aucun` for the third asserted a negative the
+                    // command never established (C2 round 3, P2).
+                    !$provenance['dwellingReadable'] => 'INDÉTERMINÉ (instantané illisible — route non vérifiée)',
+                    $dwelling === null => 'aucun',
+                    default => $dwelling['tenure']->value . ' (' . $dwelling['source'] . ' ' . $dwelling['externalId'] . ')',
+                },
             ));
             if ($provenance['group'] !== null) {
                 $this->warn('le veto de groupe vient des lectures propres des annonces liées et n\'est PAS effacé : '
@@ -2005,9 +2028,19 @@ final readonly class RentScout
         // Measured on a copy of the live store: 47 candidates in 42 ms, and matching every stale
         // row took 331 ms — so the cost the hoist was avoiding did not exist. Never restore the
         // single read as an optimisation.
-        $settled = $store->excludedDwellings();
-        $promotions = array_values(array_filter($promotions, function (array $promotion) use ($settled, $dwellingDedup, &$vetoed): bool {
-            if (ExcludedDwellings::match($promotion['listing'], $settled, $dwellingDedup) === null) {
+        // ALL FOUR ROUTES, not the dwelling one. Round 2 filtered here through
+        // `ExcludedDwellings::match()` alone, and round 3 found the GROUP route stale in the same
+        // way and for the same reason: `groupExcludedTenure()` reads the `tenure` column this loop
+        // writes, and `group_key` is a DIFFERENT, sticky predicate — a rent drop past the 30 €
+        // tolerance leaves the cluster edge standing while `sameFlatReason` stops matching, so the
+        // dwelling filter misses exactly what the group would catch. A lens executed that push.
+        //
+        // Fixing the group route here as well would have been the fifth instance of this
+        // milestone's named defect; `SectionOneGate` reads every route fresh instead, and it is the
+        // same gate `Pipeline` uses at its send. A caller that wants a subset is a future finding.
+        $sectionOne = new SectionOneGate($store, $dwellingDedup);
+        $promotions = array_values(array_filter($promotions, function (array $promotion) use ($sectionOne, &$vetoed): bool {
+            if ($sectionOne->refuses($promotion['listing'], $promotion['key']) === null) {
                 return true;
             }
             ++$vetoed;

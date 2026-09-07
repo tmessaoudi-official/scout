@@ -1468,7 +1468,7 @@ run_sabotage "one failed run is a broken source again (the flap, through the rea
 # which every verdict of the run is on disk.
 run_sabotage "reclassify promotes a sibling of an exclusion it resolved seconds earlier (§1)" \
   src/php/Rent/Cli/RentScout.php \
-  's%\$settled = \$store->excludedDwellings();%$settled = [];%'
+  '/private function reclassify(/,$ s%if (\$sectionOne->refuses(\$promotion\[.listing.\], \$promotion\[.key.\]) === null) {%if (true) {%'
 
 # THE CAR VERB against a refused ROLLUP — round 1 fixed the RENT verb and wrote "only the verb was
 # wrong", which was true of rent and left this standing (C2 round 2, P1 on all three lenses).
@@ -1480,13 +1480,69 @@ run_sabotage "the car rollup VERB counts a refused mail as drained" \
 # the parameter's old name and wrong: a one-row bin printed the row and then called it an *other*.
 run_sabotage "digest --dry-run reports the batch it just listed as a backlog beyond itself" \
   src/php/Rent/Cli/RentScout.php \
-  's%\$this->reportRemainder(\$batch, 0, true);%$this->reportRemainder($batch, 0, false);%'
+  's%\$this->reportRemainder(\$batch, \$batch->retryKeyCount(), true);%$this->reportRemainder($batch, 0, false);%'
 
 # `--reopen` IS THE DOCUMENTED ONE WAY BACK, and round 1 made it the only unguarded `evidence()`
 # caller in the tree — above the loop, so a damaged snapshot took the whole command down.
 run_sabotage "--reopen throws on a corrupt snapshot instead of skipping the dwelling route" \
   src/php/Rent/Store/Store.php \
-  's%        } catch (\\JsonException | \\InvalidArgumentException) {%        } catch (\\LogicException) {%'
+  '/public function reopen/,/^    }/ s%} catch (\\JsonException | \\InvalidArgumentException) {%} catch (\\LogicException) {%'
+
+# THE PRECEDENT `reopen()` CITES, and it had ZERO coverage of its own (C2 round 3, P2 on two
+# lenses): mutating it alone left all 3000 tests green. One corrupt `evidence_json` on an excluded
+# row would then throw out of `excludedDwellings()`, which `Pipeline`, the drain, `reclassify` and
+# `reopen` all call — aborting every pass for as long as the row exists. The case that looked like
+# it covered this was the `reopen` one, whose unscoped sed hit BOTH blocks while its detection came
+# from reopen's alone.
+run_sabotage "excludedDwellings() throws on a corrupt snapshot instead of skipping the row" \
+  src/php/Rent/Store/Store.php \
+  '/public function excludedDwellings/,/^    }/ s%} catch (\\JsonException | \\InvalidArgumentException) {%} catch (\\LogicException) {%'
+
+# THE §1 GATE — one implementation, four routes, read FRESH at every send (2026-09-07). It exists
+# because three certification rounds each found a route checked on one announcing surface and not
+# another, or checked when the state it read was already stale. One case per route, plus the wiring.
+run_sabotage "the §1 gate stops reading the row's own durable exclusion" \
+  src/php/Rent/Cli/SectionOneGate.php \
+  's%\$own = \$this->store->tenure(\$dedupKey);%$own = null;%'
+
+run_sabotage "the §1 gate stops reading the cluster veto" \
+  src/php/Rent/Cli/SectionOneGate.php \
+  's%\$group = \$this->store->groupExcludedTenure(\$dedupKey);%$group = null;%'
+
+run_sabotage "the §1 gate stops reading the cross-track twin" \
+  src/php/Rent/Cli/SectionOneGate.php \
+  's%\$twin = \$this->store->twinTenure(\$dedupKey);%$twin = null;%'
+
+run_sabotage "the §1 gate stops reading the same dwelling under another ad id" \
+  src/php/Rent/Cli/SectionOneGate.php \
+  's%\$dwelling = ExcludedDwellings::match(\$listing, \$this->store->excludedDwellings(), \$this->dedup);%$dwelling = null;%'
+
+# THE WIRING, per announcing surface. A gate nothing calls is the dead safety code this milestone
+# has already produced twice.
+run_sabotage "the live push path stops consulting the §1 gate" \
+  src/php/Rent/Cli/Pipeline.php \
+  's%\$refusal = \$sectionOne->refuses(\$listing, \$sighting->dedupKey);%$refusal = null;%'
+
+# NOT A CASE, deliberately: `pushRetries()` DOES consult the gate, and that guard is a real
+# last-moment backstop — but it has NO REACHABLE CASE TODAY, so a ledger entry for it would report
+# detection it does not have. `collectDigest()` already refuses such a row upstream through all four
+# routes, above the retry/rollup split, so nothing that reaches `pushRetries()` can be refused here.
+# Proved rather than assumed: a test seeded a queued retry whose dwelling was on record as PLS, and
+# it stayed GREEN with the retry gate bypassed — the drain had filtered the row before it became a
+# retry. The test was removed for passing for the wrong reason.
+#
+# The guard stays because the value of a backstop is what it catches when the upstream check
+# CHANGES, which is exactly the class of failure this milestone spent three rounds on. If a future
+# change lets a row reach `pushRetries()` unfiltered, write the case then — and it will red.
+
+# THE GATE READS FRESH — hoisting its state is what both round-3 P0s were, and a cached candidate
+# list would pass every route test above while re-opening the defect the gate exists to close.
+# READING FRESH IS THE GUARANTEE, not a detail: a hoisted set is precisely what both round-3 P0s
+# were, and a cached one passes every per-route case above while re-opening the hole. `static` here
+# memoises across calls within the process, which is what "cached" means.
+run_sabotage "the §1 gate caches the excluded-dwelling set instead of reading it fresh" \
+  src/php/Rent/Cli/SectionOneGate.php \
+  's%\$dwelling = ExcludedDwellings::match(\$listing, \$this->store->excludedDwellings(), \$this->dedup);%static $cached = null; $cached ??= $this->store->excludedDwellings(); $dwelling = ExcludedDwellings::match($listing, $cached, $this->dedup);%'
 
 # SCOPED to reclassify(), for the reason on the drain's own pair above.
 run_sabotage "reclassify stops consulting the group (it resurrects a listing the cluster vetoed)" \

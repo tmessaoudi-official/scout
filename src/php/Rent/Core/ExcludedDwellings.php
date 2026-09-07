@@ -19,12 +19,14 @@ namespace Scout\Rent\Core;
  * number a human maintains by hand is not load-bearing, it is decorative. The callers, each of
  * which must never disagree with the others:
  *
- *   - {@see \Scout\Rent\Cli\Pipeline}                — forms the verdict on a live pass
- *   - `RentScout::collectDigest()`                     — the digest/rollup drain, which announces
- *   - `RentScout::reclassify()`                        — forms a verdict AND announces; reads it
- *                                                        twice, once per row and once over the
- *                                                        settled store before promoting
- *   - `Store::reopen()`                                — reports the route `--reopen` cannot clear
+ *   - `Pipeline::storedDwellingClassification()`  — shapes the verdict on a live pass
+ *   - `RentScout::collectDigest()`                 — the digest/rollup drain
+ *   - `RentScout::reclassify()`                    — the per-row veto in the judging loop
+ *   - `Store::reopen()`                            — reports the route `--reopen` cannot clear
+ *   - `SectionOneGate::refuses()`                  — the LAST GATE before any send, and since
+ *                                                    2026-09-07 the only one that matters for §1:
+ *                                                    the four above shape verdicts and short-circuit
+ *                                                    work, this one is what a push must survive
  *
  * `tests/php/Repo/ExcludedDwellingsCallersTest.php` discovers the real call sites and fails when
  * this list is stale, so the next caller cannot be added silently.

@@ -3143,6 +3143,72 @@ tool/guard) and say which ones the fix covers.**
   **If a future round revisits this**, the thing to look for is a NEW exclusion route that is
   row-specific rather than dwelling-based. There is none today; adding one would re-open this.
 
+- [2026-09-07 18:10] AGREED (**milestone panel round 3 at `c530d9a`: NOT CLEAN — 17 findings, TWO
+  of them P0, and the response is a STRUCTURAL change rather than a fourth round of patches**).
+
+  **The trend is the finding.** Rounds went 9 → 8 → 17, and in every round the majority of defects
+  were in the PREVIOUS round's fixes. Five instances of *a fix landing on one of two symmetric
+  surfaces* across three rounds, three of them committed inside the fix for the one before. That is
+  not carelessness at the keystroke level; it is the shape of the problem: **§1 is judged from FOUR
+  persisted routes across THREE announcing surfaces, and every fix patched one cell of that matrix.**
+
+  Both round-3 P0s prove it, and each refuted a stated belief rather than exposing a slip:
+
+  - **`Pipeline` (the LIVE PUSH PATH).** The previous session had investigated this exact site,
+    failed to build a reaching case, concluded the hole was unreachable and REVERTED a correct fix —
+    recording the reasoning in this log. The reasoning assumed *"every route that excludes one copy
+    of a flat excludes the other"*, which is true only if dwelling-matching is an equivalence
+    relation. **`Dedup::within()` is a TOLERANCE BAND and is not transitive**: three ad ids 30 €
+    apart chain, and the third is inside the second's band and outside the first's. A lens executed
+    the push. *Failing to find a reaching case is not evidence that none exists.*
+  - **`reclassify`.** Round 2's promotion re-check read the DWELLING route only. `groupExcludedTenure()`
+    reads the same `tenure` column the loop writes, and `group_key` is a DIFFERENT, sticky predicate
+    — a rent drop past the tolerance leaves the cluster edge standing while `sameFlatReason` stops
+    matching. A lens executed that push too.
+
+  **`Rent/Cli/SectionOneGate` is the answer to the class, not to the two instances.** One
+  implementation, ALL four routes, READ FRESH, called at the LAST moment before every send. Nothing
+  hoisted and nothing cached — a hoist is precisely what both P0s were. The per-route checks upstream
+  stay: they shape the verdict and short-circuit work; the gate is the backstop that makes their
+  ordering stop mattering for §1. Wired into all three send sites, including `pushRetries()`, which
+  was sending a MATCH gated only by an upstream collect-time check through three of four routes.
+
+  **`tests/php/Repo/SectionOneGateCallSitesTest.php` is what stops a fourth surface appearing
+  unguarded**: it DISCOVERS every file that sends a `->match(` notification and fails if one does not
+  consult the gate. Enumerating surfaces in prose is what failed twice — the `ExcludedDwellings`
+  docblock said "TWO callers", then "THREE", each time in the commit that added the uncounted one.
+
+  The other findings, all fixed: the dry-run remainder accounted for the batch and not the RETRIES it
+  had also printed (both domains — on a deployment with no `push_min_score` that is the whole queue,
+  every dry run); the car half of round 2's dry-run fix was DEAD SAFETY CODE, reverting it left all
+  3000 tests green; `excludedDwellings()`'s corrupt-snapshot skip had zero coverage and the ledger
+  case that appeared to cover it was `reopen`'s, whose unscoped `sed` hit both blocks; `--reopen`
+  reported a route it COULD NOT CHECK as `aucun`, a checked negative, on a row whose own reading it
+  had just cleared; the caller guard pinned CLASSES while the docblock enumerated METHODS, so a fifth
+  call site inside a named class was invisible — and its counterweight was a hardcoded three-name
+  allow-list an invented bullet passed. Both are derived from source now, and both sabotages a lens
+  proved green now fail. Plus the eighth surface the round-1 renumber missed, two unanchored digit
+  assertions, an orphaned docblock, and a doc claim that `--reopen` "names the listing to reopen
+  instead" — true of the dwelling route, false of the group route, and neither prints the
+  `dedup_key` the flag actually takes.
+
+  **The retry-site guard has NO REACHABLE CASE, and that is recorded rather than papered over.**
+  Its ledger case reported UNDETECTED; a test written for it then stayed GREEN with the guard
+  bypassed, because `collectDigest()` refuses such a row upstream through all four routes before it
+  can become a retry. Three responses were available and only one is honest: the test was removed
+  (it passed for the wrong reason), the ledger case became a documented NON-case (it reported
+  detection it did not have — the very defect this round fixed in three other places), and the guard
+  itself STAYS, because a backstop's value is what it catches when the upstream check changes, which
+  is this milestone's entire failure class. Write the case when a path makes it reachable.
+
+  **A second self-inflicted one, for the record:** the "reads fresh" ledger case mutated a variable
+  the gate does not read, so it changed nothing and reported undetected. Rewritten to memoise across
+  calls — which is what "cached" means — and it now reds.
+
+  **The method-granular caller guard caught a real staleness on its FIRST run** — `SectionOneGate::refuses()`
+  was a new caller the enumeration did not name. That is the guard doing in one second what two
+  rounds of review did not.
+
 <!-- progress-block v1 -->
 | # | Step | Size | State | Evidence | Files |
 |---|------|------|-------|----------|-------|

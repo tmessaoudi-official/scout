@@ -257,7 +257,9 @@ final class CarScoutTest extends TestCase
         $r = $this->scout(['--domain=car', 'rollup'], $channel);
 
         self::assertSame(1, \Scout\Car\VehicleStore::open($this->db)->pendingRollupCount(), 'premise: it did not drain');
-        self::assertStringContainsString('1 autre(s) en attente', $r['out'] . $r['err']);
+        // ANCHORED: '1 autre(s)' is a SUBSTRING of '21 autre(s)'. The rule was written in round 2
+        // and applied to one assertion of three (C2 round 3, P3).
+        self::assertMatchesRegularExpression('/(?<![0-9])1 autre\\(s\\) en attente/', $r['out'] . $r['err']);
     }
 
     /**
@@ -353,6 +355,31 @@ final class CarScoutTest extends TestCase
             'autre(s) en attente',
             $r['out'] . $r['err'],
             'a refused rollup drained nothing, and the remainder must say so',
+        );
+    }
+
+    /**
+     * THE CAR DRY-RUN REMAINDER — round 2 flipped this flag and covered it with NOTHING.
+     *
+     * A completeness lens reverted the car half of round 2's dry-run fix and ran the whole suite:
+     * 3000 tests, all green. No car test asserted the rollup dry-run remainder and no ledger case
+     * touched it, so the fix was dead safety code — the exact shape round 2 had just diagnosed for
+     * `floorDigest()`, committed inside the fix cycle for it.
+     *
+     * The retry half is round 3's own P1: the `[RETRY]` lines are printed on this same output and
+     * were counted as still waiting beyond themselves.
+     */
+    public function testTheCarDryRunAccountsForWhatItJustListed(): void
+    {
+        $this->queueACarOverTheGate();
+
+        $r = $this->scout(['--domain=car', 'rollup', '--dry-run'], new CarRecordingChannel());
+
+        self::assertStringContainsString('[RETRY]', $r['out'], 'premise: the retry was listed');
+        self::assertStringNotContainsString(
+            'autre(s) en attente',
+            $r['out'],
+            'the row it just printed is not ALSO an "other" waiting beyond it',
         );
     }
 

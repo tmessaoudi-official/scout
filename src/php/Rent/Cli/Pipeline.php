@@ -423,6 +423,11 @@ final readonly class Pipeline
         // nothing at all.
         $notified = 0;
         $queuedLowScore = 0;
+        $sectionOneRefused = 0;
+
+        // ONE gate, constructed once, reading FRESH on every call. Not hoisted state: it holds no
+        // candidate list — a hoisted list is what both round-3 P0s were.
+        $sectionOne = new SectionOneGate($this->store, $this->dedup);
         $rejected = [];
 
         /** @var list<array{listing: RawListing, verdict: Verdict, key: string, keys: list<string>}> $digestEntries */
@@ -671,6 +676,32 @@ final readonly class Pipeline
             $pushMin = $this->criteria->notify->pushMinScore;
             if ($pushMin !== null && ($verdict->score ?? 0) < $pushMin) {
                 ++$queuedLowScore;
+
+                continue;
+            }
+
+            // §1's LAST GATE, immediately before the send and over FRESHLY-READ state.
+            //
+            // Every veto above shapes the VERDICT and each reads its route at a different moment;
+            // this reads all four again at the one moment that matters. It is the backstop for the
+            // round-3 P0: `$excludedDwellings` is loaded once per pass while judged tenures are
+            // written inside the loop, and `Dedup::within()` is a TOLERANCE BAND, so three ad ids
+            // 30 € apart chain and the third sits inside the second's band and outside the first's.
+            // A lens executed that push. No ordering inside a pass can route around a check made
+            // here, which is the property the per-route checks cannot have.
+            $refusal = $sectionOne->refuses($listing, $sighting->dedupKey);
+            if ($refusal !== null) {
+                // Recorded, not merely skipped: the reading is what makes the next pass cheap and
+                // what every other surface reads. Left unnotified, so nothing announces it.
+                $this->store->recordVerdict(
+                    $sighting->dedupKey,
+                    $refusal['tenure']->value,
+                    9000,
+                    ['§1 — ' . $refusal['detail'] . ' (' . $refusal['route'] . ')'],
+                    $listing,
+                );
+                $this->store->recordOutcome($sighting->dedupKey, 'REJECT');
+                ++$sectionOneRefused;
 
                 continue;
             }
@@ -1150,7 +1181,7 @@ final readonly class Pipeline
         }
 
         // ONE matcher, shared with the digest drain (C2 round 8, completeness P0): that surface
-        // read only two of the three persisted routes because this rule lived here alone.
+        // read only two of the FOUR persisted routes because this rule lived here alone.
         $candidate = ExcludedDwellings::match($listing, $excludedDwellings, $this->dedup);
         if ($candidate === null) {
             return $survivor;
