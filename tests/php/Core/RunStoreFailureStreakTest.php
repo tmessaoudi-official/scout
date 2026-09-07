@@ -229,6 +229,33 @@ final class RunStoreFailureStreakTest extends TestCase
     }
 
     /**
+     * THE BASELINE IS MEASURED FROM THE RUN IMMEDIATELY BEFORE THE STREAK, and a tolerated failure
+     * must not shift that index.
+     *
+     * `$emptyStreak` is counted in `$observed`, so `$streakStart` has to be counted there too.
+     * Indexing it into `$runs` lands one row late and averages a run the streak already contains —
+     * a real defect, made and caught while writing this change, which reported a 25-listing
+     * baseline as 12.5.
+     *
+     * IT NEEDS ITS OWN FIXTURE. The existing case that caught it has a month-long gap, so under a
+     * one-sided mutation the rolling window comes back empty and `lastProductiveCount()` rescues
+     * the answer — the ledger case reported detection it did not have until this test existed.
+     * Here every run is inside the window, so the shift changes the number instead of erasing it.
+     */
+    public function testAToleratedFailureDoesNotShiftTheBaselineWindow(): void
+    {
+        $now = strtotime('2026-09-07T09:00:00Z');
+        $this->seed('inli', [[25, true], [30, true], [0, false], [0, true], [0, true], [0, true]], $now);
+
+        $health = $this->store->health('inli', gmdate('Y-m-d\TH:i:s\Z', $now));
+
+        self::assertSame(SourceStatus::BROKEN, $health->status);
+        // 27.5 is the mean of the two PRODUCTIVE runs before the streak. One row late it is 18.3,
+        // because the first empty run of the streak joins its own baseline.
+        self::assertStringContainsString('27.5', $health->detail, 'the baseline must not include a run the streak already contains');
+    }
+
+    /**
      * `doctor` must not say "165 annonces au dernier run" when the last run FAILED. The count is
      * real and it is the last one observed — the detail line has to say that is what it is, or this
      * change buys quiet by making the operator's own instrument lie.
