@@ -1764,6 +1764,15 @@ this way" is never authority, and extending it in place contradicts the brief.
    > the commit author on every commit — it is the LINKAGE of a person to a subscription and its
    > criteria. Treat "the tree is clean" and "the exposure is over" as different claims.
    >
+   > **AND THE AUDIENCE IS EVERYONE: THIS REPO IS PUBLIC** (measured 2026-09-07 — `gh api
+   > /repos/tmessaoudi-official/scout` → `{"private": false, "visibility": "public"}`). This note
+   > has said *reachable on GitHub* since it was written and never said to whom, which reads as
+   > "reachable by anyone who already has a clone". It is not: the old blobs are world-readable.
+   > Nothing about the incidents changed — the fact was simply never written down, and it is the
+   > one that decides how the purge-versus-accept question is weighed. That question is now
+   > `docs/OPEN-QUESTIONS.md` Q40, with **accept** as its default and the re-pointing cost of a
+   > rewrite priced there; a question living only in a chat transcript is lost at the next session.
+   >
    > **THERE IS A THIRD COMMITTED-THEN-SCRUBBED INCIDENT, and this note enumerated two** (C2 round
    > 2, 2026-09-04). `25d8839 fix(fixtures): a live API key was committed, because scrubbing was a
    > habit` — Cityloger's Google Maps key, reachable across 34 commits, `a00791e` → `8c16587`, and

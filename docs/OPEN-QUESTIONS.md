@@ -1334,6 +1334,45 @@ notification's `reasons[]` rather than only rejecting on it, so an over-link is 
 merely documented. Today a vetoed row is silent and the user cannot tell an over-link from an absent
 listing.
 
+## Part 2h — Raised by measuring the repo's own visibility (2026-09-07)
+
+### Ⓞ Q40 — the scrubbed captures are in a PUBLIC repo's history: purge, or accept?
+
+Hard rule 7 in `CLAUDE.md` already records that scrubbing a fixture fixes the working tree and not
+the remote — the old blobs stay reachable by `git show <old-sha>:<path>` whatever HEAD says. What it
+has never said is **to whom**. Measured 2026-09-07 while checking an unrelated claim about CI
+minutes: `gh api /repos/tmessaoudi-official/scout` returns `{"private": false, "visibility":
+"public"}`, so *reachable* means world-readable rather than "reachable by anyone who already has a
+clone". Nothing about the incidents changed; the audience is what was never written down.
+
+The three incidents that note enumerates:
+
+- two ParuVendu fixtures carrying the developer's real name;
+- three Bien'ici fixtures carrying the subscriber's address behind a double base64 layer;
+- `25d8839` — Cityloger's browser-side Google Maps key, reachable across 34 commits (`a00791e` →
+  `8c16587`). Hygiene rather than a credential exposure, exactly as hard rule 7 scopes it: the
+  landlord serves that key to every visitor.
+
+**The asset is the one the existing note already names** — the LINKAGE of a person to a subscription
+and its criteria. The name on its own is public as the commit author of every commit here; the
+linkage is not.
+
+**Why this is a question rather than a task.** A purge is `git filter-repo` plus a force-push, and
+rewriting published history is unauthorised for a session (§ "Git autonomy"). The developer runs it
+or it does not happen. The forward fix is already landed and is the most a session can do:
+`tools/scrub-eml.php` refusing a RECOVERABLE address, `FixtureSecretsTest` sharing the one decode
+cascade through `Core/RecoverableForms`, and the `X-MSFBL` / `X-Mailgun-Sid` drops.
+
+**Default if unanswered: ACCEPT.** History stands, the forward fix holds, and `CLAUDE.md` now states
+the audience so the next reader is not working from the same gap. Chosen because the alternative is
+not free: a rewrite changes every sha, and this plan's status block, its Decisions Log, `CLAUDE.md`
+and 800-odd sabotage cases all cite shas as evidence — a large, silent correctness cost paid against
+a window that has already been open for weeks.
+
+**To reverse:** the developer authorises and runs the purge. Budget the re-pointing as part of that
+work rather than as its aftermath — every Evidence cell in `docs/plans/*.plan.md` and every
+commit-referencing sentence in `CLAUDE.md` goes stale in the same instant.
+
 ## Decisions Log
 
 - [2026-08-06] AGREED: work on `master` only; no `claude/*` branch (developer instruction).
