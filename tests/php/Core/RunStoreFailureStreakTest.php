@@ -256,6 +256,64 @@ final class RunStoreFailureStreakTest extends TestCase
     }
 
     /**
+     * THE FLAKY RULES KEEP THE WHOLE LOG, and that is the counterweight the whole design rests on:
+     * tolerating isolated failures is only safe because a source failing at a flaky RATE still
+     * alerts, however isolated each failure is.
+     *
+     * Nothing asserted it. `RunStoreFlakyWindowTest` seeds its failures FIRST, so they are never
+     * tolerated and never exercise this path. The obvious "consistency" edit — pointing
+     * `windowCounts()` at `$observed` — would silence every flaky verdict on exactly the sources
+     * this rule tolerates, and no test would have reddened.
+     *
+     * 25 of 100 passes fail, each isolated, and the last run is one of them. The SHORT window fires
+     * at 20 %; the seven-day rule genuinely cannot, which is asserted rather than assumed.
+     */
+    public function testAToleratedTailDoesNotHideAFlakyRate(): void
+    {
+        $now = strtotime('2026-09-07T09:00:00Z');
+        $spec = [];
+
+        for ($i = 0; $i < 100; ++$i) {
+            $failed = $i % 4 === 3;
+            $spec[] = [$failed ? 0 : 165, !$failed];
+        }
+
+        $this->seed('inli', $spec, $now);
+
+        $health = $this->store->health('inli', gmdate('Y-m-d\TH:i:s\Z', $now));
+
+        self::assertSame(SourceStatus::WARN_FLAKY, $health->status, 'tolerating each failure must not tolerate the RATE');
+        self::assertSame(25, $health->failedRunsInWindow, 'the flaky windows count attempts, so a tolerated failure is still a failure here');
+        self::assertLessThan(
+            RunStore::FLAKY_FAILURE_RATIO,
+            $health->failedRunsInWindow / $health->runsInWindow,
+            'the seven-day rate must be under the long threshold, or this proves nothing about the short window',
+        );
+    }
+
+    /**
+     * An interior failure DROPPED and a trailing outage KEPT, in one log. Reachable, and the two
+     * arrays must agree: the streak counts the real trailing failures and the detail names the real
+     * last run, rather than one coming from `$observed` and the other from `$runs`.
+     */
+    public function testAKeptOutageAfterADroppedHiccupNamesTheRealLastRun(): void
+    {
+        $now = strtotime('2026-09-07T09:00:00Z');
+        $this->seed('inli', [
+            ...self::healthy(10),
+            [0, false],
+            ...self::healthy(2),
+            [0, false], [0, false], [0, false],
+        ], $now);
+
+        $health = $this->store->health('inli', gmdate('Y-m-d\TH:i:s\Z', $now));
+
+        self::assertSame(SourceStatus::BROKEN, $health->status);
+        self::assertStringContainsString('3 run(s) consécutif(s) en échec', $health->detail);
+        self::assertStringContainsString(gmdate('Y-m-d\TH:i:s\Z', $now), $health->detail, 'the named run is the real last one');
+    }
+
+    /**
      * `doctor` must not say "165 annonces au dernier run" when the last run FAILED. The count is
      * real and it is the last one observed — the detail line has to say that is what it is, or this
      * change buys quiet by making the operator's own instrument lie.

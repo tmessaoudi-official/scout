@@ -717,6 +717,16 @@ run_sabotage "one hiccup resets a dead feed's empty streak, buying it three more
   src/php/Core/RunStore.php \
   's%self::trailingEmptyRuns($observed)%self::trailingEmptyRuns($runs)%'
 
+# THE COUNTERWEIGHT THE WHOLE TOLERANCE RESTS ON. Isolated failures are only safe to tolerate
+# because a source failing at a FLAKY RATE still alerts, however isolated each failure is — so the
+# flaky windows deliberately count ATTEMPTS and read the whole log. Pointing them at `$observed` is
+# the obvious "consistency" edit, and it silences every flaky verdict on exactly the sources this
+# rule tolerates. Round 9 finding: nothing asserted it, because RunStoreFlakyWindowTest seeds its
+# failures FIRST, where they are never tolerated.
+run_sabotage "the flaky windows count observations instead of attempts (a tolerated tail hides the rate)" \
+  src/php/Core/RunStore.php \
+  's%windowCounts($runs, $edge%windowCounts($observed, $edge%'
+
 run_sabotage "the drop warning reads the failed run's zero again (the flap under a new subject)" \
   src/php/Core/RunStore.php \
   "s%\$lastCount = (int) \$last\['item_count'\];%\$lastCount = (int) \$runs[array_key_last(\$runs)]['item_count'];%"

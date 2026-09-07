@@ -164,7 +164,7 @@ check "…and its job runs even after a cancelled dependency (always(), or GitHu
   grep -qE "if: always\(\) && needs\.sabotage\.result != .skipped." "$wf"
 
 # ── THE SHARDING CONTRACT (2026-09-05) ───────────────────────────────────────────────────────────
-# One job could not finish the ledger any more: 258 -> 527 -> 771 cases, four of the last eight
+# One job could not finish the ledger any more: 258 -> 527 -> 772 cases, four of the last eight
 # nightlies cut off at the cap and four red for the row-45 cause — eight days with no completed
 # detection proof. Each direction below is silent if it breaks.
 check "the ledger job is sharded" grep -q "shard: \[1, 2, 3, 4, 5, 6\]" "$wf"
