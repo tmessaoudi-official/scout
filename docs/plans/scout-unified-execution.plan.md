@@ -2909,7 +2909,7 @@ tool/guard) and say which ones the fix covers.**
   path against a throwaway store. The proof is one query — `SELECT * FROM source_alerts` plus the
   notification label — and **zero new in'li rows after a failed pass** is what closes it.
 
-- [2026-09-07 13:25] RECORD (**ROUND 10 CLEAN — the two-clean counter moves to 1**). `advisor()`
+- [2026-09-07 13:20] RECORD (**ROUND 10 CLEAN — the two-clean counter moves to 1**). `advisor()`
   traced the whole span `c6e29e0..4ae6a4f` and found no defect: the flaky counterweight's arithmetic
   (25/100 on the seven-day window, under 0.30; ~25/97 on the 24 h window, over 0.20 and above the
   20-run floor; the tail tolerated so `$observed` drops all 25, which under `windowCounts($observed)`
@@ -2928,7 +2928,7 @@ tool/guard) and say which ones the fix covers.**
   two-consecutive-clean bar was written for FRESH-CONTEXT lenses. The tier is the developer's call
   and is asked fresh either way; this note exists so the option descriptions say it.
 
-- [2026-09-07 13:30] AGREED (**round 11 tier: `advisor()` only, on the unchanged span**). Asked
+- [2026-09-07 13:22] AGREED (**round 11 tier: `advisor()` only, on the unchanged span**). Asked
   fresh at this gate with the structural caveat stated FIRST in the option text — that a second
   `advisor()`-only round over an unchanged span is one reviewer re-reading its own clean verdict,
   and that the two-consecutive-clean bar was written for fresh-context lenses. The developer chose
