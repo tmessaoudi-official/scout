@@ -2961,6 +2961,38 @@ tool/guard) and say which ones the fix covers.**
   was read this session, not executed. Round 8's `$criteria` defect is the precedent for why the
   distinction is worth writing down.
 
+- [2026-09-07 13:42] AGREED (**the ONE milestone panel is authorised — run it AFTER a `/compact`**).
+  The developer chose the full three-lens panel at the milestone gate and asked to compact first, so
+  the panel was NOT spawned in that session. **Choosing it here IS the instruction to spawn one**;
+  no further question is needed at the next gate for this round. **Freeze: this commit** — the
+  milestone spans several commits, so everything is landed first and ONE round covers all of it,
+  which is the rule that exists to stop two panels being run for one milestone.
+
+  **The brief, written out because the session that runs it will have been compacted:**
+
+  - **Span**: `dfc49e8..HEAD` — 18 commits, 17 files, +1183/−99. Round 8's §1 drain fixes, the health
+    flap and its two live-data corrections, the ledger case that reported detection it did not have,
+    the compound-expression triage, round 9's flaky counterweight, and the doc landings.
+  - **Three lenses, one UNNAMED agent each** (`name:` routes the report through `SendMessage`, which
+    is denied — they run, go idle, and the reports vanish, indistinguishable from unavailability):
+    `tenure-correctness-reviewer`, `source-resilience-reviewer`, `completeness-reviewer`.
+  - **Each probes in a pinned `git worktree` or a `cp -a` copy, never the live tree, and `vendor/`
+    is COPIED, never symlinked** — Composer's PSR-4 map resolves relative to its own location, so a
+    symlink points it back at the pristine `src/` and every sabotage reports as undetected.
+  - **Do not edit the tree while a round is running.** That was violated twice in this session and
+    both runs had to be discarded and relaunched.
+  - **What to hand them as already-established, so they refute rather than rediscover**: the suite is
+    2984/11776 green, 783 sabotage expressions apply, the ledger is 772 cases, `test-ci-workflow` is
+    60/60, drift-scan is 0/0/0, and the health verdicts were verified against SQLite `.backup` copies
+    of BOTH live stores. Row 35 is certified by two `advisor()` rounds over `4ae6a4f` — the same
+    reviewer twice, which is weaker than MAXIMAL and is recorded as such; the panel is the
+    independent read those rounds could not give.
+  - **Two open items to put in front of them explicitly**: `alertOnHealth()` has not met a real in'li
+    302 since the 11:40 redeploy (7 passes, 0 failures, 0 in'li alert rows), so the end-to-end "no
+    more flap emails" claim rests on the verdict being right rather than on the send path having been
+    watched decline to fire; and `CarScout`'s alert loop was READ, not RUN, this session.
+  - **Bar**: any finding resets the two-clean counter and needs a new freeze; cap 5 rounds, then ask.
+
 <!-- progress-block v1 -->
 | # | Step | Size | State | Evidence | Files |
 |---|------|------|-------|----------|-------|
