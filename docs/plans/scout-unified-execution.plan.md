@@ -3268,6 +3268,27 @@ tool/guard) and say which ones the fix covers.**
   sixth round. On this trend that ask is likely owed, and it is written here so a compacted session
   does not quietly start a round 6.
 
+- [2026-09-07 21:33] AGREED (**the narrow fix landed as `8055943` and the watcher was REDEPLOYED —
+  one deploy, not two, per the same ruling**). Production had been running the 09:39 image against a
+  19:44 `src/` HEAD, so it predated the round-4 P0 (the rent-drop push escaping the gate) for the
+  whole of that afternoon. Rollback is one retag away (`scout:pre-round5`); both stores were backed
+  up with readback verification before the swap (rent 3193 annonces, car 4254, integrity ok) and the
+  migration was rehearsed on copies — rent stays schema v12, WAL, so this carries no migration at
+  all. `tools/verify-deploy.sh` is green on all four of its questions, and `test-notify` from the
+  DEPLOYED image reached the channel. **`up -d` printing Started is not a deployment** and the
+  verifier is the step that says otherwise: it asks separately whether the image is CURRENT and
+  whether it POSTDATES its build inputs, because "running, image courante" is also true of a watcher
+  whose image predates the fix by a day and a half.
+
+  **AND THE DEPLOYED FIRST PASS WAS READ, not assumed** — the round-5 gate adds a `refuses()` call
+  inside `Pipeline::runOnce`'s digest branch, and production is the only place commute enrichment is
+  ON, which is exactly the hop where an earlier pipeline fix passed 2 192 tests and then misbehaved
+  live. Rent: **8 sources, 1670 annonces, 551 correspondances, 50 à vérifier, 938 écartées, 131
+  doublons, 1 copie d'agence non poussée**, against the OUTGOING build's last pass of 1667/550/43/
+  932/142 — no collapse, no explosion, and the digest branch exercised with the new gate in it. Car:
+  6 sources, 248 annonces, 222 correspondances. Zero PHP diagnostics on either. The three stderr
+  warnings are the same three SeLoger identity hashes the outgoing build emitted, so nothing new.
+
 - [2026-09-07 20:45] AGREED (**round 5 at `dde4d8c` — the CAP — was NOT clean; the developer was
   asked and ruled: land ONE narrowly-scoped fix, then close; redeploy AFTER it lands, not before**).
 
@@ -3383,7 +3404,7 @@ tool/guard) and say which ones the fix covers.**
 | 32 | Deep — field-map regex has no load-time compile check | S | certified | 38f64bb test:2026-09-04 | src/php/Rent/Config/FieldMap.php tests/php/Rent/Config/ConfigTest.php |
 | 33 | Deep — doc drift: WARN_FLAKY, card_separator_pattern refusals, 4 stale Core paths | M | done | 38f64bb | CLAUDE.md docs/OPEN-QUESTIONS.md |
 | 34 | Deep — plan track sections stale for Tracks 0 1 2-step0 4 and 6-A1/A2/A3 | M | done | 38f64bb | docs/plans/scout-unified-execution.plan.md |
-| 35 | 6-C2 — the TWO CONSECUTIVE CLEAN rounds the bar requires; cap 5 then ask. Rounds 10+11 (advisor() only, same reviewer twice) were RETRACTED as a closure by the three-lens milestone panel: r1 @67e7bb1 found 9, r2 @e3cfef0 found 8, r3 @c530d9a found 17, r4 @5b030fe found 15 — counter 0, gate UNMET, round 5 is the cap and then it ASKS | L | doing | - | docs/plans/scout-unified-execution.plan.md |
+| 35 | 6-C2 — the panel ran to its 5-round cap and ASKED, as the bar requires. r1 @67e7bb1 found 9, r2 @e3cfef0 found 8, r3 @c530d9a found 17, r4 @5b030fe found 15, r5 @dde4d8c found ~28 but ZERO MATCH bypasses. Counter reached 0/2, so the gate is UNMET and CLOSED BY RULING, not by convergence: the developer chose "land the narrow fix, then close" | L | done | 8055943 | docs/plans/scout-unified-execution.plan.md |
 | 36 | Processed alert emails are marked \Seen — run only, after the store recorded the source; doctor/dump stay read-only | M | certified | 766edd7 test:2026-09-06 | src/php/Adapters/Mail/ImapMailbox.php src/php/Adapters/Mail/Mailbox.php src/php/Rent/Cli/Pipeline.php src/php/Car/VehiclePipeline.php |
 | 37 | B-common — content-addressed identity for VehicleEmailSource (no-information floor, price out of the key, in-message duplicate announced) | M | certified | 7e1d54b test:2026-09-06 | src/php/Car/VehicleEmailSource.php src/php/Car/VehicleSourceLoader.php |
 | 38 | B-common — per-segment labelled field reader for VehicleEmailSource (the CapCar shape) | M | certified | 7e1d54b test:2026-09-06 | src/php/Car/VehicleEmailSource.php src/php/Car/VehicleSourceLoader.php |
