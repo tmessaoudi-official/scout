@@ -2944,7 +2944,7 @@ tool/guard) and say which ones the fix covers.**
 | 56 | C2 round 8 P1 — a refused retry counted as drained, so the remainder line went silent on both domains | M | done | 422e27a | src/php/Rent/Cli/DigestBatch.php src/php/Rent/Cli/RentScout.php src/php/Car/Cli/CarScout.php tests/php/Car/Cli/CarScoutTest.php |
 | 57 | C2 round 8 P2/P3 — drifted ledger counts, three classes absent from both Core inventories, a de-indented declaration | S | done | 422e27a | CLAUDE.md .github/workflows/ci.yml tests/test-ci-workflow.sh src/php/Car/Cli/CarScout.php |
 | 58 | The health flap — one failed run was BROKEN and every recovery wiped the cooldown; a failed run's zero is no longer read as an observation | M | done | e3ec04d | src/php/Core/RunStore.php tests/php/Core/RunStoreFailureStreakTest.php tests/php/Rent/Store/StoreTest.php tests/php/Rent/Store/StoreFeedSilenceTest.php tests/sabotage-check.sh CLAUDE.md |
-| 59 | The trailing-only strip was refuted by the live store within the hour — a tolerated failure is dropped wherever it sits, the note counts the trailing streak, and the streak is indexed where it is counted | M | done | - | src/php/Core/RunStore.php tests/php/Core/RunStoreFailureStreakTest.php tests/sabotage-check.sh CLAUDE.md |
+| 59 | The trailing-only strip was refuted by the live store within the hour — a tolerated failure is dropped wherever it sits, the note counts the trailing streak, and the streak is indexed where it is counted | M | done | 366218e | src/php/Core/RunStore.php tests/php/Core/RunStoreFailureStreakTest.php tests/sabotage-check.sh CLAUDE.md |
 <!-- /progress-block -->
 ### Blocked
 
