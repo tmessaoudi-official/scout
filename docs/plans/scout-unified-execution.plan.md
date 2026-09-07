@@ -2981,7 +2981,7 @@ tool/guard) and say which ones the fix covers.**
 | 32 | Deep — field-map regex has no load-time compile check | S | certified | 38f64bb test:2026-09-04 | src/php/Rent/Config/FieldMap.php tests/php/Rent/Config/ConfigTest.php |
 | 33 | Deep — doc drift: WARN_FLAKY, card_separator_pattern refusals, 4 stale Core paths | M | done | 38f64bb | CLAUDE.md docs/OPEN-QUESTIONS.md |
 | 34 | Deep — plan track sections stale for Tracks 0 1 2-step0 4 and 6-A1/A2/A3 | M | done | 38f64bb | docs/plans/scout-unified-execution.plan.md |
-| 35 | 6-C2 — the TWO CONSECUTIVE CLEAN rounds the bar requires; rounds 1-3 each found real defects, cap is 5 then ask | L | doing | - | src/php |
+| 35 | 6-C2 — the TWO CONSECUTIVE CLEAN rounds the bar requires; rounds 1-3 each found real defects, cap is 5 then ask; CLOSED by rounds 10+11, both advisor() over the frozen 4ae6a4f — same reviewer, same span, weaker than MAXIMAL and ruled so | L | certified | 348271a test:2026-09-07 | src/php |
 | 36 | Processed alert emails are marked \Seen — run only, after the store recorded the source; doctor/dump stay read-only | M | certified | 766edd7 test:2026-09-06 | src/php/Adapters/Mail/ImapMailbox.php src/php/Adapters/Mail/Mailbox.php src/php/Rent/Cli/Pipeline.php src/php/Car/VehiclePipeline.php |
 | 37 | B-common — content-addressed identity for VehicleEmailSource (no-information floor, price out of the key, in-message duplicate announced) | M | certified | 7e1d54b test:2026-09-06 | src/php/Car/VehicleEmailSource.php src/php/Car/VehicleSourceLoader.php |
 | 38 | B-common — per-segment labelled field reader for VehicleEmailSource (the CapCar shape) | M | certified | 7e1d54b test:2026-09-06 | src/php/Car/VehicleEmailSource.php src/php/Car/VehicleSourceLoader.php |
