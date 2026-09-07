@@ -1298,10 +1298,17 @@ exists, do not describe either veto as one-line reversible.
 
 > **THE REPAIR ROUTE LANDED 2026-09-05 (row 40, developer ruling: the command, not the stored
 > distinction).** `scout --domain=rent reclassify --reopen=<dedup_key>` prints the provenance
-> (own reading / twin reading with its source / group veto), clears the row's own and twin
-> readings, and re-judges the row on its own evidence in the same invocation. The group veto is
-> reported and NOT cleared — it lives on the siblings' own readings. Either veto is therefore
-> reversible by one named command, and only by one: never a pattern, never "all".
+> (own reading / twin reading with its source / group veto / same dwelling under another ad id —
+> FOUR routes since 2026-09-07), clears the row's own and twin readings, and re-judges the row on
+> its own evidence in the same invocation. The group veto is reported and NOT cleared — it lives on
+> the siblings' own readings — and so is the same-dwelling route, for the same reason.
+>
+> **THIS ENTRY CLAIMED *"either veto is therefore reversible by one named command"* AND THAT WAS
+> ALWAYS TOO STRONG** (C2 milestone panel round 2, P2). What one command reverses is the row's OWN
+> reading and its TWIN's. A row held by its GROUP or by the SAME DWELLING is not reversible by
+> `--reopen` at all: the command reports the route and names the listing whose reading you would
+> have to reopen instead. Closed, but narrower than the closure claimed — and the narrowing is the
+> §1-safe direction, which is why it is not being widened.
 
 > **THE MISATTRIBUTION HALF IS CLOSED (2026-09-04, F20); THE REPAIR ROUTE IS STILL OWED, and the
 > two are worth keeping apart.** The reason now reads *"régime exclu (PLS) retenu pour cette

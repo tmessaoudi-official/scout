@@ -1491,7 +1491,14 @@ final class PipelineRunTest extends TestCase
             self::NOW,
         );
 
-        self::assertNotSame([], $this->healthAlerts($channel), 'three consecutive failures is an outage, and it must be said');
+        // PIN THE STATUS, not merely "something alerted". Asserting `!= []` left this green when the
+        // tolerance was taken to its limit, because the outage then alerts as WARN_FLAKY (3 of 4
+        // runs failed in the window) from a different code path — over-tolerance is exactly the
+        // direction `observedRuns()` moves in, and the counterweight written for it could not see
+        // it (C2 round 2, P2/P3 on two lenses).
+        $titles = array_map(static fn (Notification $n): string => $n->title, $this->healthAlerts($channel));
+        self::assertNotSame([], $titles, 'three consecutive failures is an outage, and it must be said');
+        self::assertStringContainsString('broken', implode(' | ', $titles), 'and it must be BROKEN, not some other alerting status');
     }
 
     public function testAFailedAlertSendDoesNotStartTheCooldown(): void

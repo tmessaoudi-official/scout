@@ -332,6 +332,30 @@ final class CarScoutTest extends TestCase
         self::assertStringContainsString('autre(s) en attente', $r['out'] . $r['err'], 'the floor must say the backlog did not empty');
     }
 
+    /**
+     * THE CAR VERB against a REFUSED rollup — the surface round 1's rent fix did not reach.
+     *
+     * `testARefusedCarRetryIsStillReportedAsARemainder` uses a wholly-down channel on an OVER-gate
+     * car, so `$entries === []` and it returns before the send is ever attempted. No car test drove
+     * the verb against a refused ROLLUP at all, which is why the remainder could subtract the whole
+     * batch four lines before the mail was tried. All three round-2 lenses found it.
+     */
+    public function testTheCarVerbReportsARefusedRollupAsStillWaiting(): void
+    {
+        $this->queueTheWeakParuVenduCard();
+        $channel = new CarRecordingChannel();
+        $channel->refuseKind = \Scout\Core\Notify\NotificationKind::ROLLUP;
+
+        $r = $this->scout(['--domain=car', 'rollup'], $channel);
+
+        self::assertSame(1, \Scout\Car\VehicleStore::open($this->db)->pendingRollupCount(), 'premise: nothing drained');
+        self::assertStringContainsString(
+            'autre(s) en attente',
+            $r['out'] . $r['err'],
+            'a refused rollup drained nothing, and the remainder must say so',
+        );
+    }
+
     /** And a drain that emptied the queue claims no remainder — the counterweight the line never had. */
     public function testACarDrainThatEmptiedTheQueueClaimsNoRemainder(): void
     {

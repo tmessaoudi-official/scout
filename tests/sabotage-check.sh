@@ -1444,14 +1444,14 @@ run_sabotage "--reopen stops reporting the same-dwelling route (the repair verb 
 # panel, P1 on all three lenses). The verb's own case is above; this is the deployed surface.
 run_sabotage "the car FLOOR reports a refused retry as drained (the deployed rollup goes quiet)" \
   src/php/Car/Cli/CarScout.php \
-  's%return \$waiting - count(\$entries) - \$drained;%return $waiting - count($entries) - $waiting;%'
+  '/private function floorRollup/,/^    }/ s%\$this->remainingAfterDrain(\$waiting, \$entries, \$drained, true) > 0%false%'
 
 # A REFUSED DIGEST MAIL DRAINED NOTHING, and `digest` reported the whole batch as gone: the
 # remainder was printed BEFORE the send and subtracted every announced and rolled-up row
 # unconditionally (C2 milestone panel, P2). The rent floor was already right; only the verb was not.
 run_sabotage "the rent digest remainder counts a refused mail as delivered" \
   src/php/Rent/Cli/DigestBatch.php \
-  's%\$announced = \$rollupDelivered ? \\count(\$this->entries) : 0;%$announced = \\count($this->entries);%'
+  's%\$announced = \$batchAccountedFor ? \\count(\$this->entries) : 0;%$announced = \\count($this->entries);%'
 
 # THE SEAM: the real verdict feeding the real alert loop. Every other health case proves one side —
 # `RunStoreFailureStreakTest` the verdict, the Pipeline health tests the loop with an INJECTED
@@ -1459,6 +1459,34 @@ run_sabotage "the rent digest remainder counts a refused mail as delivered" \
 run_sabotage "one failed run is a broken source again (the flap, through the real verdict)" \
   src/php/Core/RunStore.php \
   's%\$observed = self::observedRuns(\$runs);%$observed = $runs;%'
+
+# THE EXCLUSION THIS RUN RESOLVES MUST VETO THE SIBLING THIS RUN PROMOTES (C2 milestone panel round
+# 2, P0 — two lenses, each with an executed push). Round 1 hoisted `excludedDwellings()` above the
+# loop; `reclassify` WRITES tenure inside that loop, so an exclusion it resolves itself never enters
+# the set. `staleVerdicts()` orders `seen_epoch DESC`, so the NEW ad is judged FIRST in the natural
+# re-advertising case — which is why the veto is re-applied to the PROMOTION, the last moment at
+# which every verdict of the run is on disk.
+run_sabotage "reclassify promotes a sibling of an exclusion it resolved seconds earlier (§1)" \
+  src/php/Rent/Cli/RentScout.php \
+  's%\$settled = \$store->excludedDwellings();%$settled = [];%'
+
+# THE CAR VERB against a refused ROLLUP — round 1 fixed the RENT verb and wrote "only the verb was
+# wrong", which was true of rent and left this standing (C2 round 2, P1 on all three lenses).
+run_sabotage "the car rollup VERB counts a refused mail as drained" \
+  src/php/Car/Cli/CarScout.php \
+  's%return \$waiting - (\$announced ? count(\$entries) : 0) - \$drained;%return $waiting - count($entries) - $drained;%'
+
+# A DRY RUN LISTS THE BATCH, so the batch is accounted for. Round 1 passed `false` here — true by
+# the parameter's old name and wrong: a one-row bin printed the row and then called it an *other*.
+run_sabotage "digest --dry-run reports the batch it just listed as a backlog beyond itself" \
+  src/php/Rent/Cli/RentScout.php \
+  's%\$this->reportRemainder(\$batch, 0, true);%$this->reportRemainder($batch, 0, false);%'
+
+# `--reopen` IS THE DOCUMENTED ONE WAY BACK, and round 1 made it the only unguarded `evidence()`
+# caller in the tree — above the loop, so a damaged snapshot took the whole command down.
+run_sabotage "--reopen throws on a corrupt snapshot instead of skipping the dwelling route" \
+  src/php/Rent/Store/Store.php \
+  's%        } catch (\\JsonException | \\InvalidArgumentException) {%        } catch (\\LogicException) {%'
 
 # SCOPED to reclassify(), for the reason on the drain's own pair above.
 run_sabotage "reclassify stops consulting the group (it resurrects a listing the cluster vetoed)" \
@@ -2606,7 +2634,7 @@ run_sabotage "detail fetches stop being paced (a per-listing burst, hard rule 5)
 # ── C2 round 8 (2026-09-06): §1 from EVERY persisted reading, on the drain too ──────────────────
 # Round 7 lifted the group and twin vetoes above the retry/rollup split and left two things behind:
 # the row's OWN reading (below the snapshot arm's `continue`, so two arms of one loop answered the
-# same row differently) and `excludedDwellings()` — the third route `Pipeline` reads, and the only
+# same row differently) and `excludedDwellings()` — the FOURTH route `Pipeline` reads, and the only
 # one that catches a portal re-advertising a flat under a new ad id.
 
 run_sabotage "the drain stops reading the row's own excluded tenure (the snapshot-less arm)" \
@@ -2623,7 +2651,7 @@ run_sabotage "a refused retry is counted as drained, so the rent remainder line 
 
 run_sabotage "a refused retry is counted as drained, so the car remainder line goes silent" \
   src/php/Car/Cli/CarScout.php \
-  's%$this->reportRollupRemainder($waiting, $entries, $drained);%$this->reportRollupRemainder($waiting, $entries, count($retries));%'
+  '/if (\$entries === \[\]) {/,/return 0;/ s%\$this->reportRollupRemainder(\$waiting, \$entries, \$drained, false);%$this->reportRollupRemainder($waiting, $entries, count($retries), false);%'
 
 run_sabotage "the page walk stops pausing between pages (a burst against one host, hard rule 5)" \
   src/php/Rent/Adapters/HtmlSource.php \
@@ -2754,9 +2782,15 @@ run_sabotage "an empty digest bin is announced anyway (a daily push with nothing
 
 # THE FAILED-SEND ASYMMETRY: marking before delivery consumes the day's floor with nothing having
 # reached anyone, and these entries have no other route to the developer.
-run_sabotage "digest entries are marked before the channel confirms (a failed send eats the backlog)" \
+# SCOPED to floorDigest(). Unscoped, this sed hit FOUR guards — the digest verb, pushRetries(), the
+# reclassify promotion and this one — so both this case and its on-demand twin below passed on the
+# OTHER three while the floor's own guard was covered by nothing at all (C2 round 2, P2). Mutating
+# line 2580 alone left the entire suite green until `testARefusedFloorEmissionMarksNothingAnd
+# WritesNoMarker` was written. The ledger's own convention already knew the fix: :2056 and :2088
+# scope the identical pattern the same way.
+run_sabotage "the DAILY FLOOR marks its digest entries before the channel confirms (the deployed drain)" \
   src/php/Rent/Cli/RentScout.php \
-  's%if (!$notifier->delivered($failures)) {%if (false) {%'
+  '/private function floorDigest/,/^    }/ s%if (!\$notifier->delivered(\$failures)) {%if (false) {%'
 
 run_sabotage "the digest floor is never checked at all (the bin only ever drains by hand)" \
   src/php/Rent/Cli/RentScout.php \
@@ -3046,9 +3080,10 @@ run_sabotage "the on-demand digest skips the very rows it exists to rescue" \
 
 # Marking before the channel confirms consumes the batch permanently on a failed send. A digest
 # entry, unlike a match, has no second chance from anywhere: nothing else will ever surface it.
+# SCOPED to the digest VERB — see the floor's note above; the same sed hit four guards.
 run_sabotage "the on-demand digest marks its entries before the channel confirms" \
   src/php/Rent/Cli/RentScout.php \
-  's%if (!\$notifier->delivered(\$failures)) {%if (false) {%'
+  '/private function digest(/,/private function pushRetries/ s%if (!\$notifier->delivered(\$failures)) {%if (false) {%'
 
 # The count is what tells the reader a backlog was announced WITHOUT its full detail. Removed, a set
 # of degraded entries is indistinguishable from a set of sources that publish nothing but titles.

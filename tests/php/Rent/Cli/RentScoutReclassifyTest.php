@@ -591,6 +591,103 @@ final class RentScoutReclassifyTest extends TestCase
         self::assertSame([], $delivering->sent, 'reopening must not push a flat the dwelling route still vetoes');
     }
 
+    /**
+     * THE EXCLUSION THIS RUN RESOLVES MUST VETO THE SIBLING THIS RUN PROMOTES.
+     *
+     * Round 1 hoisted `excludedDwellings()` above the loop, on the reasoning that the candidate set
+     * is a property of the store. True of `Pipeline` — which persists every reading BEFORE loading
+     * the set — and false here: `reclassify` writes `tenure` inside the loop, so an exclusion it
+     * resolves itself never enters the set, and the next row describing that dwelling is judged
+     * against a set that predates it. Two panel lenses executed the push independently.
+     *
+     * BOTH rows start UNKNOWN, which is the whole point: this is the population the command exists
+     * for after a classifier change, not a forged state. The old ad states its PLS ceiling, the new
+     * one states LLI. Ordering is deliberately not relied on — `staleVerdicts()` orders
+     * `seen_epoch DESC`, so the NEW ad is judged first in the natural case, which is why the veto
+     * is applied to the PROMOTION rather than in a second judging pass.
+     */
+    public function testAnExclusionResolvedInThisRunVetoesItsOwnSibling(): void
+    {
+        $root = $this->tempRoot();
+        $old = new RawListing(
+            sourceName: 'demo',
+            externalId: 'SAME-OLD',
+            title: 'T4 lumineux',
+            description: 'Le logement est soumis au plafond de ressources PLS.',
+            commune: 'Sartrouville',
+            postcode: '78500',
+            rentCc: 1450,
+            surfaceM2: 88.0,
+            rooms: 4,
+        );
+        $this->seed($root, $old, 'UNKNOWN', 'DIGEST');
+        $newKey = $this->seed($root, $this->intermediateListing('SAME-NEW'), 'UNKNOWN', 'DIGEST');
+
+        $delivering = $this->delivering();
+        $result = $this->scout($root, ['reclassify'], $delivering);
+
+        self::assertSame(0, $result['code'], $result['err']);
+        self::assertSame(
+            [],
+            $delivering->sent,
+            'the same dwelling resolved PLS in this very run must veto the promotion of its sibling',
+        );
+        self::assertSame('DIGEST', $this->outcomeOf($root, $newKey), 'and the sibling stays in the backlog');
+    }
+
+    /**
+     * The counterweight, and it is what stops the re-check being "veto every promotion".
+     *
+     * An unrelated flat resolved PLS in the same run must not touch this promotion. Without it the
+     * fix above is satisfied by refusing everything, which is §1 by switching the command off.
+     */
+    public function testAnUnrelatedExclusionResolvedInThisRunLeavesThePromotionAlone(): void
+    {
+        $root = $this->tempRoot();
+        $elsewhere = new RawListing(
+            sourceName: 'demo',
+            externalId: 'OTHER-PLS',
+            title: 'Studio',
+            description: 'Le logement est soumis au plafond de ressources PLS.',
+            commune: 'Dourdan',
+            postcode: '91410',
+            rentCc: 700,
+            surfaceM2: 28.0,
+            rooms: 1,
+        );
+        $this->seed($root, $elsewhere, 'UNKNOWN', 'DIGEST');
+        $key = $this->seed($root, $this->intermediateListing('UNRELATED-NEW'), 'UNKNOWN', 'DIGEST');
+
+        $delivering = $this->delivering();
+        $result = $this->scout($root, ['reclassify'], $delivering);
+
+        self::assertSame(0, $result['code'], $result['err']);
+        self::assertCount(1, $delivering->sent, 'an unrelated exclusion must not veto this promotion');
+        self::assertSame('MATCH', $this->outcomeOf($root, $key));
+    }
+
+    /**
+     * `--reopen` MUST SURVIVE A CORRUPT SNAPSHOT — it is the documented one way back.
+     *
+     * Round 1 added an unguarded `evidence()` call to `Store::reopen()` for the dwelling provenance.
+     * `evidence()` throws on a damaged snapshot by design, `reopen()` runs ABOVE the loop, and none
+     * of the CLI's catch arms covers `JsonException` — so the whole command died with a raw stack
+     * trace, cleared nothing, and re-judged nothing else either. The repo's other two `evidence()`
+     * call sites both catch that pair; this made reopen the only unguarded one.
+     */
+    public function testReopenSurvivesACorruptSnapshotAndStillClearsTheReading(): void
+    {
+        $root = $this->tempRoot();
+        $key = $this->seed($root, $this->intermediateListing('CORRUPT-1'), 'PLS', 'REJECT');
+        $this->corruptSnapshot($root, $key);
+
+        $result = $this->scout($root, ['reclassify', '--reopen=' . $key], $this->delivering());
+
+        self::assertSame(0, $result['code'], $result['err']);
+        self::assertStringContainsString('réouverture', $result['out']);
+        self::assertNull($this->tenureOf($root, $key), 'the reading must still be cleared');
+    }
+
     /** A row on record with an EXCLUDED tenure and a snapshot — what `excludedDwellings()` returns. */
     private function seedExcludedDwelling(string $root, RawListing $listing, Tenure $tenure): string
     {

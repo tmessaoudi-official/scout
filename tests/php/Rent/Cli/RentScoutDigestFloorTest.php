@@ -94,6 +94,33 @@ final class RentScoutDigestFloorTest extends TestCase
         self::assertFileExists($root . '/state/rent-digest.txt', 'a delivered emission records its window as served');
     }
 
+    /**
+     * A REFUSED FLOOR EMISSION MARKS NOTHING AND WRITES NO MARKER — and NOTHING covered it.
+     *
+     * Mutating this guard alone left the whole suite green (C2 round 2, P2): the two ledger cases
+     * labelled for it share an unscoped `sed` that also disables `pushRetries()` and the reclassify
+     * promotion, so both passed on those and neither reached the floor. The floor is the DEPLOYED
+     * drain, and marking before the channel confirms consumes a backlog whose own comment says
+     * *"these entries have no other route to the developer"*. The car floor's twin was covered; the
+     * rent floor's was not.
+     */
+    public function testARefusedFloorEmissionMarksNothingAndWritesNoMarker(): void
+    {
+        $root = $this->tempRoot();
+        $key = $this->seedDigestRow($root, 'REFUS-1');
+
+        $this->watch($root, 1, [\Scout\Core\Notify\NotificationKind::DIGEST]);
+
+        self::assertFileDoesNotExist(
+            $root . '/state/rent-digest.txt',
+            'a refused emission records no window as served, so the next pass retries',
+        );
+        self::assertFalse(
+            Store::open($root . '/state/rent-watch.sqlite3')->wasNotified($key),
+            'and nothing is marked — the backlog has no other route to the developer',
+        );
+    }
+
     public function testASnapshotLessRowIsAnnouncedAndTheFaultIsVOICED(): void
     {
         // The row is ANNOUNCED, never skipped — it has a verdict, an outcome and a title, and
@@ -353,18 +380,23 @@ final class RentScoutDigestFloorTest extends TestCase
     // ── harness ──────────────────────────────────────────────────────────────────────────────────
 
     /** @return array{code: int, out: string, err: string} */
-    private function watch(string $root, int $passes = 1): array
+    /**
+     * @param list<\Scout\Core\Notify\NotificationKind> $refuses kinds the channel will not deliver
+     */
+    private function watch(string $root, int $passes = 1, array $refuses = []): array
     {
         putenv('SCOUT_MAX_PASSES=' . $passes);
 
         $out = fopen('php://memory', 'r+');
         $err = fopen('php://memory', 'r+');
-        self::assertIsResource($out);
         self::assertIsResource($err);
+        self::assertIsResource($out);
 
         putenv('RENT_SCOUT_DB=' . $root . '/state/rent-watch.sqlite3');
 
-        $notifier = new Notifier([new ConsoleChannel($out), new DeliveringChannel()]);
+        $channel = new DeliveringChannel();
+        $channel->refuses = $refuses;
+        $notifier = new Notifier([new ConsoleChannel($out), $channel]);
         $code = (new RentScout($root, $out, $err, self::NOW, null, $notifier))->run(['run', '--watch']);
 
         rewind($out);

@@ -477,8 +477,10 @@ scout --domain=rent digest [--dry-run]      # emit the pending "à vérifier" ro
                                             #   section (matches under push_min_score), on demand
 scout --domain=rent reclassify [--dry-run]  # re-judge stored UNKNOWN verdicts against today's classifier
 scout --domain=rent reclassify --reopen=<dedup_key>   # the ONE way back for a durably-excluded row: prints where
-                                            #   the exclusion came from, clears the row's own + twin readings,
-                                            #   re-judges it (the group veto is reported, never cleared)
+                                            #   the exclusion came from (4 routes), clears the row's own + twin
+                                            #   readings, re-judges it. The group veto AND the same dwelling
+                                            #   under another ad id are reported, never cleared — each lives on
+                                            #   another row, so this is not a universal undo
 scout --domain=rent replay <source>         # alias of `dump` — takes a SOURCE NAME
 scout --domain=rent replay <source> --file=<payload>   # a frozen page through that source's own field map, offline
 ```

@@ -3055,6 +3055,94 @@ tool/guard) and say which ones the fix covers.**
   fire; what remains unwitnessed is only that a genuine three-failure outage still alerts, which is
   verified by execution on the verdict and by reading on the send.
 
+- [2026-09-07 16:30] AGREED (**milestone panel round 2 at `e3cfef0`: NOT CLEAN — 8 findings, five of
+  them in round 1's own fixes; the counter stays at 0**). Three UNNAMED lenses again, each briefed to
+  attack round 1's repairs FIRST because they were the newest and least-reviewed code in the span.
+  That instruction is what produced the round: the P0 and two P2s are defects the round-1 fix
+  introduced or left.
+
+  - **P0 · §1 · the hoisted candidate set was stale within the invocation.** Two lenses executed a
+    push independently. `reclassify` writes `tenure` inside the loop it guards, so an exclusion it
+    resolved itself never entered `$excludedDwellings`; `staleVerdicts()` orders `seen_epoch DESC`,
+    so the NEW ad is judged first and a second pass would not have helped either. The veto is now
+    re-applied to the PROMOTION, over a freshly-read set, which is ordering-independent and the last
+    moment at which every verdict of the run is on disk. Round 1's test could not see it: it seeded
+    the excluded row already `PLS` on disk, reproducing `Pipeline`'s ordering rather than this one.
+    **The hoist's stated rationale was never measured** — 47 candidates in 42 ms, 331 ms for every
+    stale row.
+  - **P1 · the car rollup VERB** counts a refused mail as drained. Round 1 fixed the rent verb and
+    wrote *"only the verb was wrong"* — true of RENT. All three lenses found the car twin. Third
+    consecutive round in which *a fix landing on one of two symmetric surfaces* was committed inside
+    the fix for it.
+  - **P1 · `--reopen` threw on a corrupt snapshot**, above the loop, killing the whole command and
+    clearing nothing — on the verb documented as the ONE way back. Round 1 made it the only
+    unguarded `evidence()` caller in the tree; the other two catch exactly that pair and
+    `excludedDwellings()` documents skipping such a row twelve lines away.
+  - **P2 · `digest --dry-run` reported the whole bin.** Round 1 named the fact `$rollupDelivered` and
+    passed `false` for dry-run — true by that name, wrong in substance. Renamed `$batchAccountedFor`:
+    a dry run SHOWS the batch, so it is accounted for; only a refused send leaves it unaccounted.
+  - **P2 · the rent daily floor's failed-send guard was dead safety code.** Its two ledger cases
+    shared an unscoped `sed` hitting four guards, so both passed on the other three; mutating the
+    floor's alone left the whole suite green. Now scoped per function (one changed line each,
+    measured) and covered by a test that reds on that mutation.
+  - **P2 · row 35 said `certified` in the machine-read status block** while the Decisions Log in the
+    same commit recorded the counter resetting to 0, and the Known-issues bullet was stale by five
+    rounds. All three now agree: `doing`, gate UNMET. This is the artefact a post-compact session
+    trusts without reading prose, so it is the one place the contradiction actually costs something.
+  - **P2 · the `--reopen` fourth route was undocumented on four surfaces**, and
+    `docs/OPEN-QUESTIONS.md` was materially wrong — *"either veto is therefore reversible by one
+    named command"*. It never was for the group veto and is not for the dwelling route: both live on
+    ANOTHER row's reading. Corrected rather than quietly widened.
+  - **P3 · "THREE callers" was four**, the fourth added by the same commit that edited the line
+    saying the count is load-bearing. Second time in two rounds. The docblock now ENUMERATES its
+    callers and `ExcludedDwellingsCallersTest` pins the list; its own first draft was vacuous and was
+    sabotage-verified in both directions before shipping.
+
+  **What the lenses could not break**, and it is worth recording because it is the milestone's
+  subject: no second `$observed`/`$runs` index mismatch (every use enumerated by hand); three more
+  run-log hiding shapes all still alert; `$failedStreak >= 3 && $lastOk` proven unreachable; the car
+  domain confirmed to need no `ExcludedDwellings` equivalent (refutation attempted and failed);
+  legal posture and secrets clean across the whole span, including a sweep of both live stores for
+  the new interpolations; all five round-1 ledger cases detect 5/5; and the four address-scoped
+  expressions each change exactly one line, with a rename making them INERT rather than silently
+  wide — which `test-sabotage-applies.sh` catches.
+
+  **Process correction recorded against this session, not the lenses.** `e3cfef0` was committed
+  while a round-1 lens was still executing — its report had been delivered, but a completion
+  notification is not proof the agent has stopped, and it observed the tree move under it. Round 1's
+  verdict stands (its findings were reproduced on trees that provably lacked the fix, and a findings
+  round never counted toward two-clean), but the rule is now read the stricter way: hold the freeze
+  past all three reports, not until the last notification lands.
+
+- [2026-09-07 16:50] AGREED (**the round-2 resilience lens's parting warning about `Pipeline` was
+  INVESTIGATED and the hole is NOT reachable — nothing shipped**). Recorded because the site it names
+  is real, so the next session will find it again and should not have to re-derive this.
+
+  **What is true**: `Pipeline` loads `$excludedDwellings` once at line 333, and there is a SECOND
+  `recordVerdict()` at line 501, after the load, whose own comment says the write makes an exclusion
+  visible *"to the next pass"* — literally true, since the in-memory set never grows within a pass.
+  The round-2 correctness lens cleared `Pipeline` by accounting for the recording loop's write at
+  254 and not for this one, so the two lenses genuinely disagreed and the site was read directly
+  rather than taking either verdict.
+
+  **What does not follow**: that a re-advert judged later in the same pass escapes §1. Every route
+  that can newly exclude a row here is either DWELLING-BASED — the group veto, the twin veto and
+  `storedDwellingClassification` all match on dwelling similarity, so whatever catches the first copy
+  catches the re-advert too — or it is the DURABLE OWN READING, which by definition means the row was
+  excluded in an earlier pass and is therefore already on disk and already in the loaded set. There
+  is no route that excludes one copy and not the other.
+
+  **How that was established, and it is the part worth keeping**: a fix and a test were written
+  first, and the test PASSED with the fix mutated out. The vacuity was the evidence — every
+  construction attempted had the same veto catching both copies. Both the fix and the test were
+  REVERTED (`Pipeline.php` is byte-identical to `e3cfef0`), under the rule quoted in the very file
+  being edited: *"Dead safety code is worse than none: it reads as a second line of defence and is
+  not one. Removed rather than kept."* Shipping it would also have been the round-2 P2 finding —
+  dead safety code — committed in the fix cycle for that finding.
+
+  **If a future round revisits this**, the thing to look for is a NEW exclusion route that is
+  row-specific rather than dwelling-based. There is none today; adding one would re-open this.
+
 <!-- progress-block v1 -->
 | # | Step | Size | State | Evidence | Files |
 |---|------|------|-------|----------|-------|
@@ -3092,7 +3180,7 @@ tool/guard) and say which ones the fix covers.**
 | 32 | Deep — field-map regex has no load-time compile check | S | certified | 38f64bb test:2026-09-04 | src/php/Rent/Config/FieldMap.php tests/php/Rent/Config/ConfigTest.php |
 | 33 | Deep — doc drift: WARN_FLAKY, card_separator_pattern refusals, 4 stale Core paths | M | done | 38f64bb | CLAUDE.md docs/OPEN-QUESTIONS.md |
 | 34 | Deep — plan track sections stale for Tracks 0 1 2-step0 4 and 6-A1/A2/A3 | M | done | 38f64bb | docs/plans/scout-unified-execution.plan.md |
-| 35 | 6-C2 — the TWO CONSECUTIVE CLEAN rounds the bar requires; rounds 1-3 each found real defects, cap is 5 then ask; CLOSED by rounds 10+11, both advisor() over the frozen 4ae6a4f — same reviewer, same span, weaker than MAXIMAL and ruled so | L | certified | cb5e765 test:2026-09-07 | docs/plans/scout-unified-execution.plan.md |
+| 35 | 6-C2 — the TWO CONSECUTIVE CLEAN rounds the bar requires; cap 5 then ask. Rounds 10+11 (advisor() only, same reviewer twice) were RETRACTED as a closure by the three-lens milestone panel: round 1 at 67e7bb1 found 9, round 2 at e3cfef0 found 8, so the counter is 0 and the gate is UNMET | L | doing | - | docs/plans/scout-unified-execution.plan.md |
 | 36 | Processed alert emails are marked \Seen — run only, after the store recorded the source; doctor/dump stay read-only | M | certified | 766edd7 test:2026-09-06 | src/php/Adapters/Mail/ImapMailbox.php src/php/Adapters/Mail/Mailbox.php src/php/Rent/Cli/Pipeline.php src/php/Car/VehiclePipeline.php |
 | 37 | B-common — content-addressed identity for VehicleEmailSource (no-information floor, price out of the key, in-message duplicate announced) | M | certified | 7e1d54b test:2026-09-06 | src/php/Car/VehicleEmailSource.php src/php/Car/VehicleSourceLoader.php |
 | 38 | B-common — per-segment labelled field reader for VehicleEmailSource (the CapCar shape) | M | certified | 7e1d54b test:2026-09-06 | src/php/Car/VehicleEmailSource.php src/php/Car/VehicleSourceLoader.php |
@@ -3152,11 +3240,15 @@ tool/guard) and say which ones the fix covers.**
 
 ### Known issues
 
-- **Row 35 is UNMET and IN FLIGHT** (round 8, frozen 2026-09-06): the two-clean counter is 0 —
-  rounds 1–7 each found real defects, round 7 alone 23 of them. The rows that gated the resume
-  (6, 9–11, 36–43) have all landed and the old resume point `792eb3a` is superseded. Round 8's
-  freeze is the commit that closes this bullet's own row; a clean round moves the counter to 1,
-  and TWO are required, so even a clean round 8 does not close row 35.
+- **Row 35 is UNMET and IN FLIGHT** (three-lens milestone panel, round 2 frozen at `e3cfef0`): the
+  two-clean counter is **0**. Rounds 1–7 each found real defects, round 7 alone 23. Rounds 10 and
+  11 were `advisor()` only — the same reviewer twice over one span — and briefly carried row 35 to
+  `certified`; **the panel retracted that**: its round 1 found 9 findings including a §1 P0, and its
+  round 2 found 8 more, five of them in round 1's own fixes. A clean round moves the counter to 1
+  and TWO are required, so the earliest possible closure is two more clean rounds from here.
+  **Anything that reads this plan mechanically should read row 35 as `doing`, never `certified`** —
+  it said `certified` in the same commit whose Decisions Log recorded the counter resetting to 0,
+  which is the one artefact a post-compact session trusts without reading the prose.
 - **Round-5 P2, recorded not fixed** (row 41): with no band on the mapped path, a selector drifting
   onto a 5-digit field extracts `95240` cleanly, `max_rent_cc` rejects every card, `rent` counts
   zero misses and health stays `ok`. The ParuVendu `autres` class one layer over; it wants a

@@ -1843,11 +1843,25 @@ final readonly class Store
      * and clears the row's OWN reading and its TWIN reading, so the next pass (or the rest of the
      * `reclassify` invocation that called it) re-judges the row on its own evidence.
      *
-     * The GROUP veto is reported but NOT cleared: it lives on the siblings' own readings, and a
-     * sibling that really says `PLS` keeps saying it. Re-opening a row whose group still vetoes it
-     * changes nothing on the next pass, and the report says so before the operator wonders why.
+     * TWO of the four routes are reported but NOT cleared, for one reason: they live on ANOTHER
+     * row's own reading, and a listing that really says `PLS` keeps saying it. Clearing either here
+     * would delete a §1 fact belonging to a row the operator did not name.
      *
-     * @return array{own: ?Tenure, twin: ?array{tenure: Tenure, source: string}, group: ?Tenure}|null
+     *   - the GROUP veto — the siblings' own readings
+     *   - the SAME DWELLING on record under another ad id — that other listing's own reading
+     *
+     * So re-opening a row held by either changes nothing on the next pass, and the report says so
+     * before the operator wonders why. **`--reopen` is therefore not a universal undo**: it
+     * reverses the row's own reading and its twin's, and for the other two it tells you which
+     * listing to reopen instead.
+     *
+     * A row whose snapshot will not decode reports `dwelling: null` — that route needs the
+     * evidence, and a damaged snapshot is skipped rather than thrown (see the body). The clear
+     * still happens, which is the part the operator asked for.
+     *
+     * @return array{own: ?Tenure, twin: ?array{tenure: Tenure, source: string}, group: ?Tenure,
+     *         dwelling: ?array{key: string, source: string, externalId: string, tenure: Tenure,
+     *         listing: RawListing, reason: string}}|null
      *         the provenance, or `null` when no such row exists — nothing is touched then
      */
     public function reopen(string $dedupKey, bool $dryRun = false): ?array
@@ -1861,7 +1875,18 @@ final readonly class Store
         // FOUR ROUTES, because `reclassify` judges §1 by four. Reporting three read as "nothing
         // links this row" on exactly the population the fourth exists for — a flat re-advertised
         // under a new ad id, which by construction has no group edge and no twin.
-        $evidence = $this->evidence($dedupKey);
+        // A CORRUPT SNAPSHOT IS SKIPPED, NEVER THROWN — the choice `excludedDwellings()` two methods
+        // below documents as "the one place this method deliberately departs from `evidence()`".
+        // Round 1 called `evidence()` unguarded here and made `--reopen` the only unguarded caller
+        // in the tree: it sits ABOVE the `UPDATE`, so a damaged snapshot took the whole command down
+        // with a raw stack trace, cleared nothing, and re-judged no other row either — on the verb
+        // documented as the ONE way back for a durably-excluded row (C2 round 2, P1 on all three
+        // lenses). The other two call sites both catch exactly this pair.
+        try {
+            $evidence = $this->evidence($dedupKey);
+        } catch (\JsonException | \InvalidArgumentException) {
+            $evidence = null;
+        }
         $provenance = [
             'own' => $this->tenure($dedupKey),
             'twin' => $this->twinTenure($dedupKey),

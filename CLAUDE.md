@@ -2395,13 +2395,56 @@ var/claude/                 Reports, review outputs — gitignored scratch (hand
   directives are `PHP_INI_ALL`, restored in `finally`; the child probe likewise) instead of
   finding it. **Run `gh run list --limit 5` after every push** — the notification half of CI is
   the nightly ledger's issue, not the fast job's, and a red fast job is silent.
+- **A HOISTED READ IS STALE THE MOMENT THE LOOP IT GUARDS WRITES TO WHAT IT READ (2026-09-07, §1
+  P0).** `reclassify` loaded `excludedDwellings()` once above its judging loop, with a comment
+  borrowed from `Pipeline`: *"the candidate set is a property of the store, not of the row being
+  judged"*. True there, false here, and the difference is ORDERING — `Pipeline` persists every
+  member's reading in a recording loop BEFORE it loads the set; `reclassify` writes `tenure` INSIDE
+  the loop. So an exclusion the command resolved itself was invisible to every row judged after it,
+  and the same flat re-advertised under a new ad id was promoted and PUSHED in the same invocation.
+  Two panel lenses reached it independently, each with an executed push, on rows that both start
+  `UNKNOWN` — the population the command exists for, not a forged state.
+  **A second judging pass would NOT have fixed it**: `staleVerdicts()` orders `seen_epoch DESC`, so
+  in the natural case the NEW ad is judged FIRST. The veto belongs on the PROMOTION — the last
+  moment at which every verdict of the run is on disk, and the only one that is ordering-independent.
+  **And the rationale for the hoist was never measured**: on a copy of the live store
+  `excludedDwellings()` is 47 candidates in 42 ms and matching every stale row costs 331 ms. The
+  cost it avoided did not exist. *Borrowing a justification from a sibling call site is not the same
+  as checking it holds at this one.*
+- **A REMAINDER ASSERTION MUST PIN THE DIGIT BOUNDARY (2026-09-07).** `assertStringContainsString('7
+  autre(s) en attente')` is satisfied by `57 autre(s) en attente`. The suite was green with the
+  number wrong by a factor of eight, on the line that tells an operator whether a capped batch
+  drained. Anchor with `(?<![0-9])` — the same guard `ROOMS_PATTERN` already carries for the same
+  reason one layer down.
+- **A COUNT A HUMAN MAINTAINS IS DECORATIVE; ENUMERATE AND PIN IT (2026-09-07).**
+  `ExcludedDwellings`'s docblock said *"TWO callers that must never disagree"*, then *"THREE"* — and
+  **each time, the very commit editing that line added a caller it did not count**, on a line
+  reading *"the count is load-bearing, so keep it right"*. Twice in two rounds. It now NAMES its
+  callers and `tests/php/Repo/ExcludedDwellingsCallersTest.php` discovers the real call sites and
+  fails when the list is stale. Its own first draft was vacuous — matching the whole docblock, where
+  the word `Store` also appears in prose above the list — so it scopes to the enumeration bullets
+  and both directions are sabotage-verified.
+- **AN UNSCOPED `sed` IN THE LEDGER CAN LEAVE THE LABELLED SURFACE COVERED BY NOTHING (2026-09-07).**
+  Two cases labelled for the digest verb and the daily floor shared
+  `s%if (!$notifier->delivered($failures)) {%if (false) {%`, which hits **four** guards — the verb,
+  `pushRetries()`, the reclassify promotion and `floorDigest()`. Both passed on the other three, and
+  mutating `floorDigest()`'s guard ALONE left the entire suite green: the DEPLOYED drain marking its
+  digest entries before the channel confirms — a backlog whose own comment says *"these entries have
+  no other route to the developer"* — was dead safety code. `test-sabotage-applies.sh` cannot see
+  this: it proves an expression MATCHES, never that it matches ONE thing. When two cases share a
+  pattern, scope each with a function address range and measure the changed-line count.
 - **A DURABLY-EXCLUDED ROW HAS ONE WAY BACK, AND IT IS A NAMED COMMAND (row 40, 2026-09-05).**
   `scout --domain=rent reclassify --reopen=<dedup_key>` prints where the exclusion came from
-  (*lecture propre / jumeau / groupe*), clears the row's OWN and TWIN readings, and re-judges it
+  (*lecture propre / jumeau / groupe / même logement* — FOUR routes since 2026-09-07; it printed
+  three until then, which read as *"nothing links this row"* on exactly the population the fourth
+  exists for), clears the row's OWN and TWIN readings, and re-judges it
   on its own evidence in the same invocation — a row that then judges MATCH is notified, so the
-  run needs a delivering channel like every promotion. The GROUP veto is reported and deliberately
-  NOT cleared: it lives on the siblings' own readings, and a sibling that really says `PLS` keeps
-  saying it, so the command tells you the next pass will reject again while that holds. Never a
+  run needs a delivering channel like every promotion. **TWO routes are reported and deliberately
+  NOT cleared** — the GROUP veto and the SAME DWELLING under another ad id — for one reason: each
+  lives on ANOTHER row's own reading, and a listing that really says `PLS` keeps saying it, so the
+  command tells you the next pass will reject again while that holds and which listing to reopen
+  instead. **`--reopen` is therefore not a universal undo**, and a row held by either of those two
+  is not reversible by this command alone. Never a
   pattern, never "all" — the cost of a wrong re-open is a social-housing flat pushed as a match.
   `--dry-run` reports and clears nothing; an unknown key is refused and touches nothing. This
   closes F20's *"repair route still owed"*; the *"this row said PLS vs something linked to it said

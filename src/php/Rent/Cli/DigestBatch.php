@@ -117,14 +117,21 @@ final readonly class DigestBatch
      * verb was wrong, which is this repo's *a fix landing on one of two symmetric surfaces* once
      * more. No default here either, and for the same reason as above.
      */
-    public function overflow(int $retriesDrained, bool $rollupDelivered): int
+    public function overflow(int $retriesDrained, bool $batchAccountedFor): int
     {
-        // ONE mail carries both lists, so delivery is ONE fact and it governs both halves. A first
+        // ONE mail carries both lists, so the fact is ONE fact and it governs both halves. A first
         // cut gated only the rollup half and would have left the digest half telling the same lie
         // in the same line — the very shape this finding is an instance of.
-        $announced = $rollupDelivered ? \count($this->entries) : 0;
+        //
+        // **IT IS "ACCOUNTED FOR", NOT "DELIVERED"** (C2 round 2, P2 on two lenses). Round 1 named
+        // it `$rollupDelivered` and passed `false` on the DRY-RUN path, where nothing is delivered
+        // by definition — so a dry run subtracted nothing and reported the entire queue as waiting,
+        // under wording asserting a backlog BEYOND the batch it had just listed. On a one-row bin it
+        // printed the row and then called it an *other*. A dry run SHOWS the batch to the operator,
+        // so the batch is accounted for; only a refused send leaves it unaccounted.
+        $announced = $batchAccountedFor ? \count($this->entries) : 0;
         $drained = $retriesDrained;
-        if ($rollupDelivered) {
+        if ($batchAccountedFor) {
             foreach ($this->lowScore as $entry) {
                 $drained += \count($entry['keys']);
             }

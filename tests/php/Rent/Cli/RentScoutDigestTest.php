@@ -251,10 +251,13 @@ final class RentScoutDigestTest extends TestCase
             substr_count($result['out'], 'Sartrouville'),
             'one batch, capped — an unbounded backlog in one all-or-nothing send can never drain',
         );
-        self::assertStringContainsString(
-            '7 autre(s) en attente',
+        // ANCHORED, because `'7 autre(s)'` is a SUBSTRING of `'57 autre(s)'` — this assertion was
+        // green while the line reported the whole 57-row bin instead of the 7 beyond the batch
+        // (C2 round 2, P2). A remainder assertion must pin the digit boundary or it pins nothing.
+        self::assertMatchesRegularExpression(
+            '/(?<![0-9])7 autre\(s\) en attente/',
             $result['out'],
-            'the remainder must be named, or a capped batch reads as the whole bin',
+            'the remainder must be named EXACTLY, or a capped batch reads as the whole bin',
         );
     }
 
@@ -562,10 +565,10 @@ final class RentScoutDigestTest extends TestCase
     /**
      * §1, C2 ROUND 8 P0 (b) — THE FOURTH PERSISTED ROUTE, WHICH THE DRAIN NEVER READ.
      *
-     * `Pipeline` judges §1 from THREE persisted readings; round 7 gave this drain two of them.
-     * `Store::excludedDwellings()` is the third, and it is the only one that catches a portal
+     * `Pipeline` judges §1 from FOUR persisted readings; round 7 gave this drain two of them.
+     * `Store::excludedDwellings()` is the fourth, and it is the only one that catches a portal
      * RE-ADVERTISING the same flat under a new ad id: there is no group edge and no twin, so the
-     * other two see nothing at all. Its only consumers were `Pipeline`'s two call sites.
+     * other two see nothing at all. Its consumers are enumerated in the matcher's own docblock and pinned by ExcludedDwellingsCallersTest.
      *
      * The counterweight is in the test below — an unrelated excluded row must not veto anything,
      * or this guard is satisfied by refusing the whole queue.
@@ -900,6 +903,29 @@ final class RentScoutDigestTest extends TestCase
     private function pendingDigestCount(string $root): int
     {
         return Store::open($root . '/state/rent-watch.sqlite3')->pendingDigestCount();
+    }
+
+    /**
+     * A DRY RUN LISTS THE BATCH, so the batch is accounted for and only what lies BEYOND it waits.
+     *
+     * Round 1 passed the delivery fact as `false` on the dry-run path — true by the parameter's old
+     * name (`$rollupDelivered`), and wrong: nothing is ever delivered in a dry run, so the line
+     * subtracted nothing and reported the entire queue under wording asserting a backlog beyond the
+     * batch it had just printed. On a one-row bin it listed the row and then called it an *other*.
+     */
+    public function testADryRunWithNothingBeyondTheBatchClaimsNoRemainder(): void
+    {
+        $root = $this->tempRoot();
+        $this->seedDigestRow($root, $this->queueable('inli', 'ONLY-1'));
+
+        $result = $this->scout($root, ['digest', '--dry-run']);
+
+        self::assertStringContainsString('Sartrouville', $result['out'], 'premise: the row was listed');
+        self::assertStringNotContainsString(
+            'autre(s) en attente',
+            $result['out'],
+            'the only row in the bin is not ALSO an "other" waiting beyond it',
+        );
     }
 
     private function seedQueuedMatch(string $root, RawListing $listing): string

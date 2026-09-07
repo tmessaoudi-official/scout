@@ -714,8 +714,9 @@ final readonly class CarScout
             }
         }
         if ($dryRun) {
-            // Nothing was attempted, so nothing drained.
-            $this->reportRollupRemainder($waiting, $entries, 0);
+            // Nothing was attempted, so nothing drained — but the batch WAS listed above, so it is
+            // accounted for and the remainder means "beyond what you were just shown".
+            $this->reportRollupRemainder($waiting, $entries, 0, true);
             $this->line('--dry-run : rien n\'a été envoyé, rien n\'a été marqué comme émis.');
 
             return 0;
@@ -726,8 +727,10 @@ final readonly class CarScout
             return $this->fail($fatal);
         }
         $drained = $this->pushRetries($notifier, $store, $retries, $this->now());
-        $this->reportRollupRemainder($waiting, $entries, $drained);
         if ($entries === []) {
+            // Nothing to send, so nothing can land: the retries are the whole story.
+            $this->reportRollupRemainder($waiting, $entries, $drained, false);
+
             return 0;
         }
         $failures = $notifier->send($notification);
@@ -735,10 +738,12 @@ final readonly class CarScout
             $this->warn(Redact::text($failure->getMessage()));
         }
         if (!$notifier->delivered($failures)) {
+            $this->reportRollupRemainder($waiting, $entries, $drained, false);
             $this->warn('récapitulatif non délivré — rien n\'a été marqué comme émis, il sera réessayé.');
 
             return 1;
         }
+        $this->reportRollupRemainder($waiting, $entries, $drained, true);
         foreach ($entries as $entry) {
             $store->markNotified($entry['key'], $this->now());
         }
@@ -856,18 +861,30 @@ final readonly class CarScout
      *
      * @param list<array<string, mixed>> $entries
      */
-    private function reportRollupRemainder(int $waiting, array $entries, int $drained): void
+    private function reportRollupRemainder(int $waiting, array $entries, int $drained, bool $announced): void
     {
-        $remaining = $this->remainingAfterDrain($waiting, $entries, $drained);
+        $remaining = $this->remainingAfterDrain($waiting, $entries, $drained, $announced);
         if ($remaining > 0) {
             $this->line(sprintf('%d autre(s) en attente — relancer `scout --domain=car rollup` pour la suite.', $remaining));
         }
     }
 
-    /** @param list<array<string, mixed>> $entries */
-    private function remainingAfterDrain(int $waiting, array $entries, int $drained): int
+    /**
+     * @param list<array<string, mixed>> $entries
+     *
+     * **`$announced` IS A DELIVERY FACT, NOT A COUNT** (C2 round 2, P1 on all three lenses). The
+     * rent twin took this in round 1 — `DigestBatch::overflow(int, bool)` — with a docblock reading
+     * *"only the verb was wrong"*, which was true of RENT and left the car verb standing: it
+     * subtracted `count($entries)` four lines BEFORE `send()`, so a refused mail marked nothing,
+     * left every entry queued, and reported them gone. *A fix landing on one of two symmetric
+     * surfaces*, committed inside the fix for it.
+     *
+     * There is no default, for `overflow()`'s reason: both defaults lie in one direction, and only
+     * the caller knows which happened.
+     */
+    private function remainingAfterDrain(int $waiting, array $entries, int $drained, bool $announced): int
     {
-        return $waiting - count($entries) - $drained;
+        return $waiting - ($announced ? count($entries) : 0) - $drained;
     }
 
     private function pushRetries(Notifier $notifier, VehicleStore $store, array $retries, string $now): int
@@ -930,8 +947,8 @@ final readonly class CarScout
             count($entries),
             // ONE arithmetic for the guard AND the value — they disagreed until the C2 milestone
             // panel, and the guard was the stale half. `$drained` is what the channel took.
-            $this->remainingAfterDrain($waiting, $entries, $drained) > 0
-                ? sprintf(' — %d autre(s) en attente', $this->remainingAfterDrain($waiting, $entries, $drained))
+            $this->remainingAfterDrain($waiting, $entries, $drained, true) > 0
+                ? sprintf(' — %d autre(s) en attente', $this->remainingAfterDrain($waiting, $entries, $drained, true))
                 : '',
         ));
     }

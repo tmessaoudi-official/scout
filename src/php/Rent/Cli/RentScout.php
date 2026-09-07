@@ -1176,7 +1176,9 @@ final readonly class RentScout
 
         if ($dryRun) {
             // Nothing was attempted, so nothing drained.
-            $this->reportRemainder($batch, 0, false);
+            // The batch was LISTED above, so it is accounted for; the remainder means "beyond what
+            // you were just shown". Passing `false` here reported the whole queue (C2 round 2, P2).
+            $this->reportRemainder($batch, 0, true);
             $this->line('--dry-run : rien n\'a été envoyé, rien n\'a été marqué comme émis.');
 
             return 0;
@@ -1603,9 +1605,9 @@ final readonly class RentScout
      * because a line claiming a backlog it has just emptied is how they learn to stop reading it.
      * Both directions have cost a round.
      */
-    private function reportRemainder(DigestBatch $batch, int $drainedKeys, bool $delivered): void
+    private function reportRemainder(DigestBatch $batch, int $drainedKeys, bool $accountedFor): void
     {
-        $remaining = $batch->overflow($drainedKeys, $delivered);
+        $remaining = $batch->overflow($drainedKeys, $accountedFor);
         if ($remaining > 0) {
             $this->line(sprintf(
                 '%d autre(s) en attente — relancer `scout --domain=rent digest` pour la suite (lot de %d).',
@@ -1983,6 +1985,35 @@ final readonly class RentScout
                 ++$changed;
             }
         }
+
+        // §1 RE-CHECKED ON THE SETTLED STORE, because the candidate set this loop was judged
+        // against is the one that existed BEFORE it ran (C2 milestone panel round 2, P0 — found
+        // independently by two lenses, each with an executed push).
+        //
+        // The hoist above reads `excludedDwellings()` once, and its comment justified that by
+        // saying the candidate set is a property of the store rather than of the row. That is true
+        // of `Pipeline`, which persists every member's reading in a recording loop BEFORE it loads
+        // the set, and false here: `reclassify` writes `tenure` INSIDE the loop it guards, so an
+        // exclusion this very command resolves is invisible to every row judged after it.
+        //
+        // Re-judging in a second pass would not be enough either. `staleVerdicts()` orders
+        // `seen_epoch DESC`, so in the ordinary re-advertising case the NEW ad is judged FIRST and
+        // the old copy resolves to `PLS` afterwards — the veto has to be applied to the PROMOTION,
+        // which is the last moment at which every verdict of this run is on disk. Nothing is
+        // announced before this point, so it is also the cheapest place: one query, not one per row.
+        //
+        // Measured on a copy of the live store: 47 candidates in 42 ms, and matching every stale
+        // row took 331 ms — so the cost the hoist was avoiding did not exist. Never restore the
+        // single read as an optimisation.
+        $settled = $store->excludedDwellings();
+        $promotions = array_values(array_filter($promotions, function (array $promotion) use ($settled, $dwellingDedup, &$vetoed): bool {
+            if (ExcludedDwellings::match($promotion['listing'], $settled, $dwellingDedup) === null) {
+                return true;
+            }
+            ++$vetoed;
+
+            return false;
+        }));
 
         // CAPPED HERE, before the summary, so the two numbers describe the same set. The cap used
         // to live inside `announcePromotions()`, which meant the summary said 54 while 50 were
