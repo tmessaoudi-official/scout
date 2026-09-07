@@ -1324,7 +1324,13 @@ run_sabotage "a known duplicate is silently dropped instead of shown" \
 
 run_sabotage "--seed stops marking listings notified (the flood moves one run later)" \
   src/php/Rent/Cli/Pipeline.php \
-  's%MARKED NOTIFIED WITHOUT SENDING%DISABLED%; s%^                \$this->store->markNotified(\$sighting->dedupKey, \$nowIso, .MATCH.);$%%'
+  's%^                \$this->store->markNotified(\$sighting->dedupKey, \$nowIso, .MATCH.);$%%'
+# NOT A CASE: the first half of this expression used to rewrite the COMMENT above that line
+# (`MARKED NOTIFIED WITHOUT SENDING` -> `DISABLED`). A comment cannot redden a suite, and unlike the
+# genuinely paired compounds in this ledger it did not enable its sibling either — the sibling is an
+# anchored match on the call itself. Measured on 2026-09-07 by running all 26 sub-expressions of the
+# 15 compound cases ALONE: it was the only one of the eleven undetected halves that was inert rather
+# than shadowed. Removed, because an expression that cannot fail reports work it does not do.
 
 run_sabotage "the digest re-emits everything on every pass (Q34)" \
   src/php/Rent/Cli/Pipeline.php \
@@ -4576,6 +4582,10 @@ run_sabotage "the price-per-m² guard accepts a zero surface and divides by zero
 # THROUGH a twin never reached that listing's OTHER twins, and a second copy of a flat rejected as
 # PLS was pushed as a match naming the rejected route. The graph is resolved to a fixed point before
 # any judging; disabling the propagation is the regression.
+# THE SECOND HALF DISABLES `excludedDwellings()`, and that is why it is here: the broadest route
+# shadows this one, so mutating the propagation alone leaves the suite green — measured 2026-09-07.
+# Same shape as the pipeline-veto and twin-group-veto cases above, which already said so; this one
+# did not, and a reader could not tell a shadow-remover from a second guarantee.
 run_sabotage "the twin veto stops being transitive (a third copy of a rejected flat is pushed)" \
   src/php/Rent/Cli/Pipeline.php \
   's%if (\$twinRank(\$other\['"'"'tenure'"'"'\]) > \$twinRank(\$mine\['"'"'tenure'"'"'\])) {%if (false) {%; s%\$excludedDwellings = \$this->store->excludedDwellings();%\$excludedDwellings = [];%'
