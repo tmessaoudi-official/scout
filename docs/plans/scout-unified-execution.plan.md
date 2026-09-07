@@ -2944,6 +2944,23 @@ tool/guard) and say which ones the fix covers.**
   The three deferred non-blocking items (the dated `CLAUDE.md:93` count narrative, the
   `SourceHealth` two-array docblock) stay deferred, deliberately, so the freeze does not move.
 
+- [2026-09-07 13:40] RECORD (**ROUND 11 CLEAN — the counter reaches 2 and row 35 closes**).
+  `advisor()` re-read `4ae6a4f`'s reviewed code cold rather than re-reading its own round-10 verdict,
+  and probed the one asymmetry round 10 had not: whether `observedRuns()` changes what the
+  empty-streak baseline fallback can see. It does not — `lastProductiveCount()` filters `ok === 1`,
+  so a KEPT failure episode never counted toward it either, identical before and after. No defect.
+
+  **What row 35 is therefore certified BY, stated once and not softened**: two consecutive clean
+  rounds by the SAME reviewer over the same frozen span, `advisor()` at the developer's ruling on
+  both. That is weaker than the ladder's MAXIMAL tier, which asks for fresh-context lenses; the
+  three reviewer agents were offered at both gates and declined at both. The suite record backing it
+  is `test:2026-09-07`, passing on the reviewed tree.
+
+  **One line read and not run**: `CarScout`'s alert loop consumes this change through the shared
+  `RunStore`, and the verdicts were verified on a live copy of the car store — but that loop itself
+  was read this session, not executed. Round 8's `$criteria` defect is the precedent for why the
+  distinction is worth writing down.
+
 <!-- progress-block v1 -->
 | # | Step | Size | State | Evidence | Files |
 |---|------|------|-------|----------|-------|
@@ -2981,7 +2998,7 @@ tool/guard) and say which ones the fix covers.**
 | 32 | Deep — field-map regex has no load-time compile check | S | certified | 38f64bb test:2026-09-04 | src/php/Rent/Config/FieldMap.php tests/php/Rent/Config/ConfigTest.php |
 | 33 | Deep — doc drift: WARN_FLAKY, card_separator_pattern refusals, 4 stale Core paths | M | done | 38f64bb | CLAUDE.md docs/OPEN-QUESTIONS.md |
 | 34 | Deep — plan track sections stale for Tracks 0 1 2-step0 4 and 6-A1/A2/A3 | M | done | 38f64bb | docs/plans/scout-unified-execution.plan.md |
-| 35 | 6-C2 — the TWO CONSECUTIVE CLEAN rounds the bar requires; rounds 1-3 each found real defects, cap is 5 then ask; CLOSED by rounds 10+11, both advisor() over the frozen 4ae6a4f — same reviewer, same span, weaker than MAXIMAL and ruled so | L | certified | 348271a test:2026-09-07 | src/php |
+| 35 | 6-C2 — the TWO CONSECUTIVE CLEAN rounds the bar requires; rounds 1-3 each found real defects, cap is 5 then ask; CLOSED by rounds 10+11, both advisor() over the frozen 4ae6a4f — same reviewer, same span, weaker than MAXIMAL and ruled so | L | certified | ca4720b test:2026-09-07 | docs/plans/scout-unified-execution.plan.md |
 | 36 | Processed alert emails are marked \Seen — run only, after the store recorded the source; doctor/dump stay read-only | M | certified | 766edd7 test:2026-09-06 | src/php/Adapters/Mail/ImapMailbox.php src/php/Adapters/Mail/Mailbox.php src/php/Rent/Cli/Pipeline.php src/php/Car/VehiclePipeline.php |
 | 37 | B-common — content-addressed identity for VehicleEmailSource (no-information floor, price out of the key, in-message duplicate announced) | M | certified | 7e1d54b test:2026-09-06 | src/php/Car/VehicleEmailSource.php src/php/Car/VehicleSourceLoader.php |
 | 38 | B-common — per-segment labelled field reader for VehicleEmailSource (the CapCar shape) | M | certified | 7e1d54b test:2026-09-06 | src/php/Car/VehicleEmailSource.php src/php/Car/VehicleSourceLoader.php |
