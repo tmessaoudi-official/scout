@@ -116,8 +116,7 @@ final readonly class DigestBatch
      * them as gone. The rent daily floor was already correct (it counts after marking); only the
      * verb was wrong, which is this repo's *a fix landing on one of two symmetric surfaces* once
      * more. No default here either, and for the same reason as above.
-     */
-    /**
+     *
      * @param list<array{keys: list<string>}> $lowScoreAnnounced the rollup entries that SURVIVED the
      *                                                            §1 gate — never `$this->lowScore`,
      *                                                            which is what was QUEUED

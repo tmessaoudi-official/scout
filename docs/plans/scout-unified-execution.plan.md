@@ -3268,27 +3268,6 @@ tool/guard) and say which ones the fix covers.**
   sixth round. On this trend that ask is likely owed, and it is written here so a compacted session
   does not quietly start a round 6.
 
-- [2026-09-07 21:33] AGREED (**the narrow fix landed as `8055943` and the watcher was REDEPLOYED —
-  one deploy, not two, per the same ruling**). Production had been running the 09:39 image against a
-  19:44 `src/` HEAD, so it predated the round-4 P0 (the rent-drop push escaping the gate) for the
-  whole of that afternoon. Rollback is one retag away (`scout:pre-round5`); both stores were backed
-  up with readback verification before the swap (rent 3193 annonces, car 4254, integrity ok) and the
-  migration was rehearsed on copies — rent stays schema v12, WAL, so this carries no migration at
-  all. `tools/verify-deploy.sh` is green on all four of its questions, and `test-notify` from the
-  DEPLOYED image reached the channel. **`up -d` printing Started is not a deployment** and the
-  verifier is the step that says otherwise: it asks separately whether the image is CURRENT and
-  whether it POSTDATES its build inputs, because "running, image courante" is also true of a watcher
-  whose image predates the fix by a day and a half.
-
-  **AND THE DEPLOYED FIRST PASS WAS READ, not assumed** — the round-5 gate adds a `refuses()` call
-  inside `Pipeline::runOnce`'s digest branch, and production is the only place commute enrichment is
-  ON, which is exactly the hop where an earlier pipeline fix passed 2 192 tests and then misbehaved
-  live. Rent: **8 sources, 1670 annonces, 551 correspondances, 50 à vérifier, 938 écartées, 131
-  doublons, 1 copie d'agence non poussée**, against the OUTGOING build's last pass of 1667/550/43/
-  932/142 — no collapse, no explosion, and the digest branch exercised with the new gate in it. Car:
-  6 sources, 248 annonces, 222 correspondances. Zero PHP diagnostics on either. The three stderr
-  warnings are the same three SeLoger identity hashes the outgoing build emitted, so nothing new.
-
 - [2026-09-07 20:45] AGREED (**round 5 at `dde4d8c` — the CAP — was NOT clean; the developer was
   asked and ruled: land ONE narrowly-scoped fix, then close; redeploy AFTER it lands, not before**).
 
@@ -3360,12 +3339,41 @@ tool/guard) and say which ones the fix covers.**
   against the documented cross-process interleave, which a single-process suite cannot construct.
   The removal stands, on evidence this time rather than on reasoning.
 
+  **TWO CHANGES IN `floorDigest()` ARE THEREFORE UNCERTIFIED BY EXECUTION, and both are named rather
+  than left to be discovered.** The emptiness reorder is one; the other is `count($batch->entries) +
+  count($lowScore)` replacing `$batch->count()` in the emitted line. In a single process
+  `$lowScore === $batch->lowScore`, so NO test can observe either, and both are defence in depth
+  against the documented cross-process interleave. Correct code, unproven by execution — which is
+  what `UNCERTIFIED-BY-EXECUTION` is for, and saying "the suite is green" about them would be a
+  claim about a different thing.
+
   What the re-examination DID buy is a test worth keeping:
   `testAFlatWhoseTwinSaysPLSIsNeitherRolledUpNorAnnouncedAsAnEmptyMail` pins the twin veto on the
   DEPLOYED drain. It is defended in depth — `collectDigest()` refuses it and `SectionOneGate` refuses
   it again — so mutating either layer alone leaves it green, and **only mutating BOTH reds it**. That
   is stated because a reader checking it against one ledger case would otherwise read it as vacuous,
   which is what I read it as for twenty minutes.
+
+- [2026-09-07 21:33] AGREED (**the narrow fix landed as `8055943` and the watcher was REDEPLOYED —
+  one deploy, not two, per the same ruling**). Production had been running the 09:39 image against a
+  19:44 `src/` HEAD, so it predated the round-4 P0 (the rent-drop push escaping the gate) for the
+  whole of that afternoon. Rollback is one retag away (`scout:pre-round5`); both stores were backed
+  up with readback verification before the swap (rent 3193 annonces, car 4254, integrity ok) and the
+  migration was rehearsed on copies — rent stays schema v12, WAL, so this carries no migration at
+  all. `tools/verify-deploy.sh` is green on all four of its questions, and `test-notify` from the
+  DEPLOYED image reached the channel. **`up -d` printing Started is not a deployment** and the
+  verifier is the step that says otherwise: it asks separately whether the image is CURRENT and
+  whether it POSTDATES its build inputs, because "running, image courante" is also true of a watcher
+  whose image predates the fix by a day and a half.
+
+  **AND THE DEPLOYED FIRST PASS WAS READ, not assumed** — the round-5 gate adds a `refuses()` call
+  inside `Pipeline::runOnce`'s digest branch, and production is the only place commute enrichment is
+  ON, which is exactly the hop where an earlier pipeline fix passed 2 192 tests and then misbehaved
+  live. Rent: **8 sources, 1670 annonces, 551 correspondances, 50 à vérifier, 938 écartées, 131
+  doublons, 1 copie d'agence non poussée**, against the OUTGOING build's last pass of 1667/550/43/
+  932/142 — no collapse, no explosion, and the digest branch exercised with the new gate in it. Car:
+  6 sources, 248 annonces, 222 correspondances. Zero PHP diagnostics on either. The three stderr
+  warnings are the same three SeLoger identity hashes the outgoing build emitted, so nothing new.
 
 <!-- progress-block v1 -->
 | # | Step | Size | State | Evidence | Files |

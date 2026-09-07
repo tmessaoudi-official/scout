@@ -2409,6 +2409,18 @@ var/claude/                 Reports, review outputs — gitignored scratch (hand
   seconds against a 15-minute cadence. The per-route checks upstream STAY: they shape the verdict
   (an excluded reading is recorded, a doubt becomes a digest) and short-circuit work. The gate does
   not replace them; it makes their ordering stop mattering for §1.
+  **THE DIGEST BIN IS AN ANNOUNCEMENT, AND FOR FIVE ROUNDS IT WAS NOT TREATED AS ONE (round 5).**
+  §1 was implemented as *"never a MATCH"*, so `Outcome::DIGEST` read as a DESTINATION rather than as
+  something that reaches the phone. It reaches the phone. The digest branch `continue`s 42 lines
+  ABOVE the match gate, so an excluded dwelling was announced under a headline asserting *« au régime
+  indéterminé »* while the store held `PLS` for the same dwelling one row away, written by that same
+  pass — reachable on ordinary in-pass ordering, no concurrency, via the non-transitive tolerance
+  chain. The bin is §1's ONLY landing zone, so what it announces has to be trustworthy.
+  **Its refusal is deliberately DIFFERENT from the match gate's**, and copying one to the other would
+  be a defect: a row refused at the bin is DROPPED and said out loud, never written `REJECT` with a
+  derived durable reading — a doubt the pipeline could not resolve is not a regime it read, and the
+  match gate's write is terminal by query. `$digestRefusal` is a separate variable for that reason,
+  so the two cannot share one sabotage expression either.
   **`tests/php/Repo/SectionOneGateCallSitesTest.php` is the half that prevents recurrence**: it
   discovers every METHOD under `src/php/Rent` containing a `notifier->send(` and fails when one does
   not consult the gate in that same method. Enumerating surfaces in prose failed twice —
