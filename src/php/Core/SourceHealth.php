@@ -16,6 +16,15 @@ namespace Scout\Core;
  * fetches has no way to say so, because `status` reads only the LAST run and the streak resets on
  * any success. Data that cannot reach the verdict object cannot reach the user either.
  */
+/**
+ * TWO OF THESE FIELDS ARE COUNTED OVER DIFFERENT SETS OF RUNS, and that is deliberate rather than an
+ * oversight (2026-09-07). `totalRuns`, `runsInWindow` and `failedRunsInWindow` count ATTEMPTS, so
+ * they read the whole log — a failed run is a perfectly good attempt, and the flaky verdicts depend
+ * on it. `consecutiveEmptyRuns`, `lastCount` and `rollingMean` count OBSERVATIONS, so they read the
+ * log with tolerated failure episodes removed: a failed run's `item_count` of 0 is unknown, not
+ * "zero annonces" (hard rule 9). A reader comparing `totalRuns` with `consecutiveEmptyRuns` and
+ * finding they do not add up is seeing the design, not a bug. {@see RunStore::observedRuns()}.
+ */
 final readonly class SourceHealth
 {
     /**

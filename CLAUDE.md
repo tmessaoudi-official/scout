@@ -90,7 +90,7 @@ closed one, so issues #1 and #2 stood open for days after the regression they re
 pushed, and an alert nobody retracts becomes furniture. Both halves are pinned by
 `tests/test-ci-workflow.sh` — by step NAME *and* by the API call that does the work, since a name
 alone survives the body being gutted. **THE LEDGER IS SHARDED SIX WAYS since 2026-09-05** (developer
-ruling), because one job could no longer finish it: 258 → 527 → 772 cases in three weeks, four of
+ruling), because one job could no longer finish it: 258 → 527 → 764 cases in the three weeks to 2026-09-05, four of
 the last eight nightlies CANCELLED at the 240-minute cap and four failed on row 45's CI cause —
 eight days with no completed detection proof and seven issues nobody could close. GitHub's hosted
 ceiling is 360, so a bigger budget had nowhere left to go. `SABOTAGE_SHARD=<i>/<n>` selects by case
