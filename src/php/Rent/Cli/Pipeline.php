@@ -542,6 +542,33 @@ final readonly class Pipeline
                 // that gap. It did not — the pipeline's own re-judgement removes the row from
                 // `staleVerdicts()` before reclassify can ever see it. Schema v8's `notified_as` is
                 // what closes it, and the match path below asks `wasNotifiedAs(..., 'MATCH')`.
+                // §1 ON THE DIGEST BIN TOO — THE DIGEST IS AN ANNOUNCEMENT (C2 round 5, P0).
+                //
+                // §1 was implemented as "never a MATCH", so `DIGEST` was treated as a DESTINATION
+                // rather than as a surface that reaches the phone. It reaches the phone. This
+                // branch `continue`s 42 lines ABOVE the gate, so an excluded dwelling was announced
+                // under a headline asserting *« au régime indéterminé »* while the store recorded
+                // `PLS` for the same dwelling one row away, written by this very pass. Reachable on
+                // ordinary in-pass ordering with no concurrency: the non-transitive tolerance chain.
+                //
+                // THE REFUSAL IS DIFFERENT FROM THE MATCH GATE'S, deliberately. A row refused here
+                // is DROPPED FROM THE BIN and said out loud; it is NOT written `REJECT` with a
+                // derived durable reading, because a doubt the pipeline could not resolve is not
+                // the same fact as a regime it read — and the match gate's write is terminal by
+                // query. The next pass's own hoisted set catches it in `storedDwellingClassification`
+                // anyway; what this closes is the announcement.
+                $digestRefusal = $sectionOne->refuses($listing, $sighting->dedupKey);
+                if ($digestRefusal !== null) {
+                    $sectionOneRefused[] = sprintf(
+                        '%s — §1 : %s (%s) — retirée du récapitulatif « à vérifier »',
+                        $sighting->dedupKey,
+                        $digestRefusal['detail'],
+                        $digestRefusal['route'],
+                    );
+
+                    continue;
+                }
+
                 if (!$this->store->wasNotified($sighting->dedupKey)) {
                     $digestEntries[] = [
                         'listing' => $listing,
@@ -616,12 +643,20 @@ final readonly class Pipeline
                 // `reclassify --reopen=<dedup_key>`, and until now NOTHING PRINTED THE KEY. The
                 // other three announcing surfaces all speak on the identical refusal; this is the
                 // one that runs unattended every 15 minutes, and it was the silent one.
+                // THE REMEDY NAMED MUST WORK FOR THIS ROUTE (C2 round 5). `--reopen` clears the
+                // row's OWN reading and its TWIN's; the GROUP and SAME-DWELLING vetoes live on
+                // ANOTHER row's reading and are deliberately NOT cleared — so promising it
+                // unconditionally sent the operator into a closed loop: re-refused and rewritten
+                // every pass, under an instruction saying there is a way out.
+                $reversible = \in_array($refusal['route'], ['lecture propre', 'jumeau'], true);
                 $sectionOneRefused[] = sprintf(
-                    '%s — §1 : %s (%s) — `scout --domain=rent reclassify --reopen=%s` si c\'est une erreur',
+                    '%s — §1 : %s (%s) — %s',
                     $sighting->dedupKey,
                     $refusal['detail'],
                     $refusal['route'],
-                    $sighting->dedupKey,
+                    $reversible
+                        ? sprintf('`scout --domain=rent reclassify --reopen=%s` si c\'est une erreur', $sighting->dedupKey)
+                        : 'ce veto vient d\'une AUTRE annonce et n\'est pas effaçable ici — rouvrez celle-là si elle est erronée',
                 );
 
                 continue;

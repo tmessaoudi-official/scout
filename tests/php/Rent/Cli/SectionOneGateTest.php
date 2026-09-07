@@ -234,6 +234,42 @@ final class SectionOneGateTest extends TestCase
         self::assertSame('même logement', $refusal['route']);
     }
 
+    /**
+     * THE COUNT MUST SEE BOTH WAYS A VETO IS LOST, not just the rare one.
+     *
+     * `excludedDwellings()`'s own docblock names two: a pre-v7 row (never backfilled) and a payload
+     * that could not be JSON-encoded — and BOTH have a NULL snapshot. The first version of this
+     * count reused the shared query, which filters `evidence_json IS NOT NULL`, so it removed the
+     * whole documented population before counting and reported only the CORRUPT shape. `doctor`
+     * printed nothing while a `PLS` row had silently stopped vetoing (C2 round 5).
+     */
+    public function testTheUnreadableCountSeesANullSnapshotAndNotOnlyACorruptOne(): void
+    {
+        $store = Store::open($this->db);
+        $pdo = new \PDO('sqlite:' . $this->db);
+        $pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+
+        $nulled = $this->flat('NULL-SNAP');
+        $nulledKey = $store->record($nulled, 1450, self::NOW)->dedupKey;
+        $store->recordVerdict($nulledKey, 'PLS', 90, ['régime relevé'], $nulled);
+        $pdo->prepare('UPDATE listings SET evidence_json = NULL WHERE dedup_key = :k')->execute(['k' => $nulledKey]);
+
+        self::assertSame([], $store->excludedDwellings(), 'premise: it has left the veto set');
+        self::assertSame(1, $store->unreadableExcludedDwellings(), 'and the count must see it');
+    }
+
+    /** The counterweight: a perfectly readable excluded row is NOT counted as unreadable. */
+    public function testAReadableExcludedRowIsNotCountedAsUnreadable(): void
+    {
+        $store = Store::open($this->db);
+        $good = $this->flat('GOOD-SNAP');
+        $key = $store->record($good, 1450, self::NOW)->dedupKey;
+        $store->recordVerdict($key, 'PLS', 90, ['régime relevé'], $good);
+
+        self::assertCount(1, $store->excludedDwellings(), 'premise: it is in the veto set');
+        self::assertSame(0, $store->unreadableExcludedDwellings());
+    }
+
     private function gate(Store $store): SectionOneGate
     {
         return new SectionOneGate($store, new Dedup());

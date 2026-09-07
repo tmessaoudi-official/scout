@@ -1153,7 +1153,6 @@ final readonly class RentScout
         $entries = $batch->entries;
         $withoutSnapshot = $batch->withoutSnapshot;
         $unreadable = $batch->unreadable();
-        $waiting = $batch->waiting;
 
         // §1 ON THE ROLLUP HALF, in the method that sends. `$entries` is the tenure-doubt bin —
         // announcing a doubt is what that bin IS, and §1's landing zone by design. `$batch->lowScore`
@@ -1206,7 +1205,12 @@ final readonly class RentScout
             ));
         }
         if ($unreadable > 0) {
-            $this->line($unreadable . ' instantané(s) illisible(s) — voir les avertissements ci-dessus.');
+            // "ÉCARTÉE OU ILLISIBLE", not "instantané illisible" — THE CAUSE IT NAMES MUST BE ONE
+            // THAT CAN HAPPEN, which this file already fixed once for the same reason (C2 round 5).
+            // `unreadable()` returns `count($this->warnings)`, and `collectDigest()` pushes every §1
+            // veto into that list — so a queued match with a `PLS` twin and a perfectly decodable
+            // snapshot was reported as a source-side encoding fault that does not exist.
+            $this->line($unreadable . ' annonce(s) écartée(s) ou illisible(s) — voir les avertissements ci-dessus.');
         }
 
         if ($dryRun) {
@@ -1215,7 +1219,7 @@ final readonly class RentScout
             // you were just shown". Passing `false` here reported the whole queue (C2 round 2, P2),
             // and passing `0` retries reported every retry it had just printed (C2 round 3, P1) —
             // the same defect on the third list, found by all three lenses.
-            $this->reportRemainder($batch, $batch->retryKeyCount(), true);
+            $this->reportRemainder($batch, $batch->retryKeyCount(), true, $lowScore);
             $this->line('--dry-run : rien n\'a été envoyé, rien n\'a été marqué comme émis.');
 
             return 0;
@@ -1244,7 +1248,7 @@ final readonly class RentScout
 
         if ($entries === [] && $lowScore === []) {
             // Nothing to send, so nothing can land: the retries are the whole story.
-            $this->reportRemainder($batch, $drainedKeys, false);
+            $this->reportRemainder($batch, $drainedKeys, false, $lowScore);
 
             return 0;
         }
@@ -1268,13 +1272,13 @@ final readonly class RentScout
             // AND THE REMAINDER SAYS SO. It used to be printed before the send, subtracting every
             // announced and rolled-up row unconditionally — so a refused mail marked nothing, left
             // the whole batch queued, and reported it as drained (C2 milestone panel, P2).
-            $this->reportRemainder($batch, $drainedKeys, false);
+            $this->reportRemainder($batch, $drainedKeys, false, $lowScore);
             $this->warn('récapitulatif non délivré — rien n\'a été marqué comme émis, il sera réessayé.');
 
             return 1;
         }
 
-        $this->reportRemainder($batch, $drainedKeys, true);
+        $this->reportRemainder($batch, $drainedKeys, true, $lowScore);
 
         foreach ($entries as $entry) {
             $store->markNotified($entry['key'], $now, 'DIGEST');
@@ -1642,9 +1646,10 @@ final readonly class RentScout
      * because a line claiming a backlog it has just emptied is how they learn to stop reading it.
      * Both directions have cost a round.
      */
-    private function reportRemainder(DigestBatch $batch, int $drainedKeys, bool $accountedFor): void
+    /** @param list<array{keys: list<string>}> $lowScoreAnnounced what survived the §1 gate */
+    private function reportRemainder(DigestBatch $batch, int $drainedKeys, bool $accountedFor, array $lowScoreAnnounced): void
     {
-        $remaining = $batch->overflow($drainedKeys, $accountedFor);
+        $remaining = $batch->overflow($drainedKeys, $accountedFor, $lowScoreAnnounced);
         if ($remaining > 0) {
             $this->line(sprintf(
                 '%d autre(s) en attente — relancer `scout --domain=rent digest` pour la suite (lot de %d).',
@@ -2659,12 +2664,17 @@ final readonly class RentScout
         // source fetches, not notification sends, so there is no jitter between them.
         $drainedKeys = $this->pushRetries($notifier, $store, $batch->retries, $now);
 
-        if ($batch->entries === [] && $batch->lowScore === []) {
-            return;
-        }
-
         // §1 ON THE ROLLUP HALF — the same rule as the verb, in the method that sends. This is the
         // DEPLOYED drain, so if the two were ever to differ this is the one that matters.
+        //
+        // FILTERED BEFORE THE EMPTINESS CHECK, not after (C2 round 5). The guard below tested the
+        // UNFILTERED property while the filter ran seven lines later, so an all-refused rollup fell
+        // through and sent `Vérifié, score bas : 0 annonce(s)` — a mail saying nothing — and then
+        // wrote `state/rent-digest.txt`, recording the window as SERVED. Q34's ruling is verbatim
+        // the opposite: *"It is SILENT on a day with nothing pending, and records no window as
+        // served — leaving the window open is what makes 'an unsent digest is retried' work."* A
+        // doubt arriving later that day would have waited until tomorrow. The verb's twin check was
+        // changed to the filtered local in the same commit; this one was not.
         $sectionOne = new SectionOneGate($store, new Dedup());
         $lowScore = array_values(array_filter($batch->lowScore, function (array $entry) use ($sectionOne): bool {
             $refusal = $sectionOne->refuses($entry['listing'], $entry['key']);
@@ -2680,6 +2690,11 @@ final readonly class RentScout
 
             return false;
         }));
+
+        // NOW the emptiness check, on what will actually be announced.
+        if ($batch->entries === [] && $lowScore === []) {
+            return;
+        }
 
         $notification = (new Formatter())->digest($batch->entries, $lowScore);
         $failures = $notifier->send($notification);
@@ -2708,12 +2723,16 @@ final readonly class RentScout
 
         $this->line(sprintf(
             'récapitulatif quotidien « à vérifier » : %d annonce(s) émise(s)%s.',
-            $batch->count(),
-            $batch->overflow($drainedKeys, true) > 0
+            // WHAT WAS SENT, not what was queued. `$batch->count()` sums the UNFILTERED lowScore,
+            // so a gate-refused row was reported as emitted — while `overflow()` subtracted it too,
+            // so no remainder line said it was still waiting. Both halves of one line wrong in
+            // opposite directions (C2 round 5). The verb's count was corrected in the same commit.
+            count($batch->entries) + count($lowScore),
+            $batch->overflow($drainedKeys, true, $lowScore) > 0
                 // Named, like every other cap in this file. A floor that drains one batch a day
                 // without saying so reads as the whole backlog having been dealt with — and it is
                 // counted AFTER the retries were attempted, because a refused one stays queued.
-                ? sprintf(' — %d autre(s) en attente (lot de %d)', $batch->overflow($drainedKeys, true), Store::DIGEST_BATCH)
+                ? sprintf(' — %d autre(s) en attente (lot de %d)', $batch->overflow($drainedKeys, true, $lowScore), Store::DIGEST_BATCH)
                 : '',
         ));
 

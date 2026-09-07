@@ -117,7 +117,12 @@ final readonly class DigestBatch
      * verb was wrong, which is this repo's *a fix landing on one of two symmetric surfaces* once
      * more. No default here either, and for the same reason as above.
      */
-    public function overflow(int $retriesDrained, bool $batchAccountedFor): int
+    /**
+     * @param list<array{keys: list<string>}> $lowScoreAnnounced the rollup entries that SURVIVED the
+     *                                                            §1 gate — never `$this->lowScore`,
+     *                                                            which is what was QUEUED
+     */
+    public function overflow(int $retriesDrained, bool $batchAccountedFor, array $lowScoreAnnounced): int
     {
         // ONE mail carries both lists, so the fact is ONE fact and it governs both halves. A first
         // cut gated only the rollup half and would have left the digest half telling the same lie
@@ -129,10 +134,14 @@ final readonly class DigestBatch
         // under wording asserting a backlog BEYOND the batch it had just listed. On a one-row bin it
         // printed the row and then called it an *other*. A dry run SHOWS the batch to the operator,
         // so the batch is accounted for; only a refused send leaves it unaccounted.
+        // THE ANNOUNCED LIST, not the queued one (C2 round 5). This iterated `$this->lowScore`,
+        // so a row the §1 gate removed from the mail was still counted as drained — and the
+        // remainder line then stayed silent while that row sat in `pendingLowScore()`. That is
+        // this method's own documented guarantee read backwards.
         $announced = $batchAccountedFor ? \count($this->entries) : 0;
         $drained = $retriesDrained;
         if ($batchAccountedFor) {
-            foreach ($this->lowScore as $entry) {
+            foreach ($lowScoreAnnounced as $entry) {
                 $drained += \count($entry['keys']);
             }
         }

@@ -2065,40 +2065,6 @@ final readonly class Store
     }
 
     /**
-     * Every dwelling the store has judged to be an EXCLUDED regime, with the evidence to compare it.
-     *
-     * The §1 veto travelled three ways — the persisted cluster `group_key`, the cross-track
-     * `twin_tenure`, and the row's own durable reading — and a portal RE-ADVERTISING a flat under a
-     * new ad id acquires none of them: a new `external_id` means a fresh row, and `Dedup` refuses a
-     * same-source edge on purpose. So the `PLS` sat one row away on disk while the second copy was
-     * pushed as a match (C2 round-1 correctness lens, 2026-09-02, proven through the real pipeline).
-     * This is the fourth route, and the only one that does not need an edge in the pass's harvest —
-     * which is what the DELISTED variant needs, where the excluded copy is not fetched at all.
-     *
-     * **Excluded only, and never `UNKNOWN`.** Propagating a doubt by content match against the whole
-     * store is a different decision with the In'li cost — *not §1 satisfied, the tool switched off* —
-     * and it is deliberately not made here.
-     *
-     * **A row with no snapshot cannot be compared and is therefore NOT vetoed.** That is the unsafe
-     * direction and it is stated rather than hidden: a pre-v7 row (never backfilled, by ruling) and a
-     * listing whose payload could not be JSON-encoded both fall out. It decays — the live store has
-     * been v7 since late August — and the alternative, comparing on the four flat columns the
-     * `listings` table happens to carry, would merge on the ABSENCE of a difference, which is the
-     * over-merge `sameFlatReason()` exists to refuse.
-     *
-     * **A corrupt snapshot is SKIPPED here, not thrown**, which is the one place this method
-     * deliberately departs from {@see evidence()}. That method throws because `reclassify` is
-     * re-judging exactly that row and must not do it on less evidence; here the row is one candidate
-     * among many and throwing would take the whole pass — every source, every listing — down with it,
-     * turning one bad row into a total outage. The cost is that the bad row stops vetoing, which is
-     * the same not-vetoed gap the snapshot-less rows already have.
-     *
-     * Small by construction: the live store holds 43 excluded rows against 2 331 listings, so this is
-     * one indexed scan and a few dozen JSON decodes per pass, loaded ONCE and passed down.
-     *
-     * @return list<array{key: string, source: string, externalId: string, tenure: Tenure, listing: RawListing}>
-     */
-    /**
      * How many excluded rows the §1 dwelling route CANNOT read — a veto that silently shrank.
      *
      * `excludedDwellings()` skips a row whose snapshot will not decode, and that skip is right:
@@ -2116,10 +2082,41 @@ final readonly class Store
      */
     public function unreadableExcludedDwellings(): int
     {
+        // ITS OWN QUERY, because `excludedDwellingRows()` filters
+        // `evidence_json IS NOT NULL AND <> ''` — and BOTH documented ways an excluded row loses
+        // its veto have a NULL snapshot: a pre-v7 row (never backfilled, by ruling) and a listing
+        // whose payload could not be JSON-encoded. So the shared query removed the entire
+        // population this count exists for before it could see it, leaving only the CORRUPT shape,
+        // which is not the documented production one (C2 round 5). `doctor` printed nothing while a
+        // `PLS` row had silently stopped vetoing — *"checked and clear"* reported for a row that
+        // could not be checked, which is the exact distinction this count was added to preserve.
+        $excluded = array_values(array_filter(
+            Tenure::cases(),
+            static fn (Tenure $t): bool => $t->isExcluded(),
+        ));
+        $placeholders = [];
+        $params = [];
+        foreach ($excluded as $i => $tenure) {
+            $placeholders[] = ':t' . $i;
+            $params['t' . $i] = $tenure->value;
+        }
+
+        $statement = $this->pdo->prepare(
+            'SELECT evidence_json FROM listings WHERE tenure IN (' . implode(', ', $placeholders) . ')',
+        );
+        $statement->execute($params);
+
         $unreadable = 0;
-        foreach ($this->excludedDwellingRows() as $row) {
+        /** @var array{evidence_json: ?string} $row */
+        foreach ($statement->fetchAll() as $row) {
+            $json = $row['evidence_json'];
+            if ($json === null || $json === '') {
+                ++$unreadable;
+
+                continue;
+            }
             try {
-                ListingSnapshot::decode($row['evidence_json']);
+                ListingSnapshot::decode($json);
             } catch (\JsonException | \InvalidArgumentException) {
                 ++$unreadable;
             }
@@ -2165,6 +2162,40 @@ final readonly class Store
         return $rows;
     }
 
+    /**
+     * Every dwelling the store has judged to be an EXCLUDED regime, with the evidence to compare it.
+     *
+     * The §1 veto travelled three ways — the persisted cluster `group_key`, the cross-track
+     * `twin_tenure`, and the row's own durable reading — and a portal RE-ADVERTISING a flat under a
+     * new ad id acquires none of them: a new `external_id` means a fresh row, and `Dedup` refuses a
+     * same-source edge on purpose. So the `PLS` sat one row away on disk while the second copy was
+     * pushed as a match (C2 round-1 correctness lens, 2026-09-02, proven through the real pipeline).
+     * This is the fourth route, and the only one that does not need an edge in the pass's harvest —
+     * which is what the DELISTED variant needs, where the excluded copy is not fetched at all.
+     *
+     * **Excluded only, and never `UNKNOWN`.** Propagating a doubt by content match against the whole
+     * store is a different decision with the In'li cost — *not §1 satisfied, the tool switched off* —
+     * and it is deliberately not made here.
+     *
+     * **A row with no snapshot cannot be compared and is therefore NOT vetoed.** That is the unsafe
+     * direction and it is stated rather than hidden: a pre-v7 row (never backfilled, by ruling) and a
+     * listing whose payload could not be JSON-encoded both fall out. It decays — the live store has
+     * been v7 since late August — and the alternative, comparing on the four flat columns the
+     * `listings` table happens to carry, would merge on the ABSENCE of a difference, which is the
+     * over-merge `sameFlatReason()` exists to refuse.
+     *
+     * **A corrupt snapshot is SKIPPED here, not thrown**, which is the one place this method
+     * deliberately departs from {@see evidence()}. That method throws because `reclassify` is
+     * re-judging exactly that row and must not do it on less evidence; here the row is one candidate
+     * among many and throwing would take the whole pass — every source, every listing — down with it,
+     * turning one bad row into a total outage. The cost is that the bad row stops vetoing, which is
+     * the same not-vetoed gap the snapshot-less rows already have.
+     *
+     * Small by construction: the live store holds 43 excluded rows against 2 331 listings, so this is
+     * one indexed scan and a few dozen JSON decodes per pass, loaded ONCE and passed down.
+     *
+     * @return list<array{key: string, source: string, externalId: string, tenure: Tenure, listing: RawListing}>
+     */
     public function excludedDwellings(): array
     {
         $out = [];

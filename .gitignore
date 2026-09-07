@@ -58,6 +58,10 @@ seen.json
 # container's egress policy blocks GitHub dist zipballs, so Composer falls back to full git
 # clones and vendor/ balloons to 2.6 GB for a test runner. See README.md § Getting started.
 /tools/*.phar
+# PHPUnit writes its per-test-duration cache beside whatever cwd it is run from, and the
+# documented invocation is `php tools/phpunit.phar`. Untracked and unignored, it showed up
+# in `git status` on every run — one more thing for a `git add -A` to sweep into a commit.
+/tools/.phpunit.result.cache
 
 # ── Python ──────────────────────────────────────────────────────────────────────
 __pycache__/

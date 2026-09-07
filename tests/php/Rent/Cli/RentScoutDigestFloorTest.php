@@ -9,6 +9,7 @@ use Scout\Rent\Cli\RentScout;
 use Scout\Core\Notify\ConsoleChannel;
 use Scout\Core\Notify\Notifier;
 use Scout\Rent\Core\RawListing;
+use Scout\Rent\Core\Tenure;
 use Scout\Rent\Store\Store;
 use Scout\Tests\Support\DeliveringChannel;
 
@@ -331,6 +332,53 @@ final class RentScoutDigestFloorTest extends TestCase
         self::assertStringContainsString('réémise(s) individuellement', $r['out'], 'pushed by the floor, not left waiting');
         self::assertStringNotContainsString('Vérifié, score bas', $r['out'], 'no gate held it back — it is not a low score');
         self::assertTrue(Store::open($root . '/state/rent-watch.sqlite3')->wasNotifiedAs($key, 'MATCH'));
+    }
+
+    /**
+     * §1 ON THE DEPLOYED DRAIN, AND THE ALL-REFUSED DAY — one scenario carrying both halves.
+     *
+     * The floor is the drain that runs unattended, so of the two it is the one that matters. A
+     * queued MATCH whose CROSS-TRACK TWIN says `PLS` must not be rolled up: the twin is one of §1's
+     * four persisted routes, and nothing about a row's own `MATCH` outcome releases it. What this
+     * pins is that the floor re-reads the gate AT SEND TIME — a collect-time read alone misses a
+     * twin written by a concurrent `run --watch` in the window between the two.
+     *
+     * AND WHEN THE GATE REFUSES THE WHOLE ROLLUP, THE FLOOR STAYS SILENT. It used to test the
+     * UNFILTERED list for emptiness while the filter ran seven lines below, so an all-refused rollup
+     * fell through, sent `Vérifié, score bas : 0 annonce(s)` — a mail saying nothing — and then
+     * wrote the marker, recording the window as SERVED. Q34's ruling is verbatim the opposite, and a
+     * doubt arriving later that same day would then have waited until tomorrow.
+     *
+     * A first pass at this milestone REMOVED the all-refused test as unreachable, reasoning that
+     * `collectDigest()` refuses such a row upstream through all four routes. That reasoning holds
+     * for ONE process; the twin is written by another, which is the documented shape that made the
+     * retry case reachable two rounds earlier. **Failing to construct a case is not evidence that
+     * none exists** — this repo has now paid for that inference three times.
+     */
+    public function testAFlatWhoseTwinSaysPLSIsNeitherRolledUpNorAnnouncedAsAnEmptyMail(): void
+    {
+        $root = $this->tempRoot(['notify' => ['push_min_score' => 100]]);
+        $key = $this->seedQueuedMatch($root, 'TWIN-PLS-FLOOR');
+        Store::open($root . '/state/rent-watch.sqlite3')->recordTwin($key, Tenure::PLS, 'cdc_habitat', 9000);
+
+        $r = $this->watch($root);
+
+        self::assertSame(0, $r['code'], $r['err']);
+        self::assertStringNotContainsString('score bas', $r['out'], '§1 refuses the only rollup row');
+        self::assertStringNotContainsString(
+            'récapitulatif quotidien',
+            $r['out'],
+            'and an all-refused rollup sends no mail at all, not an empty one',
+        );
+
+        $store = Store::open($root . '/state/rent-watch.sqlite3');
+        self::assertFalse($store->wasNotifiedAs($key, 'ROLLUP'), 'never announced');
+        self::assertFalse($store->wasNotifiedAs($key, 'MATCH'), 'and never promoted over the gate either');
+
+        self::assertFileDoesNotExist(
+            $root . '/state/rent-digest.txt',
+            'a floor that announced nothing must not consume the day\'s window',
+        );
     }
 
     /** Under a gate it really fell short of, the same floor rolls it up and marks it ROLLUP. */

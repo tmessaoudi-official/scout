@@ -2426,8 +2426,12 @@ var/claude/                 Reports, review outputs — gitignored scratch (hand
   **Scope, stated because the sentence above invites the wrong reading:** the gate and the guard are
   RENT-only. The car domain persists no §1 route — verified against `VehicleStore`'s schema, which
   has no tenure, group or twin column — with ONE stated cost: when a car's snapshot will not decode,
-  `VehiclePipeline` rebuilds from stored columns and never re-runs the classifier, so an excluded
-  car can be announced. Structural, not patchable: the rent drain has a stored `tenure` column to
+  **`CarScout::collectRollup()`** leaves `$car` null, skips the re-judge block, rebuilds the listing
+  from the stored columns and pushes it as an individual match if the stored score clears the gate,
+  so an excluded car can be announced. (This paragraph named `VehiclePipeline`, which contains no
+  snapshot handling at all — *a true cost attached to an invented site*, this repo's own named
+  failure, in the sentence written to close a gap. Found by the C2 round-5 panel.) Structural,
+  not patchable: the rent drain has a stored `tenure` column to
   check for exactly that row and the car domain has no persisted fact to substitute.
 - **A TOLERANCE BAND IS NOT AN EQUIVALENCE RELATION, and assuming it is cost a reverted fix
   (2026-09-07).** `Dedup::within()` matches on ±30 € / 3 %, so it is NOT TRANSITIVE: three ad ids of

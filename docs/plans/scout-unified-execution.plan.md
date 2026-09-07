@@ -3268,6 +3268,84 @@ tool/guard) and say which ones the fix covers.**
   sixth round. On this trend that ask is likely owed, and it is written here so a compacted session
   does not quietly start a round 6.
 
+- [2026-09-07 20:45] AGREED (**round 5 at `dde4d8c` — the CAP — was NOT clean; the developer was
+  asked and ruled: land ONE narrowly-scoped fix, then close; redeploy AFTER it lands, not before**).
+
+  **The escalation happened as the framework requires, and the panel's own evidence framed it.**
+  Rounds found 9, 8, 17, 15 and ~28 — but round 5 found **ZERO ways for an excluded flat to reach a
+  MATCH push**, the first round with none. Its correctness lens: *"The §1 MATCH exclusion is sound…
+  Stop looking for MATCH bypasses."* What it found instead was the surface nobody had defined as in
+  scope, plus bookkeeping.
+
+  - **P0 · THE DIGEST IS AN ANNOUNCEMENT.** §1 was implemented as *"never a MATCH"*, so
+    `Outcome::DIGEST` was treated as a DESTINATION. The digest branch `continue`s 42 lines above the
+    gate, so an excluded dwelling was announced under a headline asserting *« au régime indéterminé »*
+    while the store recorded `PLS` for the same dwelling one row away, written by the same pass. The
+    bin is §1's ONLY landing zone, so what it announces has to be trustworthy. Gated with a
+    DIFFERENT refusal from the match gate's: dropped from the bin and voiced, never written `REJECT`
+    with a derived durable reading — a doubt the pipeline could not resolve is not a regime it read,
+    and the match gate's write is terminal by query.
+  - **INSTANCE SEVEN was inside round 4's guard.** Comment-stripping was applied to the DETECTION
+    half (`$code`) and not to the VERIFICATION half (`$body`), ONE LINE APART. A lens deleted
+    `announcePromotions()`'s gate, left a TRUE comment in its place, and all 3018 tests passed. The
+    guard also keyed on the single literal `notifier->send(` — one spelling of the notifier variable,
+    in the guard whose docblock faults its predecessor for recognising three spellings of the
+    formatter variable. **It now has its own sabotage test**, which it had never had: a comment must
+    not satisfy the gate, a renamed receiver must still be found, an HTTP send must not be. Reverting
+    the `$code`/`$body` asymmetry reds it — the first time this milestone a meta-guard has been
+    proven against itself.
+  - The deployed floor sent an EMPTY rollup and burned the day's window (emptiness guard tested the
+    unfiltered property while the filter ran seven lines below); `overflow()` counted the QUEUED
+    rollup rather than the ANNOUNCED one, so a gate-refused row was reported as drained AND produced
+    no remainder line; `unreadableExcludedDwellings()` reused a query filtering
+    `evidence_json IS NOT NULL`, which removed **both** documented ways a veto is lost before it
+    could count them; §1 vetoes were reported as *"instantané illisible"*, a cause that cannot
+    happen; and the refusal warning promised `--reopen` for the two routes `--reopen` cannot clear,
+    sending the operator into a closed loop.
+  - **A doc claim was my own named failure class**: the car cost was attributed to `VehiclePipeline`,
+    which contains no snapshot handling at all — the behaviour is in `CarScout::collectRollup()`. *A
+    true cost attached to an invented site*, in the sentence written to close a gap.
+
+  **TWO THINGS DELIBERATELY NOT DONE, because the alternative was worse.** A test written for the
+  all-refused rollup was REMOVED: `collectDigest()` refuses such a row upstream through all four
+  routes, so it cannot be reached in one process, and shipping a test that passes for the wrong
+  reason is the defect this milestone keeps finding. The arithmetic is pinned instead as a
+  `DigestBatch` unit test, where it IS reachable. And nine pre-existing orphaned docblocks were left
+  alone — only the one this work created was fixed; widening a narrow fix is how the last four rounds
+  went.
+
+  **A test of mine was pinning the bug it was written to prevent**:
+  `testASectionOneRefusalIsReportedWithTheKeyThatReversesIt` demanded `--reopen=` unconditionally
+  while driving a same-dwelling refusal — the one route it cannot clear.
+
+  **State: suite 3025/11916, drift 0/0/0, 798 ledger cases / 809 expressions, all applying.** The milestone's §1
+  promise — never surface social housing as a match — holds, and is now pinned by execution on every
+  announcing surface in both domains.
+
+  **THE LEDGER CAUGHT ONE OF ITS OWN GOING INERT, which is the whole reason that gate is cheap.**
+  Adding a fourth argument to `reportRemainder()` silently voided the `digest --dry-run` case — it
+  reported coverage it no longer had, the failure mode that asks for nothing. Retargeted, never
+  deleted. Four new cases cover this round: the digest-bin gate, the route-appropriate `--reopen`
+  wording, `overflow()` counting the announced list, and — the only case in this ledger that targets
+  a TEST file — the call-site guard accepting a commented-out gate. All six verified detected.
+
+  **AND THE 'UNREACHABLE' CALL ABOVE WAS RE-EXAMINED RATHER THAN DEFENDED, because this session had
+  already reverted a correct fix on exactly that inference.** The prompt was that the DAILY FLOOR's
+  own §1 case detects — which would mean some test reaches that gate with a refusable row, and the
+  all-refused variant is one row away. **Measured, and it does not**: mutating the floor's gate reds
+  `SectionOneGateCallSitesTest` and NOTHING else, so that case is covered STRUCTURALLY and no
+  behavioural test drives a refusable row through it. `collectDigest()` really does refuse upstream
+  in a single process, and the emptiness reorder really is unreachable here — it is defence in depth
+  against the documented cross-process interleave, which a single-process suite cannot construct.
+  The removal stands, on evidence this time rather than on reasoning.
+
+  What the re-examination DID buy is a test worth keeping:
+  `testAFlatWhoseTwinSaysPLSIsNeitherRolledUpNorAnnouncedAsAnEmptyMail` pins the twin veto on the
+  DEPLOYED drain. It is defended in depth — `collectDigest()` refuses it and `SectionOneGate` refuses
+  it again — so mutating either layer alone leaves it green, and **only mutating BOTH reds it**. That
+  is stated because a reader checking it against one ledger case would otherwise read it as vacuous,
+  which is what I read it as for twenty minutes.
+
 <!-- progress-block v1 -->
 | # | Step | Size | State | Evidence | Files |
 |---|------|------|-------|----------|-------|

@@ -1480,7 +1480,7 @@ run_sabotage "the car rollup VERB counts a refused mail as drained" \
 # the parameter's old name and wrong: a one-row bin printed the row and then called it an *other*.
 run_sabotage "digest --dry-run reports the batch it just listed as a backlog beyond itself" \
   src/php/Rent/Cli/RentScout.php \
-  's%\$this->reportRemainder(\$batch, \$batch->retryKeyCount(), true);%$this->reportRemainder($batch, 0, false);%'
+  's%\$this->reportRemainder(\$batch, \$batch->retryKeyCount(), true, \$lowScore);%$this->reportRemainder($batch, 0, false, $lowScore);%'
 
 # `--reopen` IS THE DOCUMENTED ONE WAY BACK, and round 1 made it the only unguarded `evidence()`
 # caller in the tree — above the loop, so a damaged snapshot took the whole command down.
@@ -1577,6 +1577,42 @@ run_sabotage "the DAILY FLOOR announces a rolled-up match the §1 gate refuses (
 run_sabotage "announcePromotions sends without re-reading §1 in the sending method" \
   src/php/Rent/Cli/RentScout.php \
   '/private function announcePromotions/,/^    }/ s%\$refusal = \$sectionOne->refuses(\$promotion\[.listing.\], \$promotion\[.key.\]);%$refusal = null;%'
+
+# THE DIGEST BIN IS AN ANNOUNCEMENT TOO — the round-5 P0, and the last surface §1 was not judged on.
+# §1 was built as "never a MATCH", so `DIGEST` was treated as a DESTINATION rather than as something
+# that reaches the phone. The bin `continue`s 42 lines ABOVE the match gate, so an excluded dwelling
+# went out under a headline asserting *« au régime indéterminé »* while the store held `PLS` for the
+# same dwelling one row away, written by that same pass. `$digestRefusal` is a DIFFERENT variable
+# from the match gate's `$refusal` deliberately: this route drops the row from the bin and says so,
+# and does NOT write a derived `REJECT` — a doubt the pipeline could not resolve is not a regime it
+# read. So the two cannot share one expression, and the match gate's case above never covered this.
+run_sabotage "the digest bin escapes the §1 gate (an excluded dwelling announced as a tenure doubt)" \
+  src/php/Rent/Cli/Pipeline.php \
+  's%\$digestRefusal = \$sectionOne->refuses(\$listing, \$sighting->dedupKey);%$digestRefusal = null;%'
+
+# THE REMEDY NAMED MUST WORK FOR THE ROUTE THAT REFUSED. `--reopen` clears the row's OWN reading and
+# its TWIN's; the GROUP and SAME-DWELLING vetoes live on ANOTHER row's reading and are deliberately
+# not cleared. Promising it unconditionally is a closed loop dressed as a way out — re-refused and
+# rewritten every pass, under an instruction saying there is an exit.
+run_sabotage "a §1 refusal promises --reopen for a veto --reopen cannot clear" \
+  src/php/Rent/Cli/Pipeline.php \
+  's%\$reversible = \\in_array(\$refusal\[.route.\], \[.lecture propre., .jumeau.\], true);%$reversible = true;%'
+
+# THE REMAINDER LINE COUNTS WHAT WAS ANNOUNCED, NEVER WHAT WAS QUEUED. A row the §1 gate removed
+# from the mail was still counted as drained, so the line went silent while that row sat in
+# `pendingLowScore()` for ever — this method's own documented guarantee, read backwards.
+run_sabotage "overflow() counts the queued rollup instead of the announced one (a gated row goes silent)" \
+  src/php/Rent/Cli/DigestBatch.php \
+  's%foreach (\$lowScoreAnnounced as \$entry) {%foreach ($this->lowScore as $entry) {%'
+
+# THE GUARD THAT PREVENTS RECURRENCE, SABOTAGED AGAINST ITSELF — and the only case in this ledger
+# that targets a test file, because this test IS a guarantee rather than a check of one. Its
+# discovery matched a method's BODY while its gate check read the whole `$code` (signature and
+# docblock included), so a gate COMMENTED OUT satisfied it: the announcing-surface guard could be
+# switched off one `//` at a time. Nothing but its own counterweight would notice.
+run_sabotage "the call-site guard accepts a COMMENTED-OUT §1 gate" \
+  tests/php/Repo/SectionOneGateCallSitesTest.php \
+  's%\$out\[\] = \[basename(\$file, ..php.), \$name, \$code\];%$out[] = [basename($file, ".php"), $name, $body];%'
 
 # SCOPED to reclassify(), for the reason on the drain's own pair above.
 run_sabotage "reclassify stops consulting the group (it resurrects a listing the cluster vetoed)" \

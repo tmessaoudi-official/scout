@@ -47,12 +47,12 @@ final class SectionOneGateCallSitesTest extends TestCase
         $offenders = [];
         $checked = 0;
 
-        foreach (self::announcingMethods($root) as [$class, $method, $body]) {
+        foreach (self::announcingMethods($root . '/src/php/Rent') as [$class, $method, $code]) {
             if (\in_array($method, self::NOT_ABOUT_A_LISTING, true)) {
                 continue;
             }
             ++$checked;
-            if (!str_contains($body, '->refuses(')) {
+            if (!str_contains($code, '->refuses(')) {
                 $offenders[] = $class . '::' . $method;
             }
         }
@@ -79,7 +79,7 @@ final class SectionOneGateCallSitesTest extends TestCase
     {
         $methods = array_map(
             static fn (array $m): string => $m[1],
-            self::announcingMethods(\dirname(__DIR__, 3)),
+            self::announcingMethods(\dirname(__DIR__, 3) . '/src/php/Rent'),
         );
 
         self::assertContains('runOnce', $methods, 'the live pass sends matches AND rent drops');
@@ -89,7 +89,81 @@ final class SectionOneGateCallSitesTest extends TestCase
     }
 
     /**
-     * Every method under `src/php/Rent` containing a `notifier->send(`, with its body.
+     * THE GUARD'S OWN SABOTAGE TEST — it had none, and that is how instance seven shipped.
+     *
+     * Three properties, each defeated in the C2 round-5 panel before this existed:
+     *
+     *   - a COMMENT mentioning `->refuses(` must not satisfy the gate check. A lens deleted
+     *     `announcePromotions()`'s gate, left a TRUE comment in its place ("the caller already
+     *     filters every promotion") and all 3018 tests passed;
+     *   - a method whose notifier variable is not called `$notifier` must still be DISCOVERED.
+     *     Renaming it in `floorDigest` and deleting the gate left the guard green;
+     *   - an HTTP `->send(` must NOT be discovered, or the guard cries wolf on every adapter.
+     */
+    public function testACommentDoesNotSatisfyTheGateAndARenamedNotifierIsStillFound(): void
+    {
+        $dir = sys_get_temp_dir() . '/s1guard-' . bin2hex(random_bytes(6));
+        mkdir($dir, 0o777, true);
+
+        try {
+            file_put_contents($dir . '/Commented.php', <<<'PHP'
+                <?php
+                final class Commented
+                {
+                    private function announce($channel, array $rows): void
+                    {
+                        // The caller already filters every promotion: it calls $gate->refuses( on each.
+                        foreach ($rows as $row) {
+                            $channel->send((new Formatter())->match($row['listing'], $row['verdict']));
+                        }
+                    }
+                }
+                PHP);
+            file_put_contents($dir . '/Http.php', <<<'PHP'
+                <?php
+                final class Http
+                {
+                    private function fetch($request): string
+                    {
+                        $response = $this->client->send($request);
+
+                        return $response->body;
+                    }
+                }
+                PHP);
+
+            $found = self::announcingMethods($dir);
+            $names = array_map(static fn (array $m): string => $m[0] . '::' . $m[1], $found);
+
+            self::assertContains('Commented::announce', $names, 'a renamed notifier must still be discovered');
+            self::assertNotContains('Http::fetch', $names, 'an HTTP send is not an announcement');
+
+            foreach ($found as [$class, $method, $code]) {
+                if ($class === 'Commented') {
+                    self::assertStringNotContainsString(
+                        '->refuses(',
+                        $code,
+                        'a COMMENT mentioning the gate must not satisfy the gate check',
+                    );
+                }
+            }
+        } finally {
+            array_map('unlink', glob($dir . '/*.php') ?: []);
+            rmdir($dir);
+        }
+    }
+
+    /**
+     * Every method under `$dir` that SENDS A NOTIFICATION, with its comment-stripped code.
+     *
+     * The needle discriminates on the NOTIFICATION, not on the receiver's name. It was the single
+     * literal `notifier->send(`, so renaming `$notifier` to `$channel` hid an entire announcing
+     * method — while this guard's own docblock faulted its predecessor for recognising "three exact
+     * spellings of the formatter variable". One spelling of the notifier variable is the same
+     * mistake wearing the other hat. A bare `->send(` alone would catch the HTTP clients in
+     * `Adapters/` and `Enrich/`, so the second term is what makes it a NOTIFICATION send. It
+     * matches `Formatter`, `formatter->` and `Notification` — the first spelling alone missed
+     * `Pipeline::runOnce`, whose sends read `$this->formatter->match(` with a lowercase receiver.
      *
      * Bodies are cut declaration-to-declaration. That is coarse, and deliberately so: it has no
      * false NEGATIVES, because a send is always attributed to a declaration at or before it, so
@@ -99,10 +173,10 @@ final class SectionOneGateCallSitesTest extends TestCase
      *
      * @return list<array{0: string, 1: string, 2: string}>
      */
-    private static function announcingMethods(string $root): array
+    private static function announcingMethods(string $dir): array
     {
         $out = [];
-        foreach (self::rentPhpFiles($root . '/src/php/Rent') as $file) {
+        foreach (self::rentPhpFiles($dir) as $file) {
             $lines = file($file, \FILE_IGNORE_NEW_LINES);
             if ($lines === false) {
                 continue;
@@ -122,8 +196,15 @@ final class SectionOneGateCallSitesTest extends TestCase
                     \array_slice($lines, $from, $to - $from),
                     static fn (string $l): bool => !preg_match('/^\s*(\*|\/\/|\/\*)/', $l),
                 ));
-                if (str_contains($code, 'notifier->send(')) {
-                    $out[] = [basename($file, '.php'), $name, $body];
+                if (str_contains($code, '->send(') && preg_match('/Formatter|formatter->|Notification/', $code) === 1) {
+                    // `$code`, NEVER `$body` — INSTANCE SEVEN of this milestone's named defect, and
+                    // it was committed inside the fix for instance six. Comment-stripping was
+                    // applied to the DETECTION half and not to the VERIFICATION half, ONE LINE
+                    // APART, so a comment mentioning `->refuses(` satisfied the gate check. A lens
+                    // deleted `announcePromotions()`'s gate, left a TRUE comment in its place, and
+                    // all 3018 tests passed. `testACommentDoesNotSatisfyTheGate()` below is the
+                    // self-test this guard had never had.
+                    $out[] = [basename($file, '.php'), $name, $code];
                 }
             }
         }

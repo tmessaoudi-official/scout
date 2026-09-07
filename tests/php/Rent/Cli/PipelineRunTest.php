@@ -2760,6 +2760,72 @@ final class PipelineRunTest extends TestCase
     }
 
     /**
+     * THE DIGEST IS AN ANNOUNCEMENT, and §1 was implemented as "never a MATCH".
+     *
+     * The `Outcome::DIGEST` branch `continue`s 42 lines above the gate, so an excluded dwelling was
+     * announced under a headline asserting *« au régime indéterminé »* while the store recorded
+     * `PLS` for the same dwelling one row away — written by the same pass. No forged state and no
+     * concurrency: the non-transitive tolerance chain on ordinary in-pass ordering.
+     *
+     * The bin is §1's ONLY landing zone, so what it announces has to be trustworthy; announcing a
+     * flat the store knows is excluded is the one thing that zone must never do.
+     */
+    public function testAnExcludedDwellingIsNotAnnouncedInTheDigestEither(): void
+    {
+        $store = $this->store();
+        $channel = new RecordingChannel();
+        $pipeline = $this->pipeline($store, new Notifier([$channel]));
+
+        // BUILT DIRECTLY, not through `listing()`: that helper hardcodes the title
+        // 'T4 Sartrouville - logement intermediaire', an explicit LLI label, so every listing it
+        // makes classifies MATCH and can never reach the digest branch. The helper's own docblock
+        // warns that a helper quietly ignoring what a test asked for makes every test using it
+        // prove something else — this is that, for `title`.
+        $flat = static fn (string $id, int $rent, array $fields): RawListing => new RawListing(
+            sourceName: 'cdc_habitat',
+            externalId: $id,
+            title: 'T4 lumineux Sartrouville',
+            description: '4 pieces de 88 m2, ascenseur.',
+            fields: $fields,
+            url: 'https://example.test/' . $id,
+            commune: 'Sartrouville',
+            postcode: '78500',
+            rentCc: $rent,
+            surfaceM2: 88.0,
+            rooms: 4,
+        );
+
+        $pipeline->runOnce([
+            new FakeSource('cdc_habitat', [$flat('c1', 1450, ['financement' => 'PLS'])], mixedTenure: true),
+        ], self::NOW);
+
+        $channel->sent = [];
+
+        // b1 (1480) is vetoed by c1 and written PLS in this pass; b2 (1510) is outside c1's band,
+        // inside b1's, and states no tenure at all on a mixed source — so it classifies UNKNOWN and
+        // lands in the DIGEST bin rather than on the match path.
+        $result = $pipeline->runOnce([
+            new FakeSource('cdc_habitat', [$flat('b1', 1480, []), $flat('b2', 1510, [])], mixedTenure: true),
+        ], '2026-08-08T12:00:00+02:00');
+
+        // POSITIVE, not silence. A first version asserted only `$channel->sent === []`, which is
+        // satisfied by a pass that sent nothing for ANY reason — and it stayed green with the gate
+        // removed, because b2 then went to the digest bin and the bin was emitted, but the emission
+        // needs a delivering channel this harness does not give it. Asserting that the REFUSAL
+        // happened is what makes this a detector: remove the gate and the warning disappears.
+        self::assertStringContainsString(
+            'retirée du récapitulatif',
+            implode(' | ', $result->warnings),
+            '§1: the digest bin must refuse a flat the store records as PLS one row away, and say so',
+        );
+        self::assertSame(
+            [],
+            $channel->sent,
+            'and nothing is announced as "régime indéterminé" about it',
+        );
+    }
+
+    /**
      * THE RENT-DROP SEND IS AN ANNOUNCING SURFACE, and it sat ABOVE the gate.
      *
      * A crossed ceiling is documented as "a NEW MATCH whatever its size" (Q33) and goes out at
@@ -2864,7 +2930,16 @@ final class PipelineRunTest extends TestCase
 
         $said = implode(' | ', $result->warnings);
         self::assertStringContainsString('§1', $said, 'the refusal must be voiced, not merely counted');
-        self::assertStringContainsString('--reopen=', $said, 'and it must carry the command that reverses it');
+        // THE REMEDY MUST MATCH THE ROUTE. This asserted `--reopen=` unconditionally, and the
+        // scenario it drives is a SAME-DWELLING refusal — the one route `--reopen` cannot clear,
+        // because the veto lives on another row's reading. Promising it here sent the operator into
+        // a closed loop: re-refused and rewritten every pass under an instruction saying otherwise.
+        self::assertStringContainsString(
+            'n\'est pas effaçable ici',
+            $said,
+            'a veto owned by another listing must not promise --reopen',
+        );
+        self::assertStringNotContainsString('--reopen=', $said, 'and must not name a command that cannot work');
     }
 
     public function testAReadvertisedFlatInheritsTheStoredExclusionAfterTheExcludedCopyIsGone(): void
