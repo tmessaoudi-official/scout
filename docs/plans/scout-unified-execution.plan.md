@@ -2893,6 +2893,22 @@ tool/guard) and say which ones the fix covers.**
   to **1**; any finding resets it to **0**. The triage was taken first for a stated reason: it is
   ledger work, and landing it after the freeze would have reset the counter again.
 
+- [2026-09-07 13:15] AGREED (**round 10 tier: `advisor()` only; the live proof is a later check,
+  not a forced one**). Two answers at this gate, asked fresh as the rule requires — round 9's tier
+  is not carried forward, it was re-chosen. **Freeze: `4ae6a4f`.** Span is `c6e29e0..4ae6a4f` — the
+  round-9 fixes on a base the advisor has already read: the flaky counterweight test, the
+  mixed-episode pin, one ledger case, and the plan rows. Round 9 was NOT CLEAN (the flaky windows
+  had no counterweight, so the obvious `windowCounts($observed)` edit would have silenced every
+  flaky verdict on exactly the sources the new tolerance covers), so the two-clean counter stays at
+  **0** and the earliest close for row 35 is round 11.
+
+  **The one link still measured by inference is named rather than assumed**: `alertOnHealth()` has
+  not met a real in'li 302 since the 11:40 redeploy — 5 passes, 0 failures — so the end-to-end
+  "no more flap emails" claim rests on the verdict being right, not on having watched the send path
+  decline to fire. The developer chose to confirm it by a later check rather than by forcing the
+  path against a throwaway store. The proof is one query — `SELECT * FROM source_alerts` plus the
+  notification label — and **zero new in'li rows after a failed pass** is what closes it.
+
 <!-- progress-block v1 -->
 | # | Step | Size | State | Evidence | Files |
 |---|------|------|-------|----------|-------|
