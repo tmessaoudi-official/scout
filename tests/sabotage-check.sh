@@ -1523,17 +1523,24 @@ run_sabotage "the live push path stops consulting the §1 gate" \
   src/php/Rent/Cli/Pipeline.php \
   's%\$refusal = \$sectionOne->refuses(\$listing, \$sighting->dedupKey);%$refusal = null;%'
 
-# NOT A CASE, deliberately: `pushRetries()` DOES consult the gate, and that guard is a real
-# last-moment backstop — but it has NO REACHABLE CASE TODAY, so a ledger entry for it would report
-# detection it does not have. `collectDigest()` already refuses such a row upstream through all four
-# routes, above the retry/rollup split, so nothing that reaches `pushRetries()` can be refused here.
-# Proved rather than assumed: a test seeded a queued retry whose dwelling was on record as PLS, and
-# it stayed GREEN with the retry gate bypassed — the drain had filtered the row before it became a
-# retry. The test was removed for passing for the wrong reason.
+# RESTORED (C2 round 4). Round 3 made this a documented NON-case on the reasoning that
+# `collectDigest()` refuses such a row upstream through all four routes, so nothing reaching
+# `pushRetries()` could be refused here — and a test written for it stayed green with the guard
+# bypassed, which was read as proof. **Both halves were wrong**, and a lens showed it two ways:
 #
-# The guard stays because the value of a backstop is what it catches when the upstream check
-# CHANGES, which is exactly the class of failure this milestone spent three rounds on. If a future
-# change lets a row reach `pushRetries()` unfiltered, write the case then — and it will red.
+#   - `digest` calls `collectDigest()`, then builds the notifier and runs its checks, and only then
+#     `pushRetries()`. A concurrent `run --watch` in a SEPARATE PROCESS writes `recordTwin()` in that
+#     window; the store is WAL with a documented concurrent-writer contract. Demonstrated with two
+#     `Store::open()` handles: all four routes NULL at collect, `jumeau / PLS` at push.
+#   - The dwelling route sits BELOW the snapshot-less `continue`, so a row whose payload will not
+#     encode enters `$retries` never having been dwelling-checked at all.
+#
+# The single-process seed could not produce the interleave. **That was the test failing to reach the
+# branch, not the branch being unreachable** — and turning that into a non-case removed the one
+# thing that would have said so.
+run_sabotage "the retry push stops consulting the §1 gate" \
+  src/php/Rent/Cli/RentScout.php \
+  's%\$refusal = \$sectionOne->refuses(\$entry\[.listing.\], \$entry\[.key.\]);%$refusal = null;%'
 
 # THE GATE READS FRESH — hoisting its state is what both round-3 P0s were, and a cached candidate
 # list would pass every route test above while re-opening the defect the gate exists to close.
@@ -1543,6 +1550,33 @@ run_sabotage "the live push path stops consulting the §1 gate" \
 run_sabotage "the §1 gate caches the excluded-dwelling set instead of reading it fresh" \
   src/php/Rent/Cli/SectionOneGate.php \
   's%\$dwelling = ExcludedDwellings::match(\$listing, \$this->store->excludedDwellings(), \$this->dedup);%static $cached = null; $cached ??= $this->store->excludedDwellings(); $dwelling = ExcludedDwellings::match($listing, $cached, $this->dedup);%'
+
+# THE RENT-DROP SEND — the round-4 P0. Two lenses executed a HIGH-priority PLS push from a send 98
+# lines ABOVE the gate. An announcing surface is a SEND, not a notification KIND.
+run_sabotage "the rent-drop push escapes the §1 gate (a PLS flat pushed as PASSE SOUS LE PLAFOND)" \
+  src/php/Rent/Cli/Pipeline.php \
+  's%\$refusal = \$sectionOne->refuses(\$listing, \$sighting->dedupKey);%$refusal = $sighting->isPriceDrop ? null : $sectionOne->refuses($listing, $sighting->dedupKey);%'
+
+# THE SILENCE. `$sectionOneRefused` was incremented and read nowhere, on the one announcing surface
+# that runs unattended — while the refusal is terminal by query and nothing printed the key that
+# reverses it.
+run_sabotage "a §1 refusal on the live pass is counted and never voiced" \
+  src/php/Rent/Cli/Pipeline.php \
+  's%\$warnings = \[...\$warnings, ...\$sectionOneRefused\];%$warnings = [...$warnings];%'
+
+# THE ROLLUP HALF of both digest drains: those are MATCHES held back by the score gate, and they
+# reached the wire on collect-time reads alone.
+run_sabotage "the digest verb announces a rolled-up match the §1 gate refuses" \
+  src/php/Rent/Cli/RentScout.php \
+  '/private function digest(/,/private function pushRetries/ s%\$refusal = \$sectionOne->refuses(\$entry\[.listing.\], \$entry\[.key.\]);%$refusal = null;%'
+
+run_sabotage "the DAILY FLOOR announces a rolled-up match the §1 gate refuses (the deployed drain)" \
+  src/php/Rent/Cli/RentScout.php \
+  '/private function floorDigest/,/^    }/ s%\$refusal = \$sectionOne->refuses(\$entry\[.listing.\], \$entry\[.key.\]);%$refusal = null;%'
+
+run_sabotage "announcePromotions sends without re-reading §1 in the sending method" \
+  src/php/Rent/Cli/RentScout.php \
+  '/private function announcePromotions/,/^    }/ s%\$refusal = \$sectionOne->refuses(\$promotion\[.listing.\], \$promotion\[.key.\]);%$refusal = null;%'
 
 # SCOPED to reclassify(), for the reason on the drain's own pair above.
 run_sabotage "reclassify stops consulting the group (it resurrects a listing the cluster vetoed)" \
@@ -2066,7 +2100,7 @@ run_sabotage "the rent digest marks a rolled-up match as DIGEST (a settled LLI r
 
 run_sabotage "the rent digest drops the low-score section from the mail (queued matches are marked and never shown)" \
   src/php/Rent/Cli/RentScout.php \
-  's%\$notification = (new Formatter())->digest(\$entries, \$batch->lowScore);%\$notification = (new Formatter())->digest(\$entries);%'
+  's%\$notification = (new Formatter())->digest(\$entries, \$lowScore);%$notification = (new Formatter())->digest($entries);%'
 
 run_sabotage "the formatter attaches the regime clause to a rollup-only digest" \
   src/php/Rent/Notify/Formatter.php \

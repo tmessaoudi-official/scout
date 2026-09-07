@@ -7,85 +7,135 @@ namespace Scout\Tests\Repo;
 use PHPUnit\Framework\TestCase;
 
 /**
- * EVERY SURFACE THAT SENDS A MATCH MUST CONSULT `SectionOneGate` — discovered, never listed.
+ * EVERY METHOD THAT ANNOUNCES A LISTING MUST CONSULT `SectionOneGate` — discovered, and per SITE.
  *
- * §1 is judged from four persisted routes, and for three certification rounds the defect was always
- * the same: a route checked on one announcing surface and not another, or checked at a moment when
- * the state it reads was already stale. Five findings, three of them committed inside the fix for
- * the previous one. Enumerating the surfaces in prose is what failed twice — `ExcludedDwellings`'s
- * docblock said "TWO callers", then "THREE", and each time the commit editing that line added a
- * caller it did not count.
+ * §1 is judged from four persisted routes, and for four certification rounds the defect was always
+ * the same: a route checked on one announcing surface and not another, or checked when the state it
+ * read was already stale. Six findings of that shape, three committed inside the fix for the one
+ * before. Enumerating surfaces in prose failed twice — `ExcludedDwellings`'s docblock said "TWO
+ * callers", then "THREE", each time in the commit that added the uncounted one.
  *
- * So this discovers the surfaces instead. A file that formats a MATCH notification and sends it is
- * an announcing surface by definition; if a fourth one appears, it fails here rather than in a
- * review round or in production.
+ * **The first version of THIS guard failed too, and that is why it is shaped as it is.** It was
+ * FILE-granular and keyed on `->match(`. Both halves were defeated in one round:
  *
- * It is deliberately COARSE — file granularity, not call-site — because a precise version would
- * need to parse PHP, and a guard nobody can read is a guard nobody maintains. Its job is to make
- * a new surface impossible to add SILENTLY, not to prove each existing call is correctly placed;
- * that is what `SectionOneGateTest` and the per-surface tests do.
+ *   - `Pipeline.php` mentions the gate once, so a SECOND ungated send in the same file passed —
+ *     which is exactly the round-4 P0, a `Priority::HIGH` rent-drop push of a `PLS` flat from a
+ *     send 98 lines above the gate.
+ *   - A genuinely new announcing file using a local `$fmt` was never even counted, because the
+ *     pattern recognised three exact spellings of the formatter variable.
+ *
+ * That is the same class granularity its sibling guard was rewritten to remove IN THE SAME COMMIT.
+ * The lesson landed on one of the two.
+ *
+ * So this discovers by **SEND**, never by notification kind, and attributes each send to the METHOD
+ * containing it. An announcing surface is a send; equating it with `->match(` is what let the
+ * rent-drop path through.
  */
 final class SectionOneGateCallSitesTest extends TestCase
 {
-    public function testEverySurfaceThatSendsAMatchConsultsTheGate(): void
+    /**
+     * Methods whose notification is about a SOURCE, not a listing.
+     *
+     * There is no listing and no dedup key to judge, so the gate has nothing to read. Named rather
+     * than pattern-matched, so a new exemption must be written down deliberately.
+     */
+    private const array NOT_ABOUT_A_LISTING = ['alertOnHealth', 'beat', 'testNotify'];
+
+    public function testEveryMethodThatAnnouncesAListingConsultsTheGate(): void
     {
         $root = \dirname(__DIR__, 3);
         $offenders = [];
         $checked = 0;
 
-        foreach ($this->rentPhpFiles($root) as $file) {
-            $body = (string) file_get_contents($file);
-
-            // A SEND, not merely a format: `[RETRY]` prints a formatted title to the console without
-            // notifying anyone, and gating a console line would be noise.
-            if (!preg_match('/send\(\s*(?:\(new Formatter\(\)\)|\$this->formatter|\$formatter)->match\(/', $body)) {
+        foreach (self::announcingMethods($root) as [$class, $method, $body]) {
+            if (\in_array($method, self::NOT_ABOUT_A_LISTING, true)) {
                 continue;
             }
             ++$checked;
-            if (!str_contains($body, 'SectionOneGate') || !str_contains($body, '->refuses(')) {
-                $offenders[] = basename($file);
+            if (!str_contains($body, '->refuses(')) {
+                $offenders[] = $class . '::' . $method;
             }
         }
 
-        self::assertGreaterThan(0, $checked, 'premise: at least one surface sends a MATCH');
+        self::assertGreaterThan(0, $checked, 'premise: some method announces a listing');
         self::assertSame(
             [],
             $offenders,
-            'these files send a MATCH notification without consulting SectionOneGate — §1 is judged '
-                . 'from four persisted routes and a surface that skips the gate reads a subset',
+            'these methods send a notification about a listing without consulting SectionOneGate in '
+                . 'the same method — §1 is judged from four persisted routes, and a send that skips '
+                . 'the gate reads none of them',
         );
     }
 
     /**
-     * The counterweight: the discovery must actually FIND the surfaces.
+     * The counterweight: the discovery must find the sends that exist.
      *
-     * Without it the test above is satisfied by a pattern that matches nothing at all, which is this
-     * repo's named vacuity — a guard that reports coverage it does not have. Both known send sites
-     * are named, so narrowing the pattern to zero fails here.
+     * Derived from source and asserted as a FLOOR, never a hardcoded exact set — the previous
+     * counterweight was `assertSame(['Pipeline','RentScout'], $found)`, the same allow-list shape a
+     * lens proved vacuous on the sibling guard. A floor means a NEW announcing method makes this
+     * guard stricter rather than red for the wrong reason.
      */
-    public function testTheDiscoveryFindsTheKnownSendingSurfaces(): void
+    public function testTheDiscoveryFindsTheSendsThatExist(): void
     {
-        $root = \dirname(__DIR__, 3);
-        $found = [];
+        $methods = array_map(
+            static fn (array $m): string => $m[1],
+            self::announcingMethods(\dirname(__DIR__, 3)),
+        );
 
-        foreach ($this->rentPhpFiles($root) as $file) {
-            $body = (string) file_get_contents($file);
-            if (preg_match('/send\(\s*(?:\(new Formatter\(\)\)|\$this->formatter|\$formatter)->match\(/', $body)) {
-                $found[] = basename($file, '.php');
+        self::assertContains('runOnce', $methods, 'the live pass sends matches AND rent drops');
+        self::assertContains('pushRetries', $methods, 'the retry drain sends individual matches');
+        self::assertContains('announcePromotions', $methods, 'reclassify sends its promotions');
+        self::assertGreaterThanOrEqual(4, \count($methods), 'at least the known sending methods');
+    }
+
+    /**
+     * Every method under `src/php/Rent` containing a `notifier->send(`, with its body.
+     *
+     * Bodies are cut declaration-to-declaration. That is coarse, and deliberately so: it has no
+     * false NEGATIVES, because a send is always attributed to a declaration at or before it, so
+     * imprecision can only ever make the guard STRICTER. `Scout\Car` is out of scope — the car
+     * domain persists no §1 route at all, a claim verified against `VehicleStore`'s schema rather
+     * than asserted.
+     *
+     * @return list<array{0: string, 1: string, 2: string}>
+     */
+    private static function announcingMethods(string $root): array
+    {
+        $out = [];
+        foreach (self::rentPhpFiles($root . '/src/php/Rent') as $file) {
+            $lines = file($file, \FILE_IGNORE_NEW_LINES);
+            if ($lines === false) {
+                continue;
+            }
+            $starts = [];
+            foreach ($lines as $i => $line) {
+                if (preg_match('/function\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(/', $line, $m) === 1) {
+                    $starts[] = [$i, $m[1]];
+                }
+            }
+            foreach ($starts as $k => [$from, $name]) {
+                $to = $starts[$k + 1][0] ?? \count($lines);
+                $body = implode("\n", \array_slice($lines, $from, $to - $from));
+                // CODE ONLY. A docblock quoting `$notifier->send()` is prose, and attributing it to
+                // the declaration above put `DigestBatch::count` on the offender list.
+                $code = implode("\n", array_filter(
+                    \array_slice($lines, $from, $to - $from),
+                    static fn (string $l): bool => !preg_match('/^\s*(\*|\/\/|\/\*)/', $l),
+                ));
+                if (str_contains($code, 'notifier->send(')) {
+                    $out[] = [basename($file, '.php'), $name, $body];
+                }
             }
         }
-        sort($found);
 
-        self::assertSame(['Pipeline', 'RentScout'], $found, 'the known MATCH-sending surfaces');
+        return $out;
     }
 
     /** @return list<string> */
-    private function rentPhpFiles(string $root): array
+    private static function rentPhpFiles(string $dir): array
     {
         $files = [];
-        $it = new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator($root . '/src/php/Rent', \FilesystemIterator::SKIP_DOTS),
-        );
+        $it = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($dir, \FilesystemIterator::SKIP_DOTS));
         foreach ($it as $entry) {
             if ($entry instanceof \SplFileInfo && $entry->getExtension() === 'php') {
                 $files[] = $entry->getPathname();

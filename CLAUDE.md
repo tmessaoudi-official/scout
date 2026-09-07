@@ -2410,9 +2410,25 @@ var/claude/                 Reports, review outputs — gitignored scratch (hand
   (an excluded reading is recorded, a doubt becomes a digest) and short-circuit work. The gate does
   not replace them; it makes their ordering stop mattering for §1.
   **`tests/php/Repo/SectionOneGateCallSitesTest.php` is the half that prevents recurrence**: it
-  DISCOVERS every file that sends a `->match(` notification and fails when one does not consult the
-  gate. Enumerating surfaces in prose failed twice — `ExcludedDwellings`'s docblock said "TWO
-  callers", then "THREE", and each time the commit editing that line added the uncounted one.
+  discovers every METHOD under `src/php/Rent` containing a `notifier->send(` and fails when one does
+  not consult the gate in that same method. Enumerating surfaces in prose failed twice —
+  `ExcludedDwellings`'s docblock said "TWO callers", then "THREE", and each time the commit editing
+  that line added the uncounted one.
+  **ITS FIRST VERSION FAILED TOO, and how is the rule worth keeping.** It was FILE-granular and
+  keyed on `->match(`, so `Pipeline` mentioning the gate once covered a SECOND ungated send in the
+  same file — which is the round-4 P0, a `Priority::HIGH` rent-drop push of a `PLS` flat from a send
+  98 lines above the gate — and a new surface using a local `$fmt` was never counted at all. That is
+  the same class granularity its sibling guard was rewritten to remove IN THE SAME COMMIT: the
+  lesson landed on one of the two. **An announcing surface is a SEND, not a notification KIND**, and
+  the gate belongs above every send in its scope, not immediately above one of them. Rewriting the
+  guard that way found THREE more ungated methods the lenses had not reached — both digest drains'
+  rollup half, and `announcePromotions`, whose gate sat one level up in the caller.
+  **Scope, stated because the sentence above invites the wrong reading:** the gate and the guard are
+  RENT-only. The car domain persists no §1 route — verified against `VehicleStore`'s schema, which
+  has no tenure, group or twin column — with ONE stated cost: when a car's snapshot will not decode,
+  `VehiclePipeline` rebuilds from stored columns and never re-runs the classifier, so an excluded
+  car can be announced. Structural, not patchable: the rent drain has a stored `tenure` column to
+  check for exactly that row and the car domain has no persisted fact to substitute.
 - **A TOLERANCE BAND IS NOT AN EQUIVALENCE RELATION, and assuming it is cost a reverted fix
   (2026-09-07).** `Dedup::within()` matches on ±30 € / 3 %, so it is NOT TRANSITIVE: three ad ids of
   one flat 30 € apart chain, and the third sits inside the second's band and OUTSIDE the first's. A

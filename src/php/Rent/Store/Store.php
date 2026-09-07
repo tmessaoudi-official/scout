@@ -2098,7 +2098,46 @@ final readonly class Store
      *
      * @return list<array{key: string, source: string, externalId: string, tenure: Tenure, listing: RawListing}>
      */
-    public function excludedDwellings(): array
+    /**
+     * How many excluded rows the §1 dwelling route CANNOT read — a veto that silently shrank.
+     *
+     * `excludedDwellings()` skips a row whose snapshot will not decode, and that skip is right:
+     * throwing would abort every pass for as long as the row exists. What was wrong was the
+     * silence. Round 3 gave `Store::reopen()` a `dwellingReadable` flag precisely so *could not
+     * check* is distinguishable from *checked and clear*, hit the identical condition two methods
+     * below, and said nothing (C2 round 4). Same shape, opposite decision, one commit.
+     *
+     * The cost is narrow and real: such a row stops vetoing re-advertisements under a new ad id,
+     * which is the ONE population route 4 exists for. Latent on the live store today (47 of 47
+     * decode); a source-side encoding regression turns it on, and nothing else would say so.
+     *
+     * Recomputed rather than counted into a property, because `Store` is `readonly` and the bar for
+     * `MutableByDesign` is deliberately high — this runs once per `doctor`, never in a pass.
+     */
+    public function unreadableExcludedDwellings(): int
+    {
+        $unreadable = 0;
+        foreach ($this->excludedDwellingRows() as $row) {
+            try {
+                ListingSnapshot::decode($row['evidence_json']);
+            } catch (\JsonException | \InvalidArgumentException) {
+                ++$unreadable;
+            }
+        }
+
+        return $unreadable;
+    }
+
+    /**
+     * The candidate ROWS for the §1 dwelling route — ONE query, two readers.
+     *
+     * `excludedDwellings()` decodes them and `unreadableExcludedDwellings()` counts the ones that
+     * will not decode. Two copies of this query is how the count and the veto come to describe
+     * different sets, which is this repo's named recurring defect at the SQL layer.
+     *
+     * @return list<array{dedup_key: string, source: string, external_id: string, tenure: string, evidence_json: string}>
+     */
+    private function excludedDwellingRows(): array
     {
         $excluded = array_values(array_filter(
             Tenure::cases(),
@@ -2120,9 +2159,16 @@ final readonly class Store
         );
         $statement->execute($params);
 
+        /** @var list<array{dedup_key: string, source: string, external_id: string, tenure: string, evidence_json: string}> $rows */
+        $rows = $statement->fetchAll();
+
+        return $rows;
+    }
+
+    public function excludedDwellings(): array
+    {
         $out = [];
-        /** @var array{dedup_key: string, source: string, external_id: string, tenure: string, evidence_json: string} $row */
-        foreach ($statement->fetchAll() as $row) {
+        foreach ($this->excludedDwellingRows() as $row) {
             $tenure = Tenure::tryFrom($row['tenure']);
             if ($tenure === null || !$tenure->isExcluded()) {
                 continue;
@@ -2131,6 +2177,15 @@ final readonly class Store
             try {
                 $listing = ListingSnapshot::decode($row['evidence_json']);
             } catch (\JsonException | \InvalidArgumentException) {
+                // SKIPPED, and COUNTED. Throwing would abort every pass for as long as the row
+                // exists, so the skip is right — but round 3 gave `reopen()` a `dwellingReadable`
+                // flag so *could not check* is distinguishable from *checked and clear*, and hit the
+                // identical condition here two methods below and said nothing at all (C2 round 4).
+                // Same shape, opposite decision, one commit.
+                //
+                // What it costs: this row stops vetoing re-advertisements, which is the ONE
+                // population route 4 exists for. Latent today (47 of 47 decode on the live store);
+                // a source-side encoding regression turns it on, and nothing would say so.
                 continue;
             }
 

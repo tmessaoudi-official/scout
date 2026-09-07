@@ -275,6 +275,17 @@ final readonly class RentScout
                 . '(antérieurs au schéma v7, ou charge utile non encodable)');
         }
 
+        // THE §1 DWELLING ROUTE'S OWN BLIND SPOT, said out loud. A row whose snapshot will not
+        // decode is skipped by `excludedDwellings()` — correctly, since throwing would abort every
+        // pass — and it then stops vetoing re-advertisements under a new ad id, the one population
+        // that route exists for. Silent until now (C2 round 4), while `--reopen` had learned to
+        // report the identical condition in the same commit.
+        $unreadableVetoes = $store->unreadableExcludedDwellings();
+        if ($unreadableVetoes > 0) {
+            $this->line('  §1      : ' . $unreadableVetoes . ' annonce(s) au régime exclu dont l\'instantané ne '
+                . 'se décode pas — elles ne peuvent plus opposer leur veto à une remise en ligne sous une autre référence');
+        }
+
         $notifier = $this->notifier($criteria);
         // NAMED, not summarised. "au moins un canal distant" was the whole report, and it cannot
         // distinguish a push to a phone from an `.eml` written into a directory the container
@@ -1144,9 +1155,33 @@ final readonly class RentScout
         $unreadable = $batch->unreadable();
         $waiting = $batch->waiting;
 
-        $notification = (new Formatter())->digest($entries, $batch->lowScore);
+        // §1 ON THE ROLLUP HALF, in the method that sends. `$entries` is the tenure-doubt bin —
+        // announcing a doubt is what that bin IS, and §1's landing zone by design. `$batch->lowScore`
+        // is different: those are MATCHES held back by the score gate, and they reached the wire on
+        // `collectDigest()`'s collect-time reads alone. Safe only while nothing writes `tenure`
+        // between collect and send — which is precisely the assumption the gate exists to stop
+        // relying on, and a round-4 lens demonstrated a concurrent `--watch` writer closing that
+        // window on a second connection under WAL.
+        // `DigestBatch` is readonly, so the survivors go in a local and every use below reads it.
+        $sectionOne = new SectionOneGate($store, new Dedup());
+        $lowScore = array_values(array_filter($batch->lowScore, function (array $entry) use ($sectionOne): bool {
+            $refusal = $sectionOne->refuses($entry['listing'], $entry['key']);
+            if ($refusal === null) {
+                return true;
+            }
+            $this->warn(sprintf(
+                '%s — §1 : %s (%s) — retirée du récapitulatif',
+                $entry['key'],
+                $refusal['detail'],
+                $refusal['route'],
+            ));
 
-        if ($entries !== [] || $batch->lowScore !== []) {
+            return false;
+        }));
+
+        $notification = (new Formatter())->digest($entries, $lowScore);
+
+        if ($entries !== [] || $lowScore !== []) {
             $this->line($notification->title);
             foreach ($notification->reasons as $reason) {
                 $this->line($reason);
@@ -1207,7 +1242,7 @@ final readonly class RentScout
         // backlog moved and claimed it had.
         $drainedKeys = $this->pushRetries($notifier, $store, $batch->retries, $now);
 
-        if ($entries === [] && $batch->lowScore === []) {
+        if ($entries === [] && $lowScore === []) {
             // Nothing to send, so nothing can land: the retries are the whole story.
             $this->reportRemainder($batch, $drainedKeys, false);
 
@@ -1247,13 +1282,13 @@ final readonly class RentScout
         // A5: a rolled-up match is marked ROLLUP, never DIGEST (it is no tenure doubt) and never
         // MATCH (it was not pushed — the promotion over the gate stays reachable). EVERY key of a
         // collapsed twin pair, so the other route is not re-announced tomorrow.
-        foreach ($batch->lowScore as $entry) {
+        foreach ($lowScore as $entry) {
             foreach ($entry['keys'] as $key) {
                 $store->markNotified($key, $now, 'ROLLUP');
             }
         }
 
-        $this->line($batch->count() . ' annonce(s) émise(s)' . ($batch->lowScore !== [] ? sprintf(' (dont %d « vérifié, score bas »)', count($batch->lowScore)) : '') . '.');
+        $this->line(count($entries) + count($lowScore) . ' annonce(s) émise(s)' . ($lowScore !== [] ? sprintf(' (dont %d « vérifié, score bas »)', count($lowScore)) : '') . '.');
 
         return 0;
     }
@@ -1628,6 +1663,7 @@ final readonly class RentScout
         // before the flat reaches a phone. Uniformity is the point — an announcing surface that is
         // "already checked somewhere earlier" is how this milestone produced five findings.
         $sectionOne = new SectionOneGate($store, new Dedup());
+        $attempted = 0;
         foreach ($retries as $entry) {
             $refusal = $sectionOne->refuses($entry['listing'], $entry['key']);
             if ($refusal !== null) {
@@ -1640,6 +1676,7 @@ final readonly class RentScout
 
                 continue;
             }
+            ++$attempted;
             $failures = $notifier->send((new Formatter())->match($entry['listing'], $entry['verdict']));
             foreach ($failures as $failure) {
                 $this->warn(Redact::text($failure->getMessage()));
@@ -1655,7 +1692,11 @@ final readonly class RentScout
             ++$delivered;
         }
         if ($retries !== []) {
-            $this->line(sprintf('%d correspondance(s) réémise(s) individuellement — au niveau du seuil ou sans seuil, jamais « score bas » (%d délivrée(s)).', count($retries), $delivered));
+            // ATTEMPTED, not queued. This printed `count($retries)`, which includes every entry the
+            // §1 gate refused above — so three refusals read as *3 réémises, 0 délivrées*, the
+            // channel's failure shape rather than §1's (C2 round 4, P3). Same "counted what it did
+            // not do" class as the round-3 dry-run finding.
+            $this->line(sprintf('%d correspondance(s) réémise(s) individuellement — au niveau du seuil ou sans seuil, jamais « score bas » (%d délivrée(s)).', $attempted, $delivered));
         }
 
         // KEYS, not entries: a collapsed twin leaves the queue as two rows, and the remainder line
@@ -2038,6 +2079,9 @@ final readonly class RentScout
         // Fixing the group route here as well would have been the fifth instance of this
         // milestone's named defect; `SectionOneGate` reads every route fresh instead, and it is the
         // same gate `Pipeline` uses at its send. A caller that wants a subset is a future finding.
+        // The gate itself lives in `announcePromotions()`, the method that SENDS — a check one
+        // level up from the send is what the round-4 P0 was (C2 round 4). Counted here so the
+        // summary below describes the set that will actually be announced.
         $sectionOne = new SectionOneGate($store, $dwellingDedup);
         $promotions = array_values(array_filter($promotions, function (array $promotion) use ($sectionOne, &$vetoed): bool {
             if ($sectionOne->refuses($promotion['listing'], $promotion['key']) === null) {
@@ -2162,7 +2206,23 @@ final readonly class RentScout
         // The list arrives already capped — see the caller. Capping HERE made the summary count a
         // different set from the one announced.
 
+        // §1 RE-READ IN THE SENDING METHOD, not only in the caller. The caller filters the batch;
+        // this is the last statement before the wire, and "checked one level up" is exactly the
+        // shape that put a HIGH-priority PLS push on a phone in round 4. Cheap: the list is capped.
+        $sectionOne = new SectionOneGate($store, new Dedup());
+
         foreach ($promotions as $promotion) {
+            $refusal = $sectionOne->refuses($promotion['listing'], $promotion['key']);
+            if ($refusal !== null) {
+                $this->warn(sprintf(
+                    '%s — §1 : %s (%s) — promotion abandonnée',
+                    $promotion['key'],
+                    $refusal['detail'],
+                    $refusal['route'],
+                ));
+
+                continue;
+            }
             $failures = $notifier->send($formatter->match($promotion['listing'], $promotion['verdict']));
             foreach ($failures as $failure) {
                 $this->warn(Redact::text($failure->getMessage()));
@@ -2603,7 +2663,25 @@ final readonly class RentScout
             return;
         }
 
-        $notification = (new Formatter())->digest($batch->entries, $batch->lowScore);
+        // §1 ON THE ROLLUP HALF — the same rule as the verb, in the method that sends. This is the
+        // DEPLOYED drain, so if the two were ever to differ this is the one that matters.
+        $sectionOne = new SectionOneGate($store, new Dedup());
+        $lowScore = array_values(array_filter($batch->lowScore, function (array $entry) use ($sectionOne): bool {
+            $refusal = $sectionOne->refuses($entry['listing'], $entry['key']);
+            if ($refusal === null) {
+                return true;
+            }
+            $this->warn(sprintf(
+                '%s — §1 : %s (%s) — retirée du récapitulatif',
+                $entry['key'],
+                $refusal['detail'],
+                $refusal['route'],
+            ));
+
+            return false;
+        }));
+
+        $notification = (new Formatter())->digest($batch->entries, $lowScore);
         $failures = $notifier->send($notification);
 
         foreach ($failures as $failure) {
@@ -2622,7 +2700,7 @@ final readonly class RentScout
         foreach ($batch->entries as $entry) {
             $store->markNotified($entry['key'], $now, 'DIGEST');
         }
-        foreach ($batch->lowScore as $entry) {
+        foreach ($lowScore as $entry) {
             foreach ($entry['keys'] as $key) {
                 $store->markNotified($key, $now, 'ROLLUP');
             }

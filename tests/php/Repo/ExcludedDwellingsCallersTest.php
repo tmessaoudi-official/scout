@@ -41,8 +41,14 @@ final class ExcludedDwellingsCallersTest extends TestCase
 
         foreach ($sites as $site) {
             [$class, $method] = $site;
+            // NO ESCAPE CLAUSE. This read `|| str_contains($doc, $class . '}')`, which accepts a
+            // `{@see RentScout}`-style bullet and thereby covers EVERY method of that class — the
+            // class granularity this test was written to remove, re-opened on demand. It was inert
+            // (no bullet contains `}`) and undocumented, and a lens defeated the test with it in
+            // one edit: two bullets replaced by `{@see RentScout}`, plus a fifth undeclared call
+            // site, green (C2 round 4). A dead escape clause is still a door.
             self::assertTrue(
-                str_contains($doc, $class . '::' . $method) || str_contains($doc, $class . '}'),
+                str_contains($doc, $class . '::' . $method),
                 sprintf(
                     '%s::%s() calls ExcludedDwellings::match() and no bullet names it. §1 is judged '
                         . 'from four persisted routes; a call site the enumeration does not know '

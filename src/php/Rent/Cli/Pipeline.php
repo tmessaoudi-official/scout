@@ -423,7 +423,8 @@ final readonly class Pipeline
         // nothing at all.
         $notified = 0;
         $queuedLowScore = 0;
-        $sectionOneRefused = 0;
+        /** @var list<string> $sectionOneRefused */
+        $sectionOneRefused = [];
 
         // ONE gate, constructed once, reading FRESH on every call. Not hoisted state: it holds no
         // candidate list — a hoisted list is what both round-3 P0s were.
@@ -577,6 +578,55 @@ final readonly class Pipeline
                 continue;
             }
 
+            // §1's GATE — ABOVE EVERY SEND IN THIS LOOP, over FRESHLY-READ state.
+            //
+            // It sat 98 lines lower, immediately above the MATCH send, and its own docblock claimed
+            // that was "the last moment, so no ordering can route around it". THERE ARE TWO SENDS
+            // HERE. The rent-drop push below is reached by a listing whose outcome is already
+            // MATCH, and a crossed ceiling is documented as "a NEW MATCH whatever its size" (Q33) —
+            // `Priority::HIGH`, titled PASSE SOUS LE PLAFOND, carrying the listing's URL. Two C2
+            // round-4 lenses executed it independently: a PLS flat reached the phone at high
+            // priority saying it now fits the budget, while the SAME iteration recorded REJECT/PLS
+            // for it and wrote the gate's own refusal string into its reasons.
+            //
+            // That was the SIXTH instance of this milestone's named defect, committed inside the
+            // structural fix for the other five. The lesson is the placement rule, not the line:
+            // an announcing surface is a SEND, not a notification KIND, and the gate belongs above
+            // all of them. The car pipeline already had this right — `VehiclePipeline` puts its
+            // price-drop below the REJECT check.
+            $refusal = $sectionOne->refuses($listing, $sighting->dedupKey);
+            if ($refusal !== null) {
+                // Recorded, not merely skipped: the reading is what makes the next pass cheap and
+                // what every other surface reads. Left unnotified, so nothing announces it.
+                //
+                // `100`, not `9000`: `Classification::$confidenceBp` is documented `0..100` and
+                // `confidence()` divides by 100. Every other §1 write in this file passes 100.
+                $this->store->recordVerdict(
+                    $sighting->dedupKey,
+                    $refusal['tenure']->value,
+                    100,
+                    ['§1 — ' . $refusal['detail'] . ' (' . $refusal['route'] . ')'],
+                    $listing,
+                );
+                $this->store->recordOutcome($sighting->dedupKey, 'REJECT');
+
+                // SAID OUT LOUD, with the key. This refusal writes the row's own durable reading
+                // and `outcome = REJECT`, which closes `pendingLowScore()`, `pendingDigest()` and
+                // `staleVerdicts()` by query — so the documented one way back is
+                // `reclassify --reopen=<dedup_key>`, and until now NOTHING PRINTED THE KEY. The
+                // other three announcing surfaces all speak on the identical refusal; this is the
+                // one that runs unattended every 15 minutes, and it was the silent one.
+                $sectionOneRefused[] = sprintf(
+                    '%s — §1 : %s (%s) — `scout --domain=rent reclassify --reopen=%s` si c\'est une erreur',
+                    $sighting->dedupKey,
+                    $refusal['detail'],
+                    $refusal['route'],
+                    $sighting->dedupKey,
+                );
+
+                continue;
+            }
+
             // A rent that fell on a listing we already knew is its own event — and one that crosses
             // the ceiling from above is a NEW MATCH whatever its size (Q33), which is why the size
             // thresholds are not consulted in that case.
@@ -676,32 +726,6 @@ final readonly class Pipeline
             $pushMin = $this->criteria->notify->pushMinScore;
             if ($pushMin !== null && ($verdict->score ?? 0) < $pushMin) {
                 ++$queuedLowScore;
-
-                continue;
-            }
-
-            // §1's LAST GATE, immediately before the send and over FRESHLY-READ state.
-            //
-            // Every veto above shapes the VERDICT and each reads its route at a different moment;
-            // this reads all four again at the one moment that matters. It is the backstop for the
-            // round-3 P0: `$excludedDwellings` is loaded once per pass while judged tenures are
-            // written inside the loop, and `Dedup::within()` is a TOLERANCE BAND, so three ad ids
-            // 30 € apart chain and the third sits inside the second's band and outside the first's.
-            // A lens executed that push. No ordering inside a pass can route around a check made
-            // here, which is the property the per-route checks cannot have.
-            $refusal = $sectionOne->refuses($listing, $sighting->dedupKey);
-            if ($refusal !== null) {
-                // Recorded, not merely skipped: the reading is what makes the next pass cheap and
-                // what every other surface reads. Left unnotified, so nothing announces it.
-                $this->store->recordVerdict(
-                    $sighting->dedupKey,
-                    $refusal['tenure']->value,
-                    9000,
-                    ['§1 — ' . $refusal['detail'] . ' (' . $refusal['route'] . ')'],
-                    $listing,
-                );
-                $this->store->recordOutcome($sighting->dedupKey, 'REJECT');
-                ++$sectionOneRefused;
 
                 continue;
             }
@@ -816,6 +840,18 @@ final readonly class Pipeline
         // ROW 41 — a source whose every judged card failed the SAME hard filter is named here,
         // beside the errors and never as one: the pass succeeded, the selector may not have.
         $warnings = SameFilterWarning::warnings($filterTally);
+
+        // §1 REFUSALS ARE WARNINGS, not a silent counter. `$sectionOneRefused` was incremented and
+        // read NOWHERE (C2 round 4, P1): the one announcing surface that runs unattended every 15
+        // minutes said nothing at all, while the other three all speak on the identical refusal.
+        // Hard rule 2's shape one layer in from the source — if the gate ever refuses wrongly (an
+        // over-merge, or the excluded set growing), the operator sees a healthy source, a plausible
+        // match count and a phone that never rings.
+        //
+        // Each line carries the `dedup_key` AND the command that reverses it, because the refusal
+        // is terminal by query: it writes the row's own durable reading and `outcome = REJECT`,
+        // which closes `pendingLowScore()`, `pendingDigest()` and `staleVerdicts()` at once.
+        $warnings = [...$warnings, ...$sectionOneRefused];
 
         return new RunResult(
             sourcesRun: $sourcesRun,

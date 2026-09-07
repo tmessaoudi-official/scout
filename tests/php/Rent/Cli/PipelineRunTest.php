@@ -2748,11 +2748,123 @@ final class PipelineRunTest extends TestCase
             ], family: 'private'),
         ], '2026-08-08T12:00:00+02:00');
 
-        self::assertNotContains(
-            NotificationKind::MATCH,
-            array_map(static fn ($n) => $n->kind, $channel->sent),
-            '§1: the chain link is inside b1 tolerance even though it is outside c1 tolerance',
+        // EVERY KIND, not just MATCH. This assertion read `assertNotContains(MATCH)` and was green
+        // while the same flat went out as a HIGH-priority PRICE_DROP from a send 98 lines above the
+        // gate (C2 round 4, P0 — two lenses executed it). A §1 assertion scoped to one notification
+        // kind pins the kind, not the rule.
+        self::assertSame(
+            [],
+            $channel->sent,
+            '§1: nothing at all may be announced for a flat the gate refuses — not a match, not a drop',
         );
+    }
+
+    /**
+     * THE RENT-DROP SEND IS AN ANNOUNCING SURFACE, and it sat ABOVE the gate.
+     *
+     * A crossed ceiling is documented as "a NEW MATCH whatever its size" (Q33) and goes out at
+     * `Priority::HIGH`, titled PASSE SOUS LE PLAFOND, carrying the listing's URL. It is reached by
+     * a listing whose outcome is already MATCH, and it fired before the gate ever ran — so a PLS
+     * flat was pushed telling the user it now fits the budget, in the same iteration that recorded
+     * REJECT/PLS for it.
+     *
+     * Sixth instance of *a fix landing on one of two symmetric surfaces*, committed inside the
+     * structural fix for the other five. The car pipeline already had this ordering right.
+     */
+    public function testAFlatTheGateRefusesIsNotAnnouncedAsARentDropEither(): void
+    {
+        $store = $this->store();
+        $channel = new RecordingChannel();
+        $pipeline = $this->pipeline($store, new Notifier([$channel]));
+
+        // c1 states PLS on disk. b2 is first seen ABOVE the ceiling, so it is recorded and rejected.
+        $pipeline->runOnce([
+            new FakeSource('cdc_habitat', [$this->listing('c1', [
+                'source' => 'cdc_habitat',
+                'fields' => ['financement' => 'PLS'],
+                'description' => '4 pieces de 88 m2, ascenseur.',
+                'rentCc' => 1450,
+            ])], mixedTenure: true),
+            new FakeSource('bienici', [$this->listing('b2', [
+                'source' => 'bienici',
+                'family' => 'private',
+                'fields' => [],
+                'description' => '4 pieces de 88 m2, ascenseur.',
+                'rentCc' => 1900,
+            ])], family: 'private'),
+        ], self::NOW);
+
+        $channel->sent = [];
+
+        // One pass: b1 at 1480 is vetoed by c1 and written PLS here; b2 drops to 1510 — inside b1's
+        // band, outside c1's — and CROSSES the ceiling, which is the high-priority push.
+        $pipeline->runOnce([
+            new FakeSource('bienici', [
+                $this->listing('b1', [
+                    'source' => 'bienici',
+                    'family' => 'private',
+                    'fields' => [],
+                    'description' => '4 pieces de 88 m2, ascenseur.',
+                    'rentCc' => 1480,
+                ]),
+                $this->listing('b2', [
+                    'source' => 'bienici',
+                    'family' => 'private',
+                    'fields' => [],
+                    'description' => '4 pieces de 88 m2, ascenseur.',
+                    'rentCc' => 1510,
+                ]),
+            ], family: 'private'),
+        ], '2026-08-08T12:00:00+02:00');
+
+        self::assertSame([], $channel->sent, '§1: a refused flat is not announced by ANY send in the loop');
+    }
+
+    /**
+     * AND THE REFUSAL IS SAID OUT LOUD, with the key that reverses it.
+     *
+     * `$sectionOneRefused` was incremented and read nowhere, so the only unattended surface was the
+     * silent one — while the refusal is terminal by query (own durable reading + `outcome = REJECT`
+     * closes `pendingLowScore()`, `pendingDigest()` and `staleVerdicts()` together). The documented
+     * way back is `--reopen=<dedup_key>`, and nothing printed the key.
+     */
+    public function testASectionOneRefusalIsReportedWithTheKeyThatReversesIt(): void
+    {
+        $store = $this->store();
+        $channel = new RecordingChannel();
+        $pipeline = $this->pipeline($store, new Notifier([$channel]));
+
+        $pipeline->runOnce([
+            new FakeSource('cdc_habitat', [$this->listing('c1', [
+                'source' => 'cdc_habitat',
+                'fields' => ['financement' => 'PLS'],
+                'description' => '4 pieces de 88 m2, ascenseur.',
+                'rentCc' => 1450,
+            ])], mixedTenure: true),
+        ], self::NOW);
+
+        $result = $pipeline->runOnce([
+            new FakeSource('bienici', [
+                $this->listing('b1', [
+                    'source' => 'bienici',
+                    'family' => 'private',
+                    'fields' => [],
+                    'description' => '4 pieces de 88 m2, ascenseur.',
+                    'rentCc' => 1480,
+                ]),
+                $this->listing('b2', [
+                    'source' => 'bienici',
+                    'family' => 'private',
+                    'fields' => [],
+                    'description' => '4 pieces de 88 m2, ascenseur.',
+                    'rentCc' => 1510,
+                ]),
+            ], family: 'private'),
+        ], '2026-08-08T12:00:00+02:00');
+
+        $said = implode(' | ', $result->warnings);
+        self::assertStringContainsString('§1', $said, 'the refusal must be voiced, not merely counted');
+        self::assertStringContainsString('--reopen=', $said, 'and it must carry the command that reverses it');
     }
 
     public function testAReadvertisedFlatInheritsTheStoredExclusionAfterTheExcludedCopyIsGone(): void

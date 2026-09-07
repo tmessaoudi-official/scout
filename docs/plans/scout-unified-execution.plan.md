@@ -3209,6 +3209,65 @@ tool/guard) and say which ones the fix covers.**
   was a new caller the enumeration did not name. That is the guard doing in one second what two
   rounds of review did not.
 
+- [2026-09-07 19:40] AGREED (**milestone panel round 4 at `5b030fe`: NOT CLEAN — 15 findings, one
+  P0, and the P0 was inside round 3's structural fix**). Rounds now read **9 → 8 → 17 → 15**.
+
+  **The gate CONCEPT held; its PLACEMENT and its GUARD did not.** Lenses verified independently that
+  `SectionOneGate` reads fresh (no memoisation anywhere in `Store`), consults all four routes with no
+  selector, that `Dedup` is stateless by reflection, that `--reopen` and `--seed` are clean, and that
+  the car domain persists no §1 route (checked against `VehicleStore`'s schema, not asserted). What
+  was wrong is that I equated *announcing surface* with *match send*.
+
+  - **P0 · the rent-drop send sat 98 lines ABOVE the gate.** A crossed ceiling is documented as "a
+    NEW MATCH whatever its size" (Q33) and goes out at `Priority::HIGH`, titled PASSE SOUS LE
+    PLAFOND, carrying the URL. Two lenses executed it: a `PLS` flat reached the phone saying it now
+    fits the budget, in the same iteration that recorded `REJECT`/`PLS` for it and wrote the gate's
+    own refusal string into its reasons. **Sixth instance of the milestone's named defect, committed
+    inside the structural fix for the other five.** The car pipeline already had this ordering right.
+  - **The test pinning that exact chain passed**, because it asserted `assertNotContains(MATCH)` and
+    the notification sent was `PRICE_DROP`. A §1 assertion scoped to one notification kind pins the
+    kind, not the rule. It asserts `$channel->sent === []` now.
+  - **P1 · the refusal was SILENT on the only unattended surface.** `$sectionOneRefused` was
+    incremented and read nowhere, while the other three surfaces all speak on the identical refusal.
+    It is terminal by query — own durable reading plus `outcome = REJECT` closes `pendingLowScore()`,
+    `pendingDigest()` and `staleVerdicts()` together — and the documented way back is
+    `--reopen=<dedup_key>`, which nothing printed. Now a warning per refusal, carrying the key and
+    the command.
+  - **P1 · MY "unreachable" RULING WAS WRONG, for the second time this milestone.** Round 3 turned
+    the retry-site case into a documented NON-case because a test stayed green with the guard
+    bypassed. A lens reached it two ways: a concurrent `run --watch` writing `recordTwin()` in the
+    window between collect and push (WAL, two handles, demonstrated), and a snapshot-less row that
+    enters `$retries` BELOW the dwelling check. **A test failing to reach a branch is not the branch
+    being unreachable** — and converting it to a non-case removed the one thing that would have said
+    so. Case restored.
+
+  **THE REWRITTEN GUARD FOUND THREE MORE THAT NO LENS REACHED.** Made site-granular and made to
+  discover by `notifier->send(` rather than by `->match(`, it immediately flagged both digest drains'
+  ROLLUP half (queued matches reaching the wire on collect-time reads alone) and `announcePromotions`
+  (gate one level up, in the caller — the P0 restated). All four announcing methods are gated now,
+  each in the method that sends. The guard's own first version was FILE-granular and keyed on one
+  notification kind: the same class granularity its sibling was rewritten to remove *in the same
+  commit*, so the lesson had landed on one of the two.
+
+  Also fixed: `excludedDwellings()` silently shrank on a corrupt snapshot while `--reopen` had
+  learned to report that identical condition one commit earlier — `doctor` says it now, and the count
+  shares ONE query with the veto so the two cannot describe different sets; the gate wrote
+  `confidenceBp = 9000` against a documented `0..100`; the re-emission line counted the queue rather
+  than the attempts; the sibling guard's undocumented `$class . '}'` escape clause re-opened class
+  granularity on demand (a lens defeated the whole test with it in one edit); the plan's prose
+  stopped at round 2 and `5b030fe` appeared nowhere in it; and the car domain's ONE stated cost —
+  a snapshot that will not decode means the classifier never re-runs — is now written down rather
+  than left as an unstated gap.
+
+  **A fix I had to back out mid-way, recorded because the reasoning matters:** the first version of
+  the `excludedDwellings()` counter added a mutable property to `Store`, which is `readonly`. The
+  repo's bar for `MutableByDesign` is explicitly not "readonly was inconvenient", so it is recomputed
+  statelessly instead.
+
+  **ROUND 5 IS THE CAP.** The framework requires an `AskUserQuestion` escalation there rather than a
+  sixth round. On this trend that ask is likely owed, and it is written here so a compacted session
+  does not quietly start a round 6.
+
 <!-- progress-block v1 -->
 | # | Step | Size | State | Evidence | Files |
 |---|------|------|-------|----------|-------|
@@ -3246,7 +3305,7 @@ tool/guard) and say which ones the fix covers.**
 | 32 | Deep — field-map regex has no load-time compile check | S | certified | 38f64bb test:2026-09-04 | src/php/Rent/Config/FieldMap.php tests/php/Rent/Config/ConfigTest.php |
 | 33 | Deep — doc drift: WARN_FLAKY, card_separator_pattern refusals, 4 stale Core paths | M | done | 38f64bb | CLAUDE.md docs/OPEN-QUESTIONS.md |
 | 34 | Deep — plan track sections stale for Tracks 0 1 2-step0 4 and 6-A1/A2/A3 | M | done | 38f64bb | docs/plans/scout-unified-execution.plan.md |
-| 35 | 6-C2 — the TWO CONSECUTIVE CLEAN rounds the bar requires; cap 5 then ask. Rounds 10+11 (advisor() only, same reviewer twice) were RETRACTED as a closure by the three-lens milestone panel: round 1 at 67e7bb1 found 9, round 2 at e3cfef0 found 8, so the counter is 0 and the gate is UNMET | L | doing | - | docs/plans/scout-unified-execution.plan.md |
+| 35 | 6-C2 — the TWO CONSECUTIVE CLEAN rounds the bar requires; cap 5 then ask. Rounds 10+11 (advisor() only, same reviewer twice) were RETRACTED as a closure by the three-lens milestone panel: r1 @67e7bb1 found 9, r2 @e3cfef0 found 8, r3 @c530d9a found 17, r4 @5b030fe found 15 — counter 0, gate UNMET, round 5 is the cap and then it ASKS | L | doing | - | docs/plans/scout-unified-execution.plan.md |
 | 36 | Processed alert emails are marked \Seen — run only, after the store recorded the source; doctor/dump stay read-only | M | certified | 766edd7 test:2026-09-06 | src/php/Adapters/Mail/ImapMailbox.php src/php/Adapters/Mail/Mailbox.php src/php/Rent/Cli/Pipeline.php src/php/Car/VehiclePipeline.php |
 | 37 | B-common — content-addressed identity for VehicleEmailSource (no-information floor, price out of the key, in-message duplicate announced) | M | certified | 7e1d54b test:2026-09-06 | src/php/Car/VehicleEmailSource.php src/php/Car/VehicleSourceLoader.php |
 | 38 | B-common — per-segment labelled field reader for VehicleEmailSource (the CapCar shape) | M | certified | 7e1d54b test:2026-09-06 | src/php/Car/VehicleEmailSource.php src/php/Car/VehicleSourceLoader.php |
@@ -3306,12 +3365,13 @@ tool/guard) and say which ones the fix covers.**
 
 ### Known issues
 
-- **Row 35 is UNMET and IN FLIGHT** (three-lens milestone panel, round 2 frozen at `e3cfef0`): the
-  two-clean counter is **0**. Rounds 1–7 each found real defects, round 7 alone 23. Rounds 10 and
-  11 were `advisor()` only — the same reviewer twice over one span — and briefly carried row 35 to
-  `certified`; **the panel retracted that**: its round 1 found 9 findings including a §1 P0, and its
-  round 2 found 8 more, five of them in round 1's own fixes. A clean round moves the counter to 1
-  and TWO are required, so the earliest possible closure is two more clean rounds from here.
+- **Row 35 is UNMET and IN FLIGHT** (three-lens milestone panel, round 4 frozen at `5b030fe`): the
+  two-clean counter is **0**. Rounds 10 and 11 were `advisor()` only — the same reviewer twice over
+  one span — and briefly carried row 35 to `certified`; **the panel retracted that.** Its rounds
+  found **9 (`67e7bb1`), 8 (`e3cfef0`), 17 (`c530d9a`) and 15 (`5b030fe`)**, and in every round the
+  majority were in the PREVIOUS round's fixes. **Round 5 is the CAP**, and the framework requires an
+  `AskUserQuestion` escalation there rather than a sixth round — that ask is owed if round 5 is not
+  clean. A clean round moves the counter to 1 and TWO are required.
   **Anything that reads this plan mechanically should read row 35 as `doing`, never `certified`** —
   it said `certified` in the same commit whose Decisions Log recorded the counter resetting to 0,
   which is the one artefact a post-compact session trusts without reading the prose.
