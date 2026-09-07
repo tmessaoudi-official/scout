@@ -3539,6 +3539,24 @@ tool/guard) and say which ones the fix covers.**
 - **The car domain has no `PacedSource`**, recorded not fixed with its trigger: the moment a second
   car web source without its own rate limiter exists, lift `PacedSource` into `Scout\Adapters`
   over a shared contract — never write a car twin.
+- **`tools/verify-deploy.sh` CONTRADICTS ITSELF ABOUT A LIVE SERVICE, and its printed remedy would
+  kill a running watcher** (observed 2026-09-07, recorded not fixed). Its leftover question greps
+  `docker ps -a` for a hex-prefixed name (`tools/verify-deploy.sh:150`) and excludes nothing, so it
+  cannot tell a corpse from the container a declared service currently resolves to. One real run
+  printed `✓ car-scout (0250190bdb78_scout-car-scout-1) : running, image courante` and, four lines
+  below, listed that same container under `conteneurs orphelins` with `docker rm -f` beside it. The
+  service check was right; the remedy would have removed the watcher it had just certified.
+  **Trigger**: a recreate interrupted mid-flight — here a foreground `timeout` SIGTERMing the whole
+  process group while compose was inside a minutes-long stop grace period — leaves the renamed
+  container RUNNING as the service rather than dead. The recovery is
+  `docker compose up -d --force-recreate --remove-orphans <service>`, which reclaims the clean name;
+  run compose detached (`setsid`), never under a foreground `timeout`, and the state does not arise.
+  Two halves when this is picked up, and the second is the one that makes the tool believable:
+  resolve each declared service's current container and drop it from the leftover set before naming
+  it; and split the message, because *a renamed container that IS the running service* and *a dead
+  leftover holding a name* want opposite commands. `tests/test-verify-deploy.sh` drives every
+  failure state through a stub `docker` and carries no case for this one — the counterweight is
+  what is missing, not the detection.
 - *(Three bullets that stood here on 2026-09-04 were stale against rows 19, 25 and 31 — COR-F5 is
   built and test-verified at `eb5d971`; the `ede198e` freeze was superseded by step 25; the
   `MalformedText` ORDER is pinned by `VehicleMalformedTextTest` at `526d246`. Removed by row 42.)*
