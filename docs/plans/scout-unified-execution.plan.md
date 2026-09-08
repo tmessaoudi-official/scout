@@ -3612,3 +3612,235 @@ tool/guard) and say which ones the fix covers.**
 - *(Three bullets that stood here on 2026-09-04 were stale against rows 19, 25 and 31 — COR-F5 is
   built and test-verified at `eb5d971`; the `ede198e` freeze was superseded by step 25; the
   `MalformedText` ORDER is pinned by `VehicleMalformedTextTest` at `526d246`. Removed by row 42.)*
+
+---
+
+## Track 7 — filter/score refinement, rent heating + amenities and the car brand/body model (2026-09-08)
+
+> **DESIGNED, NOT BUILT.** Every number below was MEASURED before the design, against the live
+> stores and the real scorers — never predicted. Nothing under `src/`, `config/` or `tests/` has
+> been touched. The developer ruled eight questions; the Decisions Log carries them.
+
+### What the sources can physically say — the constraint that shapes the whole rent half
+
+`chauffage` reaches the stored text of **three of eight** rent sources: In'li 671, Cityloger 75,
+SeLoger 4. **Zero** on Bien'ici, CDC Habitat, PAP, Logirep and leboncoin — their alert bodies are
+title, numbers and tracking links, no listing prose at all (PAP already declares `prose_absent`).
+
+Narrowed to flats that MATCH today: **all 40** matched flats with individual heating are **In'li**
+[Verified: all 1 261 MATCH snapshots re-judged through the real `CriteriaEngine` at production
+weights, `positiveTotal = 105`]. So the penalty ranks In'li flats below portal flats for a fact the
+portals never state. That is hard rule 9 behaving correctly — unknown is not "no" — and it is the
+STATED COST of Track 7-A, not a defect to be repaired later.
+
+### 7-A — the `chauffage individuel` penalty
+
+**The vocabulary was read off the real copy, not composed.** 125 distinct `chauffage …` contexts in
+the store, and the decisive shape is that `individuel` and the energy word are **0–3 words apart, in
+either order**: `chauffage individuel electrique` (18) but also `chauffage electrique individuel`
+(6), `chauffage est individuel electrique` (3), `chauffage et eau chaude individuels gaz` (9),
+`chauffage individuel alimente au gaz` (3). An adjacency reader — the shape `exclude_patterns`
+already uses for meublé — misses 9 of the 35 electric rows. `convecteur`, `radiateur`, `CPCU` and
+`reseau de chaleur` are **0 hits each** and are not in the vocabulary.
+
+Candidate reader, trialled over all 3 372 stored rows: negation first (`sans|pas de|aucun`
++ `chauffage`), then `chauffage` + optional infix (`est`, `et eau chaude`, `de la residence`,
+`de l'immeuble`) + a 24-character window to `individuel(s|le)` / `collectif(s|ve)`, then an energy
+scan over that window plus 40 characters.
+
+| classe | tout | MATCH | | classe | tout | MATCH |
+|---|---:|---:|---|---|---:|---:|
+| ABSENT | 2 663 | 1 102 | | individuel/? | 101 | 24 |
+| collectif/? | 339 | 90 | | individuel/gaz | 80 | 8 |
+| collectif/gaz | 143 | 29 | | individuel/électrique | 35 | 8 |
+| collectif/urbain · électrique · bois | 12 | 0 | | individuel/PAC | 1 | 0 |
+
+**Mechanism:** two negative weights on `Rent/Config/Weights`, the `highFloorNoLift: -20` precedent
+exactly — bounded `-1000..0` at load, **excluded from `positiveTotal()`** so they subtract from the
+numerator without inflating the denominator. `heatingIndividual: -20` fires on the mode whatever the
+energy; `heatingIndividualElectric: -15` is a SURCHARGE that stacks (electric = −35, gas = −20,
+unstated = −20, PAC = −20).
+
+**"Severely" was turned into a number rather than an adjective.** `positiveTotal` is 105 in
+production, so −20 is 19 points on the 0–100 scale, −30 is 28.6, −40 is 38.1:
+
+| classe | n | min | med | max | ≥55 today | −20 | −30 | −40 |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| individuel/? | 24 | 14 | 55 | 61 | 12 | **0** | 0 | 0 |
+| individuel/électrique | 8 | 30 | 50 | 62 | 3 | **0** | 0 | 0 |
+| individuel/gaz | 8 | 43 | 57 | 59 | 5 | **0** | 0 | 0 |
+
+**−20 is the whole effect at the gate**: it takes every individually-heated flat off the individual
+push and into the daily digest. −30 and −40 buy nothing at `push_min_score: 55` — they only reorder
+rows already below it. 20 of the ~105 rows clearing 55 today are individually heated, so this
+removes about a fifth of individual pushes.
+
+### 7-B — the terrace / cave / parking display line
+
+**A display line: it rejects nothing and scores nothing** (hard rule 8), exactly like the existing
+`Yvelines (78) · 2e étage · avec ascenseur` line. Reach on matched flats: **185 of 1 261 (15 %)**.
+
+| mot | tout | MATCH | | mot | tout | MATCH |
+|---|---:|---:|---|---|---:|---:|
+| balcon | 277 | 72 | | parking | 596 | 109 |
+| terrasse | 125 | 24 | | stationnement | 117 | 30 |
+| jardin | 65 | 17 | | emplacement | 64 | 17 |
+| cave | 41 | 3 | | box | 17 | 7 |
+| loggia | 29 | 3 | | garage | 14 | 5 |
+| cellier | 8 | 0 | | | | |
+
+**A MENTION IS NOT AN INCLUSION, and the line must never say otherwise.** 79 of the parking-
+mentioning matches say *inclus / compris / attribué*; **0** say *en sus* (the 5 Cityloger
+"possibilité de louer … en sus" rows do not match). A naive `parking … XX €` reader gives 38 hits of
+which **36 are CDC false positives** — that card puts the rent immediately after the amenity list.
+So the line reports `parking inclus` only on an explicit inclusion word and plain `parking`
+otherwise, and prints nothing when nothing was read: an absent line means the ad said nothing, never
+that the flat lacks a terrace.
+
+Two guards the measurement forced, both of them this repo's own recurring classes:
+
+- **`terrasse` has a furniture false positive** — 2 of its 38 matched mentions are a RESIDENCE NAME,
+  `12, les terrasses de la ravinière`. Guarded on the plural after a comma or a street number.
+- **`cave` appeared inside a SeLoger tracking URL.** The reader strips a URL's query and fragment
+  before scanning, the rule `RawListing::text()` and `EmailAlertSource::prose()` already apply —
+  ninth instance of *URLs are classified text*.
+- `jardin` reads `jardin` and never `rez de jardin` (4 of 32) — that is a FLOOR, and the line
+  already prints the floor.
+
+### Where both readers live — and why NOT the field map
+
+`FieldMap::fingerprint()` (`src/php/Rent/Config/FieldMap.php:97`) hashes **every mapped field list**.
+Adding a `heating` or `amenities` map entry changes In'li's fingerprint, which **invalidates all 737
+cached `listing_detail` rows**; they then re-hydrate at `detail_budget_per_pass: 20` ≈ 37 passes ≈
+9 hours, competing with genuinely new listings for the budget, and every In'li listing is judged
+card-alone meanwhile. [Verified: read the implementation]
+
+**So both readers run over `RawListing::description` AFTER mapping** — the surface `exclude_patterns`
+already scans. Zero cache invalidation, zero re-hydration, and no `Core/Prose` capture prefix.
+
+### 7-C — the car model: gearbox, body, brand and the gate, measured as ONE calibration
+
+They are one calibration and were measured as one: all 951 matched car snapshots re-judged through
+the **real `VehicleScorer`**, each component's share isolated exactly (weight 100 on one component,
+0 on the rest — `VehicleCriteria`'s constructor does not validate the sum; only the loader does),
+then recombined under candidate splits. Brand population under the requested list: **favoured 366 ·
+avoided 499 · neither 47 · unknown make 39.**
+
+| split (gearbox → 0) | p50 | p90 | pushed at 73 | favoured | avoided | neither | unknown |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| current 15/20/15/10/20/10/10 | 62 | 80 | 237 | 147/366 | 65/499 | 25/47 | 0/39 |
+| A price15 age15 km10 fuel20 body20 brand20 | 61 | 86 | 206 | 180 | 26 | 0 | 0 |
+| **B price10 age15 km10 fuel15 body25 brand25** | 61 | 90 | **197** | **197/366** | **0/499** | **0/47** | **0/39** |
+| C = A, "neither" at half share | 62 | 86 | 222 | 180 | 26 | 16 | 0 |
+| D price15 age20 km15 fuel20 body15 brand15 | 63 | 85 | 315 | 202 | 104 | 8 | 1 |
+
+**Split B is the ruling, and it is a clean separation**: at the EXISTING gate of 73 every one of the
+197 individual pushes is a favoured make — not one avoided, unlisted or unknown-make car gets
+through. That is CAR-D ("everything else must almost not show up") satisfied by CALIBRATION, with no
+new mechanism: the rest already reaches the developer once a day through `scout --domain=car rollup`
+and its `rollup_hour: 8` floor.
+
+- **Gearbox → weight 0, not "both earn full marks."** Values: automatique 452 · manuelle 276 ·
+  **null 276**. Awarding both would still leave the component scoring 0 for 27 % of the fleet on a
+  fact that no longer discriminates — a penalty for silence, hard rule 9's own shape. At 0 the
+  component drops out and its 10 points fund body and brand.
+- **Body becomes FLAT, not ranked**: suv = break = berline = full marks (today 1.0 / 0.667 / 0.333).
+  `4x4 - suv` (60 cars) already ranks as `suv` — `bodyRankOf()` uses `str_contains` — so no change
+  is needed there. `citadine` (133) and `monospace` (59) score 0 either way.
+- **Brand becomes a THREE-WAY** (favoured 1.0 / avoided 0.0 / neither 0.0 / unknown 0.0), replacing
+  the inverted binary. The unknown-make arm is UNTOUCHED — it already scores 0 with
+  `marque inconnue — hors score`, deliberately, because awarding the share would rank an extraction
+  failure as a definitely-not-Peugeot (Track 6-A4).
+- **`high_priority_score` and `push_min_score` must BOTH be re-measured after the weight change**,
+  because 73 was calibrated against the current scale and the config's own comment says an absolute
+  threshold silently changes meaning when the scale beneath it moves. Under B the split at 73 is
+  measured above and holds; the `!!` marker's `confidenceBp >= 80` half is code and is not touched.
+
+### 7-D — the meublé negation guard
+
+`non meublé` is **NOT rejected today** [Verified]. 13 of 3 372 stored rows carry a negated meublé
+(8 In'li = an unfurnished KITCHEN in the description; 5 SeLoger titles). **Rows matching both a
+negation and the `exclude_patterns` meublé rule: 0.** But the two lists are safe for DIFFERENT
+reasons: `exclude_title_patterns` carries an explicit `(?!.*\b(?:non|pas|sans)\b[^\n]{0,15}meuble)`
+lookahead, while `exclude_patterns` is safe only by ADJACENCY — a trigger word must sit immediately
+before `meuble`. So `appartement meublé ou non` and `meublé : non` would be wrongly rejected, and
+`location non meublée` escapes only because `location` is not adjacent. The guard is added to
+`exclude_patterns`, config-only, and TRIALLED over all 3 372 stored rows first (gained / lost /
+changed reported before shipping) — the discipline rows 37 and F24 established.
+
+### Surface this touches
+
+Rent: `Rent/Config/Weights` + `ConfigLoader` + `config/rent/criteria.json` (+ `.local.json`) · a
+heating reader and an amenity reader under `Rent/Core` · new `RawListing` properties, therefore the
+reflection-guarded `ListingSnapshot` encoder, the `withCommute()`-style clone-with (NEVER a
+field-by-field copy — the 429-history-row defect), `Pipeline::enrich()` and `reclassify` ·
+`Rent/Notify/Formatter` · fixtures · `tests/sabotage-check.sh`.
+Car: `config/car/criteria.json` weights + a new `brand_favour` key · `VehicleCriteria` ·
+`VehicleScorer`'s brand and body arms · the 26-make classification sabotage case ·
+`high_priority_score` / `push_min_score` re-measurement · fixtures · ledger.
+
+### Two incidental findings — recorded, NOT bundled into this work
+
+- **CDC descriptions leak JavaScript**: `})(jQuery)` in 278 stored rows and
+  `(function ($) { $('.tooltipBubble').tooltip()` in 139. The description selector is capturing a
+  `<script>`. Benign for tenure (no vocabulary in it), but it is page furniture inside the text the
+  classifier reads.
+- **`c4` is stored as a car MAKE.** It is a Citroën model — an extraction miss, and one of the 47
+  "neither" makes. Note it would be scored 0 under the new brand model while the real make is on the
+  avoid list, so the defect is currently self-cancelling and will stop being so if `c4` is ever
+  resolved to `citroen`.
+
+### Decisions Log — Track 7
+
+- [2026-09-08 22:10] AGREED: **`ford` is FAVOURED** — removed from `brand_avoid` (22 stems → 21),
+  added to the favoured list. The developer asked for a recommendation and it was MEASURED rather
+  than argued: under split B ford's 28 matched cars score median 80 / max 95 and 17 of 28 clear the
+  gate if favoured, median 55 / max 70 and **0 of 28** if avoided; the stock is Puma 10, Kuga 5,
+  Focus 4, EcoSport…, petrol and mild-hybrid SUVs, 2020–2023, €12 490–15 990 — precisely the shape
+  the body and fuel preferences reward. The deciding argument is that **the avoid list's own comment
+  admits ford belongs to neither group it justifies**: Stellantis contributes 14 marques and the
+  Renault–Nissan–Mitsubishi alliance 5, on shared mechanicals, while *"ford and chevrolet are the
+  developer's own additions and belong to neither group"* — so ford had no group rationale, only a
+  preference, now restated the other way. **`chevrolet` STAYS on the avoid list** (not on the new
+  favoured list) and the choice is moot: **0 rows** in the store. Reversed by moving the one stem
+  back.
+- [2026-09-08 22:10] AGREED: the **47 "neither" makes score ZERO**, the same as avoided — the literal
+  reading of *"everything else must have lowest score"*. mini 13, suzuki 11, mg 7, lexus 6,
+  land rover 6, smart 3, porsche 2, jaguar, isuzu, bentley, `land`, `c4`. Measured: at gate 73 none
+  of the 47 is pushed individually; all reach the developer in the daily rollup. The rejected
+  alternative (half share, split C) pushed 16 of the 47. Reversed by giving the unlisted arm a
+  non-zero share.
+- [2026-09-08 22:10] AGREED: the heating penalty fires on **`chauffage individuel` with no energy
+  stated** — the BASE penalty only, never the electric surcharge. Hard rule 9: an unstated energy is
+  not electricity. It covers the largest single class (101 stored rows, 24 matched), and −20 alone
+  already takes all 24 below the push gate. The rejected alternatives were "explicit energy only"
+  (loses the 24, which In'li's copy makes the commonest shape) and "treat unstated as electric"
+  (manufactures a fact from an absence).
+- [2026-09-08 22:10] AGREED: severity is **−20 base, −15 electric surcharge** (electric −35, gas −20,
+  unstated −20). Measured: −20 = 19 points on the 0–100 scale at `positiveTotal 105`, and it already
+  removes EVERY individually-heated flat from the individual push. −30 and −40 change nothing at the
+  gate and were rejected for that reason — they would only reorder rows already below it. Reversed
+  by the two weight lines.
+- [2026-09-08 22:10] AGREED: **car weight split B** — price 10, age 15, mileage 10, **gearbox 0**,
+  fuel 15, **body 25**, **brand 25**, summing to 100 as `VehicleCriteriaLoader` requires. Chosen
+  because it is the only measured split that separates cleanly: 197 individual pushes at the
+  existing gate of 73, **all 197 favoured**, zero avoided / unlisted / unknown-make. Split A left 26
+  avoided cars above the gate and split D 104. Note fuel drops 20 → 15, partially reversing the
+  2026-09-01 fuel ruling; the diesel/clean ordering must be RE-MEASURED before this ships, exactly as
+  that ruling itself was.
+- [2026-09-08 22:10] AGREED: **gearbox accepts both by scoring ZERO weight**, not by awarding both
+  arms full marks. 276 of 1 004 cars state no gearbox at all, and a component that no longer
+  discriminates must not keep penalising them for silence.
+- [2026-09-08 22:10] AGREED: the terrace/cave/parking feature is **DISPLAY ONLY** — no score, no
+  filter (hard rule 8). Only 15 % of matched flats mention any amenity, so scoring it would rank
+  prose-carrying sources above card-only ones for a fact the portals never state. A score bonus was
+  offered with the distortion priced and was declined.
+- [2026-09-08 22:10] AGREED: the line reports **terrasse, balcon, loggia, jardin, cave and the
+  parking family** — everything except `cellier`. balcon is 3× more common than terrasse (111 vs 38
+  matched mentions), so omitting it would blank the line on the commonest case; loggia is a recessed
+  balcony, the same fact under another word. `cellier` is DROPPED: 0 matched reach, and a cellier is
+  an indoor pantry rather than a basement cave — merging the two would state something the ad did
+  not.
+- [2026-09-08 22:10] AGREED: add the **negation lookahead to the `exclude_patterns` meublé rule**,
+  matching the one `exclude_title_patterns` already carries, and TRIAL it over all 3 372 stored rows
+  before shipping (gained / lost / changed reported).
