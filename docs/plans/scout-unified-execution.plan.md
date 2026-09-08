@@ -3751,6 +3751,30 @@ and its `rollup_hour: 8` floor.
   the inverted binary. The unknown-make arm is UNTOUCHED — it already scores 0 with
   `marque inconnue — hors score`, deliberately, because awarding the share would rank an extraction
   failure as a definitely-not-Peugeot (Track 6-A4).
+- **B DROPS FUEL 20 → 15, WHICH PARTIALLY REVERSES THE 2026-09-01 FUEL RULING, AND THAT WAS
+  MEASURED RATHER THAN RE-ARGUED.** That ruling exists because diesels were ranking high enough to
+  be noticed, so the number that decides it is how many reach the individual push. Over the same
+  951 rows, at gate 73:
+
+  | split | diesel median | clean median | gap | pushes | diesel pushes |
+  |---|---:|---:|---:|---:|---:|
+  | current (fuel 20) | 43 | 70 | 27 | 237 | **0 / 245** |
+  | **B (fuel 15)** | 47 | 67 | 20 | 197 | **15 / 245** |
+  | B′ fuel 20, price → 5 | 45 | 71 | 26 | 220 | 13 / 245 |
+  | B″ fuel 20, age → 10 | 43 | 68 | 25 | 185 | 3 / 245 |
+
+  Fifteen diesels where today there are none, and **every one of the fifteen is a favoured-make
+  suv / break / berline** — Kia XCeed 79, Mercedes Citan 78, Ford Kuga 78, VW Golf 77, BMW X1 77,
+  three Audi Q2, two Kia Sportage, Hyundai Tucson at exactly 73. They arrive through the front
+  door of the two rules this track adds, not around them.
+
+  **The lever is NOT the fuel weight, and predicting it would have got that backwards.** Restoring
+  fuel to 20 removes only 2 of the 15 (B′), because the diesels are riding **body 25 + brand 25**
+  against today's 10 + 10; the only weight that suppresses them is AGE, and B″ buys 12 of them back
+  by halving the second-heaviest real signal on a used-car list. Ruled: **accept the fifteen**
+  (developer, 2026-09-08). The preference survives as a preference — a diesel still forfeits 15
+  points of ordering, and 92 % of pushes are still petrol, hybrid or electric — which is what
+  hard rule 8 asks of it. It was never a disqualifier and must not become one.
 - **`high_priority_score` and `push_min_score` must BOTH be re-measured after the weight change**,
   because 73 was calibrated against the current scale and the config's own comment says an absolute
   threshold silently changes meaning when the scale beneath it moves. Under B the split at 73 is
@@ -3792,7 +3816,7 @@ Car: `config/car/criteria.json` weights + a new `brand_favour` key · `VehicleCr
 
 ### Decisions Log — Track 7
 
-- [2026-09-08 22:10] AGREED: **`ford` is FAVOURED** — removed from `brand_avoid` (22 stems → 21),
+- [2026-09-08 22:06] AGREED: **`ford` is FAVOURED** — removed from `brand_avoid` (22 stems → 21),
   added to the favoured list. The developer asked for a recommendation and it was MEASURED rather
   than argued: under split B ford's 28 matched cars score median 80 / max 95 and 17 of 28 clear the
   gate if favoured, median 55 / max 70 and **0 of 28** if avoided; the stock is Puma 10, Kuga 5,
@@ -3804,43 +3828,52 @@ Car: `config/car/criteria.json` weights + a new `brand_favour` key · `VehicleCr
   preference, now restated the other way. **`chevrolet` STAYS on the avoid list** (not on the new
   favoured list) and the choice is moot: **0 rows** in the store. Reversed by moving the one stem
   back.
-- [2026-09-08 22:10] AGREED: the **47 "neither" makes score ZERO**, the same as avoided — the literal
+- [2026-09-08 22:06] AGREED: the **47 "neither" makes score ZERO**, the same as avoided — the literal
   reading of *"everything else must have lowest score"*. mini 13, suzuki 11, mg 7, lexus 6,
   land rover 6, smart 3, porsche 2, jaguar, isuzu, bentley, `land`, `c4`. Measured: at gate 73 none
   of the 47 is pushed individually; all reach the developer in the daily rollup. The rejected
   alternative (half share, split C) pushed 16 of the 47. Reversed by giving the unlisted arm a
   non-zero share.
-- [2026-09-08 22:10] AGREED: the heating penalty fires on **`chauffage individuel` with no energy
+- [2026-09-08 22:06] AGREED: the heating penalty fires on **`chauffage individuel` with no energy
   stated** — the BASE penalty only, never the electric surcharge. Hard rule 9: an unstated energy is
   not electricity. It covers the largest single class (101 stored rows, 24 matched), and −20 alone
   already takes all 24 below the push gate. The rejected alternatives were "explicit energy only"
   (loses the 24, which In'li's copy makes the commonest shape) and "treat unstated as electric"
   (manufactures a fact from an absence).
-- [2026-09-08 22:10] AGREED: severity is **−20 base, −15 electric surcharge** (electric −35, gas −20,
+- [2026-09-08 22:06] AGREED: severity is **−20 base, −15 electric surcharge** (electric −35, gas −20,
   unstated −20). Measured: −20 = 19 points on the 0–100 scale at `positiveTotal 105`, and it already
   removes EVERY individually-heated flat from the individual push. −30 and −40 change nothing at the
   gate and were rejected for that reason — they would only reorder rows already below it. Reversed
   by the two weight lines.
-- [2026-09-08 22:10] AGREED: **car weight split B** — price 10, age 15, mileage 10, **gearbox 0**,
+- [2026-09-08 22:06] AGREED: **car weight split B** — price 10, age 15, mileage 10, **gearbox 0**,
   fuel 15, **body 25**, **brand 25**, summing to 100 as `VehicleCriteriaLoader` requires. Chosen
   because it is the only measured split that separates cleanly: 197 individual pushes at the
   existing gate of 73, **all 197 favoured**, zero avoided / unlisted / unknown-make. Split A left 26
   avoided cars above the gate and split D 104. Note fuel drops 20 → 15, partially reversing the
   2026-09-01 fuel ruling; the diesel/clean ordering must be RE-MEASURED before this ships, exactly as
   that ruling itself was.
-- [2026-09-08 22:10] AGREED: **gearbox accepts both by scoring ZERO weight**, not by awarding both
+- [2026-09-08 22:16] AGREED: **fuel 15 stands — the fifteen diesels are accepted.** The entry above
+  was ruled with that number not yet taken, so it is re-ratified with it: over the same 951 rows,
+  B puts **15 of 245 diesels above gate 73 where the current weights put 0**, and every one is a
+  favoured-make suv / break / berline. The diesel/clean median gap goes 27 → 20. Both alternatives
+  were measured in the same run and rejected: B′ (fuel 20, price → 5) removes only 2 of the 15,
+  because the diesels ride body 25 + brand 25 rather than the fuel weight, and B″ (fuel 20, age →
+  10) removes 12 only by halving the second-heaviest signal on a used-car list. The 2026-09-01
+  ruling was a PREFERENCE, never a disqualifier — a diesel still forfeits 15 points of ordering and
+  92 % of individual pushes remain petrol, hybrid or electric.
+- [2026-09-08 22:06] AGREED: **gearbox accepts both by scoring ZERO weight**, not by awarding both
   arms full marks. 276 of 1 004 cars state no gearbox at all, and a component that no longer
   discriminates must not keep penalising them for silence.
-- [2026-09-08 22:10] AGREED: the terrace/cave/parking feature is **DISPLAY ONLY** — no score, no
+- [2026-09-08 22:06] AGREED: the terrace/cave/parking feature is **DISPLAY ONLY** — no score, no
   filter (hard rule 8). Only 15 % of matched flats mention any amenity, so scoring it would rank
   prose-carrying sources above card-only ones for a fact the portals never state. A score bonus was
   offered with the distortion priced and was declined.
-- [2026-09-08 22:10] AGREED: the line reports **terrasse, balcon, loggia, jardin, cave and the
+- [2026-09-08 22:06] AGREED: the line reports **terrasse, balcon, loggia, jardin, cave and the
   parking family** — everything except `cellier`. balcon is 3× more common than terrasse (111 vs 38
   matched mentions), so omitting it would blank the line on the commonest case; loggia is a recessed
   balcony, the same fact under another word. `cellier` is DROPPED: 0 matched reach, and a cellier is
   an indoor pantry rather than a basement cave — merging the two would state something the ad did
   not.
-- [2026-09-08 22:10] AGREED: add the **negation lookahead to the `exclude_patterns` meublé rule**,
+- [2026-09-08 22:06] AGREED: add the **negation lookahead to the `exclude_patterns` meublé rule**,
   matching the one `exclude_title_patterns` already carries, and TRIAL it over all 3 372 stored rows
   before shipping (gained / lost / changed reported).
