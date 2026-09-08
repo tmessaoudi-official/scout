@@ -3592,6 +3592,23 @@ tool/guard) and say which ones the fix covers.**
   > compose projects, silence about what the scan dropped reads exactly like a scan that found
   > nothing — and the three surfaces now say *counted, never named, never given a remedy*, with case
   > 4d asserting all three halves instead of only the absence of a command.
+  >
+  > **TWO RESIDUALS, RECORDED AND NOT FIXED — both outside row 62's verbatim scope.**
+  > **(a) The SERVICE loop's own `break` hides a container when the order runs the other way.** It
+  > reports the first row it matches, and it reports that row's STATE and IMAGE, not merely whether
+  > the service has a container at all. Driven with 4e's two rows FLIPPED — the running rename listed
+  > before the stuck one — it prints `✓ rent-scout (7c1f0a9b3e42_…) : running, image courante` and
+  > the `Created` container **appears nowhere**, which is this tool's own headline defect one layer
+  > up. The verdict is still red and the printed remedy still correct (`--force-recreate` clears
+  > both), so the diagnosis is INCOMPLETE rather than wrong. Pre-existing; it predates row 62.
+  > **(b) A stop issued mid-pass ALWAYS ends in SIGKILL, so the wedge is a design interaction rather
+  > than operator error.** `WatchLoop` stops only after the pass in flight finishes, and
+  > `compose.yaml` gives both services `stop_grace_period: 5m`. Measured from the live run log rather
+  > than reasoned: the final pass began `2026-09-07T23:14:02+02:00`, the stop was requested at
+  > 23:15:55 (`FinishedAt` 23:20:55 minus the 5 m grace), and at the kill the pass had recorded
+  > **4 of its 8 sources** — still running six minutes and fifty-three seconds in. At Q37 pacing
+  > (60 s per host) a hydration-heavy pass exceeds five minutes routinely, which is why this state
+  > keeps arising and why the tool's own hint says to run compose DETACHED.
 - *(Three bullets that stood here on 2026-09-04 were stale against rows 19, 25 and 31 — COR-F5 is
   built and test-verified at `eb5d971`; the `ede198e` freeze was superseded by step 25; the
   `MalformedText` ORDER is pinned by `VehicleMalformedTextTest` at `526d246`. Removed by row 42.)*
