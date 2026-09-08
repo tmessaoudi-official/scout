@@ -112,13 +112,13 @@ flowchart TD
     E --> F["twin scan — the OTHER track, same evidence bar"]
     F --> G["record + classify EVERY member<br/><b>② durable reading applied per member before anything is written</b>"]
     G --> H["twin graph resolved to a fixed point<br/><b>③ before any survivor is judged</b>"]
-    H --> I["judge the survivor:<br/>cluster veto → twin veto → stored-dwelling veto → CriteriaEngine"]
+    H --> O["acknowledge() — the claimed emails get \\Seen,<br/>after the store recorded them and nowhere earlier"]
+    O --> I["judge the survivor:<br/>cluster veto → twin veto → stored-dwelling veto → CriteriaEngine"]
     I --> J["<b>SectionOneGate</b> — reads FRESH at the last moment before every send"]
     J -->|match| K["push · markNotified MATCH"]
     J -->|doubt| L["digest bin — « à vérifier »"]
     J -->|below push gate| M["low-score queue — drains at the daily floor"]
     J -->|refused| N["dropped, and said out loud"]
-    K & L & M --> O["acknowledge() — the claimed emails get \\Seen,<br/>after the store recorded them and nowhere earlier"]
 ```
 
 **① Enrichment is upstream of everything.** Two independent reasons, either alone deciding it: a
@@ -137,7 +137,10 @@ before anything is written — there is no window in which it is off disk.
 not transitive: A links B, B links C, and C is outside A's tolerance band.
 
 **④ `acknowledge()` runs after the store recorded the pass**, never earlier — a crash between the
-flag and the write would lose the listings while marking their mail read.
+flag and the write would lose the listings while marking their mail read. It sits *before* the
+judging loop, not after the sends (`Pipeline.php:401`, against the gate at 431): the flag says a
+message was **read**, not that anything in it was notified, so a pass that matches nothing still
+marks its mail, and a send that fails does not un-mark it.
 
 The car pipeline (`Car\VehiclePipeline`) is the same shape with three stages absent: no tenure, no
 clustering across tracks, no detail hydration.
@@ -319,7 +322,7 @@ eats the budget while a genuinely new listing is notified unhydrated.
 
 ## 7. The stores
 
-Three SQLite files, three independent version counters.
+Two SQLite files, three independent version counters — the third belongs to a store both files carry.
 
 | File | Owner | Version key | Tables |
 |---|---|---|---|
@@ -476,8 +479,8 @@ Three ledger meta-tests exist because the ledger itself has failed silently:
 real socket). Before that, enabling one real source turned the suite into a crawler of a live
 landlord's site.
 
-**The classifier corpus** (`tests/fixtures/rent/tenure/corpus.json`) is language-neutral so both
-implementations can read it. Every case declares its `provenance` and a test asserts the declared
+**The classifier corpus** (`tests/fixtures/rent/tenure/corpus.json`) is language-neutral so a second
+implementation could read it — today only the PHP one does, phorj being on hold (§11). Every case declares its `provenance` and a test asserts the declared
 counts, so the synthetic/captured gap is visible as data. Append captures as sources come online;
 never renumber.
 
@@ -491,11 +494,12 @@ A per-fixture corpus only covers cells someone thought to write.
 
 ## 11. Two languages, and what is deliberately absent
 
-`src/phorj/` is the second implementation of the **pure core only** — `models`, `tenure`, `criteria`,
+**`src/phorj/` does not exist** — `src/` contains `php/` and nothing else (checked 2026-09-08). It
+*would* be the second implementation of the **pure core only** — `models`, `tenure`, `criteria`,
 `dedup` — diffed fixture-by-fixture against the same shared corpus. Everything touching IMAP, HTTP,
-SQLite or SMTP stays PHP-only: phorj refuses to transpile those domains, so a whole-app port is
+SQLite or SMTP would stay PHP-only: phorj refuses to transpile those domains, so a whole-app port is
 impossible by design rather than by omission (`docs/PHORJ-REQUIREMENTS.md`). It is **on indefinite
-hold** (2026-08-19) — deprioritised, not blocked.
+hold** (2026-08-19) — deprioritised, not blocked, and not to be started.
 
 Ruled **non-goals**, not gaps: no auto-application or form submission to landlords; no multi-user
 support; no web UI (a read-only HTML digest would be acceptable later).

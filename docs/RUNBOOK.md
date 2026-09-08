@@ -282,7 +282,8 @@ Run the ledger after any change to the tenure module, `Core/Text.php`, the corpu
 
 > **Three ways to misread the ledger.** Join `SABOTAGE_FILTER` labels with a plain `|` — `/bin/grep`
 > here is ugrep, where `\|` is **literal**, so a `\|` filter skips every case and still exits 0. A
-> case that **times out** counts as undetected; the full run is ~88 s on an idle box, so check
+> case that **times out** counts as undetected — each case runs the whole suite, ~88 s on an idle box
+(the ledger itself is hours, which is why it is a nightly CI job), so check
 > `uptime` before believing a lone timeout on this shared machine. And the local PHP's tracing JIT
 > crashes it nondeterministically (`zend_jit_trace.c` assertion, exit 134) — that is *harness broke*,
 > not a detection.

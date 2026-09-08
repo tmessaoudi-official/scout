@@ -58,10 +58,12 @@ first shipped *enabled* for two weeks and put ten flats that do not exist into e
 
 ### The §1 residual, stated
 
-`seloger`, `bienici` and `leboncoin` are `mixed_tenure: false`, which is defensible for a
+`seloger`, `bienici`, `leboncoin` **and `pap`** are `mixed_tenure: false`, which is defensible for a
 private-market portal. What holds regardless: an explicit `PLS`/`PLUS`/`PLAI`/`conventionné` label
 anywhere in a card is caught by the tier-2 label rules, which **never consult that flag**. What does
-not: a card stating no tenure at all takes the source default and matches.
+not: a card stating no tenure at all takes the source default and matches. `pap`'s `prose_absent`
+does **not** exempt it — a card carrying no prose states no tenure either, so it takes `LIBRE` by
+exactly the same route; the flag names a filtering gap, not a tenure one.
 
 Since 2026-09-01 `Rent\Core\LandlordRegistry` narrows this — a card whose advertiser names itself a
 bailleur is judged with **that landlord's** profile — so the residual is now an **anonymous**

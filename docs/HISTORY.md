@@ -70,7 +70,7 @@ figures. No default can supply those.
 |---|---|
 | 09-04 | `verify-deploy.sh` checks the **image against the code**, not just the containers — after a §1 fix ran unarmed in production for a day and a half while every container reported *running, image courante*. CapCar's payload measured. |
 | 09-05 | A processed alert email is marked `\Seen`, after the store recorded it and by a `run` pass only. **CapCar #4, La Centrale #5, Agorastore #6** — content-addressed identity, labelled-block cards, and the first auction. `reclassify --reopen`. **The push gate**: a match under the line waits for the rollup. The sabotage ledger sharded six ways. |
-| 09-06 → 09-07 | **§1 collapses into one gate.** A certification panel ran five rounds against the four-routes × three-surfaces matrix and found 9, then 8, then 17 defects — *in every round the majority were in the previous round's fixes*. `SectionOneGate` reads all four routes fresh at the last moment before every send, and two reflection-driven guards make an unguarded surface fail the suite rather than ship. |
+| 09-06 → 09-07 | **§1 collapses into one gate.** A certification panel ran three rounds against the four-routes × three-surfaces matrix and found 9, then 8, then 17 defects — *in every round the majority were in the previous round's fixes*. `SectionOneGate` reads all four routes fresh at the last moment before every send, and two reflection-driven guards make an unguarded surface fail the suite rather than ship. |
 | 09-07 | The health-alert flap: a single failed run had counted as a broken source, costing 77 flap emails in four days. A failed run's zero is now *unknown*, not *zero listings*. |
 
 ---
