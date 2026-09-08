@@ -1718,7 +1718,7 @@ read-only) and the merged prose as one review deep.
 | F11 | Startup refusal reachable only under `--watch` | *FIXED 2026-08-31* — it was also consumed above the `isDue()` test, so a restart inside the beat interval destroyed it unreported; `doctor` now reports it without consuming | round-4 fix commit |
 | F23 | SeLoger `Baisse de prix` yields an EMPTY title | **CLOSED 2026-09-01** (`d60a183`) — the pattern refused any candidate CONTAINING a `€`; it now refuses only one that IS a price. Measured over the store: 552 unchanged, 2 gained a title, 0 changed, 0 lost. Template frozen as fixtures 004/005 | — |
 | F24 | A SeLoger card with no `pièces` line has no title anchor at all | **CLOSED 2026-09-01 (T5B-9).** The captured card of that shape was already in the store — schema v7 keeps the card text, so no Gmail capture was needed: both empty-title rows are room rentals whose title line is present and readable, sitting between the price line and a `140 m²` line. `title_pattern` gained a SECOND ANCHOR on the surface line (`m²` and the ASCII `m2`, since 128 stored titles write it). Trialled over all 619 stored SeLoger cards before shipping: **617 unchanged, 2 gained, 0 changed, 0 LOST**, the two gained being exactly the victims — and both are now rejected through the SHIPPED criteria, asserted with the description held empty so `\bcolocation\b` cannot deliver the verdict the title is supposed to. **Confirmed LIVE on the deployed image the same day**: `doctor --source=seloger` over **405 live cards names no `title_pattern` miss at all** (the log lists only patterns whose miss count is non-zero), so the anchor read every one and never fell back to the subject. That is the post-deploy evidence F9 asks for, arriving on the first pass rather than waiting for the next room-rental alert. Was: **LIVE, and the remaining half of F10** — the anchor IS the `pièces` line, so a card stating no room count (a room rental, a parking, an atypical ad) yields `''` whatever the `€` rule does. Two such rows; both REJECTED, by the description-matching `exclude_patterns` rather than the title ones — luck rather than a guard. Needs a SECOND anchor, and a captured card of that shape to measure one against | closed — T5B-9; the second anchor ships |
-| F25 | `docker compose up -d` wedges on recreate and leaves a watcher DOWN | **LIVE, twice on 2026-08-31.** `stop_grace_period: 5m` + a renamed old container = the orchestration stalls; once it then failed outright on `Conflict. The container name … is already in use`. rent-scout was down ~13 min and nothing said so | **CLOSED 2026-09-04 — and the prose recipe was not the closure.** The redeploy note below has existed since 08-31 and the failure is precisely one a human reading `up -d`'s output cannot see, so a note is the wrong instrument. `tools/verify-deploy.sh` asserts the three things that output hides: every service compose declares has a container AND it is running (`ps -a`, because without `-a` a down service is simply absent — the silent-omission shape hard rule 2 is about, one layer into the deployment); that container runs the CURRENT image rather than one from three deploys ago (`src/` is baked in, so a green tree says nothing about what is executing); and no hex-prefixed leftover still holds a name, which is what kills the NEXT recreate rather than this one. Read-only. `tests/test-verify-deploy.sh` is its sabotage test — 7 cases through a stub `docker`, counterweight first, and a missing image exits 2 *"build it"* rather than 1 *"watcher down"*, because collapsing those two would make a forgotten build read as a broken watcher. **Its own first draft leaked state between cases** (`PS_ROWS=x out="$(run)"` with no command is an assignment list, not a temporary environment) so two cases passed on a failure they had not asked for, and a `${SERVICES:-…}` knob was inert against an empty value — both found by running it, both fixed. Wired into CI and pinned by `test-ci-workflow.sh`. Verified against the live deployment the same day |
+| F25 | `docker compose up -d` wedges on recreate and leaves a watcher DOWN | **LIVE, twice on 2026-08-31.** `stop_grace_period: 5m` + a renamed old container = the orchestration stalls; once it then failed outright on `Conflict. The container name … is already in use`. rent-scout was down ~13 min and nothing said so | **CLOSED 2026-09-04 — and the prose recipe was not the closure.** The redeploy note below has existed since 08-31 and the failure is precisely one a human reading `up -d`'s output cannot see, so a note is the wrong instrument. `tools/verify-deploy.sh` asserts the three things that output hides: every service compose declares has a container AND it is running (`ps -a`, because without `-a` a down service is simply absent — the silent-omission shape hard rule 2 is about, one layer into the deployment); that container runs the CURRENT image rather than one from three deploys ago (`src/` is baked in, so a green tree says nothing about what is executing); and no hex-prefixed leftover still holds a name, which is what kills the NEXT recreate rather than this one. Read-only. `tests/test-verify-deploy.sh` is its sabotage test — 7 cases through a stub `docker`, counterweight first, and a missing image exits 2 *"build it"* rather than 1 *"watcher down"*, because collapsing those two would make a forgotten build read as a broken watcher. **Its own first draft leaked state between cases** (`PS_ROWS=x out="$(run)"` with no command is an assignment list, not a temporary environment) so two cases passed on a failure they had not asked for, and a `${SERVICES:-…}` knob was inert against an empty value — both found by running it, both fixed. Wired into CI and pinned by `test-ci-workflow.sh`. Verified against the live deployment the same day. **Its leftover question was itself wrong until 2026-09-08** — it named a live service's own container an orphan and offered `docker rm -f` for it, so both the "three things" and the "7 cases" above are the 09-04 state, not today's: see row 62 |
 | F26 | A fixture-backed `doctor` writes its run into the LIVE store | **HIT 2026-09-01, and it is the DOCUMENTED workflow that does it.** `MAILBOX_DIR=` swaps the mailbox, not the database, so a fixture run's item count joins the 7-day baseline every live run is judged against — it made car `leboncoin` report `broken` on a 5-annonce premise made of fixtures. Fixed in CLAUDE.md: every documented offline proof now pairs with a throwaway DB | closed, guidance fixed |
 | F12 | Car heartbeat inside the pass closure | *FIXED 2026-08-31* — a throwing pass silenced the watcher entirely, the one state the beat exists to make visible | round-4 fix commit |
 | F13 | Scrubber `To:`/`Cc:` display name, and any base64 fold ≤19 columns | *FIXED 2026-08-31* — two committed fixtures had shipped the subscriber's real name; a 19-column fold was written and reported `scrubbed` with the address one `base64 -d` away | round-4 fix commit |
@@ -3476,6 +3476,7 @@ tool/guard) and say which ones the fix covers.**
 | 59 | The trailing-only strip was refuted by the live store within the hour — a tolerated failure is dropped wherever it sits, the note counts the trailing streak, and the streak is indexed where it is counted | M | done | 366218e | src/php/Core/RunStore.php tests/php/Core/RunStoreFailureStreakTest.php tests/sabotage-check.sh CLAUDE.md |
 | 60 | The compound-expression triage — all 26 sub-expressions of the 15 compound ledger cases run ALONE; 11 undetected, 10 structural, 1 inert and removed, 0 coverage holes | M | done | 6f12f85 | tests/sabotage-check.sh |
 | 61 | Round 9 (advisor) NOT CLEAN — the flaky windows had no counterweight test, so the obvious consistency edit would have silenced every flaky verdict on exactly the tolerated sources | M | done | 6bcbfd0 | tests/php/Core/RunStoreFailureStreakTest.php tests/sabotage-check.sh |
+| 62 | The deploy verifier offered `docker rm -f` for the running watcher it had just certified — a hex name is TWO states, and `docker ps -a` is machine-wide | M | done | a3fffdf | tools/verify-deploy.sh tests/test-verify-deploy.sh README.md docs/RUNBOOK.md CLAUDE.md |
 <!-- /progress-block -->
 ### Blocked
 
@@ -3539,10 +3540,16 @@ tool/guard) and say which ones the fix covers.**
 - **The car domain has no `PacedSource`**, recorded not fixed with its trigger: the moment a second
   car web source without its own rate limiter exists, lift `PacedSource` into `Scout\Adapters`
   over a shared contract — never write a car twin.
-- **`tools/verify-deploy.sh` CONTRADICTS ITSELF ABOUT A LIVE SERVICE, and its printed remedy would
-  kill a running watcher** (observed 2026-09-07, recorded not fixed). Its leftover question greps
-  `docker ps -a` for a hex-prefixed name (`tools/verify-deploy.sh:150`) and excludes nothing, so it
-  cannot tell a corpse from the container a declared service currently resolves to. One real run
+- **`tools/verify-deploy.sh` CONTRADICTED ITSELF ABOUT A LIVE SERVICE, and its printed remedy would
+  have killed a running watcher** — **CLOSED 2026-09-08 by `a3fffdf`** (row 62). The leftover set is
+  now partitioned against the association compose itself reports, and the halves take opposite
+  commands; the machine-wide half of the same defect closed with it (`docker ps -a` is global to the
+  host, so another compose project's hex-prefixed container was being offered for deletion under the
+  claim that it would break OUR next recreate — both halves false). Three cases added, the
+  counterweight among them. The record of the defect follows, because the *shape* is what recurs.
+  Observed 2026-09-07. Its leftover question grepped
+  `docker ps -a` for a hex-prefixed name and excluded nothing, so it could not tell a corpse from
+  the container a declared service currently resolves to. One real run
   printed `✓ car-scout (0250190bdb78_scout-car-scout-1) : running, image courante` and, four lines
   below, listed that same container under `conteneurs orphelins` with `docker rm -f` beside it. The
   service check was right; the remedy would have removed the watcher it had just certified.
@@ -3551,12 +3558,18 @@ tool/guard) and say which ones the fix covers.**
   container RUNNING as the service rather than dead. The recovery is
   `docker compose up -d --force-recreate --remove-orphans <service>`, which reclaims the clean name;
   run compose detached (`setsid`), never under a foreground `timeout`, and the state does not arise.
-  Two halves when this is picked up, and the second is the one that makes the tool believable:
-  resolve each declared service's current container and drop it from the leftover set before naming
-  it; and split the message, because *a renamed container that IS the running service* and *a dead
-  leftover holding a name* want opposite commands. `tests/test-verify-deploy.sh` drives every
-  failure state through a stub `docker` and carries no case for this one — the counterweight is
-  what is missing, not the detection.
+  **What was built** is the two halves this entry prescribed — resolve each declared service's
+  current container and drop it from the leftover set; split the message, because *a renamed
+  container that IS the running service* and *a dead leftover holding a name* want opposite commands
+  — plus the machine-wide scoping above, which the entry had not seen. Three things are worth
+  carrying beyond this tool. **The counterweight was what was missing, not the detection**:
+  `tests/test-verify-deploy.sh` drove every failure state through a stub `docker` and had no case
+  for this one, which is why a tool that contradicted itself in its own output stayed green.
+  **A glob over the whole output cannot assert a command line** — `"$out" != *"docker rm -f"*"$hex"*`
+  is decided by which section printed first, so the `rm -f` line is EXTRACTED and asserted on its
+  own; same shape as the remainder-digit-boundary scar. And **a two-way classifier needs both
+  mutations**: forced always-live reddens the corpse case, forced always-dead reddens the new ones,
+  and only running both proves the split is not a constant.
 - *(Three bullets that stood here on 2026-09-04 were stale against rows 19, 25 and 31 — COR-F5 is
   built and test-verified at `eb5d971`; the `ede198e` freeze was superseded by step 25; the
   `MalformedText` ORDER is pinned by `VehicleMalformedTextTest` at `526d246`. Removed by row 42.)*
