@@ -3477,6 +3477,7 @@ tool/guard) and say which ones the fix covers.**
 | 60 | The compound-expression triage — all 26 sub-expressions of the 15 compound ledger cases run ALONE; 11 undetected, 10 structural, 1 inert and removed, 0 coverage holes | M | done | 6f12f85 | tests/sabotage-check.sh |
 | 61 | Round 9 (advisor) NOT CLEAN — the flaky windows had no counterweight test, so the obvious consistency edit would have silenced every flaky verdict on exactly the tolerated sources | M | done | 6bcbfd0 | tests/php/Core/RunStoreFailureStreakTest.php tests/sabotage-check.sh |
 | 62 | The deploy verifier offered `docker rm -f` for the running watcher it had just certified — a hex name is TWO states, and `docker ps -a` is machine-wide | M | done | a3fffdf | tools/verify-deploy.sh tests/test-verify-deploy.sh README.md docs/RUNBOOK.md CLAUDE.md |
+| 63 | Row 62's own fix rebuilt the defect one row over — a map keyed per SERVICE drops the second container the wedged state always has — and three surfaces denied a count the tool prints | M | done | f1588a7 | tools/verify-deploy.sh tests/test-verify-deploy.sh README.md docs/RUNBOOK.md CLAUDE.md |
 <!-- /progress-block -->
 ### Blocked
 
@@ -3570,6 +3571,27 @@ tool/guard) and say which ones the fix covers.**
   own; same shape as the remainder-digit-boundary scar. And **a two-way classifier needs both
   mutations**: forced always-live reddens the corpse case, forced always-dead reddens the new ones,
   and only running both proves the split is not a constant.
+
+  > **AND THAT FIX REBUILT THE DEFECT ONE ROW OVER — row 63, `f1588a7`, found at the 6C gate.** The
+  > new map carried a `break`, so it held ONE entry per service, first row wins. The state this whole
+  > tool exists for is the one that breaks it: the file's own header describes `rent-scout` sitting
+  > in `Created` BESIDE a hex-prefixed leftover, and both carry the service's compose labels, so
+  > `docker compose ps -a` lists TWO rows under one service. The second missed the map, fell through
+  > to the corpse arm, and `docker rm -f` was printed for the running container again. Three things
+  > carry: **a lookup built from a list must be keyed on the LIST's granularity, not the question's**
+  > — the service loop's own `break` is correct because it asks *has this service a container at
+  > all*, and copying it into a map that must hold every container is what inverted the meaning;
+  > **the reaching case was in the tool's own docblock**, so the counterweight that was missing was
+  > one already written down in prose; and **a mutation that ADDS lines has not replaced anything** —
+  > the first attempt to re-key the map spliced a guard in, reddened eight cases, and proved nothing
+  > about the shape it claimed to restore. Re-applying the exact pre-fix code reddens case 4e alone.
+  >
+  > The same round found the **documentation half**: three surfaces said a foreign project's
+  > container *"is not reported at all"* while the tool prints `(N conteneur(s) préfixé(s) d'un AUTRE
+  > projet ignoré(s))`. **A count IS a report.** The count is kept — on a host running several
+  > compose projects, silence about what the scan dropped reads exactly like a scan that found
+  > nothing — and the three surfaces now say *counted, never named, never given a remedy*, with case
+  > 4d asserting all three halves instead of only the absence of a command.
 - *(Three bullets that stood here on 2026-09-04 were stale against rows 19, 25 and 31 — COR-F5 is
   built and test-verified at `eb5d971`; the `ede198e` freeze was superseded by step 25; the
   `MalformedText` ORDER is pinned by `VehicleMalformedTextTest` at `526d246`. Removed by row 42.)*
