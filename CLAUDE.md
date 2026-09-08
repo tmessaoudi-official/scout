@@ -2079,6 +2079,26 @@ spec/PROJECT_BRIEF.md       Full specification — the source of truth, and a ru
 state/                      The SQLite seen-set, price history and run log. Gitignored, NOT scratch
 prototype/                  Pre-existing single-file prototype. Reference only; do not extend in place
 docs/OPEN-QUESTIONS.md      All 25 questions, each closed 2026-08-07 with the default applied
+docs/ARCHITECTURE.md        The shape of the program in one sitting: layers, the lifecycle of one
+                            pass read out of Pipeline::runOnce, the FOUR §1 routes x THREE announcing
+                            surfaces and the one gate over them, the three stores and their three
+                            independent version counters, the health model, the adapter types, and
+                            the five test layers. Written 2026-09-08 from the code, not from this
+                            file — CLAUDE.md carries sentences it marks stale itself
+docs/RUNBOOK.md             The operator's checklist: zero-to-running, every verb and flag verified
+                            against the two CLI parsers, the two contexts (host `bin/scout
+                            --domain=rent` vs compose `run --rm rent-scout`, whose domain is in the
+                            ENTRYPOINT), and a symptom->check->fix table. It LINKS README's
+                            § Deploying it for the reasoning rather than restating it — a second copy
+                            of a rationale is the copy that drifts
+docs/SOURCES-LIVE.md        The live register for BOTH domains — adapter, identity scheme, rent
+                            basis (CC vs HC), and the STATED COST of each of the fourteen enabled
+                            sources. docs/SOURCES.md is rent-only and is a candidate catalogue, so
+                            the six car sources had no home anywhere until this file
+docs/HISTORY.md             Dated build record derived from git log, plus the five failure patterns
+                            this repo kept repeating (a true number on an invented cause; a fix
+                            landing on one of two symmetric surfaces; n=1; a guarantee no fixture
+                            reaches; green != deployed)
 docs/plans/                 <topic>.plan.md, each with its own ## Decisions Log
 config/<domain>/            criteria.json + sources.json per domain (committed) — JSON, ruled 2026-08-07 (Q22)
 src/php/Cli/                Scout — the --domain dispatcher (never defaults) — Domains (the registry), WatchLoop, ChannelFactory

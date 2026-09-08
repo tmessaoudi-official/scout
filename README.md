@@ -12,6 +12,26 @@ Single language, single user, single machine. CLI plus push notifications — **
 > preference, and it is enforced by a fail-closed classifier with its own test suite. See
 > [`CLAUDE.md`](CLAUDE.md) §1.
 
+## Documentation map
+
+Start here, then follow the one that matches what you are doing.
+
+| You want | Read |
+|---|---|
+| **the shape of the program** — layers, one pass end to end, the §1 gate, the stores, the health model | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) |
+| **to bring it up, or fix something that is down** — zero-to-running, every verb and flag, symptom→fix | [`docs/RUNBOOK.md`](docs/RUNBOOK.md) |
+| **what is polling today**, per domain, and what each source cannot tell us | [`docs/SOURCES-LIVE.md`](docs/SOURCES-LIVE.md) |
+| **why a landlord was or was not adopted** — the measurement history | [`docs/SOURCES.md`](docs/SOURCES.md) |
+| **how it got here**, dated, and the five failure patterns it kept repeating | [`docs/HISTORY.md`](docs/HISTORY.md) |
+| every filter dimension considered, kept or refused | [`docs/FILTERS.md`](docs/FILTERS.md) |
+| capturing a portal alert as a committable fixture | [`docs/ALERT-CAPTURE.md`](docs/ALERT-CAPTURE.md) |
+| every decision, and the one line that reverses each | [`docs/OPEN-QUESTIONS.md`](docs/OPEN-QUESTIONS.md) |
+| the product ruling set | [`spec/PROJECT_BRIEF.md`](spec/PROJECT_BRIEF.md) |
+| the rules Claude works under here | [`CLAUDE.md`](CLAUDE.md) |
+
+The rest of this file is the **narrative**: what each deployment step is for and which incident
+produced it. The runbook is the checklist; this is the reasoning behind it.
+
 ## Status
 
 **It runs. Eight sources are live: four institutional landlords and four private portals.**
