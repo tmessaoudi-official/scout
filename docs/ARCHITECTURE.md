@@ -138,9 +138,12 @@ not transitive: A links B, B links C, and C is outside A's tolerance band.
 
 **④ `acknowledge()` runs after the store recorded the pass**, never earlier — a crash between the
 flag and the write would lose the listings while marking their mail read. It sits *before* the
-judging loop, not after the sends (`Pipeline.php:401`, against the gate at 431): the flag says a
-message was **read**, not that anything in it was notified, so a pass that matches nothing still
-marks its mail, and a send that fails does not un-mark it.
+judging loop, not after the sends — the `ROW 36` loop closes the twin fixed-point sweep above it and
+runs before `new SectionOneGate(…)` and the judging loop that gate feeds. (Cited by **symbol**, not
+by line: the heartbeat entry in `CLAUDE.md` records a line citation there rotting twice in one round,
+and a symbol survives an edit above it.) The flag says a message was **read**, not that anything in
+it was notified — a pass that matches nothing still marks its mail, and a refused `acknowledge()` is
+reported on the banner while the pass carries on, because the listings are already on disk.
 
 The car pipeline (`Car\VehiclePipeline`) is the same shape with three stages absent: no tenure, no
 clustering across tracks, no detail hydration.
