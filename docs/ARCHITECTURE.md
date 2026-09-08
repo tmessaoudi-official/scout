@@ -138,7 +138,7 @@ not transitive: A links B, B links C, and C is outside A's tolerance band.
 
 **④ `acknowledge()` runs after the store recorded the pass**, never earlier — a crash between the
 flag and the write would lose the listings while marking their mail read. It sits *before* the
-judging loop, not after the sends — the `ROW 36` loop closes the twin fixed-point sweep above it and
+judging loop, not after the sends — the `ROW 36` loop follows the twin fixed-point sweep and
 runs before `new SectionOneGate(…)` and the judging loop that gate feeds. (Cited by **symbol**, not
 by line: the heartbeat entry in `CLAUDE.md` records a line citation there rotting twice in one round,
 and a symbol survives an edit above it.) The flag says a message was **read**, not that anything in
