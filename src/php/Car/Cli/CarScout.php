@@ -140,7 +140,7 @@ final readonly class CarScout
         foreach ($notifier->inventory() as $channel) {
             $this->line(sprintf('             - %-8s %s [%s]', $channel['name'], $channel['describe'], $channel['counts'] ? 'compte comme délivré' : 'NE COMPTE PAS'));
         }
-        $this->line(sprintf('  critères : ≤ %s € · zone %s · pic ≤ %d ans / ≤ %s km · carrosseries %s', number_format($criteria->maxPriceEur, 0, ',', ' '), $criteria->postcodePrefixes === [] ? 'nationale' : implode(',', $criteria->postcodePrefixes), $criteria->peakAgeYears, number_format($criteria->peakMileageKm, 0, ',', ' '), implode(' > ', $criteria->bodyRank) ?: '(aucune)'));
+        $this->line(sprintf('  critères : ≤ %s € · zone %s · pic ≤ %d ans / ≤ %s km · carrosseries %s', number_format($criteria->maxPriceEur, 0, ',', ' '), $criteria->postcodePrefixes === [] ? 'nationale' : implode(',', $criteria->postcodePrefixes), $criteria->peakAgeYears, number_format($criteria->peakMileageKm, 0, ',', ' '), implode(' · ', $criteria->bodyFavour) ?: '(aucune)'));
         $this->line('');
 
         // THE SAME BAND ADVICE THE RENT DOCTOR HAS GIVEN SINCE 2026-08-29, AND THIS SIDE NEVER DID.

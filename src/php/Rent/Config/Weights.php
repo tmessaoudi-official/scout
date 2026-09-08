@@ -18,6 +18,17 @@ use Scout\Config\Reader;
  * of what a perfect listing can earn, it is subtracted from what it earned. Including it in the
  * denominator would make the penalty smaller the larger it was set, which is the opposite of the
  * intent.
+ *
+ * `heatingIndividual` and `heatingIndividualElectric` (Track 7-A, developer ruling 2026-09-08) are
+ * the second and third weights of that kind and follow the precedent exactly — bounded `-1000..0`,
+ * absent from {@see positiveTotal()}. They STACK: an electric individual system takes both, so the
+ * three configured classes are electric −35, gas −20 and mode-stated-without-energy −20.
+ *
+ * **THE SEVERITY IS A NUMBER, NOT AN ADJECTIVE, AND IT WAS MEASURED.** `positiveTotal()` is 105 in
+ * production, so −20 is 19 points on the 0–100 scale. Re-judging all 1 261 stored MATCH snapshots
+ * at production weights: −20 takes **every** individually-heated flat below `push_min_score: 55`,
+ * and −30 and −40 buy nothing at that gate — they only reorder rows already under it. So −20 is
+ * the whole effect and a bigger number would be theatre.
  */
 final readonly class Weights
 {
@@ -29,6 +40,8 @@ final readonly class Weights
         public int $lift = 15,
         public int $highFloorNoLift = -20,
         public int $freshness = 10,
+        public int $heatingIndividual = -20,
+        public int $heatingIndividualElectric = -15,
     ) {}
 
     /**
@@ -42,6 +55,11 @@ final readonly class Weights
      */
     public function positiveTotal(): int
     {
+        // ENUMERATED, NOT DERIVED, and the three penalties are absent on purpose — `highFloorNoLift`,
+        // `heatingIndividual` and `heatingIndividualElectric`. Summing the properties reflectively
+        // and clamping each at 0 would look equivalent and would silently enrol the next penalty
+        // somebody adds, at which point setting it larger would make it weaker. If you add a
+        // component here, add it because it is EARNABLE.
         return max(0, $this->commune)
             + max(0, $this->commute)
             + max(0, $this->rentHeadroom)
@@ -62,6 +80,13 @@ final readonly class Weights
             // lift" weight would be a bonus for the exact thing the developer is escaping.
             highFloorNoLift: $r->optInt('high_floor_no_lift', -20, -1000, 0) ?? 0,
             freshness: $r->optInt('freshness', 10, 0, 1000) ?? 0,
+            // Negative for the same reason and by the same bound: a POSITIVE heating penalty would
+            // be a bonus for the exact thing the developer asked to be penalised severely.
+            heatingIndividual: $r->optInt('heating_individual', -20, -1000, 0) ?? 0,
+            // A SURCHARGE that stacks on the line above, never a replacement for it — so setting
+            // this alone still leaves an electric flat carrying the base penalty, and zeroing the
+            // base while keeping this one is a configuration that penalises electric heating only.
+            heatingIndividualElectric: $r->optInt('heating_individual_electric', -15, -1000, 0) ?? 0,
         );
         $r->done();
 

@@ -3617,9 +3617,17 @@ tool/guard) and say which ones the fix covers.**
 
 ## Track 7 — filter/score refinement, rent heating + amenities and the car brand/body model (2026-09-08)
 
-> **DESIGNED, NOT BUILT.** Every number below was MEASURED before the design, against the live
-> stores and the real scorers — never predicted. Nothing under `src/`, `config/` or `tests/` has
-> been touched. The developer ruled eight questions; the Decisions Log carries them.
+> **BUILT 2026-09-08, on the developer's go.** Every number was MEASURED before the design, against
+> the live stores and the real scorers — never predicted — and every headline number was then
+> RE-TAKEN through the shipped code (§ "Step 9" below). The developer ruled ten questions; the
+> Decisions Log carries them, followed by the four decisions the build itself forced.
+>
+> ⚠️ **The "### Surface this touches" section below is the DESIGN's estimate and it over-reached.**
+> Five of the rent surfaces it names were never touched — new `RawListing` properties, the
+> `ListingSnapshot` encoder, the clone-with, `Pipeline::enrich()` and `reclassify` — because
+> `description` was already on `RawListing` and already in the snapshot. It is kept as written
+> rather than quietly corrected: an estimate that shrank is worth seeing, and the reason it shrank
+> is the first Phase 4 decision.
 
 ### What the sources can physically say — the constraint that shapes the whole rent half
 
@@ -3773,7 +3781,7 @@ and its `rollup_hour: 8` floor.
   against today's 10 + 10; the only weight that suppresses them is AGE, and B″ buys 12 of them back
   by halving the second-heaviest real signal on a used-car list. Ruled: **accept the fifteen**
   (developer, 2026-09-08). The preference survives as a preference — a diesel still forfeits 15
-  points of ordering, and 92 % of pushes are still petrol, hybrid or electric — which is what
+  points of ordering, and 91 % of pushes are still petrol, hybrid or electric — which is what
   hard rule 8 asks of it. It was never a disqualifier and must not become one.
 - **`high_priority_score` and `push_min_score` must BOTH be re-measured after the weight change**,
   because 73 was calibrated against the current scale and the config's own comment says an absolute
@@ -3813,6 +3821,67 @@ Car: `config/car/criteria.json` weights + a new `brand_favour` key · `VehicleCr
   "neither" makes. Note it would be scored 0 under the new brand model while the real make is on the
   avoid list, so the defect is currently self-cancelling and will stop being so if `c4` is ever
   resolved to `citroen`.
+- **`VehicleScorer`'s brand docblock contradicts its own arm.** Lines 112–115 say *"A make that
+  could not be extracted takes the full share too (hard rule 9: unknown is not disfavoured)"*, and
+  the arm fifteen lines below scores it **0** with `marque inconnue — hors score` — a deliberate
+  deviation whose own comment explains why. Prose refuted by the code beneath it, which is how
+  audit finding N3 came to reason from the wrong premise (Track 6-A4 records that). Phase 5 rewrites
+  that block for the three-way brand, so it is corrected in passing rather than as its own change.
+
+### Formal Plan — Track 7 (Phase 4, approved 2026-09-08)
+
+**Three decisions were taken at Phase 4 that the design section did not settle.** Each is here
+rather than in a commit message because each is reversible only if someone knows it was a choice.
+
+1. **NEITHER READER TOUCHES `RawListing`, AND THAT IS THE WHOLE REASON THE SURFACE IS SMALL.** The
+   design's own surface list named new `RawListing` properties, the reflection-guarded
+   `ListingSnapshot` encoder, a `withCommute()`-style clone-with, `Pipeline::enrich()` and
+   `reclassify`. **None of that is needed**: `description` is ALREADY on `RawListing` and already
+   round-trips in the v7 snapshot, so both readers run at JUDGE time and at DISPLAY time from a
+   field that is already there. That deletes five surfaces, and with them the 429-history-row defect
+   class (*never copy a `RawListing` field by field*) — a hop that does not exist cannot drop a
+   property. It also means `reclassify` re-judges a stored row through the same reader with no
+   change at all, which is the property that matters most: a verdict must not depend on which pass
+   formed it.
+2. **`body_rank` IS RENAMED `body_favour`, and the old key is REFUSED BY NAME.** Scoring the three
+   bodies flat makes `_rank` assert a mechanism that no longer exists, and a key whose name outlives
+   its meaning is this repo's most-repeated failure (the retired *"live yield is 0"*, *"In'li
+   publishes no lift"*, and the `_body_rank` comment itself, which still describes positional
+   scoring). The loader therefore raises a ConfigError naming the replacement rather than the
+   generic unknown-key message, so a stale `criteria.local.json` says what to do. `CarScout`'s
+   banner joins the list with `·` instead of ` > ` for the same reason — that separator asserted an
+   ordering that has stopped existing.
+3. **AVOID IS CHECKED BEFORE FAVOUR, and both lists are refused if they share a stem.** Exact
+   duplicates cannot happen after the load check; overlapping *stems* still can (`ds` avoided beside
+   a hypothetical `dsx` favoured), so the order settles it in the conservative direction — a
+   preference AGAINST outranks a preference FOR, which is the same bias §1 takes everywhere else.
+   Residual stated: two stems where one is a strict prefix of the other are not detected at load.
+
+**Order of work, and what proves each step.**
+
+| # | Change | Proof |
+|---|---|---|
+| 1 | `Rent/Core/Heating` — negation first, mode window, energy scan | unit tests over the five real word orders + the four zero-hit words |
+| 2 | `Rent/Core/Amenities` — display labels, URL query stripped | unit tests incl. the residence-name and tracking-URL false positives |
+| 3 | `Weights` + `ConfigLoader` + `config/rent/criteria.json` | the two new weights bounded `-1000..0`, absent from `positiveTotal()` |
+| 4 | `CriteriaEngine::score()` applies the penalty | a table over the four heating classes at production weights |
+| 5 | `Formatter::factsLine()` appends the amenity line | asserts silence when nothing was read |
+| 6 | meublé negation lookahead | **trial over all 3 372 stored rows: gained / lost / changed** |
+| 7 | car config: split B, `brand_favour`, ford moved, `body_favour` | loader sum-to-100 and the both-lists refusal |
+| 8 | `VehicleCriteria` + `VehicleScorer`: three-way brand, flat body | the 26-make classification assertion, now **three** classes |
+| 9 | re-measure through the SHIPPED scorer over the live store | 197 pushes / 197 favoured / 0 avoided / 15 diesels, ±1 on rounding |
+
+**Two things step 9 exists to catch, neither of which a green suite can.** The scratch scripts
+classified brand with `str_starts_with`; the shipped scorer must use `isAvoidedBrand()`'s
+non-letter-boundary matcher on the FAVOURED side too, or the `ds` / `ds automobiles` miss recurs
+facing the other way. And the Hyundai Tucson sits at **exactly 73**, so production rounding may show
+14 or 15 diesels — either is the same ruling, and a number outside that band means the shipped
+scorer is not the one that was measured.
+
+**Rollback.** Every change is a config line or an additive class. Reverting the two rent weight
+lines removes the heating penalty entirely; reverting `weights` in `config/car/criteria.json` and
+moving `ford` back restores the previous ordering; the readers become dead code that nothing calls.
+No schema change, no migration, no cache invalidation, nothing stored differently.
 
 ### Decisions Log — Track 7
 
@@ -3860,7 +3929,9 @@ Car: `config/car/criteria.json` weights + a new `brand_favour` key · `VehicleCr
   because the diesels ride body 25 + brand 25 rather than the fuel weight, and B″ (fuel 20, age →
   10) removes 12 only by halving the second-heaviest signal on a used-car list. The 2026-09-01
   ruling was a PREFERENCE, never a disqualifier — a diesel still forfeits 15 points of ordering and
-  92 % of individual pushes remain petrol, hybrid or electric.
+  91 % of individual pushes remain petrol, hybrid or electric (180 of 197; the 182 first written
+  here was the NON-diesel count, which also holds the one unknown-fuel car and the one gpl/autre —
+  a share quoted from a population one wider than the claim, corrected before the build).
 - [2026-09-08 22:06] AGREED: **gearbox accepts both by scoring ZERO weight**, not by awarding both
   arms full marks. 276 of 1 004 cars state no gearbox at all, and a component that no longer
   discriminates must not keep penalising them for silence.
@@ -3877,3 +3948,124 @@ Car: `config/car/criteria.json` weights + a new `brand_favour` key · `VehicleCr
 - [2026-09-08 22:06] AGREED: add the **negation lookahead to the `exclude_patterns` meublé rule**,
   matching the one `exclude_title_patterns` already carries, and TRIAL it over all 3 372 stored rows
   before shipping (gained / lost / changed reported).
+
+<!-- Phase 4 + Phase 5, the build. Decisions taken while implementing, each reversible only if
+     someone knows it was a choice. -->
+
+- [2026-09-08 23:17] AGREED: **neither Track 7 reader touches `RawListing`**, which deletes five
+  surfaces the design had listed. `description` is already a `RawListing` property and already
+  round-trips in the v7 snapshot, so both readers run at judge time and at display time from a field
+  that is there — no new property, no `ListingSnapshot` encoder change, no clone-with, no
+  `Pipeline::enrich()` hop, no `reclassify` change. It also removes the 429-history-row defect class
+  by construction: a hop that does not exist cannot drop a property. `reclassify` re-judges a stored
+  row through the same reader with no change at all, which is the property that matters most — a
+  verdict must not depend on which pass formed it. Reversed only by a reason to persist the reading.
+- [2026-09-08 23:17] AGREED: **`body_rank` is renamed `body_favour`, and the loader refuses the old
+  key BY NAME.** Scoring the three bodies flat makes `_rank` assert a mechanism that no longer
+  exists, and a key whose name outlives its meaning is this repo's most-repeated failure. A stale
+  `criteria.local.json` gets an instruction naming the replacement rather than the generic
+  unknown-key message; `CarScout`'s banner joins the list with `·` instead of ` > ` for the same
+  reason. Reversed by restoring the positional share in `VehicleScorer`.
+- [2026-09-08 23:17] AGREED: **avoid is checked before favour, and both lists are refused if they
+  share a stem.** The load refusal makes an exact clash impossible; overlapping stems can still
+  occur (`ds` avoided beside a hypothetical `dsx` favoured) and the order settles those in the
+  conservative direction — a preference AGAINST outranks a preference FOR, the bias §1 takes
+  everywhere else. Residual stated: two stems where one is a strict prefix of the other are not
+  detected at load.
+- [2026-09-08 23:17] AGREED: the **`push_min_score` calibration and the push MECHANISM are asserted
+  separately**, because Track 7's weights left no shipped car fixture able to clear the gate. All
+  three ParuVendu fixture cards are Renault/Peugeot — every one avoided — and they score 68 / 63 /
+  50 where they scored 80 / 73 / 46. That is the ruling working, and it left
+  `testAnUnseededRunPushesEveryMatchOnce…` unable to reach the branch it existed for. The test that
+  proved the push now proves the SUPPRESSION (0 pushed, 3 queued, and the pass says so), and a new
+  one drives the push path against its own repo root whose `criteria.local.json` lowers the gate.
+  **Weakening the shipped gate to keep one test green was the alternative and was refused** — it
+  trades a real guarantee for a green tick. Reversed by a fixture from a favoured make with a body
+  and a year.
+
+### What the build found that the design had not
+
+- **THE MODE WINDOW HAD TO BOUND THE GAP, NOT CUT THE TEXT — and the STORE caught it, not review.**
+  The design specified a 24-character window past `chauffage`; the longest real infix is
+  ` et eau chaude ` (15 characters, 9 rows) and `individuels` is eleven more, so a 24-character
+  substring cut the mode word in half and **the commonest gas shape read `null`**. A reader that
+  reads nothing looks exactly like a flat that says nothing — the silent direction. Caught by the
+  first test written from the store's own word orders, before any of it shipped. It is now a ledger
+  case, because no fixture would reach it again once fixed.
+- **THE MEUBLÉ TRIAL: 0 gained, 0 lost, 0 changed over all 3 377 stored rows** — 152 rows match the
+  meublé rule, 13 carry a negated meublé, and the two sets are DISJOINT. So the guard is purely
+  prospective, and **the shape was chosen by measurement rather than by mirroring**: copying
+  `exclude_title_patterns`' 15-character `non|pas|sans` window OVER-guards, because
+  `appartement meublé, pas de vis-à-vis` and `appartement meublée, non loin de la gare` are ordinary
+  French on a genuinely furnished flat. The shipped lookahead admits only `ou non` and `: non` — the
+  two shapes that are an ANSWER — and all eight probe strings land correctly. Since no fixture can
+  reach it, a ledger case and four `ConfigTest` rows are the only things that can.
+- **AN EXACT-EQUALITY ASSERTION WENT RED HAVING FOUND NOTHING.** `testGplTakesHalfTheFuelShare` read
+  `assertSame((int) round($fuel / 2), $essence - $gpl)`, which is stable only while the fuel weight
+  is EVEN — a score is `(int) round(...)` of the whole total, so at fuel 15 the difference is 7 or 8
+  depending on the fraction the other six components carry. Restated as *half the share to within
+  one point of rounding* **plus a strict ordering**, because a tolerance alone would pass for an
+  implementation awarding gpl the full share or none.
+- **`VehicleScorer`'s brand docblock was refuted by its own arm** (the third incidental finding
+  above) and is corrected in passing, as planned. Two sentences in `config/car/criteria.json`'s
+  `_brand_avoid` were wrong the same way and are corrected rather than deleted, because both were
+  load-bearing for a reader.
+- **THE DESIGN'S "79 SAY *inclus*" COUNTED THE WORD ANYWHERE; THE SHIPPED READER REQUIRES IT NEAR
+  THE AMENITY, and the two numbers are far apart.** Measured both ways over the 149
+  parking-mentioning MATCH rows: **93** carry `inclus`/`compris`/`attribué` somewhere in the
+  description, **37** carry one within 40 characters of the parking word. The shipped reader is the
+  stricter one on purpose — an inclusion word three sentences away is usually about the charges
+  (*y compris les charges*), and printing `parking inclus` on the strength of it tells the developer
+  the rent covers a space it does not. Recorded rather than quietly reconciled: quoting the design's
+  looser figure beside the stricter implementation would be *a true number attached to the wrong
+  mechanism*, which is this repo's named failure, and it would have gone unnoticed because both
+  numbers describe a working feature.
+- **`high_priority_score` and `push_min_score` STAY at 73 and their SELECTIVITY MOVED.** 73 now marks
+  197 of 951 judged MATCHes (**20.7 %**) where the 2026-09-01 calibration put it at 27.1 % of the 269
+  then stored. The threshold is unchanged because what it selects is now exactly the population the
+  developer asked for — every one of the 197 a favoured make — not because the number survived; a
+  bar preserving the old selectivity would have had to move DOWN and admit avoided makes back.
+- **`emplacement` LEFT THE PARKING FAMILY, and the 6C gate found it rather than the design or any
+  test.** It is the one family word with a second, unrelated sense: of its 36 distinct contexts in
+  the store EIGHT are a LOCATION — `emplacement privilegie` (5), `emplacement ideal` (2),
+  `emplacement pratique` (1) — so on a card carrying no other family word the line announced a
+  parking space the advertisement never offered. **It also earned nothing:** running the shipped
+  `statesParking()` with and without the word over every stored listing returns the IDENTICAL label
+  on all **3 379** rows (matched rows: 1 117 none · 112 `parking` · 37 `parking inclus`), because
+  every real one reads `emplacement de parking` or `de stationnement` and both of those words are
+  already family members. Zero coverage plus a live false-positive sense is the ruling `Heating`
+  already makes for `convecteur` and `CPCU`.
+  Three things are worth carrying forward. **The first proposed remedy was the wrong shape** —
+  qualifying the word by requiring a following parking noun — and the store refused it: six
+  occurrences read *« pour votre véhicule : parmi les emplacements disponibles »*, which that form
+  drops. **The measurement had to be of the LABEL, not of the claim's presence**, because the
+  `en sus` skip and the inclusion window are per word, so dropping one could in principle move a row
+  between `parking` and `parking inclus`; the first two scripts measured presence and would have
+  missed it. And **a qualified `emplacement` would have been a branch no stored payload reaches**,
+  which this repo has already paid for as dead safety code. The `emplacement` entries in
+  `exclude_title_patterns` are a DIFFERENT mechanism — they reject an ad that *is* a parking space —
+  and are untouched; do not tidy the two together.
+
+### Step 9 — the SHIPPED code reproducing the design's numbers over the live stores
+
+A scratch script proving a design is not a scorer proving itself, so every headline number was
+re-taken through the code that ships.
+
+| measured through the shipped code | design | shipped |
+|---|---:|---:|
+| car MATCHes judged | 951 | **951** |
+| individual pushes at the unchanged gate of 73 | 197 | **197** |
+| of which favoured / avoided / unlisted / unknown-make | 197 / 0 / 0 / 0 | **197 / 0 / 0 / 0** |
+| diesels above the gate | 15 | **15** |
+| diesel vs clean median | 47 / 67 | **47 / 67** |
+| individually-heated MATCH flats (?/gaz/élec/PAC) | 24 / 8 / 8 / 0 | **24 / 8 / 8 / 0** |
+| rent individual pushes, before → after the penalty | — | **105 → 85** |
+| `positiveTotal()` in production | 105 | **105** |
+| matched flats stating an amenity | 185 / 1 261 (15 %) | **183 / 1 266 (14 %)** |
+
+All 39 distinct make spellings in the live store classify as the config says — `mercedes-benz`
+favoured, `ds automobiles` avoided, `alfa romeo` avoided — which is the non-letter-boundary matcher
+working on the FAVOURED side, the thing a scratch script's `str_starts_with` could not have proven.
+The two amenity deltas are the two guards firing: terrasse 24 → 23 (the residence name) and jardin
+17 → 16 (`rez de jardin`). The heating and diesel figures are exact; the store has grown by 7 rows
+since the design was measured, which is the whole of the 951/1 261 → 951/1 266 difference.

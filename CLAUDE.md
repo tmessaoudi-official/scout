@@ -194,6 +194,53 @@ its own sabotage case: `floor === 0` is RDC and REAL (read as falsy it vanishes 
 of rejecting a listing for not stating a floor), and an UNMENTIONED lift is not an absent one, so
 `null` says nothing while `false` says *sans ascenseur*.
 
+> **THE SAME LINE CARRIES THE AMENITIES SINCE TRACK 7** (developer ruling, 2026-09-08: *show if it
+> has terrace, cave, parking spot*) — `Yvelines (78) · 2e étage · avec ascenseur · terrasse ·
+> parking inclus`. `Core/Amenities` reads terrasse, balcon, loggia, jardin, cave and the parking
+> family (`cellier` was DROPPED by ruling: a cellier is an indoor pantry, not a basement cave, so
+> merging them would state something the ad did not). **Display only — it rejects nothing and scores
+> nothing** (hard rule 8); a score bonus was offered with the distortion priced (only 15 % of
+> matched flats mention any amenity, so scoring it would rank prose-carrying sources above card-only
+> ones) and was declined. Three guards, each measured rather than reasoned: a MENTION is not an
+> INCLUSION, so `parking inclus` needs the word and the naive `parking … XX €` reader was built and
+> rejected at 36 CDC false positives of 38 hits; `terrasse` has a RESIDENCE-NAME false positive
+> (`12, les terrasses de la ravinière`, 2 of 38); and `cave` was measured inside a SeLoger tracking
+> token, so the reader strips a URL's query and fragment — the tenth instance of *URLs are
+> classified text*, and it calls `RawListing::withoutUrlParameters()` rather than becoming a third
+> copy of that expression. **Its REACH is the individual match push only** — `factsLine()` has one
+> call site, so with `push_min_score: 55` about one match in ten shows it. That is the pre-existing
+> reach of the departement/floor/lift line and Track 7 did not widen it; widening the context line
+> to the digest is a decision nobody has taken.
+
+**INDIVIDUAL HEATING IS PENALISED, AND THE SEVERITY IS A NUMBER RATHER THAN AN ADJECTIVE** (Track
+7-A, developer ruling 2026-09-08: *penalise severely, especially electric, gas not as much*).
+`Core/Heating` reads the mode and the energy out of the DESCRIPTION — never a new field-map entry,
+because `FieldMap::fingerprint()` hashes every mapped field list and one more entry invalidates all
+737 cached In'li `listing_detail` rows, which then re-hydrate at 20 per pass over about nine hours
+while every In'li flat is judged card-alone. Two negative weights that STACK, the `high_floor_no_lift`
+precedent exactly and likewise absent from `positiveTotal()`: electric −35, gas −20, mode-stated-
+without-energy −20. Measured through the shipped engine over every stored MATCH at production's
+`positiveTotal` of 105: individual pushes go **105 → 85**, and all 40 individually-heated matched
+flats move to the daily digest. −30 and −40 were measured and buy NOTHING at `push_min_score: 55` —
+they only reorder rows already under it.
+
+Three rules travel with it. **The negation is read FIRST** (`sans chauffage individuel`) — the
+lift-negation lesson on a new surface. **An unstated energy takes the BASE penalty only**, never the
+electric surcharge: that is the largest class in the store (101 rows, 24 matched) and reading it as
+electric would manufacture a fact from an absence. And **the vocabulary was read off the real copy**
+— `individuel` and the energy word sit 0–3 words apart in EITHER order, so an adjacency reader
+misses 9 of the 35 electric rows, while `convecteur`, `radiateur`, `CPCU` and `reseau de chaleur`
+are 0 hits each and are deliberately absent.
+
+> **STATED COST, and it is the whole asymmetry:** `chauffage` reaches the stored text of only THREE
+> of the eight sources (In'li 671, Cityloger 75, SeLoger 4), and all 40 individually-heated matched
+> flats are In'li. So the penalty ranks In'li flats below portal flats for a fact the portals never
+> state. That is hard rule 9 behaving correctly — unknown is not "no" — and not a defect to repair
+> later. The first implementation truncated its mode window at 24 characters and the STORE refuted
+> it: ` et eau chaude individuels` is 26, so the commonest gas shape came back null, and a reader
+> that reads nothing looks exactly like a flat that says nothing. Bounding the GAP is the fix, and
+> the case is in the ledger.
+
 ### Detail hydration — the cache is the gate (2026-08-23)
 
 **Phase 2 is BUILT, and Phase 2b (2026-08-23) added the two facts the description was carrying all
@@ -1205,6 +1252,26 @@ into one**, and predicting its effect would have got it backwards: widening it t
 unlisted median gap from 9 points to **13** (58 vs 71 over 160 re-judged snapshots), so a list
 covering 60 % of the fleet discriminates MORE, not less.
 
+> **TRACK 7 MADE THE BRAND SHARE A THREE-WAY AND MOVED FORD, so two claims above no longer hold as
+> written** (developer ruling, 2026-09-08). `brand_favour` is the second list — 16 makes, the same
+> stem semantics and the SAME matcher, because the `ds` / `ds automobiles` miss runs in both
+> directions and a favoured list on exact equality would have caught `mercedes` and silently missed
+> `mercedes-benz`. **Favoured takes the whole share; avoided AND unlisted take none.** So *"an
+> unlisted make earns the share"* is now true only when BOTH lists are empty, and the arm that
+> awards it tests both — keyed on `brandAvoid` alone, a config naming only favoured makes would have
+> awarded the share to everything and silently disabled the preference it had just written down.
+> The list is **21 stems**, not 22: `ford` moved to `brand_favour` after being measured both ways
+> (median 80 and 17 of 28 over the gate as favoured, median 55 and 0 of 28 as avoided), on the
+> ground that `_why` in the config already admitted ford belonged to neither group it justifies.
+> `chevrolet` stays and the choice is moot — 0 rows. The brand weight is **25** of 100 now, not 10,
+> and the live store holds **39** distinct make spellings rather than 26; all 39 are pinned in
+> `VehicleBrandPenaltyTest` as **three** classes, because an assertion that knew only *avoided* and
+> *not avoided* would have passed unchanged through the ruling that created the third.
+> `body_rank` is `body_favour` and is FLAT — suv, break and berline are equal — and the loader
+> refuses the old key by name. Measured through the shipped scorer over all 951 stored MATCHes: 197
+> individual pushes at the unchanged gate of 73, **all 197 favoured**, zero avoided, zero unlisted,
+> zero unknown-make.
+
 > **A CAR PORTAL WHOSE LINKS CARRY NO ID IS KEYED ON ITS CONTENT, AND A LABELLED CARD IS READ BY
 > ONE PATTERN (rows 37 + 38, 2026-09-05).** Measured on CapCar and La Centrale before building:
 > every link is a per-recipient tracking redirect (`sendibt3.com/tr/cl/<token>`,
@@ -2118,7 +2185,11 @@ src/php/Rent/               the rent domain — Core (models, tenure classifier,
                             plus ExcludedDwellings, the §1 matcher for the SAME FLAT on record
                             under another ad id: the fourth persisted route, and the ONE
                             implementation its three announcing surfaces share — Pipeline, the
-                            digest drain and reclassify), Config, Adapters,
+                            digest drain and reclassify; plus Heating and Amenities, the two Track 7
+                            readers, which run over the mapped `description` and NOT over a
+                            field-map entry — one more mapped field changes
+                            `FieldMap::fingerprint()` and invalidates all 737 cached In'li detail
+                            rows), Config, Adapters,
                             Store, Enrich, Notify (Formatter), Cli/RentScout
 src/php/Car/                the car domain — the Vehicle* classes and Cli/CarScout
 src/php/Core/Pacer.php      the Q37 cadence; clock, sleeper and RNG all injected so it is testable

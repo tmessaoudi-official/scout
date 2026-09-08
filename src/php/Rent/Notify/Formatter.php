@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Scout\Rent\Notify;
 
+use Scout\Rent\Core\Amenities;
 use Scout\Rent\Core\Department;
 use Scout\Rent\Core\DigestCause;
 use Scout\Rent\Core\RawListing;
@@ -336,6 +337,24 @@ final readonly class Formatter
 
         if ($listing->hasElevator !== null) {
             $bits[] = $listing->hasElevator ? 'avec ascenseur' : 'sans ascenseur';
+        }
+
+        // TERRACE, CAVE, PARKING — Track 7-B, developer ruling 2026-09-08. It joins this line rather
+        // than getting one of its own because it answers the same question the rest of the line
+        // does: what IS this flat. It rejects nothing and scores nothing (hard rule 8).
+        //
+        // Every entry obeys the same rule as the three above: an amenity nobody mentioned prints
+        // nothing, and printing nothing means the ad was silent — never that the flat lacks it. Five
+        // of the eight sources carry no listing prose, so on those this half of the line is always
+        // empty and that is the correct output rather than a gap.
+        //
+        // REACH, stated because it decides how often this is seen at all: `factsLine()` is called
+        // from `match()` alone, so it travels on an INDIVIDUAL push. With `push_min_score: 55` about
+        // one match in ten arrives that way. That is the pre-existing reach of the departement /
+        // floor / lift line and this change does not widen it; widening the context line to the
+        // digest is a separate decision nobody has taken.
+        foreach (Amenities::read($listing->description) as $amenity) {
+            $bits[] = $amenity;
         }
 
         return $bits === [] ? null : implode(' · ', $bits);

@@ -1211,6 +1211,46 @@ final class ConfigTest extends TestCase
             'THE NEGATION: a bare \\bmeuble would reject the exact flat the criteria are looking for, '
                 . 'and a disqualifier rejects SILENTLY — nothing would ever say why it vanished',
         ];
+        // ── Track 7-D: the negation on the OTHER side of the word (2026-09-08) ───────────────────
+        //
+        // `exclude_patterns` scans title AND description, and it was safe only by ADJACENCY — a
+        // trigger word must sit immediately before `meuble`, which is why `location non meublée`
+        // escapes and why the 8 In'li rows escape (their negation is about a KITCHEN, and `cuisine`
+        // is not a trigger). What was NOT safe is a negation AFTER the word: these two shapes were
+        // rejected outright, and no stored row carries either — 152 rows match the meublé rule, 13
+        // carry a negated meublé, and the two sets are DISJOINT. **So no fixture can reach this and
+        // only these cases can**, which is exactly the dead-safety-code trap this repo has walked
+        // into twice.
+        yield 'a flat offered furnished OR NOT is wanted' => [
+            'Appartement 3 pieces',
+            'Appartement meuble ou non, au choix du locataire.',
+            false,
+            'THE NEGATION AS AN ANSWER: `ou non` means the flat can be taken unfurnished, which is '
+                . 'the flat the criteria are looking for',
+        ];
+        yield 'a structured field answering no is wanted' => [
+            'Appartement 3 pieces',
+            'Surface : 82 m2. Appartement meuble : non. Etage : 3.',
+            false,
+            'the portal template shape — a label and its answer, where the answer is what counts',
+        ];
+        // THE COUNTERWEIGHT, and without it the guard is satisfied by never rejecting anything.
+        // The broad form of this lookahead (a 15-character window for non|pas|sans, copied from
+        // `exclude_title_patterns`) lets BOTH of these through, which is why the shipped one admits
+        // only `ou non` and `: non`.
+        yield 'a furnished flat that merely mentions a nearby landmark is still rejected' => [
+            'Appartement 3 pieces',
+            'Appartement meublee, non loin de la gare RER.',
+            true,
+            '`non loin` is ordinary French on a genuinely furnished flat — a wide negation window '
+                . 'would let it through',
+        ];
+        yield 'a furnished flat that mentions what it lacks is still rejected' => [
+            'Appartement 3 pieces',
+            'Appartement meuble, pas de vis-a-vis.',
+            true,
+            'so is `pas de` about something else entirely',
+        ];
         yield 'a title naming the building is wanted' => [
             'Appartement 4 pieces dans immeuble recent',
             'Au 3e etage avec ascenseur.',

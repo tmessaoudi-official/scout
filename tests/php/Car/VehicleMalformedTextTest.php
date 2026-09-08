@@ -16,15 +16,20 @@ use Scout\Car\VehicleScorer;
 /**
  * TEXT THAT WILL NOT FOLD, ACROSS THE CAR DOMAIN'S FIVE CATCH ARMS.
  *
- * `Core\Text::fold()` refuses text it cannot normalise, and five places in `src/php/Car/` catch
- * that. **Not one of them had a test**, so nothing in the tree said which way each one fails —
- * and they do not all fail the same way:
+ * `Core\Text::fold()` refuses text it cannot normalise, and several places in `src/php/Car/` catch
+ * that (`grep -c 'catch (MalformedText' src/php/Car/*.php` is the tally — a count written in prose
+ * here went stale twice in this repo already). **Not one of them had a test**, so nothing in the
+ * tree said which way each one fails — and they do not all fail the same way:
  *
  * - `VehicleClassifier::classify()` fails CLOSED. Unfoldable text is `REJECT`, with
  *   *"texte illisible"* as the reason. That is §1's twin for the excluded-vehicle set, and it is
  *   the arm that matters.
- * - `VehicleCriteria::excludedBy()` and `bodyRankOf()` fail OPEN: they return `null`, and for
- *   `excludedBy()` that reads as *no user exclusion fired*.
+ * - `VehicleCriteria::excludedBy()`, `isFavouredBody()` and the shared brand stem matcher behind
+ *   `isAvoidedBrand()` / `isFavouredBrand()` fail OPEN: they answer "no", and for `excludedBy()`
+ *   that reads as *no user exclusion fired*. The brand matcher gained its catch in Track 7 — it
+ *   folded unguarded before, so an unfoldable make threw out of the scorer rather than scoring 0;
+ *   both arms are unreachable behind the same order below, and the catch makes the two brand
+ *   methods agree with every other predicate on this class instead of being the one that throws.
  *
  * **The fail-open is unreachable today, and only because of an order nobody had written down.**
  * `VehicleScorer::judge()` returns on the classification's `REJECT` before it ever calls

@@ -292,6 +292,32 @@ final readonly class CriteriaEngine
             $reasons[] = $listing->floor . 'e étage SANS ascenseur';
         }
 
+        // --- S8 individual heating (Track 7-A, developer ruling 2026-09-08) ---
+        // A PENALTY, not a disqualifier (hard rule 8): an individually-heated flat is still a match,
+        // still notified, and simply ranks below one that is not. It reads the DESCRIPTION, which is
+        // the surface `exclude_patterns` already scans — never a new field-map entry, because
+        // `FieldMap::fingerprint()` hashes every mapped field list and one more entry would
+        // invalidate all 737 cached In'li detail rows.
+        //
+        // SILENCE TAKES NOTHING (hard rule 9). Five of the eight sources carry no listing prose at
+        // all, so their flats never take this — the penalty ranks In'li flats below portal flats for
+        // a fact the portals never state, and that asymmetry is the STATED COST rather than a defect
+        // to repair later. The alternative — reading an unstated mode as individual — manufactures a
+        // fact from its own absence, which is the shape this repo keeps paying for.
+        //
+        // The two weights STACK on purpose: electric is the mode penalty PLUS the energy surcharge.
+        $heating = Heating::read($listing->description);
+        if ($heating !== null && $heating->isIndividual()) {
+            $earned += $w->heatingIndividual;
+            if ($heating->electric) {
+                // An UNSTATED energy never reaches here (developer ruling): the base penalty alone
+                // covers the commonest shape in the store — 101 rows saying `chauffage individuel`
+                // and no energy — because an unstated energy is not electricity.
+                $earned += $w->heatingIndividualElectric;
+            }
+            $reasons[] = $heating->label() . ' — énergie à votre charge';
+        }
+
         // --- S7 freshness ---
         if ($w->freshness > 0) {
             $window = $this->criteria->freshnessMinutes * 60;

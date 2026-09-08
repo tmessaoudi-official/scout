@@ -5330,6 +5330,114 @@ run_sabotage "the scorer stops rejecting on the classification first (the exclus
   src/php/Car/VehicleScorer.php \
   "s%if (\$class->outcome === VehicleOutcome::REJECT) {%if (false) {%"
 
+# ── TRACK 7 (developer ruling, 2026-09-08): the heating penalty, the amenity line and the car
+#    brand/body model. EVERY guarantee below fails SILENTLY — a score that is 20 points wrong and a
+#    display line that says one thing too many both look exactly like a working watcher.
+
+# 7-A. THE NEGATION IS READ FIRST. `sans chauffage individuel` is an ad DENYING the thing; read as a
+# statement it costs a real flat 20 points of ordering — off the individual push and into the
+# digest — for a fact the copy explicitly refuses. The lift-negation lesson on a new surface.
+run_sabotage "a denied heating is read as a stated one (sans chauffage individuel penalised)" \
+  src/php/Rent/Core/Heating.php \
+  "s%            if (self::isNegated(\$folded, \$at)) {%            if (false) {%"
+
+# 7-A. AN UNSTATED ENERGY IS NOT ELECTRICITY (ruled). The largest class in the store — 101 rows, 24
+# matched — states the mode and no energy. Reading it as electric manufactures a fact from an
+# absence and applies a surcharge nobody earned; every score stays plausible.
+run_sabotage "an unstated heating energy is treated as electric (the surcharge on a silence)" \
+  src/php/Rent/Core/Heating.php \
+  "s%            return new self(\$mode, \$energy, \$energy === self::ELECTRIC);%            return new self(\$mode, \$energy, true);%"
+
+# 7-A. THE MODE WINDOW BOUNDS THE GAP, NOT THE TEXT. Truncating at MODE_GAP characters cuts
+# `individuels` in half and the commonest gas shape (` et eau chaude individuels`, 9 rows) reads
+# null — a reader that reads nothing looks exactly like a flat that says nothing. This is the defect
+# the first implementation actually shipped with, caught by the store rather than by review.
+run_sabotage "the heating mode window truncates the text instead of bounding the gap" \
+  src/php/Rent/Core/Heating.php \
+  "s%            \$mode = self::modeIn(\$after);%            \$mode = self::modeIn(substr(\$after, 0, self::MODE_GAP));%"
+
+# 7-A. A PENALTY IS NOT PART OF WHAT A LISTING CAN EARN. Enrolling it in the denominator makes it
+# SMALLER the larger it is set — the opposite of the intent, and arithmetic nobody re-derives once
+# it ships. Scoped to `positiveTotal()` by address so it cannot land on the constructor instead.
+run_sabotage "a heating penalty is enrolled in the normalising total (bigger becomes weaker)" \
+  src/php/Rent/Config/Weights.php \
+  "/function positiveTotal/,/^    }/ s%            + max(0, \$this->freshness);%            + max(0, \$this->freshness) + \$this->heatingIndividual;%"
+
+# 7-B. THE AMENITY LINE MUST BE SILENT WHEN THE AD WAS. A line that always claims a parking is
+# furniture, and worse than furniture — it is a fact invented about a flat, the display twin of
+# `sans ascenseur` about a building nobody described. Five of the eight sources carry no prose, so
+# this fires on most of the tree.
+run_sabotage "the amenity line claims a parking on every flat (a fact invented from silence)" \
+  src/php/Rent/Core/Amenities.php \
+  "s%        return \$seen ? 'parking' : null;%        return 'parking';%"
+
+# 7-B. A MENTION IS NOT AN INCLUSION. Claiming `parking inclus` on a mere mention tells the developer
+# the rent covers a space it does not — 37 of the 149 parking-mentioning matches carry the word
+# within the inclusion window (93 carry one anywhere in the description; this comment said 79, which
+# was neither), and the rest say nothing, so the claim must rest on the word and on nothing else.
+run_sabotage "a mentioned parking is announced as included (the claim without the word)" \
+  src/php/Rent/Core/Amenities.php \
+  "s%        return \$seen ? 'parking' : null;%        return \$seen ? 'parking inclus' : null;%"
+
+# 7-B. URLS ARE CLASSIFIED TEXT — the tenth instance, and `cave` was measured inside a real SeLoger
+# tracking token. Nobody can rewrite a portal's analytics parameters, so this is not self-healing.
+run_sabotage "the amenity reader scans a URL's tracking parameters again (cave from a token)" \
+  src/php/Rent/Core/Amenities.php \
+  "s%            \$folded = Text::fold(RawListing::withoutUrlParameters(\$text));%            \$folded = Text::fold(\$text);%"
+
+# 7-C. THE BRAND SHARE IS A THREE-WAY. Giving an unlisted make the share restores the pre-Track-7
+# binary and re-opens the gate to the 47 makes the developer ruled out — measured: split C, which
+# gave them HALF, pushed 16 of them individually.
+run_sabotage "an unlisted make earns the brand share again (the ruled three-way collapsed to two)" \
+  src/php/Car/VehicleScorer.php \
+  "s%            \$reasons\[\] = trim(\$car->make) . ' — marque hors des listes';%            \$score += \$w['brand']; \$reasons[] = trim(\$car->make) . ' — marque hors des listes';%"
+
+# 7-C. THE NO-PREFERENCE ARM NEEDS BOTH LISTS EMPTY. Keyed on `brandAvoid` alone, a deployment
+# configuring ONLY `brand_favour` — the natural way to write *these are the makes I want* — takes
+# that arm and awards the share to every make, silently disabling the preference it just wrote down.
+run_sabotage "the no-preference arm is keyed on one list (a favour-only config disables itself)" \
+  src/php/Car/VehicleScorer.php \
+  "s%        if (\$criteria->brandAvoid === \[\] \&\& \$criteria->brandFavour === \[\]) {%        if (\$criteria->brandAvoid === []) {%"
+
+# 7-C. THE FAVOURED SIDE USES THE NON-LETTER-BOUNDARY MATCHER. Exact equality catches `mercedes` and
+# silently misses `mercedes-benz` — the `ds` / `ds automobiles` defect facing the other way, worth 25
+# points of ordering on a make the developer named, with nothing anywhere reading as a fault.
+run_sabotage "the favoured brand list is matched by exact equality (mercedes-benz stops being a mercedes)" \
+  src/php/Car/VehicleCriteria.php \
+  "/function isFavouredBrand/,/^    }/ s%        return self::matchesStem(\$make, \$this->brandFavour);%        return \$make !== null \&\& in_array(\\\\Scout\\\\Core\\\\Text::fold(\$make), \$this->brandFavour, true);%"
+
+# 7-C. THE BODY SHARE IS FLAT, and that is TWO guarantees needing two mutations. The share must be
+# WHOLE (this case) and it must be EQUAL across every listed body (the next). A single case cannot
+# reach both: paying every wanted body a third keeps them equal, and paying only the first keeps the
+# share whole. A ladder is invisible in any one score, which is why neither is left to a fixture.
+run_sabotage "a wanted body earns only part of its share (the share silently shrunk)" \
+  src/php/Car/VehicleScorer.php \
+  "s%            \$score += \$w\['body'\];%            \$score += (int) (\$w['body'] / 3);%"
+
+run_sabotage "only the FIRST body earns the share (the ruled equality back to a rank)" \
+  src/php/Car/VehicleCriteria.php \
+  "/function isFavouredBody/,/^    }/ s%        foreach (\$this->bodyFavour as \$wanted) {%        foreach (array_slice(\$this->bodyFavour, 0, 1) as \$wanted) {%"
+
+# 7-C. A MAKE ON BOTH LISTS IS REFUSED AT LOAD. Without the refusal the scorer's avoid-first order
+# resolves the clash quietly to *avoided*, and the favoured entry sits in the config doing nothing —
+# a configured preference inert while every score stays plausible.
+run_sabotage "a make on both brand lists is accepted at load (the favoured entry silently inert)" \
+  src/php/Car/VehicleCriteriaLoader.php \
+  "s%        \$both = array_values(array_intersect(\$brandAvoid, \$brandFavour));%        \$both = [];%"
+
+# 7-D. THE MEUBLÉ NEGATION GUARD. It changes nothing on today's store by construction — 152 rows
+# match the rule, 13 carry a negation, and the sets are disjoint — so no fixture can reach it and
+# only this case can. `appartement meublé ou non` is a flat that is NOT furnished being rejected as
+# one that is: dead safety code the day it is deleted, exactly the class this ledger exists for.
+#
+# The mutation replaces the lookahead with one that can never fire, rather than deleting it: an
+# always-true lookahead is VALID PCRE and restores the pre-Track-7 behaviour exactly, where a
+# malformed one would be refused at load and "detected" for the wrong reason. A mutation that fails
+# to parse tests nothing.
+run_sabotage "the meublé rule loses its negation lookahead (an unfurnished flat rejected as furnished)" \
+  config/rent/criteria.json \
+  "s%meuble(?!(?:es|e|s)?\\\\\\\\s\*(?:ou\\\\\\\\s+non|:\\\\\\\\s\*non)\\\\\\\\b)%meuble(?!zzzz)%"
+
 # THE ABORT COMES BEFORE THE TALLY, and that ordering is the finding rather than a nicety (C2
 # round 7, resilience P3). The alert job harvests the `N sabotage(s) detected, M undetected` line;
 # printed AFTER it, a shard that selected no case ended its log with a clean-looking `0 / 0` and the

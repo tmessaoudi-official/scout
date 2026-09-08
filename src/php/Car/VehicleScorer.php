@@ -92,36 +92,56 @@ final class VehicleScorer
             $reasons[] = $car->fuel . ($car->fuel === 'diesel' ? ' — préférence, pas une règle ZFE' : '');
         }
 
-        // body — the commune_rank mechanism: ranked scores by position, unranked 0 and still notified
-        $rank = $criteria->bodyRankOf($car->body);
-        $n = count($criteria->bodyRank);
+        // BODY — FLAT SINCE TRACK 7, and the flatness is the ruling rather than a simplification.
+        // This was the `commune_rank` mechanism: the list's first entry took the whole share, the
+        // second two thirds, the third one third. The developer ruled suv, break and berline
+        // **equally very high** (2026-09-08), which leaves the position meaning nothing — so the
+        // list is a SET, the key is `body_favour`, and a listed body takes the full share.
+        //
+        // An unlisted body still scores 0 and is still NOTIFIED: this is a preference and never a
+        // disqualifier (hard rule 8). `citadine` (133 stored cars) and `monospace` (59) scored 0
+        // under the ranked model too, so nothing about them changed.
         if ($car->body === null) {
             $reasons[] = 'carrosserie inconnue — hors score';
-        } elseif ($rank === null || $n === 0) {
-            $reasons[] = $car->body . ' — carrosserie non classée';
+        } elseif ($criteria->isFavouredBody($car->body)) {
+            $score += $w['body'];
+            $reasons[] = $car->body . ' — carrosserie recherchée';
         } else {
-            $share = ($n - $rank + 1) / $n;
-            $score += $w['body'] * $share;
-            $reasons[] = sprintf('%s — carrosserie classée %d/%d', $car->body, $rank, $n);
+            $reasons[] = $car->body . ' — carrosserie hors préférences';
         }
 
-        // BRAND — AN INVERTED RANK, and the inversion is the ruling rather than a detail. Mirroring
-        // `body_rank` above would have scored the disfavoured makes HIGHEST, because that mechanism
-        // gives its top entry the full share; the developer asked for the opposite (2026-08-31).
+        // BRAND — A THREE-WAY SINCE TRACK 7, replacing the inverted binary (developer ruling,
+        // 2026-09-08: *"for brands I want it also high score … everything else must have lowest
+        // score and almost not show up"*). Favoured takes the whole share; avoided takes none; a
+        // make on NEITHER list takes none either, which is the literal reading of *everything
+        // else*. 47 stored makes are in that third class — mini 13, suzuki 11, mg 7, lexus 6,
+        // land rover 6 … — and at gate 73 not one of them is pushed individually under the ruled
+        // weights; they all reach the developer in the daily rollup instead. Giving them HALF the
+        // share was measured (split C) and pushed 16 of the 47, which is what the ruling excludes.
         //
-        // So the share is earned by NOT being on the list: an unlisted make takes all of it, a
-        // listed one takes none, and no ordering among the listed ones was ruled — they are equal.
-        // A make that could not be extracted takes the full share too (hard rule 9: unknown is not
-        // disfavoured), which is the direction every other unknown takes here.
+        // The previous shape is still visible in the `brandAvoid === []` arm and its comment: the
+        // share used to be earned by NOT being on the avoid list. That inversion was itself the
+        // 2026-08-31 ruling, because mirroring the body list would have scored the disfavoured
+        // makes HIGHEST.
         //
         // The weight comes OUT of the existing 100 rather than pushing past it, so the total still
-        // means what `high_priority_score` was calibrated against.
-        if ($criteria->brandAvoid === []) {
-            // Nothing configured means no make is disfavoured, so EVERY make earns the share. It
+        // means what `high_priority_score` was calibrated against — and 73 was RE-MEASURED under
+        // the new weights rather than carried over, because an absolute threshold silently changes
+        // meaning when the scale beneath it moves.
+        //
+        // AVOID IS CHECKED BEFORE FAVOUR. The loader refuses a stem appearing on both lists, so an
+        // exact clash cannot reach here; overlapping STEMS still can, and the order settles those
+        // in the conservative direction — a preference against outranks a preference for.
+        if ($criteria->brandAvoid === [] && $criteria->brandFavour === []) {
+            // NEITHER list configured means no preference at all, so EVERY make earns the share. It
             // reads as a wash for ordering either way, but withholding it would quietly drop the
             // achievable maximum to 90 for such a deployment — and `high_priority_score` is an
             // ABSOLUTE threshold, so a scale that silently shrinks makes it unreachable. Same
             // reasoning as the unknown-make arm below.
+            //
+            // The condition tests BOTH lists since Track 7: keyed on `brandAvoid` alone, a
+            // deployment configuring only `brand_favour` would have taken this arm and awarded the
+            // share to every make, silently disabling the preference it had just written down.
             $score += $w['brand']; // unique on purpose: the ledger addresses this arm by this line
             $reasons[] = 'marque — aucune préférence configurée';
         } elseif ($car->make === null) {
@@ -148,9 +168,16 @@ final class VehicleScorer
             // trims. A `make_model_pattern` capture carrying a trailing space would otherwise be
             // penalised correctly and announced with the whitespace still in it.
             $reasons[] = trim($car->make) . ' — marque à éviter';
-        } else {
+        } elseif ($criteria->isFavouredBrand($car->make)) {
             $score += $w['brand'];
-            $reasons[] = trim($car->make) . ' — hors des marques à éviter';
+            $reasons[] = trim($car->make) . ' — marque recherchée';
+        } else {
+            // THE THIRD CLASS, AND IT IS NOT THE OLD `else`. Before Track 7 this arm awarded the
+            // whole share to anything not on the avoid list; it now awards none, and the reason
+            // line says which list the make is missing from rather than implying a judgement
+            // nobody made. It is still a preference — the car is notified, and reaches the daily
+            // rollup — never a disqualifier (hard rule 8).
+            $reasons[] = trim($car->make) . ' — marque hors des listes';
         }
 
         if ($car->sellerType !== null) {

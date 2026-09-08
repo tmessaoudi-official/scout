@@ -21,7 +21,19 @@ use Scout\Tests\Car\CarRecordingChannel;
 final class CarScoutTest extends TestCase
 {
     private const string ROOT = __DIR__ . '/../../../..';
+
+    /**
+     * How many ParuVendu fixture cards the shipped gate holds back — ALL THREE since Track 7.
+     *
+     * A named constant rather than a literal in six places, because when the weights next move this
+     * number moves with them and six scattered `1`s is how one of them is missed.
+     */
+    private const int QUEUED_PARUVENDU = 3;
+
     private string $db;
+
+    /** @var list<string> */
+    private array $tempRoots = [];
 
     protected function setUp(): void
     {
@@ -40,6 +52,16 @@ final class CarScoutTest extends TestCase
         @unlink(\dirname($this->db) . '/car-heartbeat.txt');
         @unlink(\dirname($this->db) . '/car-last-refusal.txt');
         @unlink(\dirname($this->db) . '/car-rollup.txt');
+
+        foreach ($this->tempRoots as $root) {
+            foreach (glob($root . '/config/car/*') ?: [] as $f) {
+                @unlink($f);
+            }
+            @rmdir($root . '/config/car');
+            @rmdir($root . '/config');
+            @rmdir($root);
+        }
+        $this->tempRoots = [];
     }
 
     public function testTheDomainFlagIsDispatchedFromTheGenericEntryPoint(): void
@@ -68,7 +90,22 @@ final class CarScoutTest extends TestCase
         self::assertStringContainsString('3 annonce(s) analysées', $again['out']);
     }
 
-    public function testAnUnseededRunPushesEveryMatchOnceWithTheSourceLeadingTheTitle(): void
+    /**
+     * TRACK 7 END TO END: every one of ParuVendu's cards is an AVOIDED make, and not one is pushed.
+     *
+     * This test asserted the opposite until 2026-09-08 — *"two cards at or over the gate, two
+     * pushes"* — and the two it named were a Renault Austral at 80 and a Renault at 73, both on
+     * `brand_avoid`. The developer ruled *everything else must have lowest score and almost not
+     * show up*, and under the ruled weights those cards score 68 / 63 / 50. So the number that used
+     * to prove the push path now proves the SUPPRESSION, which is the guarantee this ruling bought,
+     * and the push path moved to the test below.
+     *
+     * The counterweight is load-bearing: they are HELD, never rejected. All three still MATCH, all
+     * three queue, and the pass says how many it held back — a preference is not a disqualifier
+     * (hard rule 8), and a car that silently vanished would be indistinguishable from one nobody
+     * fetched.
+     */
+    public function testAnUnseededRunHoldsBackEveryAvoidedMakeUnderTheShippedGate(): void
     {
         // Seed with an EMPTY folder, then run against the real one: three novel cards.
         $empty = sys_get_temp_dir() . '/scout-car-empty-' . bin2hex(random_bytes(4));
@@ -80,17 +117,48 @@ final class CarScoutTest extends TestCase
 
         $channel = new CarRecordingChannel();
         $r = $this->scout(['--domain=car', 'run', '--once', '-v', '--source=paruvendu'], $channel);
-        $r2 = $this->scout(['--domain=car', 'run', '--once', '--source=paruvendu'], $channel);
+
+        self::assertSame(0, $r['code'], $r['err']);
+        self::assertSame([], array_filter($channel->sent, static fn ($n) => $n->kind === NotificationKind::MATCH), 'no avoided make reaches an individual push');
+        self::assertStringContainsString('3 correspondance(s), 0 écartée(s)', $r['out'], 'all three still MATCH — held, not rejected');
+        self::assertStringContainsString('3 correspondance(s) sous le seuil', $r['out'], 'and the pass says what it held back');
+        self::assertSame(self::QUEUED_PARUVENDU, \Scout\Car\VehicleStore::open($this->db)->pendingRollupCount());
+        rmdir($empty);
+    }
+
+    /**
+     * The push path itself, with the SOURCE leading the title (developer ruling, 2026-08-29).
+     *
+     * **IT RUNS AGAINST ITS OWN ROOT, and that is deliberate rather than convenient.** Track 7's
+     * weights are calibrated so that ParuVendu's Renault/Peugeot stock stays under the gate, which
+     * left the shipped fixtures unable to reach this branch at all — *a guarantee whose branch no
+     * fixture reaches is dead safety code*, and this repo has paid for that twice. Lowering the gate
+     * in a private copy of the config separates the two questions cleanly: the CALIBRATION is
+     * asserted by `VehicleCriteriaTest` and by the live re-measurement recorded in the plan, and the
+     * MECHANISM is asserted here. Weakening the shipped gate to keep one test green would have
+     * traded a real guarantee for a green tick.
+     */
+    public function testAMatchOverTheGateIsPushedOnceWithTheSourceLeadingTheTitle(): void
+    {
+        $root = $this->rootWithPushGate(0);
+
+        $empty = sys_get_temp_dir() . '/scout-car-empty-' . bin2hex(random_bytes(4));
+        mkdir($empty);
+        putenv('MAILBOX_DIR=' . $empty);
+        \Scout\Car\VehicleStore::open($this->db)->record(new \Scout\Car\VehicleListing(sourceName: 'paruvendu', externalId: 'seed'), '2026-08-01T00:00:00Z');
+        putenv('MAILBOX_DIR=' . self::ROOT . '/tests/fixtures/car/paruvendu');
+
+        $channel = new CarRecordingChannel();
+        $r = $this->scout(['--domain=car', 'run', '--once', '-v', '--source=paruvendu'], $channel, root: $root);
+        // The SECOND run is the "once" half: a card already notified is never notified again.
+        $this->scout(['--domain=car', 'run', '--once', '--source=paruvendu'], $channel, root: $root);
 
         self::assertSame(0, $r['code'], $r['err']);
         $matches = array_values(array_filter($channel->sent, static fn ($n) => $n->kind === NotificationKind::MATCH));
-        // A5 (2026-09-05): the shipped gate is 73 and the three cards score 80 / 73 / 46 under the
-        // shipped criteria — two pushed, none twice, and the 2008 (46) QUEUED for the rollup.
-        self::assertCount(2, $matches, 'two cards at or over the gate, two pushes, none twice');
+        self::assertCount(3, $matches, 'three cards over a gate of 0, three pushes, none twice');
         self::assertStringStartsWith('paruvendu · ', $matches[0]->title);
         self::assertStringContainsString('Renault Austral 2023 · 26 000 km · 21 000 €', $matches[0]->title);
-        self::assertStringContainsString('1 correspondance(s) sous le seuil', $r['out'], 'the pass says what it held back');
-        self::assertSame(1, \Scout\Car\VehicleStore::open($this->db)->pendingRollupCount());
+        self::assertSame(0, \Scout\Car\VehicleStore::open($this->db)->pendingRollupCount(), 'nothing is queued when nothing is under the gate');
         rmdir($empty);
     }
 
@@ -98,7 +166,7 @@ final class CarScoutTest extends TestCase
 
     public function testRollupAnnouncesTheQueuedMatchesOnceUnderItsOwnKindAndMarksThemOnDelivery(): void
     {
-        $this->queueTheWeakParuVenduCard();
+        $this->queueTheParuVenduCards();
         $channel = new CarRecordingChannel();
 
         $r = $this->scout(['--domain=car', 'rollup'], $channel);
@@ -117,7 +185,7 @@ final class CarScoutTest extends TestCase
 
     public function testRollupDryRunAnnouncesNothingAndMarksNothing(): void
     {
-        $this->queueTheWeakParuVenduCard();
+        $this->queueTheParuVenduCards();
         $channel = new CarRecordingChannel();
 
         $r = $this->scout(['--domain=car', 'rollup', '--dry-run'], $channel);
@@ -125,13 +193,13 @@ final class CarScoutTest extends TestCase
         self::assertSame(0, $r['code'], $r['out'] . $r['err']);
         self::assertStringContainsString('Peugeot 2008', $r['out'], 'printed');
         self::assertSame([], $channel->sent, 'sent nowhere');
-        self::assertSame(1, \Scout\Car\VehicleStore::open($this->db)->pendingRollupCount(), 'still queued');
+        self::assertSame(self::QUEUED_PARUVENDU, \Scout\Car\VehicleStore::open($this->db)->pendingRollupCount(), 'still queued');
     }
 
     /** The floor at startup, like the rent digest's: a queue left when the container stopped is drained before the first pass. */
     public function testTheRollupFloorDrainsTheQueueAtStartupUnderWatchAndWritesItsMarkerOnDelivery(): void
     {
-        $this->queueTheWeakParuVenduCard();
+        $this->queueTheParuVenduCards();
         $channel = new CarRecordingChannel();
         putenv('SCOUT_MAX_PASSES=1');
         try {
@@ -150,7 +218,7 @@ final class CarScoutTest extends TestCase
     /** The marker is written AFTER the channel confirms: a rollup the channel refused leaves the window open and the queue intact. */
     public function testTheRollupFloorWritesNoMarkerAndMarksNothingWhenTheChannelRefuses(): void
     {
-        $this->queueTheWeakParuVenduCard();
+        $this->queueTheParuVenduCards();
         $channel = new CarRecordingChannel();
         $channel->down = true;
         putenv('SCOUT_MAX_PASSES=1');
@@ -162,7 +230,7 @@ final class CarScoutTest extends TestCase
 
         self::assertSame([], $channel->sent);
         self::assertFileDoesNotExist(\dirname($this->db) . '/car-rollup.txt', 'no delivery, no marker — the window stays open');
-        self::assertSame(1, \Scout\Car\VehicleStore::open($this->db)->pendingRollupCount(), 'still queued for the next window');
+        self::assertSame(self::QUEUED_PARUVENDU, \Scout\Car\VehicleStore::open($this->db)->pendingRollupCount(), 'still queued for the next window');
         self::assertStringContainsString('non délivré', $r['out'] . $r['err']);
     }
 
@@ -344,13 +412,13 @@ final class CarScoutTest extends TestCase
      */
     public function testTheCarVerbReportsARefusedRollupAsStillWaiting(): void
     {
-        $this->queueTheWeakParuVenduCard();
+        $this->queueTheParuVenduCards();
         $channel = new CarRecordingChannel();
         $channel->refuseKind = \Scout\Core\Notify\NotificationKind::ROLLUP;
 
         $r = $this->scout(['--domain=car', 'rollup'], $channel);
 
-        self::assertSame(1, \Scout\Car\VehicleStore::open($this->db)->pendingRollupCount(), 'premise: nothing drained');
+        self::assertSame(self::QUEUED_PARUVENDU, \Scout\Car\VehicleStore::open($this->db)->pendingRollupCount(), 'premise: nothing drained');
         self::assertStringContainsString(
             'autre(s) en attente',
             $r['out'] . $r['err'],
@@ -433,13 +501,46 @@ final class CarScoutTest extends TestCase
         return $sighting->dedupKey;
     }
 
-    /** One `run --once` over the ParuVendu fixtures under the shipped gate queues exactly the 46-point 2008. */
-    private function queueTheWeakParuVenduCard(): void
+    /**
+     * A private repo root carrying the SHIPPED config with one key overridden.
+     *
+     * `criteria.local.json` is the mechanism the config layer already provides for exactly this —
+     * field-by-field override — so nothing new is invented and the shipped `criteria.json` is read
+     * unchanged, which is what keeps the test honest about everything it did NOT override.
+     */
+    private function rootWithPushGate(int $gate): string
+    {
+        $root = sys_get_temp_dir() . '/scout-car-root-' . bin2hex(random_bytes(4));
+        mkdir($root . '/config/car', 0o777, true);
+        foreach (['criteria.json', 'sources.json'] as $f) {
+            copy(self::ROOT . '/config/car/' . $f, $root . '/config/car/' . $f);
+        }
+        file_put_contents(
+            $root . '/config/car/criteria.local.json',
+            (string) json_encode(['notify' => ['push_min_score' => $gate]]),
+        );
+        $this->tempRoots[] = $root;
+
+        return $root;
+    }
+
+    /**
+     * One `run --once` over the ParuVendu fixtures under the shipped gate queues ALL THREE cards.
+     *
+     * **IT QUEUED ONE UNTIL TRACK 7, AND THE CHANGE IS THE RULING RATHER THAN A REGRESSION.** The
+     * three fixture cards are two Renaults and a Peugeot — every one of them on `brand_avoid` — and
+     * they scored 80 / 73 / 46 while an unlisted make earned the whole brand share. Under the ruled
+     * weights (2026-09-08: *everything else must have lowest score and almost not show up*) they
+     * score **68 / 63 / 50** and none of them reaches `push_min_score: 73`. That is the developer's
+     * instruction working end to end through the CLI, and {@see testAnUnseededRunHoldsBackEveryAvoidedMakeUnderTheShippedGate}
+     * asserts it as a guarantee rather than leaving it as an incidental number here.
+     */
+    private function queueTheParuVenduCards(): void
     {
         \Scout\Car\VehicleStore::open($this->db)->record(new \Scout\Car\VehicleListing(sourceName: 'paruvendu', externalId: 'seed'), '2026-08-01T00:00:00Z');
         $r = $this->scout(['--domain=car', 'run', '--once', '--source=paruvendu'], new CarRecordingChannel());
         self::assertSame(0, $r['code'], $r['err']);
-        self::assertSame(1, \Scout\Car\VehicleStore::open($this->db)->pendingRollupCount());
+        self::assertSame(self::QUEUED_PARUVENDU, \Scout\Car\VehicleStore::open($this->db)->pendingRollupCount());
     }
 
     public function testDoctorReportsTheSourceAndTheSeenSet(): void
@@ -832,14 +933,14 @@ final class CarScoutTest extends TestCase
         }
     }
     /** @return array{code: int, out: string, err: string} */
-    private function scout(array $argv, ?CarRecordingChannel $channel = null, string $now = '2026-08-29T20:00:00+02:00'): array
+    private function scout(array $argv, ?CarRecordingChannel $channel = null, string $now = '2026-08-29T20:00:00+02:00', ?string $root = null): array
     {
         $out = fopen('php://memory', 'r+');
         $err = fopen('php://memory', 'r+');
         self::assertIsResource($out);
         self::assertIsResource($err);
 
-        $code = (new Scout(self::ROOT, $out, $err, $now, null, $channel === null ? null : new Notifier([$channel])))->run($argv);
+        $code = (new Scout($root ?? self::ROOT, $out, $err, $now, null, $channel === null ? null : new Notifier([$channel])))->run($argv);
 
         rewind($out);
         rewind($err);

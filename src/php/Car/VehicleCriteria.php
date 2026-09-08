@@ -17,14 +17,27 @@ final readonly class VehicleCriteria
 {
     /**
      * @param list<string>       $postcodePrefixes empty = any location (decision 6: settable to any set)
-     * @param list<string>       $bodyRank         folded, best first; unranked bodies score 0 and are still notified
+     * @param list<string>       $bodyFavour       folded; a listed body takes the FULL share, an unlisted one none
      * @param array<string,int>  $weights          price, age, mileage, gearbox, fuel, body — summing to 100
      * @param list<string>       $excludePatterns  extra regexes (folded text); the §1 vehicle set is NOT here
      */
     public function __construct(
         public int $maxPriceEur,
         public array $postcodePrefixes,
-        public array $bodyRank,
+        /**
+         * Bodies the developer wants, folded — a SET, and the order carries no meaning.
+         *
+         * **RENAMED FROM `bodyRank` / `body_rank` IN TRACK 7, AND THE RENAME IS THE POINT.** It was
+         * the `commune_rank` mechanism: the first entry took the full share, the second two thirds,
+         * the third one third. The developer ruled suv, break and berline **equally very high**
+         * (2026-09-08), so the position stopped meaning anything — and a key whose name asserts a
+         * mechanism that no longer exists is the failure this repo has paid for more than any
+         * other. The loader refuses `body_rank` BY NAME and says what to write instead, so a stale
+         * `criteria.local.json` gets an instruction rather than the generic unknown-key message.
+         *
+         * @var list<string>
+         */
+        public array $bodyFavour,
         public int $peakAgeYears,
         public int $peakMileageKm,
         public array $weights,
@@ -40,6 +53,23 @@ final readonly class VehicleCriteria
          * @var list<string>
          */
         public array $brandAvoid = [],
+        /**
+         * Makes the developer WANTS, folded — the third arm of Track 7's brand model.
+         *
+         * Same stem semantics as `brandAvoid` and the same matcher, deliberately: the `ds` /
+         * `ds automobiles` miss that forced the non-letter boundary runs in BOTH directions, and a
+         * favoured list matched by exact equality would silently miss the same source's spelling
+         * while every score stayed plausible.
+         *
+         * With both lists configured the share is a THREE-WAY: favoured takes it all, avoided takes
+         * none, and a make on NEITHER list takes none either — the literal reading of the ruling
+         * *"everything else must have lowest score and almost not show up"* (2026-09-08). With
+         * both lists EMPTY no preference is configured and every make takes the share, which is
+         * what keeps the achievable maximum at 100 for such a deployment.
+         *
+         * @var list<string>
+         */
+        public array $brandFavour = [],
     ) {}
 
     /** Hard rule 9: an UNKNOWN location never rejects; a stated one outside the set does. */
@@ -81,13 +111,46 @@ final readonly class VehicleCriteria
      */
     public function isAvoidedBrand(?string $make): bool
     {
+        return self::matchesStem($make, $this->brandAvoid);
+    }
+
+    /**
+     * Is this make one the developer is actively looking for? (Track 7-C, ruling 2026-09-08.)
+     *
+     * ONE MATCHER, shared with {@see isAvoidedBrand()} rather than written again. A second copy is
+     * exactly how the favoured side would have re-acquired the `ds` / `ds automobiles` defect the
+     * avoided side was repaired for — *a fix landing on one of two symmetric surfaces* is this
+     * repo's most-repeated defect, and the two surfaces here are one method apart.
+     */
+    public function isFavouredBrand(?string $make): bool
+    {
+        return self::matchesStem($make, $this->brandFavour);
+    }
+
+    /**
+     * Does a make match any stem in a list, to a NON-LETTER boundary?
+     *
+     * `null` — no make extracted — matches nothing (hard rule 9: unknown is neither wanted nor
+     * disfavoured), which is the same direction every other unknown takes here.
+     *
+     * @param list<string> $stems folded at load
+     */
+    private static function matchesStem(?string $make, array $stems): bool
+    {
         if ($make === null || trim($make) === '') {
             return false;
         }
 
-        $folded = \Scout\Core\Text::fold($make);
+        try {
+            $folded = Text::fold($make);
+        } catch (MalformedText) {
+            // A make that cannot be folded is a make nobody read. It matches no list — the same
+            // answer `null` gets, and the safe one: the alternative is a preference applied to a
+            // string nobody could decode.
+            return false;
+        }
 
-        foreach ($this->brandAvoid as $stem) {
+        foreach ($stems as $stem) {
             if ($folded === $stem) {
                 return true;
             }
@@ -106,24 +169,32 @@ final readonly class VehicleCriteria
         return false;
     }
 
-    /** 1-based rank of a body in the preference list, or null when unranked. */
-    public function bodyRankOf(?string $body): ?int
+    /**
+     * Is this body one of the wanted ones? FLAT — every entry is worth the same.
+     *
+     * This returned a 1-based RANK until Track 7 and the scorer paid the position out
+     * proportionally. suv, break and berline are now equally wanted (developer ruling 2026-09-08),
+     * so a rank would be a number nobody uses and a name that lies. `str_contains` is kept
+     * deliberately: `4x4 - suv` is how one source writes it, and 60 stored cars depend on that
+     * being read as a suv.
+     */
+    public function isFavouredBody(?string $body): bool
     {
         if ($body === null) {
-            return null;
+            return false;
         }
         try {
             $key = Text::fold($body);
         } catch (MalformedText) {
-            return null;
+            return false;
         }
-        foreach ($this->bodyRank as $i => $ranked) {
-            if ($key === $ranked || str_contains($key, $ranked)) {
-                return $i + 1;
+        foreach ($this->bodyFavour as $wanted) {
+            if ($key === $wanted || str_contains($key, $wanted)) {
+                return true;
             }
         }
 
-        return null;
+        return false;
     }
 
     /** The first extra exclusion pattern matching the listing's folded text, or null. */

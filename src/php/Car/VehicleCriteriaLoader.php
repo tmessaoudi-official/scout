@@ -44,17 +44,25 @@ final class VehicleCriteriaLoader
             }
         }
 
-        $bodyRank = [];
-        foreach ($r->requireStringList('body_rank', allowEmptyList: true) as $body) {
+        // REFUSED BY NAME, not left to the generic unknown-key message. `body_rank` was the key
+        // until Track 7 and it meant something this scorer no longer does — a POSITION, paid out
+        // proportionally. Saying so is worth a branch: a stale `criteria.local.json` otherwise gets
+        // *"clé inconnue"* and no hint that the list it holds is still exactly right.
+        if ($r->has('body_rank')) {
+            throw ConfigError::at($pointer . '.body_rank', 'clé renommée en `body_favour` (Track 7, 2026-09-08) : les carrosseries sont désormais à égalité, la position ne veut plus rien dire. Renommez la clé, la liste elle-même est inchangée.');
+        }
+
+        $bodyFavour = [];
+        foreach ($r->requireStringList('body_favour', allowEmptyList: true) as $body) {
             try {
                 $key = Text::fold($body);
             } catch (MalformedText $e) {
-                throw ConfigError::at($pointer . '.body_rank', 'carrosserie illisible : ' . $e->getMessage());
+                throw ConfigError::at($pointer . '.body_favour', 'carrosserie illisible : ' . $e->getMessage());
             }
-            if ($key === '' || in_array($key, $bodyRank, true)) {
-                throw ConfigError::at($pointer . '.body_rank', 'carrosserie vide ou en double : ' . var_export($body, true));
+            if ($key === '' || in_array($key, $bodyFavour, true)) {
+                throw ConfigError::at($pointer . '.body_favour', 'carrosserie vide ou en double : ' . var_export($body, true));
             }
-            $bodyRank[] = $key;
+            $bodyFavour[] = $key;
         }
 
         $peakAge = $r->requireInt('peak_age_years', 1, 30);
@@ -83,6 +91,32 @@ final class VehicleCriteriaLoader
             $brandAvoid[] = $folded;
         }
 
+        // The FAVOURED half of Track 7's three-way, folded by the same rule for the same reason.
+        $brandFavour = [];
+        foreach ($r->has('brand_favour') ? $r->requireStringList('brand_favour', allowEmptyList: true) : [] as $brand) {
+            $folded = Text::fold($brand);
+
+            if ($folded === '') {
+                throw ConfigError::at($pointer . '.brand_favour', 'une marque vide n\'est pas une marque');
+            }
+
+            $brandFavour[] = $folded;
+        }
+
+        // A MAKE ON BOTH LISTS IS A CONTRADICTION, AND SILENCE ABOUT IT WOULD BE THE WORST ANSWER.
+        // `VehicleScorer` checks avoid before favour, so a clash would resolve quietly to *avoided*
+        // and the favoured entry would sit in the config doing nothing — a configured preference
+        // inert while every score stays plausible, which is precisely the defect class the stem
+        // matcher was repaired for. Refusing at load makes it a startup error instead.
+        //
+        // RESIDUAL, stated rather than left to be found: this compares whole stems. Two stems where
+        // one is a strict PREFIX of the other (`ds` avoided beside a hypothetical `dsx` favoured)
+        // are not detected, and the scorer's avoid-first order is what decides those.
+        $both = array_values(array_intersect($brandAvoid, $brandFavour));
+        if ($both !== []) {
+            throw ConfigError::at($pointer . '.brand_favour', 'marque(s) à la fois recherchée(s) et à éviter : ' . implode(', ', $both));
+        }
+
         $patterns = $r->requireStringList('exclude_patterns', allowEmptyList: true);
         foreach ($patterns as $pattern) {
             if (@preg_match('~' . $pattern . '~u', '') === false) {
@@ -103,7 +137,7 @@ final class VehicleCriteriaLoader
         $n->done();
         $r->done();
 
-        return new VehicleCriteria($maxPrice, $prefixes, $bodyRank, $peakAge, $peakKm, $weights, $patterns, $notify, $brandAvoid);
+        return new VehicleCriteria($maxPrice, $prefixes, $bodyFavour, $peakAge, $peakKm, $weights, $patterns, $notify, $brandAvoid, $brandFavour);
     }
 
     /** @return array<string,mixed> */

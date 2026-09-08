@@ -713,11 +713,18 @@ first line to relax, by a commit. **The classifier reads negations first**: *jam
 *non gagé*, *aucun accident* are what an honest ad says, and a bare scan would reject the good ads
 and keep the silent ones. Price (≤ 30 000 €, the one hard ceiling) and a STATED location outside
 Île-de-France reject; age, mileage, gearbox, fuel, body and **brand** are score components and never
-reject. `brand_avoid` is 10 points of the existing 100 — flat and equal, a list of **stems** rather
-than of makes (`alfa`, never `alfa romeo`), matched to a non-letter boundary because the live store
-carries one marque under two spellings. An unlisted make earns the share; a listed one earns none;
-an **unextracted** make earns none either and says `marque inconnue — hors score`, which is the arm
-every other unknown component here takes.
+reject. **Brand is 25 points of the existing 100 and a THREE-WAY** (developer ruling, 2026-09-08):
+`brand_favour` earns the whole share, `brand_avoid` earns none, and a make on NEITHER list earns
+none either — the literal reading of *everything else must have lowest score*. Both are lists of
+**stems** rather than of makes (`alfa`, never `alfa romeo`; `mercedes` covers `mercedes-benz`),
+matched to a non-letter boundary because the live store carries one marque under two spellings, and
+a make on both lists is refused at load. An **unextracted** make earns none either and says
+`marque inconnue — hors score`, which is the arm every other unknown component here takes. Only when
+both lists are empty does every make earn the share, which keeps the achievable maximum at 100 for a
+deployment configuring no preference. `body_favour` is FLAT — suv, break and berline are equal — and
+gearbox is weight 0, which is how *accept both manual and automatic* was implemented: 276 of 1 004
+stored cars state no gearbox, so awarding both arms full marks would still have penalised a quarter
+of the fleet for silence.
 No email source states a location and Autohero delivers nationally, so the geography filter is
 inert on all six by measurement.
 

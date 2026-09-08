@@ -56,7 +56,54 @@ final class NotifyTest extends TestCase
             rooms: $pick('rooms', 4),
             floor: $pick('floor', null),
             hasElevator: $pick('hasElevator', null),
+            description: $pick('description', ''),
         );
+    }
+
+    // ------------------------------------------------- Track 7-B, the amenity line
+
+    /**
+     * TERRACE, CAVE, PARKING JOIN THE CONTEXT LINE (developer ruling, 2026-09-08).
+     *
+     * They answer the same question the departement, the floor and the lift do — what IS this flat
+     * — so they join that line rather than getting one of their own, and they obey the same rule:
+     * an amenity nobody mentioned prints nothing.
+     */
+    public function testTheAmenitiesTheAdStatesJoinTheContextLine(): void
+    {
+        $n = (new Formatter())->match(
+            $this->listing([
+                'floor' => 2,
+                'hasElevator' => true,
+                'description' => 'Beau T4 avec terrasse et un parking inclus dans le loyer.',
+            ]),
+            Verdict::matched(82, ['mention explicite « LLI »'], true),
+        );
+
+        self::assertContains('Yvelines (78) · 2e étage · avec ascenseur · terrasse · parking inclus', $n->reasons);
+    }
+
+    /**
+     * THE COUNTERWEIGHT, and without it the feature is satisfied by printing every amenity always.
+     *
+     * Five of the eight rent sources carry no listing prose at all — PAP's `description` is a fixed
+     * banner on all 57 stored rows — so on those the line must come back exactly as it did before
+     * this feature existed. An absent amenity means the ad was SILENT, never that the flat lacks
+     * one: hard rule 9 at the display layer, the same rule that makes an unmentioned lift `null`
+     * rather than `false`.
+     */
+    public function testAnAdThatMentionsNoAmenityAddsNothingToTheLine(): void
+    {
+        $n = (new Formatter())->match(
+            $this->listing([
+                'floor' => 2,
+                'hasElevator' => true,
+                'description' => 'PAP.fr De Particulier à Particulier',
+            ]),
+            Verdict::matched(82, [], true),
+        );
+
+        self::assertContains('Yvelines (78) · 2e étage · avec ascenseur', $n->reasons, 'byte-identical to the pre-Track-7 line');
     }
 
     // ---------------------------------------------------------------- payload

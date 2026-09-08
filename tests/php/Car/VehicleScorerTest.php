@@ -36,7 +36,7 @@ final class VehicleScorerTest extends TestCase
         self::assertLessThan(10, $v->score);
         self::assertFalse($v->highPriority);
         self::assertContains('diesel — préférence, pas une règle ZFE', $v->reasons, 'never a regulatory claim');
-        self::assertContains('monospace — carrosserie non classée', $v->reasons);
+        self::assertContains('monospace — carrosserie hors préférences', $v->reasons, 'the wording followed the mechanism: there is no rank left to be outside of');
     }
 
     public function testThePriceCeilingIsTheOneHardLine(): void
@@ -87,12 +87,25 @@ final class VehicleScorerTest extends TestCase
         self::assertSame(0, $far->score, 'clamped: a component can never go negative and act as a back-door rejection');
     }
 
-    public function testBodyRankScoresByPosition(): void
+    /**
+     * FLAT SINCE TRACK 7 — every wanted body is worth the same.
+     *
+     * This asserted 10 / 7 / 3 for suv / break / berline, the `commune_rank` mechanism paying the
+     * position out proportionally. The developer ruled the three EQUALLY very high (2026-09-08), so
+     * the list is a set, the key is `body_favour`, and the assertion is equality between the three
+     * rather than a ladder — the shape that would go red if the positional share ever came back.
+     *
+     * The counterweight is the fourth line: an unwanted body still scores 0 and is still notified,
+     * because this is a preference and not a disqualifier (hard rule 8).
+     */
+    public function testBodyFavourIsFlatAcrossEveryWantedBody(): void
     {
-        self::assertSame(10, $this->judge($this->car(body: 'SUV'))->score);
-        self::assertSame(7, $this->judge($this->car(body: 'Break'))->score, '10 × 2/3, rounded');
-        self::assertSame(3, $this->judge($this->car(body: 'Berline'))->score, '10 × 1/3, rounded');
-        self::assertSame(0, $this->judge($this->car(body: 'Coupé'))->score);
+        $suv = $this->judge($this->car(body: 'SUV'))->score;
+
+        self::assertSame($suv, $this->judge($this->car(body: 'Break'))->score, 'break is worth exactly what a suv is');
+        self::assertSame($suv, $this->judge($this->car(body: 'Berline'))->score, 'and so is a berline — no ladder');
+        self::assertGreaterThan(0, $suv, 'premise: a wanted body earns something, or the equality above is vacuous');
+        self::assertSame(0, $this->judge($this->car(body: 'Coupé'))->score, 'unwanted earns nothing — and is still a MATCH');
     }
 
     public function testAnExtraExcludePatternRejects(): void

@@ -314,10 +314,13 @@ final readonly class RawListing
      * query or fragment is machine parameters by construction — the same distinction
      * {@see \Scout\Rent\Adapters\EmailAlertSource::stableId()} already draws for identity.
      *
-     * Applied HERE because this method is the classifier's only prose surface — every tier folds it,
-     * and nothing else in the tree calls it.
+     * PUBLIC since Track 7, and only because the alternative was a THIRD copy. `Core\Amenities`
+     * scans the same prose for the same reason — `cave` was measured inside a SeLoger tracking URL
+     * — and this rule already exists twice (here and in `EmailAlertSource::prose()`). Writing it
+     * again is *a fix landing on one of two symmetric surfaces* with the third one added by hand,
+     * which is this repo's most-repeated defect; a caller is cheaper than a copy.
      */
-    private static function withoutUrlParameters(string $text): string
+    public static function withoutUrlParameters(string $text): string
     {
         return preg_replace('~(https?://[^\s<>"\']*?)[?#][^\s<>"\']*~i', '$1', $text) ?? $text;
     }
