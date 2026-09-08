@@ -168,6 +168,54 @@ else
   ko "a hex-prefixed leftover is reported, with the command to remove it" "exit=$code out=$out"
 fi
 
+# ── 4b. THE COUNTERWEIGHT CASE 4 LACKED, and its absence let the tool contradict itself for a day.
+#    A recreate interrupted mid-flight — a foreground `timeout` SIGTERMing the whole process group
+#    while compose sat in its minutes-long stop grace period — leaves the RENAMED container RUNNING
+#    as the service rather than dead. Compose still resolves the service to it, so it appears in BOTH
+#    lists: the loop above certifies it `running, image courante`, and the leftover scan named that
+#    same container an orphan with `docker rm -f` beside it. One real run on 2026-09-07 printed both,
+#    four lines apart. The service check was right; the remedy would have killed the watcher.
+#
+#    The `rm -f` line is EXTRACTED before it is asserted on. A glob over the whole output is satisfied
+#    or defeated by which section printed first, not by what the command line contains — the
+#    unintended-match shape this repo names as the remainder-digit-boundary scar.
+wedged='rent-scout\tscout-rent-scout-1\trunning\ncar-scout\t0250190bdb78_scout-car-scout-1\trunning\n'
+reset_case; PS_ROWS="$wedged" LEFTOVERS='0250190bdb78_scout-car-scout-1\n' out="$(run)"; code=$?
+rm_line="$(printf '%s\n' "$out" | grep -F 'docker rm -f')"
+if [[ $code -eq 1 && "$out" == *"EST le service"* && "$out" == *"--force-recreate"* \
+      && "$rm_line" != *"0250190bdb78"* ]]; then
+  ok "a renamed container that IS the live service is never offered to 'docker rm -f'"
+else
+  ko "a renamed container that IS the live service is never offered to 'docker rm -f'" \
+     "exit=$code rm_line='$rm_line' out=$out"
+fi
+
+# ── 4c. BOTH AT ONCE, which is what makes the split more than a relabelling. A constant classifier
+#    passes 4 or 4b but never both: everything-live loses the corpse, everything-dead resurrects the
+#    contradiction. Here one hex container is the live service and the other is a corpse, and each
+#    must draw its own verdict and its own command.
+reset_case; PS_ROWS="$wedged" \
+  LEFTOVERS='0250190bdb78_scout-car-scout-1\nd9272b63ebf1_scout-rent-scout-1\n' out="$(run)"; code=$?
+rm_line="$(printf '%s\n' "$out" | grep -F 'docker rm -f')"
+if [[ $code -eq 1 && "$out" == *"EST le service"* && "$out" == *"orphelins"* \
+      && "$rm_line" == *"d9272b63ebf1"* && "$rm_line" != *"0250190bdb78"* ]]; then
+  ok "a live rename and a corpse in one run get opposite commands"
+else
+  ko "a live rename and a corpse in one run get opposite commands" \
+     "exit=$code rm_line='$rm_line' out=$out"
+fi
+
+# ── 4d. `docker ps -a` IS MACHINE-WIDE, and this host runs other compose projects. A hex-prefixed
+#    container naming none of OUR services is somebody else's interrupted recreate: it cannot make
+#    our next one fail, and printing `docker rm -f` beside it is the same destructive remedy with a
+#    wider blast radius than the one this whole case set exists for.
+reset_case; PS_ROWS="$healthy" LEFTOVERS='ab12cd34ef56_global_stack-03node24-1\n' out="$(run)"; code=$?
+if [[ $code -eq 0 && "$out" != *"orphelins"* && "$out" != *"docker rm -f"* ]]; then
+  ok "another project's hex-prefixed leftover is not this project's to delete"
+else
+  ko "another project's hex-prefixed leftover is not this project's to delete" "exit=$code out=$out"
+fi
+
 # ── 5. No image at all is a DIFFERENT answer from a bad deployment: exit 2, "build it first".
 #    Collapsing the two would let a missing build read as a broken watcher.
 reset_case; PS_ROWS="$healthy" IMAGE_MISSING=1 out="$(run)"; code=$?

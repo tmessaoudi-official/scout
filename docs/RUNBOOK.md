@@ -109,6 +109,14 @@ shorter list. `verify-deploy.sh` asserts the four things that output cannot show
 service has a running container; it runs the **current** image; that image was **built after the newest
 `src/` commit**; and no hex-prefixed leftover is holding a name the next recreate will die on.
 
+A hex-prefixed name is **two states**, and they take opposite commands. If the tool says *conteneurs
+orphelins*, the container is dead and `docker rm -f <name>` is the remedy it prints. If it says the
+container **EST le service**, compose still resolves a declared service to it — a recreate was killed
+inside its grace period and left it running — so removing it kills the watcher; recover the clean name
+with `setsid docker compose up -d --force-recreate --remove-orphans <service>`, and never run compose
+under a foreground `timeout`, which is what produces the state. A hex-prefixed container belonging to
+another compose project on this host is not reported at all.
+
 ### 1.5 Schedule the backup
 
 ```bash

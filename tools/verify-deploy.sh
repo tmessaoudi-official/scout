@@ -20,7 +20,9 @@
 #   2. that container runs the CURRENT image, not the one it was created from three deploys ago —
 #      `src/` is baked in, so a green tree says nothing about what the watcher is executing;
 #   3. no hex-prefixed leftover (`d9272b63ebf1_scout-car-scout-1`) is still lying around, because
-#      that is what makes the NEXT recreate fail rather than this one.
+#      that is what makes the NEXT recreate fail rather than this one — and that such a name is
+#      classified before a remedy is printed beside it: the same shape is a DEAD leftover to remove
+#      and a RENAMED container that IS the running service, which must not be removed.
 #
 # Read-only: it inspects, it never starts, stops or removes anything. Exit 0 = the deployment is
 # what you think it is.
@@ -145,15 +147,90 @@ if git -C "$(pwd)" rev-parse --is-inside-work-tree > /dev/null 2>&1; then
   fi
 fi
 
+# ── A HEX-PREFIXED NAME IS TWO DIFFERENT STATES, AND THEY WANT OPPOSITE COMMANDS ────────────────
+#
 # The leftover is not this deploy's failure; it is the NEXT one's. Compose renames the old container
 # out of the way and, when the recreate does not complete, leaves it behind holding the name.
-leftovers="$(docker ps -a --format '{{.Names}}' 2>/dev/null | grep -E '^[0-9a-f]{12}_' || true)"
-if [[ -n "$leftovers" ]]; then
+#
+# BUT AN INTERRUPTED RECREATE DOES NOT ALWAYS LEAVE A CORPSE. When compose is killed inside its
+# minutes-long stop grace period — a foreground `timeout` SIGTERMing the whole process group — the
+# renamed container is left RUNNING, and compose still resolves the service to it. This scan used to
+# grep `docker ps -a` and exclude nothing, so it could not tell that apart from a dead leftover: on
+# 2026-09-07 one real run printed `✓ car-scout (0250190bdb78_scout-car-scout-1) : running, image
+# courante` and, four lines below, offered `docker rm -f` for that same container. The service check
+# was right; the remedy would have removed the watcher it had just certified.
+#
+# So the set is partitioned against the association compose itself reports, and the two halves get
+# opposite instructions. Neither half is silent: both are still `bad`.
+declare -A service_of=() state_of=()
+for service in "${services[@]}"; do
+  for row in "${rows[@]}"; do
+    if [[ "${row%%$'\t'*}" == "$service" ]]; then
+      service_of["$(printf '%s' "$row" | cut -f2)"]="$service"
+      state_of["$(printf '%s' "$row" | cut -f2)"]="$(printf '%s' "$row" | cut -f3)"
+      break
+    fi
+  done
+done
+
+# `docker ps -a` IS MACHINE-WIDE, and this host runs other compose projects. Somebody else's
+# interrupted recreate cannot make OUR next one fail, and `docker rm -f` beside it is the same
+# destructive remedy with a wider blast radius than the one this block exists for. A compose
+# container is `<project>-<service>-<replica>`, so the leftover is ours only when what follows the
+# hex prefix names one of the services we just read out of compose.
+ours() {
+  local rest="${1#*_}" base svc
+  base="${rest%-*}"
+  [[ "$base" != "$rest" && "${rest##*-}" =~ ^[0-9]+$ ]] || return 1
+  for svc in "${services[@]}"; do
+    [[ "$base" == "$svc" || "$base" == *"-$svc" ]] && return 0
+  done
+  return 1
+}
+
+recreate_hint() {
+  printf '      un recreate interrompu pendant le stop grace period laisse le conteneur renommé EN\n'
+  printf '      MARCHE comme service. La reprise lui rend son nom propre :\n'
+  printf '        setsid docker compose up -d --force-recreate --remove-orphans %s\n' "$1"
+  printf '      lancez compose DÉTACHÉ (setsid) — sous un timeout au premier plan, l%sétat revient.\n' "'"
+}
+
+live=() dead=() foreign=0
+while IFS= read -r leftover; do
+  [[ -n "$leftover" ]] || continue
+  if [[ -n "${service_of[$leftover]:-}" ]]; then
+    live+=("$leftover")
+  elif ours "$leftover"; then
+    dead+=("$leftover")
+  else
+    foreign=$((foreign + 1))
+  fi
+done < <(docker ps -a --format '{{.Names}}' 2>/dev/null | grep -E '^[0-9a-f]{12}_' || true)
+
+for leftover in "${live[@]}"; do
+  svc="${service_of[$leftover]}"
+  if [[ "${state_of[$leftover]}" == "running" ]]; then
+    bad "$leftover : conteneur RENOMMÉ qui EST le service « $svc » — NE LE SUPPRIMEZ PAS"
+  else
+    # The service loop above already counted this one; a second `bad` would report one container as
+    # two problems. Say it anyway, because the remedy is not the one that block prints.
+    say "$leftover : le service « $svc » y est résolu (état « ${state_of[$leftover]} ») — déjà signalé ci-dessus"
+  fi
+  recreate_hint "$svc"
+done
+
+if [[ ${#dead[@]} -gt 0 ]]; then
   bad "conteneurs orphelins laissés par un recreate interrompu — ils feront échouer le prochain :"
-  printf '      %s\n' $leftovers
-  printf '      docker rm -f %s\n' $leftovers
-else
-  good "aucun conteneur orphelin d'un recreate interrompu"
+  printf '      %s\n' "${dead[@]}"
+  printf '      docker rm -f %s\n' "${dead[@]}"
+fi
+
+if [[ ${#live[@]} -eq 0 && ${#dead[@]} -eq 0 ]]; then
+  good "aucun conteneur laissé par un recreate interrompu"
+fi
+
+if (( foreign > 0 )); then
+  say "($foreign conteneur(s) préfixé(s) d'un AUTRE projet ignoré(s) — docker ps -a est global à la machine)"
 fi
 
 if (( problems > 0 )); then

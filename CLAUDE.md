@@ -2187,7 +2187,14 @@ tools/verify-deploy.sh           Did the redeploy land? `up -d` printing Started
                                  has a RUNNING container, on the CURRENT image, that the
                                  IMAGE ITSELF postdates the newest src/ commit, and that no
                                  hex-prefixed leftover holds a name for the next recreate to
-                                 die on. Read-only. The image-age check is a DIFFERENT
+                                 die on. That last one is TWO verdicts since 2026-09-08: a
+                                 dead leftover takes `docker rm -f`, while a renamed
+                                 container the service still RESOLVES TO takes
+                                 `up -d --force-recreate` and must not be removed — the tool
+                                 certified one `running, image courante` and offered to
+                                 delete it four lines below. A hex name from another compose
+                                 project on this host is not reported at all.
+                                 Read-only. The image-age check is a DIFFERENT
                                  question from the image-id one and the answer looks the
                                  same: "running, image courante" is true of a watcher whose
                                  image predates the fix by a day and a half, which is

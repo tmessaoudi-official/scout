@@ -252,6 +252,16 @@ than one from three deploys ago, **that the image itself was built after the new
 and no hex-prefixed leftover is still holding a name that will kill the next recreate. It is
 read-only, and `tests/test-verify-deploy.sh` is its sabotage test.
 
+That last one is **two states wearing one name**, and until 2026-09-08 the tool printed one remedy
+for both. A recreate killed inside the stop grace period can leave the renamed container *running*,
+with compose still resolving the service to it — so one real run certified `✓ car-scout
+(0250190bdb78_scout-car-scout-1) : running, image courante` and, four lines below, offered
+`docker rm -f` for that same container. A dead leftover is removed; a renamed container that **is**
+the service is recovered with `docker compose up -d --force-recreate --remove-orphans <service>`,
+run detached (`setsid`) rather than under a foreground `timeout`, which is what produces the state.
+`docker ps -a` is machine-wide, so a hex-prefixed container naming none of this project's services
+is another project's and is not reported at all.
+
 The third of those is a different question from the second, with the same comforting output. The
 second asks whether the containers run the image you built; the third asks whether that image was
 built from the code you committed. On 2026-09-04 a §1 fix was committed, pushed, CI-green and
