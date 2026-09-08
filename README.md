@@ -260,7 +260,9 @@ with compose still resolving the service to it — so one real run certified `�
 the service is recovered with `docker compose up -d --force-recreate --remove-orphans <service>`,
 run detached (`setsid`) rather than under a foreground `timeout`, which is what produces the state.
 `docker ps -a` is machine-wide, so a hex-prefixed container naming none of this project's services
-is another project's and is not reported at all.
+is another project's: it is **counted, never named, and never given a remedy** — the count is there
+because on a host running several compose projects, silence about what the scan dropped is
+indistinguishable from a scan that found nothing.
 
 The third of those is a different question from the second, with the same comforting output. The
 second asks whether the containers run the image you built; the third asks whether that image was

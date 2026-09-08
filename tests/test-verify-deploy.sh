@@ -205,15 +205,54 @@ else
      "exit=$code rm_line='$rm_line' out=$out"
 fi
 
+# ── 4e. TWO ROWS UNDER ONE SERVICE, which is the 2026-08-31 state this whole tool was written for:
+#    the new container sits in `created` while the RENAMED old one is still running, and compose
+#    lists BOTH under `rent-scout` because both carry its labels. A map built with a `break` — one
+#    entry per service rather than one per row — keeps the first and loses the second, so the running
+#    container misses the association and falls straight back into the corpse arm with `docker rm -f`
+#    beside it. That is the defect this file exists for, rebuilt inside its own fix.
+two_rows='rent-scout\tscout-rent-scout-1\tcreated\nrent-scout\t7c1f0a9b3e42_scout-rent-scout-1\trunning\ncar-scout\tscout-car-scout-1\trunning\n'
+reset_case; PS_ROWS="$two_rows" LEFTOVERS='7c1f0a9b3e42_scout-rent-scout-1\n' out="$(run)"; code=$?
+rm_line="$(printf '%s\n' "$out" | grep -F 'docker rm -f')"
+if [[ $code -eq 1 && "$out" == *"--force-recreate"* && "$rm_line" != *"7c1f0a9b3e42"* ]]; then
+  ok "a service listing TWO containers still resolves to the renamed one"
+else
+  ko "a service listing TWO containers still resolves to the renamed one" \
+     "exit=$code rm_line='$rm_line' out=$out"
+fi
+
+# ── 4f. ONE CONTAINER IS ONE PROBLEM. When the renamed container is not running, the service loop
+#    has already counted it — a second `bad` here reports one container as two problems, which is a
+#    tool that inflates its own findings. The count is asserted with the digit boundary pinned,
+#    because `*"1 problème"*` is satisfied by `11 problème` — a scar this repo earned last week.
+stopped_rename='rent-scout\tscout-rent-scout-1\trunning\ncar-scout\t3f5c81a0d7be_scout-car-scout-1\texited\n'
+reset_case; PS_ROWS="$stopped_rename" LEFTOVERS='3f5c81a0d7be_scout-car-scout-1\n' out="$(run)"; code=$?
+rm_line="$(printf '%s\n' "$out" | grep -F 'docker rm -f')"
+if [[ $code -eq 1 && "$out" =~ (^|[^0-9])1\ problème && "$out" == *"déjà signalé"* \
+      && "$rm_line" != *"3f5c81a0d7be"* ]]; then
+  ok "a renamed container already reported by the service loop is not counted twice"
+else
+  ko "a renamed container already reported by the service loop is not counted twice" \
+     "exit=$code rm_line='$rm_line' out=$out"
+fi
+
 # ── 4d. `docker ps -a` IS MACHINE-WIDE, and this host runs other compose projects. A hex-prefixed
 #    container naming none of OUR services is somebody else's interrupted recreate: it cannot make
 #    our next one fail, and printing `docker rm -f` beside it is the same destructive remedy with a
 #    wider blast radius than the one this whole case set exists for.
+#
+#    It is COUNTED and never NAMED, and the assertion pins both halves. Counted, because on a host
+#    running several compose projects the reader needs to know the scan saw something and dropped
+#    it on purpose — silence there is indistinguishable from a scan that found nothing. Never
+#    named, and never given a remedy, because the container is not ours to touch: printing its name
+#    beside no command is an invitation to reach for the one printed above it.
 reset_case; PS_ROWS="$healthy" LEFTOVERS='ab12cd34ef56_global_stack-03node24-1\n' out="$(run)"; code=$?
-if [[ $code -eq 0 && "$out" != *"orphelins"* && "$out" != *"docker rm -f"* ]]; then
-  ok "another project's hex-prefixed leftover is not this project's to delete"
+if [[ $code -eq 0 && "$out" != *"orphelins"* && "$out" != *"docker rm -f"* \
+      && "$out" != *"ab12cd34ef56"* && "$out" == *"AUTRE projet"* ]]; then
+  ok "another project's hex-prefixed leftover is counted, never named, and never given a remedy"
 else
-  ko "another project's hex-prefixed leftover is not this project's to delete" "exit=$code out=$out"
+  ko "another project's hex-prefixed leftover is counted, never named, and never given a remedy" \
+     "exit=$code out=$out"
 fi
 
 # ── 5. No image at all is a DIFFERENT answer from a bad deployment: exit 2, "build it first".

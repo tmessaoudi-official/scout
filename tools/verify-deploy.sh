@@ -162,10 +162,19 @@ fi
 #
 # So the set is partitioned against the association compose itself reports, and the two halves get
 # opposite instructions. Neither half is silent: both are still `bad`.
+#
+# THE MAP IS PER ROW, NEVER PER SERVICE, and that distinction is the whole point. The state this
+# tool was written for — its own header — is `rent-scout` sitting in `Created` BESIDE a hex-prefixed
+# leftover, and both of those carry the service's compose labels, so `docker compose ps -a` lists
+# TWO rows under one service. A map keyed on the service (one entry, first row wins) drops the
+# second, the running rename misses the association, and `docker rm -f` is printed for it again —
+# the defect rebuilt inside its own fix. The service loop above keeps its own `break` because it is
+# answering a different question (does this service have a container at all).
 declare -A service_of=() state_of=()
-for service in "${services[@]}"; do
-  for row in "${rows[@]}"; do
-    if [[ "${row%%$'\t'*}" == "$service" ]]; then
+for row in "${rows[@]}"; do
+  row_service="${row%%$'\t'*}"
+  for service in "${services[@]}"; do
+    if [[ "$row_service" == "$service" ]]; then
       service_of["$(printf '%s' "$row" | cut -f2)"]="$service"
       state_of["$(printf '%s' "$row" | cut -f2)"]="$(printf '%s' "$row" | cut -f3)"
       break

@@ -115,7 +115,8 @@ container **EST le service**, compose still resolves a declared service to it �
 inside its grace period and left it running — so removing it kills the watcher; recover the clean name
 with `setsid docker compose up -d --force-recreate --remove-orphans <service>`, and never run compose
 under a foreground `timeout`, which is what produces the state. A hex-prefixed container belonging to
-another compose project on this host is not reported at all.
+another compose project on this host is **counted, never named, and never given a command** — you
+are told the scan saw one and dropped it, and nothing you can run against it.
 
 ### 1.5 Schedule the backup
 

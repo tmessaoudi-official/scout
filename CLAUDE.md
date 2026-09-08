@@ -2193,7 +2193,9 @@ tools/verify-deploy.sh           Did the redeploy land? `up -d` printing Started
                                  `up -d --force-recreate` and must not be removed — the tool
                                  certified one `running, image courante` and offered to
                                  delete it four lines below. A hex name from another compose
-                                 project on this host is not reported at all.
+                                 project on this host is COUNTED, never named and never
+                                 given a remedy — `docker ps -a` is machine-wide, and a
+                                 silent drop reads exactly like a scan that found nothing.
                                  Read-only. The image-age check is a DIFFERENT
                                  question from the image-id one and the answer looks the
                                  same: "running, image courante" is true of a watcher whose
