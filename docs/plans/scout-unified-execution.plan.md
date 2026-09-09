@@ -4210,3 +4210,17 @@ since the design was measured, which is the whole of the 951/1 261 → 951/1 266
   refuting between gates: failing test first confirmed red for the stated reason, the scoped
   sabotage cases, and `test-sabotage-applies.sh` over the pre-existing `Formatter.php` expressions,
   because collapsing two loops into one helper is exactly how a ledger expression goes inert.
+- [2026-09-09 14:30] AGREED: **the three UNDETECTED `reclassify` §1 ledger cases are MEASURED
+  first**, ahead of the three parse-error cases and the baseline one. The nightly has been red five
+  consecutive nights (issues #12–#16) and run `34326210911` started 45 min before that morning's
+  push, so it judged the parent commit — **pre-existing, not caused by the Track 7-B work**. The
+  seven failures are TWO defects and were presented as such: three §1 cases where the mutation
+  landed and the suite stayed GREEN (`reclassify ignores the same dwelling on record under another
+  ad id`, `reclassify promotes a sibling of an exclusion it resolved seconds earlier`, `reclassify
+  stops consulting the group`) plus one baseline case, against three car/rent retry cases whose
+  mutation did not PARSE and so tested nothing. **The hypothesis is a thing to measure, not the
+  answer**: `Rent/Cli/SectionOneGate` (2026-09-07) moved the guarantee to one gate above every
+  send, so an expression aimed at the old per-route check may now mutate code no send depends on —
+  which is a stale expression, the failure `test-sabotage-applies.sh` cannot see because it proves
+  an expression MATCHES, never that what it matches still carries the guarantee. If instead the
+  mutation still reaches a send, it is a real §1 hole and outranks everything else in this plan.
