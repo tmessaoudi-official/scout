@@ -3482,7 +3482,9 @@ tool/guard) and say which ones the fix covers.**
 | 65 | `Core\Redact` masked `email=x@y.com` and not `email=x%40y.com` — one alternation, PAP-only and 98/98 of the stored rows carrying it | S | done | 6ae3d31 | src/php/Core/Redact.php tests/php/Core/RedactTest.php tests/sabotage-check.sh CLAUDE.md |
 | 66 | The three undetected §1 `reclassify` cases were shadowed TWO ways, not one — two by `SectionOneGate` (compounded), the third by its own fixture (new test, expression unchanged) | M | done | de2a81e | tests/sabotage-check.sh tests/php/Rent/Cli/RentScoutReclassifyTest.php docs/plans/scout-unified-execution.plan.md |
 | 67 | `422e27a` rotted four `pushRetries` cases at once — three into parse errors and the rent FLOOR into a valid assignment chain reporting `ok`; four retargets (car scoped) and one new fixture for the fifth, a genuine coverage gap | M | done | eeaa30c | tests/sabotage-check.sh tests/php/Rent/Store/StoreTest.php |
-| 68 | The ledger's tally called a parse error an undetected regression, and the red-ledger issue described two kinds for a list holding six — each label now carries its kind; tally line and heading untouched, both being pinned | S | done | 51bfd7a | tests/sabotage-check.sh .github/workflows/ci.yml |
+| 68 | The ledger's tally called a parse error an undetected regression, and the red-ledger issue described two kinds for a list holding seven — each label now carries its kind; tally line and heading untouched, both being pinned | S | done | 51bfd7a | tests/sabotage-check.sh .github/workflows/ci.yml |
+| 69 | Row 68's own comment said `$fail` counts "six" over a list of seven, and the issue's reproduce line told the reader to paste a label that ugrep reads as a character class — numeral deleted rather than corrected, filter usage spelled out | S | done | 101a229 | tests/sabotage-check.sh .github/workflows/ci.yml |
+| 70 | Three §1 gate cases redden the STRUCTURAL guard rather than a behavioural test and report `ok`; all three measured GREEN on a consequence mutation, and the recommended repair refuted for two of them — expressions left honest-but-silent for one night, fixture design is the next work | M | todo | - | tests/sabotage-check.sh tests/php/Rent/Cli/** |
 <!-- /progress-block -->
 ### Blocked
 
@@ -4331,3 +4333,61 @@ since the design was measured, which is the whole of the 951/1 261 → 951/1 266
   The body now enumerates the bracket tags and says plainly that only `[UNDETECTED]` is a finding
   about the tests. `undetected or unapplied:` is untouched — it is the regex `ci.yml` harvests the
   block with and the string `test-ci-workflow.sh:111` pins.
+
+- [2026-09-09 23:25] MEASURED, and it is a SECOND SPECIES of the failure `ac29df4` documents: a
+  ledger case can report `ok` because its mutation reddens a guard that has nothing to do with its
+  label. Three §1 cases mutate `$refusal = null;` — which DELETES the `->refuses(` token and so
+  reddens `SectionOneGateCallSitesTest`, the STRUCTURAL guard requiring every method containing a
+  `notifier->send(` to consult the gate in that same method. The suite goes red, the case prints
+  `ok`, and §1 has been tested by nothing. Measured in a scratch tree whose own baseline was green
+  (`OK 3128 / 12118`, identical to the repo), mutating the CONSEQUENCE instead so the `->refuses(`
+  call survives and only a behavioural test could answer:
+
+  | case | site | mutation | result |
+  |---|---|---|---|
+  | `:1588` the retry push stops consulting the §1 gate | `pushRetries()` | `if ($refusal !== null)` → `if (false)` | changed=1 · **rc=0 GREEN** |
+  | `:1618` the digest verb announces a rolled-up match | `digest()` filter | `if ($refusal === null)` → `if (true)` | changed=1 · **rc=0 GREEN** |
+  | `:1622` the DAILY FLOOR announces a rolled-up match | `floorDigest()` filter | `if ($refusal === null)` → `if (true)` | changed=1 · **rc=0 GREEN** |
+
+  The shape was ALREADY RULED at line 4269 of this file — *"the gate expression is
+  `if ($refusal !== null)` → `if (false)` scoped to that one method rather than `$refusal = null;`,
+  the latter deletes the `->refuses(` token and reddens the structural guard instead, proving
+  nothing about §1"* — and `de2a81e` applied it only to the cases it was adding. These three predate
+  it and were swept past by `eeaa30c..101a229`, which were looking for rotted EXPRESSIONS.
+
+  **NOT A DISCOVERY, and saying otherwise would be the second defect.** The DAILY-FLOOR half was
+  already known and written down on 2026-09-07 — *"the daily-floor §1 case reds only
+  `SectionOneGateCallSitesTest`, the structural call-site guard, and no behavioural test at all:
+  `collectDigest()` refuses such a row upstream in a single process, so nothing refusable ever
+  reaches that send-time gate"* — in the session memory, which is machine-local and bundle-excluded,
+  so the REPO carried no trace of it and a fresh reviewer re-derived it two days later. What is new
+  here is only the measurement across ALL THREE sites and the executed refutation below; what the
+  episode actually shows is that a finding recorded solely in memory is a finding the repo will pay
+  to rediscover, which is why it is in `CLAUDE.md` as of tonight.
+
+- [2026-09-09 23:25] AGREED: the repair is NOT "write three behavioural tests", and the reviewer
+  recommendation saying so rests on a premise that does not survive reading the code it reasons
+  about — this repo's own *"a finding can be right about the defect and wrong about the fix"*, the
+  `autres` audit's shape. Its reaching case is the ledger comment's *"a row whose payload will not
+  encode enters `$retries` never having been dwelling-checked"*. That is true of `collectDigest()`
+  and does NOT make the GATE branch reachable: the snapshot-less arm builds
+  `new RawListing(sourceName:, externalId:, title:, url:, rentCc:)` (`RentScout.php:1484`) with
+  `commune` defaulting to `null`, and `Dedup::sameFlatReason()` returns at its FIRST test unless
+  both communes agree positively. Executed, with a counterweight so the probe cannot be vacuous:
+  `ExcludedDwellings::match()` on that bare listing → `NULL`; on a HYDRATED copy of the same flat →
+  `MATCHED · même bien que inli : loyer 1100 € ≈ 1100 €, surface 62 m² ≈ 62 m², 3 pièces`.
+  For the other three routes the gate is a strict SUBSET of what `collectDigest()` already applied
+  to the same key — collect skips on excluded **or `UNKNOWN`** own-reading and twin, the gate
+  refuses on excluded ONLY — with no write in between. So in one process those branches look
+  unreachable, which is the position this file already ruled for `announcePromotions` at line 4265.
+  `pushRetries` is the one with a seam (the notifier is injected and sends the digest BEFORE it
+  runs, so the documented cross-process writer can be simulated there); the two rollup filters have
+  none. That is a design call on §1 and it is the next work, not tonight's.
+
+- [2026-09-09 23:25] AGREED: the three expressions are LEFT AS THEY ARE tonight, and the reason is
+  stated here rather than left to be rediscovered. Swapping them to the consequence shape without a
+  fixture converts three `ok`s into three `[UNDETECTED]`s and turns the `0 3 * * *` nightly RED,
+  opening issue #17 — the exact outcome the 20:18 ruling above refused a `workflow_dispatch` for.
+  The gates are present and working in deployed code; what is missing is mutation PROOF, not a live
+  §1 hole. Recording a known-uncovered guarantee and leaving the ledger honest-but-silent for one
+  night is the smaller cost, and this entry is the record that it was a decision.
