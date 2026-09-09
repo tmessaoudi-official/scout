@@ -230,12 +230,16 @@ of rejecting a listing for not stating a floor), and an UNMENTIONED lift is not 
 > and the current-sighting branch of `Store::record()` rewrites it every pass**, so the order is
 > least-recently-sighted first: an email row freezes at its message `Date` and drifts forward, while
 > a still-published polled row is pushed to the back each time it is seen again. Measured: queue
-> positions 70–88 are exactly the 19 rows re-sighted in the last poll (14 In'li, 3 cdc_habitat, 1
-> bienici, 1 pap). The head 50 is 47 of 50 bienici+seloger cards, whose prose says `étage`/`RDC`
+> positions **72–88 are exactly the 17 rows a POLLED source re-sighted in the last pass** (14 In'li,
+> 3 cdc_habitat, all stamped 11:26Z), while 70–71 are one pap and one bienici alert — email rows
+> frozen at 11:04Z and 11:08Z, which fall in the same half-hour without having been re-polled at
+> all. The head 50 is 47 of 50 bienici+seloger cards, whose prose says `étage`/`RDC`
 > once in 50 and `ascenseur` not at all; the 38 behind them are In'li-led and say them 17 and 8
 > times — **8/8 of the lifts are the same rows that carry one in their snapshot, and 16 of the 17
-> floors are** (one cdc_habitat floor comes from a mapped field rather than prose, one In'li prose
-> mention is deliberately not extracted), so the two 17s coincide rather than corresponding.
+> floors are** (one cdc_habitat floor comes from a mapped field rather than prose; the one In'li
+> prose mention is `Le bâtiment compte quatre étages`, a COUNT rather than a position, which
+> `Core\Prose` refuses correctly — a first draft called it under-extraction without reading the
+> row), so the two 17s coincide rather than corresponding.
 > **That ordering is a STARVATION shape, not merely a sequence**: In'li is the one source whose
 > prose routinely states a floor and a lift, and a still-published In'li flat loses its place to
 > every alert that arrives after it, for as long as it stays published. (A `--dry-run` sends

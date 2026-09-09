@@ -4103,12 +4103,14 @@ since the design was measured, which is the whole of the 951/1 261 → 951/1 266
     Check it by diffing the sent mail against `digest2.txt` minus its footer. If it differs, the head
     of the queue is not stable and the freeze-versus-refresh account below is wrong.
   - **The second drain does NOT arrive rich in floors on a busy day, and that is the surprising
-    half.** The 18 floors split **1 head / 1 frozen tail (positions 51–69) / 16 re-polled tail
-    (70–88)**, and all **8** lifts are in that last band — which is exactly the band `seen_epoch`
+    half.** The 18 floors split **1 head / 1 frozen tail (positions 51–71) / 16 re-polled tail
+    (72–88)**, and all **8** lifts are in that last band — which is exactly the band `seen_epoch`
     keeps rewriting, so every alert arriving between the two drains overtakes it. The second 50 is
-    therefore the 19 frozen rows (**1 floor, 0 lifts**) plus new inflow, and it reaches the In'li
-    band only if fewer than ~31 rows are queued in between. If a busy day's second drain comes back
-    carrying 16 floors, the re-write mechanism is wrong rather than merely incomplete.
+    therefore the **21** frozen rows (**1 floor, 0 lifts**) plus new inflow, and it reaches the
+    In'li band only if fewer than **~29** rows are queued in between — counted in EMAIL inflow,
+    because a polled newcomer is re-sighted like the rest of that band and joins it rather than the
+    frozen pool. If a busy day's second drain comes back carrying 16 floors, the re-write mechanism
+    is wrong rather than merely incomplete.
 - [2026-09-09 09:50] NOT A DEFECT: the 2 h with no rent pass on 2026-09-09 and the unfired 08:00
   floor were **host suspend**, not a wedged watcher. Proven three ways rather than inferred — the
   car domain shows the identical 2 h 01 gap (`07:36:46` → `09:38:15`), `boottime − monotonic`
@@ -4145,18 +4147,29 @@ since the design was measured, which is the whole of the 951/1 261 → 951/1 266
   seen_epoch = :epoch`, `Store.php` — measured `|seen_epoch − last_seen_at| = 0 s` on all 88). So
   `ASC` orders least-recently-sighted first: an email row's instant is its message `Date`, which
   never moves again, while a still-published polled row is pushed to the back every time it is seen.
-  Measured on the same copy: queue positions **70–88 are exactly the 19 rows re-sighted in the last
-  poll** — 14 In'li, 3 cdc_habitat, 1 bienici, 1 pap — and the row-50/row-51 cut falls at 08:51 /
-  09:03 that morning. What the head 50 therefore do not do is STATE these facts: their prose says
+  Measured on the same copy: queue positions **72–88 are exactly the 17 rows a POLLED source
+  re-sighted in the last pass** — 14 In'li and 3 cdc_habitat, all stamped `11:26Z`. **Positions
+  70–71 are NOT re-polled and a first draft counted them as though they were**: one pap and one
+  bienici row, email alerts frozen at `11:04Z` and `11:08Z`, which land in the same half-hour
+  window without any pass having touched them. The distinction is the whole mechanism — it is
+  freeze-versus-refresh, not recency — and getting it wrong under-states the frozen pool that sits
+  in front of the In'li band by two rows. The row-50/row-51 cut falls at `08:51Z` / `09:03Z`
+  (10:51 / 11:03 Paris — every epoch in this entry is printed by `gmdate`, so it is UTC, unlike the
+  `13:51` capture stamp two paragraphs down, which is `+0200`).
+  What the head 50 therefore do not do is STATE these facts: their prose says
   `étage`/`RDC` **1 time in 50** and `ascenseur` **0**, and they are **47 of 50 bienici + seloger**
   portal-alert cards. The tail 38 is In'li-led (16, plus cdc_habitat 3 and pap 4) and says `étage`
   **17 times** and `ascenseur` **8**, against **17 floors and 8 lifts** in the snapshots.
   **THOSE TWO 17s COINCIDE; THEY DO NOT CORRESPOND, and the first draft of this entry claimed row
   identity from equal counts.** Checked per row: the LIFT half is genuinely row-identical (**8/8**,
   zero rows where prose and snapshot disagree), the FLOOR half is **16 of 17** — `cdc_habitat/49946`
-  carries a snapshot floor its prose never states (CDC maps the field), and `inli/PRV-241713` states
-  one its snapshot does not carry (under-extraction, the safe direction, and the shape `Core\Prose`
-  deliberately leaves alone). Two offsetting rows made the counts equal. Same feature, same code,
+  carries a snapshot floor its prose never states (CDC maps the field), and `inli/PRV-241713` says
+  `étage` without carrying one. **That second row is not under-extraction, and calling it that was
+  an inference rather than a reading**: its description says *« Le bâtiment compte quatre étages »*
+  — a COUNT of the building's storeys, not the flat's position, which is precisely the shape
+  `Core\Prose` was written to refuse after `Payload::floor()` returned 4 for a flat on the 3rd. The
+  reader is correct here and the snapshot's `null` is the right answer; only the word `étage` is
+  shared. Two offsetting rows made the counts equal. Same feature, same code,
   a quarter of the rate: a bin's composition moves, so quote the bin and the day, never the
   percentage alone.
   **AND THE ORDER IS A STARVATION SHAPE, WHICH IS THE PART THAT OUTLIVES THIS BIN.** In'li is the
