@@ -3481,6 +3481,8 @@ tool/guard) and say which ones the fix covers.**
 | 64 | The Track 7-B context line reached one match in ten — `contextBits()` + one `digestLine()` carry it to the digest and the rollup, departement-less and measured | M | done | 2da27d3 | src/php/Rent/Notify/Formatter.php tests/php/Rent/Core/NotifyTest.php tests/sabotage-check.sh CLAUDE.md |
 | 65 | `Core\Redact` masked `email=x@y.com` and not `email=x%40y.com` — one alternation, PAP-only and 98/98 of the stored rows carrying it | S | done | 6ae3d31 | src/php/Core/Redact.php tests/php/Core/RedactTest.php tests/sabotage-check.sh CLAUDE.md |
 | 66 | The three undetected §1 `reclassify` cases were shadowed TWO ways, not one — two by `SectionOneGate` (compounded), the third by its own fixture (new test, expression unchanged) | M | done | de2a81e | tests/sabotage-check.sh tests/php/Rent/Cli/RentScoutReclassifyTest.php docs/plans/scout-unified-execution.plan.md |
+| 67 | `422e27a` rotted four `pushRetries` cases at once — three into parse errors and the rent FLOOR into a valid assignment chain reporting `ok`; four retargets (car scoped) and one new fixture for the fifth, a genuine coverage gap | M | done | eeaa30c | tests/sabotage-check.sh tests/php/Rent/Store/StoreTest.php |
+| 68 | The ledger's tally called a parse error an undetected regression, and the red-ledger issue described two kinds for a list holding six — each label now carries its kind; tally line and heading untouched, both being pinned | S | done | 51bfd7a | tests/sabotage-check.sh .github/workflows/ci.yml |
 <!-- /progress-block -->
 ### Blocked
 
@@ -4268,3 +4270,64 @@ since the design was measured, which is the whole of the 951/1 261 → 951/1 266
   which is why the gate expression is `if ($refusal !== null)` → `if (false)` scoped to that one
   method rather than `$refusal = null;` — the latter deletes the `->refuses(` token and reddens the
   structural guard instead, proving nothing about §1.
+
+- [2026-09-09 20:18] AGREED: the FOUR remaining undetected ledger cases are the next work, and the
+  reviewer-panel dispatch offered beside them is REFUSED for a measured reason rather than a
+  budgetary one. `sabotage-alert` is gated `if: always() && needs.sabotage.result != 'skipped'`
+  (`ci.yml:277`), so it fires on `workflow_dispatch` exactly as it does on the schedule — and with
+  four known-undetected cases a run dispatched today is guaranteed RED, opening issue #17 and
+  lengthening the backlog it exists to drain. Its one genuine value, confirming `de2a81e`'s three
+  detect on the CI runtime (PCRE2 10.42, production ini), arrives free in the scheduled `0 3 * * *`
+  run. **The deadline is therefore the plan**: four cases landed before 03:00 UTC makes tonight's
+  scheduled run the green night that closes #6–#16 in one go. Reversed by dispatching the workflow
+  manually, at the cost of one more red issue.
+- [2026-09-09 20:18] AGREED: the compaction summary's label *"three parse-error cases"* is DROPPED
+  as unverified. Issue #16 reports all seven as `undetected` on `88d2209`, and the ledger's own
+  issue template distinguishes `undetected` from `unapplied` in as many words — an unapplied case
+  "proves nothing either way" and is caught by `test-sabotage-applies.sh` on every push, which is
+  green. So the four are treated as four undetected cases of UNMEASURED kind, and each one's kind is
+  measured before any repair is designed. Yesterday's three split two ways under exactly this
+  discipline; assuming a uniform kind is the error that measurement exists to prevent.
+- [2026-09-09 21:05] MEASURED, and the entry above is CORRECTED by its own discipline: the
+  compaction summary's *"parse-error"* label was RIGHT and issue #16's `undetected` was wrong. Five
+  cases were run one at a time against a byte-copy sidecar. Four are stale expressions of one
+  family — every `pushRetries()` call gained an assignment, so an expression matching the
+  right-hand side alone leaves `$drainedKeys = ;` — and three of those are PARSE ERRORS the nightly
+  reported as `undetected`. The FOURTH, `the rent daily FLOOR stops re-pushing the retries`, is the
+  one worth carrying: its truncation joins the following statement into a valid assignment chain
+  (`$drainedKeys = $sectionOne = new SectionOneGate(…)`), so it PARSES, seeds a type scramble
+  rather than its label, and has reported **`ok`** in every nightly since the assignment landed. A
+  case failing GREEN is the one shape this ledger cannot flag, and it was never in issue #16 at
+  all. All four repair by RETARGET (measured changed=1, parse clean, each reddening an on-label
+  behavioural test); the two car cases ship SCOPED to their own method, per the 2026-09-07
+  unscoped-sed lesson.
+- [2026-09-09 21:05] AGREED: the FIFTH case, `baseline falls back to the last SUCCESSFUL run again`,
+  is a genuine COVERAGE GAP and its expression is unchanged — the repair is a test. Measured:
+  changed=1, parses, **suite stayed green**. `lastProductiveCount()` runs only when
+  `rollingMeanBefore()` returns null, and its backward walk can only meet a successful-but-EMPTY
+  run when a failure episode AT `EMPTY_RUNS_BEFORE_BROKEN` sits between that run and the streak —
+  shorter, `observedRuns()` drops it and `trailingEmptyRuns()` absorbs the quiet run INTO the
+  streak. Both tests named for this guarantee use a single failure, so both are VACUOUS with
+  respect to it, and the mutation proves it: it reds the new fixture ALONE while those two stay
+  green. `StoreTest::testAQuietRunBehindARetainedOutageDoesNotZeroTheBaseline` asserts the premise
+  (`consecutiveEmptyRuns === EMPTY_RUNS_BEFORE_BROKEN`, so the quiet run is outside the streak),
+  sizes the shape off the constants rather than literals, and anchors the digit boundary
+  (`(?<![0-9])25\.0`) because a bare `25` is satisfied by `125.0`.
+- [2026-09-09 21:05] AGREED: the ledger's per-case failure KIND is annotated onto each
+  `failed_labels` entry, and the tally line and the `undetected or unapplied:` heading are
+  deliberately left alone. `$fail` counts copy failures, refused seds, inert expressions, timeouts,
+  parse errors, harness breaks and genuine undetected cases alike, and both headings call all of
+  them "undetected" — which is what misdirected today's triage. The precision goes in the label;
+  the two headings are pinned by literal text in `tests/test-ci-workflow.sh` (the `%d undetected`
+  printf, positionally against the shard ABORT, and `undetected or unapplied:` as proof the
+  red-ledger issue names WHICH cases were not caught), so renaming either is a separate change that
+  must move its pin with it.
+- [2026-09-09 21:20] MEASURED, and it is the sentence that actually did the misdirecting: the
+  red-ledger ISSUE BODY (`ci.yml`, the `sabotage-alert` job) described a TWO-kind taxonomy —
+  *"a case listed as `undetected` means the suite stayed GREEN … a case listed as `unapplied` means
+  its sed matched nothing"* — for a list holding SIX failure kinds and labelling none of them. So
+  the reader was told to classify entries by a word the ledger never printed, and issue #16's seven
+  bare labels read as seven undetected cases; three were parse errors and one was reporting `ok`.
+  The body now enumerates the bracket tags and says plainly that only `[UNDETECTED]` is a finding
+  about the tests. `undetected or unapplied:` is untouched — it is the regex `ci.yml` harvests the
+  block with and the string `test-ci-workflow.sh:111` pins.
