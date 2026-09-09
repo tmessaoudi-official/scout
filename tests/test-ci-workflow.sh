@@ -109,6 +109,15 @@ check "runs the ledger's scratch-baseline self-test" \
 check "the ledger's output is captured for the alert" has 'tee "$RUNNER_TEMP/ledger.log"'
 check "and pipefail is set, so tee cannot mask a red ledger" has 'set -o pipefail'
 check "the red-ledger issue names WHICH cases were not caught" has 'undetected or unapplied:'
+# AND THE PRODUCER SIDE, which nothing pinned until 2026-09-09. `has` greps the WORKFLOW, so the
+# line above proves only that ci.yml HARVESTS `undetected or unapplied:` — it says nothing about the
+# ledger still PRINTING it. Renaming it in tests/sabotage-check.sh alone leaves the harvest regex
+# (`/undetected or unapplied:\n([\s\S]*?)…/`) matching nothing, so a red night opens an issue whose
+# case list is EMPTY while every gate stays green: hard rule 2 in the alert path, and the shape this
+# repo keeps paying for — a contract pinned on one of its two ends. Both files now have to move
+# together, which is the point.
+check "and the LEDGER still prints the heading ci.yml harvests" \
+  grep -qF -- 'undetected or unapplied:' "$sab"
 # The SHARDED read (2026-09-05): the tee still writes `$RUNNER_TEMP/ledger.log` in each shard, the
 # artifact carries it to the alert job, and the alert reads every shard's copy — so the pin moved
 # from one path to the collected set. Summing the tallies is what makes the issue name the whole

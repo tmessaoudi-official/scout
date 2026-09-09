@@ -1585,9 +1585,23 @@ run_sabotage "the live push path stops consulting the §1 gate" \
 # The single-process seed could not produce the interleave. **That was the test failing to reach the
 # branch, not the branch being unreachable** — and turning that into a non-case removed the one
 # thing that would have said so.
+# SCOPED 2026-09-09, and it was UNSCOPED for as long as it has existed: the same expression matches
+# `digest()` (1167), `pushRetries()` (1673) and `floorDigest()` (2680), so a case labelled for ONE
+# surface mutated all THREE — `changed=3`, measured. That is this file's own documented defect (the
+# 2026-09-07 unscoped-sed entry) sitting three lines from the comment that names it, and
+# `test-sabotage-applies.sh` is blind to it: it proves an expression MATCHES, never that it matches
+# ONE thing. Scoped, the mutation is `changed=1` and reddens `SectionOneGateCallSitesTest` naming
+# `RentScout::pushRetries` — the same verdict, now attributable.
+#
+# THE REDNESS IS STRUCTURAL, NOT BEHAVIOURAL, and that is a KNOWN OPEN GAP rather than a claim of
+# coverage — see plan row 70. `$refusal = null;` removes the `->refuses(` token, so what answers is
+# the call-site guard. Measured 2026-09-09 against a green scratch baseline: mutating the
+# CONSEQUENCE instead (`if ($refusal !== null)` -> `if (false)`, scoped) leaves the whole suite
+# GREEN here and at both rollup filters below. Do not "fix" that by swapping the expression alone —
+# that converts a silent gap into three `[UNDETECTED]`s without closing it. The fixture comes first.
 run_sabotage "the retry push stops consulting the §1 gate" \
   src/php/Rent/Cli/RentScout.php \
-  's%\$refusal = \$sectionOne->refuses(\$entry\[.listing.\], \$entry\[.key.\]);%$refusal = null;%'
+  '/private function pushRetries(/,/^    }/ s%\$refusal = \$sectionOne->refuses(\$entry\[.listing.\], \$entry\[.key.\]);%$refusal = null;%'
 
 # THE GATE READS FRESH — hoisting its state is what both round-3 P0s were, and a cached candidate
 # list would pass every route test above while re-opening the defect the gate exists to close.
@@ -5586,8 +5600,13 @@ if (( fail > 0 )); then
   # EACH LABEL CARRIES ITS KIND, because `$fail` counts every kind enumerated below alike while the
   # two headings above call all of them "undetected". (That sentence said "six different things"
   # over a list of seven, in the commit that exists to make this tally precise — so the numeral is
-  # gone and the enumeration is the count. `grep -c 'failed_labels+=' ` is the only figure that
-  # cannot drift.) It misdirected a real triage on 2026-09-09: issue #16
+  # gone and the enumeration below is the count. A first repair pointed at
+  # `grep -c 'failed_labels+='`, which answers EIGHT: the instruction is itself a match, the
+  # self-referential-guard defect this file's own gotchas name, committed inside the fix for a
+  # miscount. Naming a longer literal answers EIGHT as well, for the same reason — ANY literal
+  # written here matches itself. Only an ANCHOR escapes it: `grep -c '^ *failed_labels+='` answers
+  # seven, because prose about the command is always a `#` line and never a line whose first
+  # non-blank token is the assignment.) It misdirected a real triage on 2026-09-09: issue #16
   # reported seven cases as undetected, three of them were PARSE ERRORS — which the ledger itself
   # says "prove nothing either way" — and the repair designed for the wrong kind would have been
   # a test, not a retarget. The kinds are `harness-copy-failed`, `harness-sed-failed`,
@@ -5595,11 +5614,17 @@ if (( fail > 0 )); then
   # `UNDETECTED`; only the last is a finding about the TESTS.
   #
   # THE TALLY LINE AND THIS HEADING ARE DELIBERATELY UNCHANGED, and the heading is still the
-  # imprecise part. `tests/test-ci-workflow.sh` pins both by literal text (the `%d undetected`
-  # printf format positionally against the shard ABORT, and `undetected or unapplied:` as the
-  # proof that the red-ledger issue names WHICH cases were not caught), so renaming either here
-  # reddens that gate on the same push. The annotation is where the precision goes; renaming the
-  # heading is a separate change that has to move its pin with it.
+  # imprecise part. `tests/test-ci-workflow.sh` pins both by literal text — the `%d undetected`
+  # printf format positionally against the shard ABORT, and `undetected or unapplied:` — so
+  # renaming either here reddens that gate on the same push. The annotation is where the precision
+  # goes; renaming the heading is a separate change that has to move its pin with it.
+  #
+  # THAT SENTENCE WAS ONLY HALF TRUE UNTIL 2026-09-09, and the missing half was a hard-rule-2 shape.
+  # `has()` in that gate greps the WORKFLOW, so the heading pin proved ci.yml still HARVESTS this
+  # string and nothing proved this file still PRINTS it. Renaming it HERE alone left the harvest
+  # regex matching nothing — a red night opening an issue whose case list is EMPTY, with every gate
+  # green. A contract pinned on one of its two ends. The producer side is pinned now, and the pin is
+  # sabotage-verified in both directions.
   printf '\n  undetected or unapplied:\n'
   printf '    - %s\n' "${failed_labels[@]}"
 fi
