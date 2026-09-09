@@ -219,13 +219,18 @@ of rejecting a listing for not stating a floor), and an UNMENTIONED lift is not 
 > postcode `headline()` already prints two fields to its left (rollup 40/62, tenure bin 58/94, all
 > 1 282 stored matches 958/1282); dropped, the line fires on 35–38 % of the two live bins and every
 > character of it is new. **That 35–38 % is dated 2026-09-09 morning, and the first DRY-RUN RENDER
-> of the queue that afternoon came in at 5 of 50** — four amenity rows and one `7e étage`, the rest
-> being bienici/seloger rows reading *aucun signal dans l'annonce*, the portals that ship no listing
-> prose at all. (A `--dry-run` sends nothing and marks nothing, so that batch is a READING of the
-> queue rather than a drain of it — the 88 rows are all still waiting, which matters because the
-> queue's own re-measurement is compared against that count.) The feature is behaving; the BIN
-> moved. A reach figure here is only ever true of the bin and the day it was measured on, which
-> this repo has already paid for twice.
+> of the queue that afternoon came in at 5 of 50** — four amenity rows and one `7e étage`. **The
+> cause is the drain's own ORDER, and two plausible explanations for it were measured and refuted
+> first**: not *"those portals ship no prose"* (URLs removed, the head 50 carry a median 359
+> characters against the tail's 376, and all 88 rows have a description), and not the reason string
+> *aucun signal dans l'annonce*, which marks no TENURE signal and prints on the floor-carrying In'li
+> row too. `seen_epoch ASC` puts the oldest rows first, and those are 47 of 50 bienici+seloger
+> portal cards whose prose says `étage`/`RDC` once in 50 and `ascenseur` never; the 38 behind them
+> are In'li-led and say them 17 and 8 times, matching their snapshots exactly. (A `--dry-run` sends
+> nothing and marks nothing, so that batch is a READING of the queue rather than a drain of it —
+> the 88 rows are all still waiting, which matters because the queue's own re-measurement is
+> compared against that count.) The feature is behaving; the BIN moved. A reach figure here is only
+> ever true of the bin and the day it was measured on, which this repo has already paid for twice.
 > Silence still carries nothing extra — an entry whose ad said nothing is
 > byte-identical to its pre-change line, asserted, because a dangling separator would announce an
 > absence of information as though it were information.

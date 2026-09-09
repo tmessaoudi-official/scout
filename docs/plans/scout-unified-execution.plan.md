@@ -4087,7 +4087,16 @@ since the design was measured, which is the whole of the 951/1 261 → 951/1 266
   chosen from a two-day series — this repo's own *never predict a yield* rule), and accept the lag
   (a queue that never empties is the bin-nobody-drains failure §1's landing zone exists to avoid).
   Re-measure with `SELECT COUNT(*) FROM listings WHERE outcome='MATCH' AND notified_at IS NULL`
-  after two more 08:00 windows, then rule.
+  after two more 08:00 windows, then rule. **THE BASELINE THAT COUNT IS COMPARED AGAINST, taken
+  2026-09-09 13:51 on a `.backup` copy of the live store** (never `doctor`, which writes a run into
+  the health baseline): **88 queued** (`outcome='MATCH' AND notified_at IS NULL`), **0 pending in
+  the tenure bin** (`outcome='DIGEST' AND notified_at IS NULL` — which is why that afternoon's
+  render carried one list and not two), **18 of the 88 carrying a floor** in their v7 snapshot and
+  **8 a lift**. The 13:51 render was a `--dry-run`, so it drained nothing and all 88 are still
+  waiting. **One falsifiable prediction travels with it**, because a baseline nobody can be wrong
+  about is not one: the drain orders `seen_epoch ASC`, and 17 of the 18 floors and all 8 lifts sit
+  in the 38 rows BEHIND the first 50 — so the next real batch should show floors on roughly 17 of
+  38, and if it does not, the composition story below is wrong rather than merely old.
 - [2026-09-09 09:50] NOT A DEFECT: the 2 h with no rent pass on 2026-09-09 and the unfired 08:00
   floor were **host suspend**, not a wedged watcher. Proven three ways rather than inferred — the
   car domain shows the identical 2 h 01 gap (`07:36:46` → `09:38:15`), `boottime − monotonic`
@@ -4110,10 +4119,18 @@ since the design was measured, which is the whole of the 951/1 261 → 951/1 266
   matches 958/1282). Departement-less it fires on **35–38 %** of the two live bins at ~20–24 chars,
   all of it new content — **measured over the stored rows on the morning of 2026-09-09, and that
   date is part of the claim**. The FIRST DRY-RUN RENDER of the queue after the deploy, the same
-  afternoon, came in at **5 of 50** (four amenity rows, one `7e étage`): the queue at that moment is
-  nearly all bienici/seloger rows reading *aucun signal dans l'annonce*, the portals that carry no
-  listing prose. Same feature, same code, a quarter of the rate — a bin's composition moves, so
-  quote the bin and the day, never the percentage alone. **That batch was a READING, not a drain** —
+  afternoon, came in at **5 of 50** (four amenity rows, one `7e étage`). **The cause is the DRAIN'S
+  OWN ORDER, and the first two explanations offered for it were both wrong.** It is not *"the
+  portals ship no listing prose"*: with URLs removed the head 50 carry a median **359** characters
+  of prose against the tail's **376**, and every one of the 88 rows has a description. Nor is it the
+  reason string *aucun signal dans l'annonce*, which marks no TENURE signal and is printed on the
+  floor-carrying In'li row too. What the head 50 do not do is STATE these facts: their prose says
+  `étage`/`RDC` **1 time in 50** and `ascenseur` **0**, because `seen_epoch ASC` puts the oldest
+  rows first and those are **47 of 50 bienici + seloger** portal-alert cards. The tail 38 is In'li-led
+  (16, plus cdc_habitat 3 and pap 4) and says `étage` **17 times** and `ascenseur` **8** — matching
+  its snapshots exactly, 17 floors and 8 lifts, so the reader agrees with the source text 17/17 and
+  8/8. Same feature, same code, a quarter of the rate: a bin's composition moves, so quote the bin
+  and the day, never the percentage alone. **That batch was a READING, not a drain** —
   `--dry-run` sends nothing and marks nothing, so all 88 queued rows are still waiting, which is the
   count the standing `DIGEST_BATCH` re-measurement is compared against. **The LIFT half of the line
   is uncertified by the live path**: 0 of those 50 rows carry an `hasElevator !== null` (8 of the 88
