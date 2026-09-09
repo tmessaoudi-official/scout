@@ -2664,6 +2664,23 @@ var/claude/                 Reports, review outputs — gitignored scratch (hand
   (`$drained = 0;` keeps the assignment), and after any refactor that changes a call's SHAPE rather
   than its address, re-measure the changed-line count and read WHICH test goes red, because a case
   reddening the wrong test is indistinguishable from a case working.
+- **AND THERE IS A SECOND SPECIES: THE RED COMES FROM A GUARD THAT IS NOT ABOUT THE LABEL
+  (2026-09-09).** The species above truncates code; this one runs perfectly and still proves
+  nothing. Three §1 cases mutate `$refusal = null;`, which removes the `->refuses(` token — so what
+  reddens is `SectionOneGateCallSitesTest`, the STRUCTURAL guard requiring every method holding a
+  `notifier->send(` to consult the gate in that same method. Suite red, case `ok`, §1 tested by
+  nothing. Measured in a scratch tree whose own baseline was green (`OK 3128 / 12118`), mutating the
+  CONSEQUENCE instead so the call survives: `pushRetries()`, the `digest()` rollup filter and the
+  `floorDigest()` rollup filter each go **changed=1, rc=0 — GREEN**. The shape was already ruled
+  (`docs/plans/scout-unified-execution.plan.md`, the `de2a81e` entry): mutate the CONSEQUENCE,
+  `if ($refusal !== null)` → `if (false)` scoped to one method. **The rule that generalises: when a
+  case reddens, read WHICH test — a structural or repo-level guard answering for a behavioural one
+  is a case that has measured its own scaffolding.** And the obvious repair is not always available:
+  the reaching case proposed for these three (a snapshot-less row entering `$retries`) cannot fire
+  at the gate either, because that row's rebuilt listing carries no commune and
+  `Dedup::sameFlatReason()` requires both communes to agree positively — verified by executing it
+  against a hydrated copy, which does match. Two of the three have no in-process seam at all, the
+  `announcePromotions` position.
 - **AND THE TALLY CANNOT TELL YOU WHICH KIND YOU HAVE.** `$fail` counts copy failures, refused seds,
   inert expressions, timeouts, parse errors, harness breaks and genuine undetected cases alike,
   while the tally line and the `undetected or unapplied:` heading call all of them *undetected* — so
