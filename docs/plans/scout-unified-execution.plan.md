@@ -3480,7 +3480,7 @@ tool/guard) and say which ones the fix covers.**
 | 63 | Row 62's own fix rebuilt the defect one row over — a map keyed per SERVICE drops the second container the wedged state always has — and three surfaces denied a count the tool prints | M | done | f1588a7 | tools/verify-deploy.sh tests/test-verify-deploy.sh README.md docs/RUNBOOK.md CLAUDE.md |
 | 64 | The Track 7-B context line reached one match in ten — `contextBits()` + one `digestLine()` carry it to the digest and the rollup, departement-less and measured | M | done | 2da27d3 | src/php/Rent/Notify/Formatter.php tests/php/Rent/Core/NotifyTest.php tests/sabotage-check.sh CLAUDE.md |
 | 65 | `Core\Redact` masked `email=x@y.com` and not `email=x%40y.com` — one alternation, PAP-only and 98/98 of the stored rows carrying it | S | done | 6ae3d31 | src/php/Core/Redact.php tests/php/Core/RedactTest.php tests/sabotage-check.sh CLAUDE.md |
-| 66 | The three undetected §1 `reclassify` cases were shadowed TWO ways, not one — two by `SectionOneGate` (compounded), the third by its own fixture (new test, expression unchanged) | M | done | bd2ba4f | tests/sabotage-check.sh tests/php/Rent/Cli/RentScoutReclassifyTest.php docs/plans/scout-unified-execution.plan.md |
+| 66 | The three undetected §1 `reclassify` cases were shadowed TWO ways, not one — two by `SectionOneGate` (compounded), the third by its own fixture (new test, expression unchanged) | M | done | de2a81e | tests/sabotage-check.sh tests/php/Rent/Cli/RentScoutReclassifyTest.php docs/plans/scout-unified-execution.plan.md |
 <!-- /progress-block -->
 ### Blocked
 
