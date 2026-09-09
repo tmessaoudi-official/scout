@@ -4109,11 +4109,16 @@ since the design was measured, which is the whole of the 951/1 261 → 951/1 266
   postcode `headline()` already prints two fields left (rollup 40/62, tenure bin 58/94, all stored
   matches 958/1282). Departement-less it fires on **35–38 %** of the two live bins at ~20–24 chars,
   all of it new content — **measured over the stored rows on the morning of 2026-09-09, and that
-  date is part of the claim**. The FIRST DRAINED BATCH after the deploy, the same afternoon, came in
-  at **5 of 50** (four amenity rows, one `7e étage`): the queue at that moment is nearly all
-  bienici/seloger rows reading *aucun signal dans l'annonce*, the portals that carry no listing
-  prose. Same feature, same code, a quarter of the rate — a bin's composition moves, so quote the
-  bin and the day, never the percentage alone. The rejected alternatives are recorded: the full line unchanged (100 %, and
+  date is part of the claim**. The FIRST DRY-RUN RENDER of the queue after the deploy, the same
+  afternoon, came in at **5 of 50** (four amenity rows, one `7e étage`): the queue at that moment is
+  nearly all bienici/seloger rows reading *aucun signal dans l'annonce*, the portals that carry no
+  listing prose. Same feature, same code, a quarter of the rate — a bin's composition moves, so
+  quote the bin and the day, never the percentage alone. **That batch was a READING, not a drain** —
+  `--dry-run` sends nothing and marks nothing, so all 88 queued rows are still waiting, which is the
+  count the standing `DIGEST_BATCH` re-measurement is compared against. **The LIFT half of the line
+  is uncertified by the live path**: 0 of those 50 rows carry an `hasElevator !== null` (8 of the 88
+  queued do), so `avec/sans ascenseur` is proven by unit test alone — the floor is proven by a real
+  In'li row, the same decoder and the adjacent branch, and a later drain will exercise it. The rejected alternatives are recorded: the full line unchanged (100 %, and
   redundant on nearly three quarters of rows) and amenities only (17–26 %, and it drops the floor,
   the fact most often read). Both `digest()` entry loops collapse into one `digestLine()` helper —
   two loops rendering the same line is *a fix landing on one of two symmetric surfaces* waiting to
