@@ -37,6 +37,15 @@ final class RedactTest extends TestCase
         yield 'bearer header' => ['Authorization: Bearer eyJhbGciOiJIUzI1NiJ9', ['eyJhbGciOiJIUzI1NiJ9']];
         yield 'basic header' => ['Authorization: Basic dGFraTpodW50ZXIy', ['dGFraTpodW50ZXIy']];
         yield 'mailbox' => ['LOGIN failed for jean.dupont@example.com', ['jean.dupont@example.com']];
+
+        // PERCENT-ENCODED, because a URL writes `@` that way and a source's own URL can be the
+        // disclosure: PAP puts the subscriber's address in the link it emails, on all 98 of its
+        // stored rows. The literal-`@` case above passed while this one did not — the local-part
+        // class contained `%` all along, but the separator was a bare `@`.
+        yield 'percent-encoded mailbox in a URL' => [
+            'GET https://www.pap.fr/annonces/x-r1?email=x%40example.test&md5=deadbeef a échoué',
+            ['x%40example.test'],
+        ];
         yield 'signature parameter' => ['?sig=9f8e7d6c5b4a3210&page=2', ['9f8e7d6c5b4a3210']];
 
         // Every case below got through the first version, and four of them are keys `.env.example`
@@ -236,6 +245,14 @@ final class RedactTest extends TestCase
         yield 'Login failed for' => [
             'imap_open(): Login failed for user=alertes host=imap.example.net',
             ['Login failed for', 'imap.example.net'],
+        ];
+
+        // THE COUNTERWEIGHT to the percent-encoded mailbox above: masking the address must not eat
+        // the endpoint that says WHICH request failed. Same asymmetry the literal-`@` case has had
+        // since it was written.
+        yield 'a percent-encoded address does not take the endpoint with it' => [
+            'GET https://www.pap.fr/annonces/x-r1?email=x%40example.test&md5=deadbeef a échoué',
+            ['www.pap.fr', '/annonces/x-r1', 'a échoué'],
         ];
 
         yield 'host:port with an @ in the query' => [

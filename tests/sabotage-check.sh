@@ -824,6 +824,15 @@ run_sabotage "mailbox masking neutralised (the IMAP address reaches the notifica
   src/php/Core/Redact.php \
   's%{2,}%{99,}%'
 
+# THE PERCENT-ENCODED HALF (2026-09-09). A URL writes `@` as `%40`, and a source's own URL can be
+# the disclosure: PAP puts the subscriber's address in the link it emails, on all 98 of its stored
+# rows, while not one stored URL carries a literal `@`. The case above cannot see this — it degrades
+# the TLD quantifier, which both separators share — so the literal-`@` case stayed green for as long
+# as this gap was open. Delimiter `#`, because the pattern under test contains `%`.
+run_sabotage "the percent-encoded mailbox separator is dropped (email=x%40y.com leaks)" \
+  src/php/Core/Redact.php \
+  's#(?:@|%40)#@#'
+
 run_sabotage "redaction fails OPEN on a PCRE error (raw text returned)" \
   src/php/Core/Redact.php \
   's%return self::MASK;%return $message;%'

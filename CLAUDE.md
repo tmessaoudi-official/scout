@@ -1048,8 +1048,20 @@ applies and the figure lands in `rentHc`.
 > (`Disallow: /*?*` refuses every query-bearing URL, and all 57 stored PAP URLs carry one). And **a
 > source's own URL can be the disclosure** — PAP puts the subscriber's address in plaintext in the
 > link it emails, so hydrating it verbatim would have sent that address to pap.fr on every fetch.
-> Two findings from the same pass remain OPEN: `Redact` masks `email=x@y.com` but not
-> `email=x%40y.com`, and a followed redirect is never re-checked against robots.
+> Two findings came out of that same pass. **The `Redact` one is CLOSED (2026-09-09)**: the mailbox
+> rule required a literal `@`, so `email=x%40y.com` passed through untouched — the local-part class
+> had contained `%` all along and only the separator was narrow, which is why the literal-`@` case
+> stayed green for as long as the gap was open. It is one alternation, `(?:@|%40)`, never a decode
+> cascade — `RecoverableForms` is the SCRUBBER's job and this surface is adapter error text.
+> Measured first: `%40` is PAP-only at 98 of 98 rows, a literal `@` appears in 0 of 3 471 stored
+> URLs, `%2540` measures zero so double-encoding is deliberately unread, and no case variant is
+> possible because both hex digits are numerals. **The first measurement was wrong and is the part
+> worth keeping** — `url LIKE '%'||char(37)||'40%'` reads as *contains "40"*, `%` being LIKE's own
+> wildcard, and reported every source as affected; `instr(url, char(37)||'40')` has no
+> metacharacters. **Scope stated honestly: no production path fetches a PAP URL today** (hydration
+> is refused above), so this is defence-in-depth for the surface `Redact` guards, not a leak that
+> was happening. **A followed redirect is still never re-checked against robots**, and that one
+> remains open.
 
 ### Transit enrichment — the last empty layer, and the curve that had to be measured (2026-08-26)
 

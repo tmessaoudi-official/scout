@@ -248,7 +248,29 @@ final readonly class Redact
             // Bare bearer tokens, which carry no parameter name at all.
             '~\b(Bearer|Basic)\s+[A-Za-z0-9._\-+/=]{8,}~i' => '$1 ' . self::MASK,
             // Mailboxes — the IMAP path's own identifier, and personal data in its own right.
-            '~[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}~' => self::MASK,
+            //
+            // THE SEPARATOR IS AN ALTERNATION BECAUSE A URL WRITES `@` AS `%40`. A source's own URL
+            // can be the disclosure: PAP puts the subscriber's address in plaintext in the link it
+            // emails, and every one of its 98 stored rows carries `email=<local>%40<domain>.<tld>`
+            // while not one row of the 3 471 in the store carries a literal `@` in a URL. Measured
+            // with `instr(url, char(37)||'40')` — `%` is LIKE's own wildcard, so a LIKE search
+            // silently answers "contains 40" and reports every source as affected, which is *a true
+            // number attached to an invented cause* and was caught before it reached this comment.
+            //
+            // No case variants exist and none is written: both hex digits of `%40` are numerals.
+            // `%2540` (double encoding) measured ZERO occurrences, so it is deliberately not read —
+            // a branch no payload reaches is dead safety code, which this repo has paid for before.
+            //
+            // The local-part class ALREADY contains `%`, so on `x%40example.test` the greedy class
+            // first swallows `%40` and backtracks into the alternation; that is why this is one
+            // alternation and not a decode step. Decoding belongs to `RecoverableForms`, which the
+            // fixture scrubber and its CI guard share — this surface is adapter ERROR TEXT, and a
+            // cascade here would mask the diagnosis around the secret rather than the secret.
+            //
+            // The URL-userinfo rule above runs FIRST and is what keeps `smtp.gmail.com:587` on a
+            // DSN whose username is `scout%40gmail.com`: by the time this rule looks, the userinfo
+            // is `[masqué]`, and `]` is not in the local-part class, so the host is not eaten.
+            '~[A-Za-z0-9._%+\-]+(?:@|%40)[A-Za-z0-9.\-]+\.[A-Za-z]{2,}~' => self::MASK,
         ];
 
         foreach ($patterns as $pattern => $replacement) {
