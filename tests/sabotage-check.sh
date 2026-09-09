@@ -3055,6 +3055,38 @@ run_sabotage "a lift nobody mentioned is reported as absent (a fact the tool inv
   src/php/Rent/Notify/Formatter.php \
   's%if ($listing->hasElevator !== null) {%if (true) {%'
 
+# ── the context line reaching the DIGEST and the ROLLUP (2026-09-09) ─────────────────────────────
+#
+# Until this ruling `factsLine()` had one call site, so at `push_min_score: 55` the line travelled on
+# about one match in ten. The two bins below carry most of the volume, and both render through ONE
+# helper on purpose: two byte-identical loops is `a fix landing on one of two symmetric surfaces`
+# waiting to be committed, and on a display line both halves would keep printing something plausible.
+#
+# Each expression is scoped to text that exists only in `digestLine()`. The `floor`/`hasElevator`
+# cases above target `contextBits()`, which the push and both bins now share -- so those two guard
+# all three surfaces at once and are NOT duplicated here.
+
+# THE WIDENING ITSELF. Delete the context clause and every digest and rollup entry falls back to a
+# headline and a reason -- the pre-ruling output, which no title, count or kind assertion can see.
+run_sabotage "the digest entry line loses the floor, the lift and the amenities again" \
+  src/php/Rent/Notify/Formatter.php \
+  "s%(\\\$context === \[\] ? '' : ' — ' . implode(' · ', \\\$context))%''%"
+
+# THE COUNTERWEIGHT, failing the other way, and it is the half a display feature always risks
+# losing. Appended unconditionally, an ad that said nothing gets a dangling ` — ` -- an absence of
+# information announced as though it were information. Most stored rows state no floor and five of
+# the eight sources carry no prose, so this is the COMMON row, not an edge case.
+run_sabotage "a digest entry whose ad said nothing gains a dangling separator" \
+  src/php/Rent/Notify/Formatter.php \
+  "s%(\\\$context === \[\] ? '' : ' — ' . implode(' · ', \\\$context))%' — ' . implode(' · ', \\\$context)%"
+
+# THE DEPARTEMENT IS THE HALF THAT MUST NOT TRAVEL. Calling `factsLine()` here is the tidy-looking
+# change someone makes to remove an apparent duplication, and it restates the postcode the headline
+# already prints two fields to its left on 61-74% of digest rows.
+run_sabotage "the departement is restated on the digest line beside the postcode" \
+  src/php/Rent/Notify/Formatter.php \
+  's%$context = $this->contextBits(\(.*\));%$context = explode(" · ", (string) $this->factsLine(\1));%'
+
 # The postcode leaves the headline. On In'li -- 54 of 83 matches, and it ships NO title -- the
 # headline is the only text in the notification, so this returns it to a bare commune and a price.
 run_sabotage "the postcode is dropped from the headline (ambiguous commune, no title)" \

@@ -207,10 +207,20 @@ of rejecting a listing for not stating a floor), and an UNMENTIONED lift is not 
 > (`12, les terrasses de la ravinière`, 2 of 38); and `cave` was measured inside a SeLoger tracking
 > token, so the reader strips a URL's query and fragment — the tenth instance of *URLs are
 > classified text*, and it calls `RawListing::withoutUrlParameters()` rather than becoming a third
-> copy of that expression. **Its REACH is the individual match push only** — `factsLine()` has one
-> call site, so with `push_min_score: 55` about one match in ten shows it. That is the pre-existing
-> reach of the departement/floor/lift line and Track 7 did not widen it; widening the context line
-> to the digest is a decision nobody has taken.
+> copy of that expression. **ITS REACH WAS ONE MATCH IN TEN, AND SINCE 2026-09-09 IT IS THE DIGEST
+> AND THE ROLLUP TOO** (developer ruling). `factsLine()` had a single call site — `match()` — so at
+> `push_min_score: 55` the whole departement/floor/lift/amenity line travelled on an individual push
+> alone, and the two bins carrying most of the volume showed a headline and a reason and nothing
+> else. It splits into `contextBits()` (floor · lift · amenities), shared by the push and by BOTH
+> digest lists through one `digestLine()` helper — the two lists rendered byte-identical loops until
+> then, which is *a fix landing on one of two symmetric surfaces* waiting to be committed. **The
+> DEPARTEMENT deliberately did not travel**, and that is measured: the full line fires on 100 % of
+> digest rows, but on 61–74 % of them the departement is the ONLY thing it adds, restating the
+> postcode `headline()` already prints two fields to its left (rollup 40/62, tenure bin 58/94, all
+> 1 282 stored matches 958/1282); dropped, the line fires on 35–38 % of the two live bins and every
+> character of it is new. Silence still carries nothing extra — an entry whose ad said nothing is
+> byte-identical to its pre-change line, asserted, because a dangling separator would announce an
+> absence of information as though it were information.
 
 **INDIVIDUAL HEATING IS PENALISED, AND THE SEVERITY IS A NUMBER RATHER THAN AN ADJECTIVE** (Track
 7-A, developer ruling 2026-09-08: *penalise severely, especially electric, gas not as much*).

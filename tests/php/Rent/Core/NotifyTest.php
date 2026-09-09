@@ -106,6 +106,113 @@ final class NotifyTest extends TestCase
         self::assertContains('Yvelines (78) · 2e étage · avec ascenseur', $n->reasons, 'byte-identical to the pre-Track-7 line');
     }
 
+
+    // ------------------------------------------- Track 7-B, phase 2: the digest and the rollup
+
+    /**
+     * THE CONTEXT LINE REACHES THE DIGEST (developer ruling, 2026-09-09).
+     *
+     * `factsLine()` had ONE call site — `match()` — so at `push_min_score: 55` it travelled on
+     * about one match in ten and the two bins that carry most of the volume showed a headline and a
+     * reason and nothing else. The entry line now carries the floor, the lift and the amenities
+     * between them.
+     */
+    public function testADigestEntryCarriesTheFloorTheLiftAndTheAmenities(): void
+    {
+        $n = (new Formatter())->digest([
+            [
+                'listing' => $this->listing([
+                    'floor' => 2,
+                    'hasElevator' => true,
+                    'description' => 'Beau T4 avec terrasse et un parking inclus dans le loyer.',
+                ]),
+                'verdict' => Verdict::digest(['régime indéterminé'], DigestCause::TENURE_UNDETERMINED),
+            ],
+        ]);
+
+        self::assertStringContainsString(
+            '2e étage · avec ascenseur · terrasse · parking inclus — régime indéterminé',
+            $n->reasons[0],
+        );
+    }
+
+    /**
+     * THE ROLLUP HALF, which is a SEPARATE loop over a separate queue.
+     *
+     * `digest()` rendered its two entry lists with two byte-identical loops, and *a fix landing on
+     * one of two symmetric surfaces* is this repo's named recurring defect — it was committed five
+     * times in one §1 review, three of them inside the fix for the one before. This case is what
+     * makes the shared renderer provable rather than merely intended: it fails if the widening
+     * lands on the tenure bin alone.
+     */
+    public function testARollupEntryCarriesTheSameContextAsADigestEntry(): void
+    {
+        $n = (new Formatter())->digest([], [
+            [
+                'listing' => $this->listing([
+                    'floor' => 0,
+                    'description' => 'Charmant rez-de-chaussée avec jardin privatif et une cave.',
+                ]),
+                'verdict' => Verdict::matched(48, ['sous le seuil de notification individuelle'], false),
+            ],
+        ]);
+
+        self::assertStringContainsString('RDC · jardin · cave', implode("\n", $n->reasons));
+    }
+
+    /**
+     * SILENCE CARRIES NOTHING EXTRA — hard rule 9 at the display layer, and the half a display
+     * feature always risks losing.
+     *
+     * Five of the eight rent sources carry no listing prose at all and most stored rows state no
+     * floor, so on those the entry line must come back byte-identical to what it was before this
+     * change. A dangling separator would be the feature announcing an absence of information as
+     * though it were information.
+     */
+    public function testADigestEntryWithNothingToAddIsByteIdenticalToTheOldLine(): void
+    {
+        $listing = $this->listing(['description' => 'PAP.fr De Particulier à Particulier']);
+
+        $n = (new Formatter())->digest([
+            ['listing' => $listing, 'verdict' => Verdict::digest(['régime indéterminé'], DigestCause::TENURE_UNDETERMINED)],
+        ]);
+
+        // The literal is the pre-change output pasted verbatim, which is what "byte-identical"
+        // can mean here: composing it from `match()->title` asserts something else, because the
+        // individual push carries a score and the digest headline passes `null`.
+        self::assertSame(
+            '• inli · Sartrouville 78500 · T4 88 m² · 1450 € CC — régime indéterminé',
+            $n->reasons[0],
+        );
+    }
+
+    /**
+     * THE DEPARTEMENT IS THE HALF THAT DOES **NOT** TRAVEL, and this is the counterweight that
+     * stops someone tidying the two surfaces back into one.
+     *
+     * Measured over the live store before the ruling: the full line fires on 100 % of digest rows,
+     * but on 61–74 % of them the departement is the ONLY thing it adds — a restatement of the
+     * postcode the headline already prints two fields to its left (rollup 40/62, tenure bin 58/94,
+     * all 1 282 stored matches 958/1282). Dropped from the digest, the line fires on 35–38 % of the
+     * two live bins and every character of it is new.
+     *
+     * The individual push keeps it: there the line is the only context there is, and this asserts
+     * BOTH directions in one case, because either half alone is satisfied by deleting a feature.
+     */
+    public function testTheDepartementStaysOnTheIndividualPushAndOffTheDigestLine(): void
+    {
+        $listing = $this->listing(['floor' => 2, 'hasElevator' => true]);
+
+        $digest = (new Formatter())->digest([
+            ['listing' => $listing, 'verdict' => Verdict::digest(['régime indéterminé'], DigestCause::TENURE_UNDETERMINED)],
+        ]);
+        $push = (new Formatter())->match($listing, Verdict::matched(82, ['mention explicite « LLI »'], true));
+
+        self::assertStringNotContainsString('Yvelines', $digest->reasons[0], 'the headline already prints 78500');
+        self::assertStringContainsString('2e étage · avec ascenseur', $digest->reasons[0]);
+        self::assertContains('Yvelines (78) · 2e étage · avec ascenseur', $push->reasons);
+    }
+
     // ---------------------------------------------------------------- payload
 
     public function testTheHeadlineLeadsWithFactsNotTheSourcesMarketing(): void

@@ -3866,6 +3866,7 @@ rather than in a commit message because each is reversible only if someone knows
 | 3 | `Weights` + `ConfigLoader` + `config/rent/criteria.json` | the two new weights bounded `-1000..0`, absent from `positiveTotal()` |
 | 4 | `CriteriaEngine::score()` applies the penalty | a table over the four heating classes at production weights |
 | 5 | `Formatter::factsLine()` appends the amenity line | asserts silence when nothing was read |
+| 5b | `contextBits()` + `digestLine()` — the line reaches the digest and rollup, departement-less (2026-09-09) | both bins assert the context; the departement asserted PRESENT on the push and ABSENT on the digest line, in one case |
 | 6 | meublé negation lookahead | **trial over all 3 372 stored rows: gained / lost / changed** |
 | 7 | car config: split B, `brand_favour`, ford moved, `body_favour` | loader sum-to-100 and the both-lists refusal |
 | 8 | `VehicleCriteria` + `VehicleScorer`: three-way brand, flat body | the 26-make classification assertion, now **three** classes |
@@ -4069,3 +4070,61 @@ working on the FAVOURED side, the thing a scratch script's `str_starts_with` cou
 The two amenity deltas are the two guards firing: terrasse 24 → 23 (the residence name) and jardin
 17 → 16 (`rez de jardin`). The heating and diesel figures are exact; the store has grown by 7 rows
 since the design was measured, which is the whole of the 951/1 261 → 951/1 266 difference.
+
+### Decisions Log — post-Track-7 operations
+
+- [2026-09-09 09:50] AGREED: **the below-gate rent queue is WATCHED for 24–48 h before
+  `Store::DIGEST_BATCH` is touched.** Measured rather than reasoned, and the measurement is what
+  makes it a real question: the daily floor drains **50 and closes the window** (`floorDigest()`
+  writes the marker after a successful send), while the queue accumulated **104 rows in the 21 h
+  after the 2026-09-08 12:14 drain** — inflow ≈ 115/day against an outflow of 50/day, and the cap
+  was hit on two consecutive days (09-08 ROLLUP 50, 09-09 ROLLUP 50, 62 left waiting). Track 7-A
+  moved ~40 individually-heated flats into that same bin the day before, so the series is two days
+  long and one of them is the day the inflow changed. The rejected alternatives are recorded rather
+  than discarded: drain-until-empty (one unbounded mail on a busy day), raise the cap (a constant
+  chosen from a two-day series — this repo's own *never predict a yield* rule), and accept the lag
+  (a queue that never empties is the bin-nobody-drains failure §1's landing zone exists to avoid).
+  Re-measure with `SELECT COUNT(*) FROM listings WHERE outcome='MATCH' AND notified_at IS NULL`
+  after two more 08:00 windows, then rule.
+- [2026-09-09 09:50] NOT A DEFECT: the 2 h with no rent pass on 2026-09-09 and the unfired 08:00
+  floor were **host suspend**, not a wedged watcher. Proven three ways rather than inferred — the
+  car domain shows the identical 2 h 01 gap (`07:36:46` → `09:38:15`), `boottime − monotonic`
+  = 10 365 s (2.9 h) of accumulated suspend, and `journalctl` carries
+  `Finished systemd-suspend.service` at 09:34:17. `Core\Pacer` measures with CLOCK_MONOTONIC on
+  purpose (it survives an NTP step and DST), and CLOCK_MONOTONIC does not advance while the host
+  sleeps, so the pending sleep simply resumed: the pass ran at 09:41:22 and the floor fired at
+  09:45:10, draining 50. **A true number attached to an invented cause** is this repo's named
+  failure and this was one measurement away from being committed as a production stall — the
+  refutation was the car domain's identical gap. Nothing to fix; recorded so the next session does
+  not re-diagnose it.
+- [2026-09-09 11:20] AGREED: **the Track 7-B context line reaches the digest and the rollup, WITHOUT
+  the departement.** `factsLine()` had one call site — `match()` — so at `push_min_score: 55` it
+  travelled on about one match in ten. It splits into `contextBits()` (floor · lift · amenities) and
+  a `factsLine()` that is the departement plus those bits, so the individual push is byte-identical
+  and the digest shares one renderer rather than a second copy. The departement is deliberately
+  dropped from the digest line, measured rather than reasoned: the full line fires on **100 %** of
+  digest rows, but on **61–74 %** of them the departement is the ONLY thing it adds — restating the
+  postcode `headline()` already prints two fields left (rollup 40/62, tenure bin 58/94, all stored
+  matches 958/1282). Departement-less it fires on **35–38 %** of the two live bins at ~20–24 chars,
+  all of it new content. The rejected alternatives are recorded: the full line unchanged (100 %, and
+  redundant on nearly three quarters of rows) and amenities only (17–26 %, and it drops the floor,
+  the fact most often read). Both `digest()` entry loops collapse into one `digestLine()` helper —
+  two loops rendering the same line is *a fix landing on one of two symmetric surfaces* waiting to
+  happen. Silence stays silence: an entry whose ad said nothing carries no extra separator.
+- [2026-09-09 11:20] AGREED: **`Core\Redact` masks a percent-encoded `@`.** One alternation in the
+  existing mailbox pattern, `(?:@|%40)`, and deliberately not a decode cascade — `RecoverableForms`
+  is the fixture scrubber's job, while `Redact`'s surface is adapter error text carrying URLs.
+  Measured over the live store before writing it: `%40` appears on **PAP only, 98 of 98 rows
+  (100 %)**, a literal `@` on **0 of 3 471**, with **zero `%2540`** (no double-encoding) and no case
+  variants possible — both hex digits of `%40` are numerals. The parameter is `email=<local>%40<
+  domain>.<tld>`; the real address is never written to the plan, the test or the commit, which use
+  `x%40example.test`. Scope stated honestly: no current production path fetches a PAP URL
+  (hydration is refused under hard rule 5), so this closes the gap CLAUDE.md names as
+  defence-in-depth for the surface `Redact` guards — it is not a leak that was happening.
+  `ChannelErrorRedactionTest`'s *« the host is the diagnosis »* assertion is the counterweight: the
+  userinfo rule runs first and masks `scout%40gmail.com:hunter2`, so `smtp.gmail.com:587` survives.
+- [2026-09-09 11:20] AGREED: certification for both commits is **`advisor()` only** at 3C and 6C
+  (per-gate developer choice, never carried forward), with the executable evidence doing the
+  refuting between gates: failing test first confirmed red for the stated reason, the scoped
+  sabotage cases, and `test-sabotage-applies.sh` over the pre-existing `Formatter.php` expressions,
+  because collapsing two loops into one helper is exactly how a ledger expression goes inert.

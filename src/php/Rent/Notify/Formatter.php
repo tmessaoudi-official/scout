@@ -178,9 +178,7 @@ final readonly class Formatter
     {
         $lines = [];
         foreach ($entries as $entry) {
-            $listing = $entry['listing'];
-            $lines[] = '• ' . $this->headline($listing, null)
-                . ($entry['verdict']->reasons === [] ? '' : ' — ' . $entry['verdict']->reasons[0]);
+            $lines[] = $this->digestLine($entry, null);
         }
 
         // ONE MAIL, TWO QUEUES, SEPARATED (A5, row 6). The rollup sits UNDER the §1 bin with its
@@ -189,9 +187,8 @@ final readonly class Formatter
         if ($lowScore !== []) {
             $lines[] = '— vérifié, score bas : ' . count($lowScore) . ' annonce(s) sous le seuil de notification individuelle —';
             foreach ($lowScore as $entry) {
-                $listing = $entry['listing'];
-                $lines[] = '• ' . $this->headline($listing, ($entry['verdict']->score ?? 0) > 0 ? $entry['verdict']->score : null)
-                    . ($entry['verdict']->reasons === [] ? '' : ' — ' . $entry['verdict']->reasons[0]);
+                $score = $entry['verdict']->score;
+                $lines[] = $this->digestLine($entry, ($score ?? 0) > 0 ? $score : null);
             }
         }
         if ($entries === []) {
@@ -310,13 +307,40 @@ final readonly class Formatter
     }
 
     /**
-     * Departement, floor and lift — whichever of them the source actually said.
+     * ONE entry line, for BOTH digest lists.
      *
-     * Hard rule 9 governs every entry. `floor === 0` is RDC and REAL, not absent: a ground-floor
-     * flat that silently loses its floor is the display-layer twin of one rejected for not stating
-     * it. And an UNMENTIONED lift is not an absent one — `null` says nothing, `false` says there is
-     * none — because "sans ascenseur" invented about a building nobody described is exactly the
-     * kind of fabrication that makes someone skip a flat that has one.
+     * The two lists rendered this with two byte-identical loops until 2026-09-09, differing only in
+     * the score argument. *A fix landing on one of two symmetric surfaces* is this repo's named
+     * recurring defect — it was committed five times during one §1 review, three of them inside the
+     * fix for the one before — and a display line is where it is cheapest to prevent and hardest to
+     * notice, because both halves keep rendering something plausible.
+     *
+     * Position is `• headline — context — reason`: the context answers *what is this flat* and the
+     * reason answers *why is it here*, which is the order the push already uses.
+     *
+     * SILENCE CARRIES NOTHING EXTRA. Most stored rows state no floor and five of the eight sources
+     * carry no listing prose at all, so on those the line must come back byte-identical to what it
+     * was before this feature — a dangling separator would announce an absence of information as
+     * though it were information, which is hard rule 9 read backwards at the display layer.
+     *
+     * @param array{listing: RawListing, verdict: Verdict} $entry
+     */
+    private function digestLine(array $entry, ?int $score): string
+    {
+        $context = $this->contextBits($entry['listing']);
+
+        return '• ' . $this->headline($entry['listing'], $score)
+            . ($context === [] ? '' : ' — ' . implode(' · ', $context))
+            . ($entry['verdict']->reasons === [] ? '' : ' — ' . $entry['verdict']->reasons[0]);
+    }
+
+    /**
+     * Departement, floor, lift and amenities — the INDIVIDUAL push's context line.
+     *
+     * The departement is this method's only content of its own; everything else comes from
+     * {@see contextBits()}, which the digest shares. It is here and not there because a push
+     * carries no other context, while a digest entry sits directly under a headline that already
+     * prints the postcode — see that method for the measurement that decided it.
      */
     private function factsLine(RawListing $listing): ?string
     {
@@ -326,6 +350,28 @@ final readonly class Formatter
         if ($department !== null) {
             $bits[] = $department;
         }
+
+        foreach ($this->contextBits($listing) as $bit) {
+            $bits[] = $bit;
+        }
+
+        return $bits === [] ? null : implode(' · ', $bits);
+    }
+
+    /**
+     * Floor, lift and amenities — what IS this flat, shared by the push and by both digest bins.
+     *
+     * Hard rule 9 governs every entry. `floor === 0` is RDC and REAL, not absent: a ground-floor
+     * flat that silently loses its floor is the display-layer twin of one rejected for not stating
+     * it. And an UNMENTIONED lift is not an absent one — `null` says nothing, `false` says there is
+     * none — because "sans ascenseur" invented about a building nobody described is exactly the
+     * kind of fabrication that makes someone skip a flat that has one.
+     *
+     * @return list<string>
+     */
+    private function contextBits(RawListing $listing): array
+    {
+        $bits = [];
 
         if ($listing->floor !== null) {
             $bits[] = match (true) {
@@ -348,16 +394,22 @@ final readonly class Formatter
         // of the eight sources carry no listing prose, so on those this half of the line is always
         // empty and that is the correct output rather than a gap.
         //
-        // REACH, stated because it decides how often this is seen at all: `factsLine()` is called
-        // from `match()` alone, so it travels on an INDIVIDUAL push. With `push_min_score: 55` about
-        // one match in ten arrives that way. That is the pre-existing reach of the departement /
-        // floor / lift line and this change does not widen it; widening the context line to the
-        // digest is a separate decision nobody has taken.
+        // REACH, stated because it decides how often this is seen at all. Until 2026-09-09 the
+        // whole line was called from `match()` ALONE, so at `push_min_score: 55` about one match in
+        // ten showed it and the two bins carrying most of the volume showed a headline and a reason
+        // and nothing else. It is now shared with both digest lists — hence this method existing at
+        // all, rather than the digest growing a second copy of the same rendering.
+        //
+        // THE DEPARTEMENT IS THE HALF THAT STAYED BEHIND, and that is measured rather than styled:
+        // the full line fires on 100 % of digest rows, but on 61–74 % of them the departement is
+        // the ONLY thing it adds — restating the postcode `headline()` already prints two fields to
+        // its left (rollup 40/62, tenure bin 58/94, all 1 282 stored matches 958/1282). Without it
+        // the digest line fires on 35–38 % of the two live bins and every character is new.
         foreach (Amenities::read($listing->description) as $amenity) {
             $bits[] = $amenity;
         }
 
-        return $bits === [] ? null : implode(' · ', $bits);
+        return $bits;
     }
 
     private function sizeLine(RawListing $listing): ?string
