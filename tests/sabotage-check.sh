@@ -149,14 +149,14 @@ run_sabotage() {
     || ! ln -s "$repo/tools" "$work/repo/tools"; then
     printf '  \033[31mFAIL\033[0m %-58s (could not build the scratch copy)\n' "$label"
     fail=$((fail + 1))
-    failed_labels+=("$label")
+    failed_labels+=("$label  [harness-copy-failed]")
     return
   fi
 
   if ! sed -i "$expr" "$work/repo/$target"; then
     printf '  \033[31mFAIL\033[0m %-58s (sabotage could not be applied)\n' "$label"
     fail=$((fail + 1))
-    failed_labels+=("$label")
+    failed_labels+=("$label  [harness-sed-failed]")
     return
   fi
 
@@ -164,7 +164,7 @@ run_sabotage() {
   if cmp -s "$repo/$target" "$work/repo/$target"; then
     printf '  \033[31mFAIL\033[0m %-58s (sabotage was a no-op — the pattern no longer matches)\n' "$label"
     fail=$((fail + 1))
-    failed_labels+=("$label")
+    failed_labels+=("$label  [inert-expression]")
     return
   fi
 
@@ -189,7 +189,7 @@ run_sabotage() {
     printf '  \033[31mFAIL\033[0m %-58s (the suite did not terminate within %ss — inconclusive,\n' "$label" "$SUITE_TIMEOUT_SECONDS"
     printf '        and a hang is not a detection)\n'
     fail=$((fail + 1))
-    failed_labels+=("$label")
+    failed_labels+=("$label  [inconclusive-timeout]")
     return
   fi
 
@@ -208,7 +208,7 @@ run_sabotage() {
     printf '  \033[31mFAIL\033[0m %-58s (the sabotage produced a PHP parse error, so the suite never\n' "$label"
     printf '        ran — this proves nothing either way)\n'
     fail=$((fail + 1))
-    failed_labels+=("$label")
+    failed_labels+=("$label  [inconclusive-parse-error]")
     return
   fi
 
@@ -222,11 +222,11 @@ run_sabotage() {
     printf '        harness broke rather than the sabotage being caught)\n'
     printf '        %s\n' "$(tail -3 <<<"$out")"
     fail=$((fail + 1))
-    failed_labels+=("$label")
+    failed_labels+=("$label  [harness-broke]")
   else
     printf '  \033[31mFAIL\033[0m %-58s (SUITE STAYED GREEN — this regression is undetected)\n' "$label"
     fail=$((fail + 1))
-    failed_labels+=("$label")
+    failed_labels+=("$label  [UNDETECTED]")
   fi
 }
 
@@ -5583,6 +5583,20 @@ if [[ -n "$_filter" ]]; then
 fi
 
 if (( fail > 0 )); then
+  # EACH LABEL CARRIES ITS KIND, because `$fail` counts six different things and the two headings
+  # above call all of them "undetected". That misdirected a real triage on 2026-09-09: issue #16
+  # reported seven cases as undetected, three of them were PARSE ERRORS — which the ledger itself
+  # says "prove nothing either way" — and the repair designed for the wrong kind would have been
+  # a test, not a retarget. The kinds are `harness-copy-failed`, `harness-sed-failed`,
+  # `inert-expression`, `inconclusive-timeout`, `inconclusive-parse-error`, `harness-broke` and
+  # `UNDETECTED`; only the last is a finding about the TESTS.
+  #
+  # THE TALLY LINE AND THIS HEADING ARE DELIBERATELY UNCHANGED, and the heading is still the
+  # imprecise part. `tests/test-ci-workflow.sh` pins both by literal text (the `%d undetected`
+  # printf format positionally against the shard ABORT, and `undetected or unapplied:` as the
+  # proof that the red-ledger issue names WHICH cases were not caught), so renaming either here
+  # reddens that gate on the same push. The annotation is where the precision goes; renaming the
+  # heading is a separate change that has to move its pin with it.
   printf '\n  undetected or unapplied:\n'
   printf '    - %s\n' "${failed_labels[@]}"
 fi
