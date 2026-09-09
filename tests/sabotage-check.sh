@@ -5583,8 +5583,11 @@ if [[ -n "$_filter" ]]; then
 fi
 
 if (( fail > 0 )); then
-  # EACH LABEL CARRIES ITS KIND, because `$fail` counts six different things and the two headings
-  # above call all of them "undetected". That misdirected a real triage on 2026-09-09: issue #16
+  # EACH LABEL CARRIES ITS KIND, because `$fail` counts every kind enumerated below alike while the
+  # two headings above call all of them "undetected". (That sentence said "six different things"
+  # over a list of seven, in the commit that exists to make this tally precise — so the numeral is
+  # gone and the enumeration is the count. `grep -c 'failed_labels+=' ` is the only figure that
+  # cannot drift.) It misdirected a real triage on 2026-09-09: issue #16
   # reported seven cases as undetected, three of them were PARSE ERRORS — which the ledger itself
   # says "prove nothing either way" — and the repair designed for the wrong kind would have been
   # a test, not a retarget. The kinds are `harness-copy-failed`, `harness-sed-failed`,
