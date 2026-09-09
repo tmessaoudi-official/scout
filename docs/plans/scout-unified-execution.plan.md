@@ -4093,10 +4093,22 @@ since the design was measured, which is the whole of the 951/1 261 → 951/1 266
   the tenure bin** (`outcome='DIGEST' AND notified_at IS NULL` — which is why that afternoon's
   render carried one list and not two), **18 of the 88 carrying a floor** in their v7 snapshot and
   **8 a lift**. The 13:51 render was a `--dry-run`, so it drained nothing and all 88 are still
-  waiting. **One falsifiable prediction travels with it**, because a baseline nobody can be wrong
-  about is not one: the drain orders `seen_epoch ASC`, and 17 of the 18 floors and all 8 lifts sit
-  in the 38 rows BEHIND the first 50 — so the next real batch should show floors on roughly 17 of
-  38, and if it does not, the composition story below is wrong rather than merely old.
+  waiting. **TWO falsifiable predictions travel with it**, because a baseline nobody can be wrong
+  about is not one. They are stated as *first* and *second* drain deliberately: a first draft said
+  *"the next real batch should show floors on roughly 17 of 38"*, which names the wrong batch twice
+  over — the dry run drained nothing, so the NEXT real drain re-selects the same head 50, and a
+  reader following that sentence would have read tomorrow's 1-of-50 floor as a refutation of a story
+  that predicted it.
+  - **The first real drain reproduces the dry run**: 50 rows, **1 floor, 0 lifts, 4 amenity rows**.
+    Check it by diffing the sent mail against `digest2.txt` minus its footer. If it differs, the head
+    of the queue is not stable and the freeze-versus-refresh account below is wrong.
+  - **The second drain does NOT arrive rich in floors on a busy day, and that is the surprising
+    half.** The 18 floors split **1 head / 1 frozen tail (positions 51–69) / 16 re-polled tail
+    (70–88)**, and all **8** lifts are in that last band — which is exactly the band `seen_epoch`
+    keeps rewriting, so every alert arriving between the two drains overtakes it. The second 50 is
+    therefore the 19 frozen rows (**1 floor, 0 lifts**) plus new inflow, and it reaches the In'li
+    band only if fewer than ~31 rows are queued in between. If a busy day's second drain comes back
+    carrying 16 floors, the re-write mechanism is wrong rather than merely incomplete.
 - [2026-09-09 09:50] NOT A DEFECT: the 2 h with no rent pass on 2026-09-09 and the unfired 08:00
   floor were **host suspend**, not a wedged watcher. Proven three ways rather than inferred — the
   car domain shows the identical 2 h 01 gap (`07:36:46` → `09:38:15`), `boottime − monotonic`
@@ -4120,17 +4132,40 @@ since the design was measured, which is the whole of the 951/1 261 → 951/1 266
   all of it new content — **measured over the stored rows on the morning of 2026-09-09, and that
   date is part of the claim**. The FIRST DRY-RUN RENDER of the queue after the deploy, the same
   afternoon, came in at **5 of 50** (four amenity rows, one `7e étage`). **The cause is the DRAIN'S
-  OWN ORDER, and the first two explanations offered for it were both wrong.** It is not *"the
+  OWN ORDER, and the first THREE explanations offered for it were all wrong.** It is not *"the
   portals ship no listing prose"*: with URLs removed the head 50 carry a median **359** characters
   of prose against the tail's **376**, and every one of the 88 rows has a description. Nor is it the
   reason string *aucun signal dans l'annonce*, which marks no TENURE signal and is printed on the
-  floor-carrying In'li row too. What the head 50 do not do is STATE these facts: their prose says
-  `étage`/`RDC` **1 time in 50** and `ascenseur` **0**, because `seen_epoch ASC` puts the oldest
-  rows first and those are **47 of 50 bienici + seloger** portal-alert cards. The tail 38 is In'li-led
-  (16, plus cdc_habitat 3 and pap 4) and says `étage` **17 times** and `ascenseur` **8** — matching
-  its snapshots exactly, 17 floors and 8 lifts, so the reader agrees with the source text 17/17 and
-  8/8. Same feature, same code, a quarter of the rate: a bin's composition moves, so quote the bin
-  and the day, never the percentage alone. **That batch was a READING, not a drain** —
+  floor-carrying In'li row too. **Nor is it *"`seen_epoch ASC` puts the oldest rows first and those
+  are the portal cards"*, which was written here for a day and describes a block structure the queue
+  does not have**: the sources INTERLEAVE over the whole 88 — seloger occupies queue positions
+  **1–63**, bienici **2–71**, In'li **3–88** — so there is no contiguous run of portal cards for the
+  order to take first. **`seen_epoch` is the LAST sighting instant, not the first**, and the
+  current-sighting branch of `Store::record()` rewrites it on every pass (`SET last_seen_at = :at,
+  seen_epoch = :epoch`, `Store.php` — measured `|seen_epoch − last_seen_at| = 0 s` on all 88). So
+  `ASC` orders least-recently-sighted first: an email row's instant is its message `Date`, which
+  never moves again, while a still-published polled row is pushed to the back every time it is seen.
+  Measured on the same copy: queue positions **70–88 are exactly the 19 rows re-sighted in the last
+  poll** — 14 In'li, 3 cdc_habitat, 1 bienici, 1 pap — and the row-50/row-51 cut falls at 08:51 /
+  09:03 that morning. What the head 50 therefore do not do is STATE these facts: their prose says
+  `étage`/`RDC` **1 time in 50** and `ascenseur` **0**, and they are **47 of 50 bienici + seloger**
+  portal-alert cards. The tail 38 is In'li-led (16, plus cdc_habitat 3 and pap 4) and says `étage`
+  **17 times** and `ascenseur` **8**, against **17 floors and 8 lifts** in the snapshots.
+  **THOSE TWO 17s COINCIDE; THEY DO NOT CORRESPOND, and the first draft of this entry claimed row
+  identity from equal counts.** Checked per row: the LIFT half is genuinely row-identical (**8/8**,
+  zero rows where prose and snapshot disagree), the FLOOR half is **16 of 17** — `cdc_habitat/49946`
+  carries a snapshot floor its prose never states (CDC maps the field), and `inli/PRV-241713` states
+  one its snapshot does not carry (under-extraction, the safe direction, and the shape `Core\Prose`
+  deliberately leaves alone). Two offsetting rows made the counts equal. Same feature, same code,
+  a quarter of the rate: a bin's composition moves, so quote the bin and the day, never the
+  percentage alone.
+  **AND THE ORDER IS A STARVATION SHAPE, WHICH IS THE PART THAT OUTLIVES THIS BIN.** In'li is the
+  one source whose prose routinely states a floor and a lift, and the very property that makes an
+  In'li row valuable — still published, so still re-polled — is what keeps pushing it behind every
+  alert that arrives after it. A below-gate In'li flat can therefore wait indefinitely while newer
+  email rows drain ahead of it. **Not acted on here**: the standing 2026-09-09 09:50 ruling is to
+  watch the queue for 24–48 h before touching the drain, and re-ordering it is a larger change than
+  the cap that ruling is about. Recorded so the re-measurement is read with it in hand. **That batch was a READING, not a drain** —
   `--dry-run` sends nothing and marks nothing, so all 88 queued rows are still waiting, which is the
   count the standing `DIGEST_BATCH` re-measurement is compared against. **The LIFT half of the line
   is uncertified by the live path**: 0 of those 50 rows carry an `hasElevator !== null` (8 of the 88

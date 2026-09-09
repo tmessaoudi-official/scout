@@ -220,13 +220,25 @@ of rejecting a listing for not stating a floor), and an UNMENTIONED lift is not 
 > 1 282 stored matches 958/1282); dropped, the line fires on 35–38 % of the two live bins and every
 > character of it is new. **That 35–38 % is dated 2026-09-09 morning, and the first DRY-RUN RENDER
 > of the queue that afternoon came in at 5 of 50** — four amenity rows and one `7e étage`. **The
-> cause is the drain's own ORDER, and two plausible explanations for it were measured and refuted
-> first**: not *"those portals ship no prose"* (URLs removed, the head 50 carry a median 359
-> characters against the tail's 376, and all 88 rows have a description), and not the reason string
+> cause is the drain's own ORDER, and THREE explanations for it were measured and refuted first**:
+> not *"those portals ship no prose"* (URLs removed, the head 50 carry a median 359 characters
+> against the tail's 376, and all 88 rows have a description), not the reason string
 > *aucun signal dans l'annonce*, which marks no TENURE signal and prints on the floor-carrying In'li
-> row too. `seen_epoch ASC` puts the oldest rows first, and those are 47 of 50 bienici+seloger
-> portal cards whose prose says `étage`/`RDC` once in 50 and `ascenseur` never; the 38 behind them
-> are In'li-led and say them 17 and 8 times, matching their snapshots exactly. (A `--dry-run` sends
+> row too, and not *"`seen_epoch ASC` takes the oldest rows, and those are the portal cards"* — the
+> sources INTERLEAVE across the whole queue (seloger holds positions 1–63, bienici 2–71, In'li
+> 3–88), so there is no block of portal cards to take. **`seen_epoch` is the LAST sighting instant,
+> and the current-sighting branch of `Store::record()` rewrites it every pass**, so the order is
+> least-recently-sighted first: an email row freezes at its message `Date` and drifts forward, while
+> a still-published polled row is pushed to the back each time it is seen again. Measured: queue
+> positions 70–88 are exactly the 19 rows re-sighted in the last poll (14 In'li, 3 cdc_habitat, 1
+> bienici, 1 pap). The head 50 is 47 of 50 bienici+seloger cards, whose prose says `étage`/`RDC`
+> once in 50 and `ascenseur` not at all; the 38 behind them are In'li-led and say them 17 and 8
+> times — **8/8 of the lifts are the same rows that carry one in their snapshot, and 16 of the 17
+> floors are** (one cdc_habitat floor comes from a mapped field rather than prose, one In'li prose
+> mention is deliberately not extracted), so the two 17s coincide rather than corresponding.
+> **That ordering is a STARVATION shape, not merely a sequence**: In'li is the one source whose
+> prose routinely states a floor and a lift, and a still-published In'li flat loses its place to
+> every alert that arrives after it, for as long as it stays published. (A `--dry-run` sends
 > nothing and marks nothing, so that batch is a READING of the queue rather than a drain of it —
 > the 88 rows are all still waiting, which matters because the queue's own re-measurement is
 > compared against that count.) The feature is behaving; the BIN moved. A reach figure here is only
