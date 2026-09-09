@@ -1438,9 +1438,27 @@ run_sabotage "a capped digest stops naming the remainder (the bin reads as empty
 # on record under another ad id — was the one it could not see, and by construction that row has no
 # group edge and no twin. Terminal once it fires: the pushed row holds a resolved tenure and
 # outcome = MATCH, so nothing returns it again.
+#
+# COMPOUND SINCE 2026-09-09, and the reason is structural rather than a fixture that could be
+# sharpened. Measured, whole suite: this expression ALONE is green (3126 tests, 12109 assertions) —
+# `SectionOneGate` re-reads all four routes at the caller's filter and again above the send, so the
+# only thing the mutation can change is whether a promotion is OFFERED. And a promotion WRITES
+# NOTHING until it is announced — `$changed` deliberately excludes them, in as many words — so
+# `testAFlatOnRecordAsExcludedUnderAnotherAdIdIsNotPromoted` already asserts this row's outcome and
+# that assertion is satisfied either way. There is nothing observable left for a sharper fixture to
+# assert; removing the two gates beside it is what makes the per-row check answerable at all. The
+# label's "it pushes" is then literal — that test fails on a MATCH notification actually delivered,
+# with `testReopenNamesTheSameDwellingRouteAndDoesNotClearIt` beside it.
+#
+# NOT INDEPENDENT of the case below it, and saying so is cheaper than someone rediscovering it: this
+# script is `D;F;G` and that one is `F;G`, so the two tests named above are the DELTA over the pair,
+# and the case below would keep this one red on its own. Structural rather than sloppy — the filter
+# reads the dwelling route, so measuring the route means removing the filter — and the Pipeline trio
+# already has the same property through the empty candidate set the three of them share. Measured:
+# 3 changed lines here, 2 in the case below, 1 in the group case, so each part reaches ONE guard.
 run_sabotage "reclassify ignores the same dwelling on record under another ad id (§1, and it pushes)" \
   src/php/Rent/Cli/RentScout.php \
-  '/private function reclassify(/,$ s%\$dwellingVeto = ExcludedDwellings::match(\$evidence, \$excludedDwellings, \$dwellingDedup);%\$dwellingVeto = null;%'
+  '/private function reclassify(/,$ s%\$dwellingVeto = ExcludedDwellings::match(\$evidence, \$excludedDwellings, \$dwellingDedup);%\$dwellingVeto = null;%; /private function reclassify(/,$ s%if (\$sectionOne->refuses(\$promotion\[.listing.\], \$promotion\[.key.\]) === null) {%if (true) {%; /private function announcePromotions/,/^    }/ s%if (\$refusal !== null) {%if (false) {%'
 
 # The counterweight half: --reopen must still NAME the route it does not clear. Without this the
 # repair verb silently declines on exactly the population the veto above is for.
@@ -1475,9 +1493,22 @@ run_sabotage "one failed run is a broken source again (the flap, through the rea
 # the set. `staleVerdicts()` orders `seen_epoch DESC`, so the NEW ad is judged FIRST in the natural
 # re-advertising case — which is why the veto is re-applied to the PROMOTION, the last moment at
 # which every verdict of the run is on disk.
+#
+# COMPOUND SINCE 2026-09-09: this filter and the gate inside `announcePromotions()` are the SAME
+# refusal at two heights, so removing one leaves the other standing and the suite green — measured,
+# whole suite, 3126 tests / 12110 assertions with only the first expression applied. Together they
+# redden `testAClusterSiblingThatResolvesLaterInTheRunStillVetoesThePromotion` and
+# `testAnExclusionResolvedInThisRunVetoesItsOwnSibling`.
+#
+# THE SEND GATE HAS NO CASE OF ITS OWN AND NEEDS NONE, which is worth writing down because its
+# absence reads like a gap. Disabling it alone is green too, and cannot be otherwise: the filter
+# above removes every refused promotion before `announcePromotions()` is reached, so its `if` is
+# unreachable while the filter stands. `SectionOneGateCallSitesTest` pins its PRESENCE — the second
+# expression here keeps `->refuses(` precisely so that guard stays green and the reddening is
+# behavioural — and this pair is what pins its EFFECT.
 run_sabotage "reclassify promotes a sibling of an exclusion it resolved seconds earlier (§1)" \
   src/php/Rent/Cli/RentScout.php \
-  '/private function reclassify(/,$ s%if (\$sectionOne->refuses(\$promotion\[.listing.\], \$promotion\[.key.\]) === null) {%if (true) {%'
+  '/private function reclassify(/,$ s%if (\$sectionOne->refuses(\$promotion\[.listing.\], \$promotion\[.key.\]) === null) {%if (true) {%; /private function announcePromotions/,/^    }/ s%if (\$refusal !== null) {%if (false) {%'
 
 # THE CAR VERB against a refused ROLLUP — round 1 fixed the RENT verb and wrote "only the verb was
 # wrong", which was true of rent and left this standing (C2 round 2, P1 on all three lenses).
@@ -1624,6 +1655,25 @@ run_sabotage "the call-site guard accepts a COMMENTED-OUT §1 gate" \
   's%\$out\[\] = \[basename(\$file, ..php.), \$name, \$code\];%$out[] = [basename($file, ".php"), $name, $body];%'
 
 # SCOPED to reclassify(), for the reason on the drain's own pair above.
+#
+# DELIBERATELY NOT COMPOUND, and it was one measurement away from becoming one. The two reclassify
+# cases above are shadowed by `SectionOneGate`; this one was shadowed by a FIXTURE.
+# `testAListingItsClusterVetoedIsNotResurrected` seeds a sibling that is a cluster member AND the
+# same dwelling under another ad id at once, so `excludedDwellings()` refuses the survivor whatever
+# the group veto does, and the shared `$vetoed` counter leaves even the `écartée` line
+# byte-identical — measured: group + dwelling nulled together is what reddens that test, with both
+# gates INTACT. Compounding on that reading would have pinned this expression to the dwelling
+# route's guarantee: a second label on one measurement, which is what the note above the Pipeline
+# trio warns against when it says the reason is written down rather than replaced.
+#
+# What separates them is that a DEMOTED verdict is written where a promotion is not, so route 2 is
+# observable on its own once route 4 cannot answer.
+# `RentScoutReclassifyTest::testTheClusterVetoHoldsWhenTheDwellingScanCanNoLongerMatch` puts the
+# store in that state — the state `PipelineRunTest::testThePersistedGroupVetoHoldsWhenTheDwelling
+# ScanCanNoLongerMatch` already uses one surface over: the cluster earned while the rents agree,
+# then one copy re-advertised 300 € away, outside `Dedup`'s tolerance. Measured 2026-09-09: green
+# at HEAD, RED on this single expression with both gates intact, and green when the DWELLING route
+# is nulled instead — the counterweight that proves it isolates route 2 and nothing else.
 run_sabotage "reclassify stops consulting the group (it resurrects a listing the cluster vetoed)" \
   src/php/Rent/Cli/RentScout.php \
   '/private function reclassify(/,$ s%\$groupVeto = \$store->groupExcludedTenure(\$key);%\$groupVeto = null;%'

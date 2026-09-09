@@ -9,6 +9,8 @@ use Scout\Rent\Cli\RentScout;
 use Scout\Core\Notify\ConsoleChannel;
 use Scout\Core\Notify\Notifier;
 use Scout\Tests\Support\DeliveringChannel;
+use Scout\Rent\Core\Dedup;
+use Scout\Rent\Core\ExcludedDwellings;
 use Scout\Rent\Core\RawListing;
 use Scout\Rent\Core\Tenure;
 use Scout\Rent\Store\Store;
@@ -458,6 +460,79 @@ final class RentScoutReclassifyTest extends TestCase
             'écartée(s) par un doublon',
             $r['out'],
             'the skip must be counted out loud — a silent skip is indistinguishable from a bug',
+        );
+    }
+
+    /**
+     * Route 2 ALONE — the persisted cluster — with route 4 unable to answer.
+     *
+     * The test above cannot isolate it, and that is why this one exists. Its sibling `VETO-2` is a
+     * cluster member AND the same dwelling under another ad id at once — identical commune,
+     * postcode, rent, surface and rooms — so `ExcludedDwellings` refuses the survivor whatever the
+     * group veto does, and the shared `$vetoed` counter leaves even the `écartée` line
+     * byte-identical. Measured 2026-09-09: nulling `groupExcludedTenure()` there changes nothing,
+     * and nulling BOTH routes is what reddens it — which would pin the ledger's group expression to
+     * the dwelling route's guarantee rather than to its own.
+     *
+     * The separating state is not invented for the occasion: it is the one
+     * `PipelineRunTest::testThePersistedGroupVetoHoldsWhenTheDwellingScanCanNoLongerMatch` uses on
+     * the pipeline surface. The cluster is EARNED while the rents agree, then one copy is
+     * re-advertised 300 € away — far outside `Dedup`'s ±30 € / 3 % tolerance — so no stored excluded
+     * dwelling matches any more while the persisted group survives. A rent change is the most
+     * ordinary event this project watches for; it must not launder a flat past §1 here any more
+     * than it may there.
+     */
+    public function testTheClusterVetoHoldsWhenTheDwellingScanCanNoLongerMatch(): void
+    {
+        $root = $this->tempRoot();
+
+        $survivor = new RawListing(
+            sourceName: 'demo',
+            externalId: 'ISO-1',
+            title: 'T4 lumineux',
+            description: 'Quatre pieces, 88 m2, ascenseur.',
+            commune: 'Sartrouville',
+            postcode: '78500',
+            rentCc: 1450,
+            surfaceM2: 88.0,
+            rooms: 4,
+        );
+        // The same flat, re-advertised 300 € higher: still the cluster it earned, no longer
+        // reachable by the dwelling scan.
+        $sibling = new RawListing(
+            sourceName: 'other',
+            externalId: 'ISO-2',
+            title: 'T4 lumineux',
+            description: 'Financement PLS, commission d attribution.',
+            fields: ['financement' => 'PLS'],
+            commune: 'Sartrouville',
+            postcode: '78500',
+            rentCc: 1750,
+            surfaceM2: 88.0,
+            rooms: 4,
+        );
+
+        $key = $this->seed($root, $survivor, 'UNKNOWN', 'REJECT');
+        $siblingKey = $this->seed($root, $sibling, 'PLS', null);
+
+        $store = Store::open($root . '/state/rent-watch.sqlite3');
+        $store->assignGroup([$key, $siblingKey]);
+
+        // THE PREMISE, asserted rather than assumed. Without it this case could go green on route 4
+        // and prove nothing at all about route 2 — which is exactly what happens to the test above,
+        // and the reason this one was written.
+        self::assertNull(
+            ExcludedDwellings::match($survivor, $store->excludedDwellings(), new Dedup()),
+            'the premise: 300 € apart, no stored excluded dwelling matches this listing',
+        );
+
+        $r = $this->scout($root, ['reclassify']);
+
+        self::assertSame(0, $r['code']);
+        self::assertSame(
+            'REJECT',
+            $this->outcomeOf($root, $key),
+            'the persisted cluster veto holds on its own when the dwelling scan cannot answer',
         );
     }
 

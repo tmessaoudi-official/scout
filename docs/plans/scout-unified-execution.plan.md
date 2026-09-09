@@ -3480,6 +3480,7 @@ tool/guard) and say which ones the fix covers.**
 | 63 | Row 62's own fix rebuilt the defect one row over — a map keyed per SERVICE drops the second container the wedged state always has — and three surfaces denied a count the tool prints | M | done | f1588a7 | tools/verify-deploy.sh tests/test-verify-deploy.sh README.md docs/RUNBOOK.md CLAUDE.md |
 | 64 | The Track 7-B context line reached one match in ten — `contextBits()` + one `digestLine()` carry it to the digest and the rollup, departement-less and measured | M | done | 2da27d3 | src/php/Rent/Notify/Formatter.php tests/php/Rent/Core/NotifyTest.php tests/sabotage-check.sh CLAUDE.md |
 | 65 | `Core\Redact` masked `email=x@y.com` and not `email=x%40y.com` — one alternation, PAP-only and 98/98 of the stored rows carrying it | S | done | 6ae3d31 | src/php/Core/Redact.php tests/php/Core/RedactTest.php tests/sabotage-check.sh CLAUDE.md |
+| 66 | The three undetected §1 `reclassify` cases were shadowed TWO ways, not one — two by `SectionOneGate` (compounded), the third by its own fixture (new test, expression unchanged) | M | done | bd2ba4f | tests/sabotage-check.sh tests/php/Rent/Cli/RentScoutReclassifyTest.php docs/plans/scout-unified-execution.plan.md |
 <!-- /progress-block -->
 ### Blocked
 
@@ -4224,3 +4225,46 @@ since the design was measured, which is the whole of the 951/1 261 → 951/1 266
   which is a stale expression, the failure `test-sabotage-applies.sh` cannot see because it proves
   an expression MATCHES, never that what it matches still carries the guarantee. If instead the
   mutation still reaches a send, it is a real §1 hole and outranks everything else in this plan.
+
+- [2026-09-09 15:30] AGREED: **the answer is THREE-WAY, and the hypothesis above is two-thirds
+  right.** None of the three is a §1 hole — every mutation is caught by a layer still standing — and
+  none is a stale expression either: each still names live code carrying a live guarantee. What
+  they are is SHADOWED, and by two different things, which is why one uniform repair would have been
+  wrong. Measured 2026-09-09 against faithful `cp -a` scratch trees, full suite unless noted:
+
+  | Mutation, alone | Result | Minimal form that reddens |
+  |---|---|---|
+  | `$dwellingVeto = null` (case 1) | OK, 3126 tests / 12109 assertions | + caller filter + send gate |
+  | caller filter (case 2) | OK, 3126 / 12110 | + send gate |
+  | `$groupVeto = null` (case 3) | OK | **unchanged — a new fixture makes it red** |
+  | send gate alone | OK, 3126 / 12110 | — (unreachable while the filter stands) |
+
+  **The mechanism is in the code rather than in the fixtures**, and it is the whole split: a
+  promotion WRITES NOTHING until it is announced — `reclassify()` says so where it excludes them
+  from `$changed` — so a mutation that only changes whether a promotion is OFFERED is unobservable
+  while any gate stands, while one that changes a WRITTEN verdict is observable with both gates
+  intact. Cases 1 and 2 are the first kind and are compounded, each naming the tests it reddens.
+  Case 3 is the second: nulling the group veto DEMOTES the survivor's stored `REJECT` to `DIGEST`,
+  which is a write, and the digest bin is an announcement.
+
+  **Case 3 therefore keeps its single expression, and the near miss is the finding.** Applying the
+  `3422225` precedent uniformly would have compounded it with the dwelling route — measured red, so
+  it would have looked correct — and that redness comes from `testAListingItsClusterVetoedIsNot
+  Resurrected` seeding a sibling that is a cluster member AND the same dwelling under another ad id
+  at once. The label would then have described case 1's guarantee twice. The shipped fixture
+  `testTheClusterVetoHoldsWhenTheDwellingScanCanNoLongerMatch` separates them in the state
+  `PipelineRunTest` already uses one surface over (the cluster earned while the rents agree, then
+  one copy re-advertised 300 € away, outside `Dedup`'s tolerance), asserts that premise rather than
+  assuming it, and is green at HEAD · RED on the single expression · green when the DWELLING route
+  is nulled instead.
+
+  **One claim raised mid-measurement is RETRACTED**: the send gate at `announcePromotions()` was
+  reported as having no behavioural coverage. It has none of its own and can have none — `Dedup`
+  carries no state, so the caller's filter removes every refused promotion before that method is
+  reached and its `if` is unreachable while the filter stands. Its presence is pinned by
+  `SectionOneGateCallSitesTest`, its effect by case 2's pair. Nothing to build.
+
+  Every reddening in the lattice was BEHAVIOURAL: no red set contained `SectionOneGateCallSitesTest`,
+  which is why the gate expression is `if ($refusal !== null)` → `if (false)` scoped to that one
+  method rather than `$refusal = null;` — the latter deletes the `->refuses(` token and reddens the
+  structural guard instead, proving nothing about §1.
