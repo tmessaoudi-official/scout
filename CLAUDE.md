@@ -2652,6 +2652,29 @@ var/claude/                 Reports, review outputs — gitignored scratch (hand
   no other route to the developer"* — was dead safety code. `test-sabotage-applies.sh` cannot see
   this: it proves an expression MATCHES, never that it matches ONE thing. When two cases share a
   pattern, scope each with a function address range and measure the changed-line count.
+- **A LEDGER CASE CAN FAIL *GREEN*, AND NOTHING IN THE GATE CAN SEE IT (2026-09-09).** One commit —
+  `422e27a`, which gave every `pushRetries()` call an assignment — rotted FOUR cases at once, and
+  the four did not fail the same way. Three left `$drainedKeys = ;` and became PARSE ERRORS, which
+  the ledger reports as *"this proves nothing either way"*. The fourth, the rent daily FLOOR,
+  truncated into the FOLLOWING statement and made a valid assignment chain
+  (`$drainedKeys = $sectionOne = new SectionOneGate(…)`): it parsed, the suite went red on a **type
+  scramble** rather than on its own label, and the case reported **`ok`** in every nightly for three
+  days. `test-sabotage-applies.sh` is blind to it — the expression still MATCHED — and so is the
+  nightly, which only ever names cases that FAILED. Two rules: replace rather than delete
+  (`$drained = 0;` keeps the assignment), and after any refactor that changes a call's SHAPE rather
+  than its address, re-measure the changed-line count and read WHICH test goes red, because a case
+  reddening the wrong test is indistinguishable from a case working.
+- **AND THE TALLY CANNOT TELL YOU WHICH KIND YOU HAVE.** `$fail` counts copy failures, refused seds,
+  inert expressions, timeouts, parse errors, harness breaks and genuine undetected cases alike,
+  while the tally line and the `undetected or unapplied:` heading call all of them *undetected* — so
+  issue #16's seven bare labels read as seven undetected regressions when three were parse errors
+  and one was reporting `ok`. Since 2026-09-09 every label carries its kind in brackets
+  (`[UNDETECTED]`, `[inconclusive-parse-error]`, `[inert-expression]`, `[inconclusive-timeout]`,
+  `[harness-*]`) and the red-ledger issue enumerates them; only `[UNDETECTED]` is a finding about
+  the TESTS. **The two headings are deliberately unchanged** — `tests/test-ci-workflow.sh` pins the
+  `%d undetected` printf positionally against the shard ABORT, and pins `undetected or unapplied:`
+  both as the proof the issue names which cases were not caught and as the regex `ci.yml` harvests
+  the block with. Renaming either is a separate change that must move its pin with it.
 - **A DURABLY-EXCLUDED ROW HAS ONE WAY BACK, AND IT IS A NAMED COMMAND (row 40, 2026-09-05).**
   `scout --domain=rent reclassify --reopen=<dedup_key>` prints where the exclusion came from
   (*lecture propre / jumeau / groupe / même logement* — FOUR routes since 2026-09-07; it printed
