@@ -7,6 +7,7 @@ namespace Scout\Tests\Rent\Store;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Scout\Rent\Core\RawListing;
+use Scout\Core\RunStore;
 use Scout\Core\SourceStatus;
 use Scout\Rent\Store\Store;
 
@@ -1525,6 +1526,60 @@ final class StoreTest extends TestCase
         }
 
         self::assertSame(SourceStatus::BROKEN, $this->store->health('inli')->status);
+    }
+
+    /**
+     * A quiet run BEHIND a retained outage must not zero the baseline — and this is the only shape
+     * in which `lastProductiveCount()`'s `item_count > 0` guard is observable at all.
+     *
+     * The two tests above are named for that guard and are VACUOUS with respect to it. Both put a
+     * single failure (or none) between the quiet run and the streak; `observedRuns()` drops a
+     * failure episode shorter than `EMPTY_RUNS_BEFORE_BROKEN`, so the quiet run is absorbed INTO
+     * the trailing streak rather than sitting before it, `trailingEmptyRuns()` never breaks, and
+     * `rollingMeanBefore()` answers before the fallback is reached. Deleting the guard left the
+     * whole suite green — the ledger case reported detection it did not have until this test
+     * existed, exactly as `testAToleratedFailureDoesNotShiftTheBaselineWindow` records for its own.
+     *
+     * The reaching shape needs three things at once: an outage AT the threshold, so it is RETAINED
+     * and breaks the streak, leaving the quiet run outside it; a gap longer than the rolling
+     * window, so `rollingMeanBefore()` returns null and the fallback runs at all; and a productive
+     * run older still, so the fallback has something to find.
+     */
+    public function testAQuietRunBehindARetainedOutageDoesNotZeroTheBaseline(): void
+    {
+        // Sized off the constants rather than a literal 3 or 7: at a raised threshold the outage
+        // would fall under the retention bar and this test would rejoin its two vacuous siblings.
+        $base = new \DateTimeImmutable('2026-08-01T09:00:00+00:00');
+        $at = static fn (int $offset): string => $base->modify(sprintf('+%d days', $offset))->format('Y-m-d\TH:i:sP');
+
+        $this->store->recordRun('inli', 25, true, null, $at(0));
+        $this->store->recordRun('inli', 0, true, null, $at(1));    // a quiet day, not a broken one
+
+        for ($i = 0; $i < RunStore::EMPTY_RUNS_BEFORE_BROKEN; ++$i) {
+            $this->store->recordRun('inli', 0, false, 'HTTP 503', $at(2 + $i));
+        }
+
+        // …then a gap longer than the rolling window, and the source comes back saying nothing.
+        $resume = 2 + RunStore::EMPTY_RUNS_BEFORE_BROKEN + RunStore::ROLLING_WINDOW_DAYS + 1;
+
+        for ($i = 0; $i < RunStore::EMPTY_RUNS_BEFORE_BROKEN; ++$i) {
+            $this->store->recordRun('inli', 0, true, null, $at($resume + $i));
+        }
+
+        $health = $this->store->health('inli');
+
+        // THE PREMISE, asserted rather than assumed: the outage BROKE the streak, so the quiet run
+        // is outside it. One more and this is the siblings' shape again, proving nothing.
+        self::assertSame(
+            RunStore::EMPTY_RUNS_BEFORE_BROKEN,
+            $health->consecutiveEmptyRuns,
+            'the quiet run was absorbed into the streak — this test is back to proving nothing',
+        );
+
+        self::assertSame(SourceStatus::BROKEN, $health->status);
+        // The digit boundary, because a bare '25' is satisfied by '125.0' — the remainder-line
+        // lesson of 2026-09-07 on a second surface.
+        self::assertMatchesRegularExpression('/(?<![0-9])25\.0 annonces/', $health->detail);
     }
 
     /**

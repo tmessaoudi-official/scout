@@ -860,6 +860,13 @@ run_sabotage "seen_epoch backfilled to zero (every stored listing reads as older
   src/php/Rent/Store/Store.php \
   's%$epoch = self::epoch((string) $row\[.last_seen_at.\]);%$epoch = 0;%'
 
+# UNDETECTED until 2026-09-09, and the expression was never the problem — no test reached the
+# guard. `lastProductiveCount()` runs only when `rollingMeanBefore()` returns null, and the walk it
+# then makes can only meet a successful-but-EMPTY run when a failure episode AT
+# `EMPTY_RUNS_BEFORE_BROKEN` sits between that run and the streak: shorter, `observedRuns()` drops
+# it and `trailingEmptyRuns()` absorbs the quiet run INTO the streak instead. The two tests named
+# for this guarantee both used a single failure, so both were green under the mutation.
+# `StoreTest::testAQuietRunBehindARetainedOutageDoesNotZeroTheBaseline` is the reaching fixture.
 run_sabotage "baseline falls back to the last SUCCESSFUL run again (one quiet day zeroes it)" \
   src/php/Core/RunStore.php \
   "s%&& (int) \$runs\[\$i\]\['item_count'\] > 0%%"
@@ -2256,13 +2263,27 @@ run_sabotage "the rent drain files every queued row as « score bas » (a failed
   src/php/Rent/Cli/RentScout.php \
   's%if (\$pushMin === null || (\$entry\['"'"'verdict'"'"'\]->score ?? 0) >= \$pushMin) {%if (false) {%'
 
+# RETARGETED 2026-09-09, AND ONE COMMIT BROKE ALL FOUR AT ONCE: `422e27a` (2026-09-06) gave every
+# `pushRetries()` call an assignment (`$drainedKeys = …` / `$drained = …`), so an expression
+# matching the right-hand side alone left `$drainedKeys = ;` behind. Three became PARSE ERRORS,
+# which the ledger reports as "this proves nothing either way" — easy to read past as a pass.
+#
+# THE FOURTH, the rent FLOOR, was worse and was never reported at all: its truncation joined the
+# following statement into a VALID assignment chain (`$drainedKeys = $sectionOne = new
+# SectionOneGate(…)`), so it parsed, seeded a type scramble rather than its own label, and reported
+# `ok` in every nightly since `422e27a`. A case failing GREEN is the one shape this ledger cannot
+# flag, and `test-sabotage-applies.sh` cannot either — the expression still MATCHED.
+#
+# Memory's fourth failure mode: an expression follows the code's SHAPE, not only its address. Hence
+# `$drained = 0;` rather than a deletion — keep the assignment, remove the call. Each of the four is
+# measured at changed=1, parses, and reddens an on-label BEHAVIOURAL test.
 run_sabotage "the rent digest VERB stops re-pushing the retries" \
   src/php/Rent/Cli/RentScout.php \
-  '/private function digest(/,/private function collectDigest/ s%\$this->pushRetries(\$notifier, \$store, \$batch->retries, \$now);%%'
+  '/private function digest(/,/private function collectDigest/ s%\$drainedKeys = \$this->pushRetries(\$notifier, \$store, \$batch->retries, \$now);%$drainedKeys = 0;%'
 
 run_sabotage "the rent daily FLOOR stops re-pushing the retries" \
   src/php/Rent/Cli/RentScout.php \
-  '/private function floorDigest(/,$ s%\$this->pushRetries(\$notifier, \$store, \$batch->retries, \$now);%%'
+  '/private function floorDigest(/,$ s%\$drainedKeys = \$this->pushRetries(\$notifier, \$store, \$batch->retries, \$now);%$drainedKeys = 0;%'
 
 run_sabotage "a rent retry marks the row even though the channel refused it" \
   src/php/Rent/Cli/RentScout.php \
@@ -2288,13 +2309,16 @@ run_sabotage "the car drain files every queued car as « score bas » (a failed 
   src/php/Car/Cli/CarScout.php \
   's%if (\$pushMin === null || (\$score !== null \&\& \$score >= \$pushMin)) {%if (false) {%'
 
+# SCOPED to their own method, as measured — the 2026-09-07 unscoped-sed lesson: an expression that
+# matches proves nothing about matching ONE thing, and these two are the symmetric pair that defect
+# was found on. Address range first, then the assignment-shaped replacement above.
 run_sabotage "the car rollup VERB stops re-pushing the retries" \
   src/php/Car/Cli/CarScout.php \
-  's%\$this->pushRetries(\$notifier, \$store, \$retries, \$this->now());%%'
+  '/private function rollup(/,/private function floorRollup/ s%\$drained = \$this->pushRetries(\$notifier, \$store, \$retries, \$this->now());%$drained = 0;%'
 
 run_sabotage "the car rollup FLOOR stops re-pushing the retries" \
   src/php/Car/Cli/CarScout.php \
-  's%\$this->pushRetries(\$notifier, \$store, \$retries, \$now);%%'
+  '/private function floorRollup(/,$ s%\$drained = \$this->pushRetries(\$notifier, \$store, \$retries, \$now);%$drained = 0;%'
 
 run_sabotage "a car retry marks the row even though the channel refused it" \
   src/php/Car/Cli/CarScout.php \
