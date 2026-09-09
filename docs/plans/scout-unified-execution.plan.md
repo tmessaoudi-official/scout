@@ -3478,6 +3478,8 @@ tool/guard) and say which ones the fix covers.**
 | 61 | Round 9 (advisor) NOT CLEAN — the flaky windows had no counterweight test, so the obvious consistency edit would have silenced every flaky verdict on exactly the tolerated sources | M | done | 6bcbfd0 | tests/php/Core/RunStoreFailureStreakTest.php tests/sabotage-check.sh |
 | 62 | The deploy verifier offered `docker rm -f` for the running watcher it had just certified — a hex name is TWO states, and `docker ps -a` is machine-wide | M | done | a3fffdf | tools/verify-deploy.sh tests/test-verify-deploy.sh README.md docs/RUNBOOK.md CLAUDE.md |
 | 63 | Row 62's own fix rebuilt the defect one row over — a map keyed per SERVICE drops the second container the wedged state always has — and three surfaces denied a count the tool prints | M | done | f1588a7 | tools/verify-deploy.sh tests/test-verify-deploy.sh README.md docs/RUNBOOK.md CLAUDE.md |
+| 64 | The Track 7-B context line reached one match in ten — `contextBits()` + one `digestLine()` carry it to the digest and the rollup, departement-less and measured | M | done | 2da27d3 | src/php/Rent/Notify/Formatter.php tests/php/Rent/Core/NotifyTest.php tests/sabotage-check.sh CLAUDE.md |
+| 65 | `Core\Redact` masked `email=x@y.com` and not `email=x%40y.com` — one alternation, PAP-only and 98/98 of the stored rows carrying it | S | done | 6ae3d31 | src/php/Core/Redact.php tests/php/Core/RedactTest.php tests/sabotage-check.sh CLAUDE.md |
 <!-- /progress-block -->
 ### Blocked
 
@@ -4097,7 +4099,7 @@ since the design was measured, which is the whole of the 951/1 261 → 951/1 266
   failure and this was one measurement away from being committed as a production stall — the
   refutation was the car domain's identical gap. Nothing to fix; recorded so the next session does
   not re-diagnose it.
-- [2026-09-09 11:20] AGREED: **the Track 7-B context line reaches the digest and the rollup, WITHOUT
+- [2026-09-09 10:05] AGREED: **the Track 7-B context line reaches the digest and the rollup, WITHOUT
   the departement.** `factsLine()` had one call site — `match()` — so at `push_min_score: 55` it
   travelled on about one match in ten. It splits into `contextBits()` (floor · lift · amenities) and
   a `factsLine()` that is the departement plus those bits, so the individual push is byte-identical
@@ -4106,12 +4108,17 @@ since the design was measured, which is the whole of the 951/1 261 → 951/1 266
   digest rows, but on **61–74 %** of them the departement is the ONLY thing it adds — restating the
   postcode `headline()` already prints two fields left (rollup 40/62, tenure bin 58/94, all stored
   matches 958/1282). Departement-less it fires on **35–38 %** of the two live bins at ~20–24 chars,
-  all of it new content. The rejected alternatives are recorded: the full line unchanged (100 %, and
+  all of it new content — **measured over the stored rows on the morning of 2026-09-09, and that
+  date is part of the claim**. The FIRST DRAINED BATCH after the deploy, the same afternoon, came in
+  at **5 of 50** (four amenity rows, one `7e étage`): the queue at that moment is nearly all
+  bienici/seloger rows reading *aucun signal dans l'annonce*, the portals that carry no listing
+  prose. Same feature, same code, a quarter of the rate — a bin's composition moves, so quote the
+  bin and the day, never the percentage alone. The rejected alternatives are recorded: the full line unchanged (100 %, and
   redundant on nearly three quarters of rows) and amenities only (17–26 %, and it drops the floor,
   the fact most often read). Both `digest()` entry loops collapse into one `digestLine()` helper —
   two loops rendering the same line is *a fix landing on one of two symmetric surfaces* waiting to
   happen. Silence stays silence: an entry whose ad said nothing carries no extra separator.
-- [2026-09-09 11:20] AGREED: **`Core\Redact` masks a percent-encoded `@`.** One alternation in the
+- [2026-09-09 10:05] AGREED: **`Core\Redact` masks a percent-encoded `@`.** One alternation in the
   existing mailbox pattern, `(?:@|%40)`, and deliberately not a decode cascade — `RecoverableForms`
   is the fixture scrubber's job, while `Redact`'s surface is adapter error text carrying URLs.
   Measured over the live store before writing it: `%40` appears on **PAP only, 98 of 98 rows
@@ -4123,7 +4130,7 @@ since the design was measured, which is the whole of the 951/1 261 → 951/1 266
   defence-in-depth for the surface `Redact` guards — it is not a leak that was happening.
   `ChannelErrorRedactionTest`'s *« the host is the diagnosis »* assertion is the counterweight: the
   userinfo rule runs first and masks `scout%40gmail.com:hunter2`, so `smtp.gmail.com:587` survives.
-- [2026-09-09 11:20] AGREED: certification for both commits is **`advisor()` only** at 3C and 6C
+- [2026-09-09 10:05] AGREED: certification for both commits is **`advisor()` only** at 3C and 6C
   (per-gate developer choice, never carried forward), with the executable evidence doing the
   refuting between gates: failing test first confirmed red for the stated reason, the scoped
   sabotage cases, and `test-sabotage-applies.sh` over the pre-existing `Formatter.php` expressions,
