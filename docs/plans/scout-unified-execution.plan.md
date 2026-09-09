@@ -3485,6 +3485,7 @@ tool/guard) and say which ones the fix covers.**
 | 68 | The ledger's tally called a parse error an undetected regression, and the red-ledger issue described two kinds for a list holding seven — each label now carries its kind; tally line and heading untouched, both being pinned | S | done | 51bfd7a | tests/sabotage-check.sh .github/workflows/ci.yml |
 | 69 | Row 68's own comment said `$fail` counts "six" over a list of seven, and the issue's reproduce line told the reader to paste a label that ugrep reads as a character class — numeral deleted rather than corrected, filter usage spelled out | S | done | 101a229 | tests/sabotage-check.sh .github/workflows/ci.yml |
 | 70 | Three §1 gate cases redden the STRUCTURAL guard rather than a behavioural test and report `ok`; all three measured GREEN on a consequence mutation, and the recommended repair refuted for two of them — expressions left honest-but-silent for one night, fixture design is the next work | M | todo | - | tests/sabotage-check.sh tests/php/Rent/Cli/** |
+| 71 | Row 69's own advice was true and INSUFFICIENT — the filter is an ERE, so 377 of 816 labels do not self-match; and its count command answered 8 by matching itself. Advice rewritten, count anchored, the retry-push case scoped (it mutated 3 sites), and the `undetected or unapplied:` contract pinned on its PRODUCER end for the first time | M | done | - | .github/workflows/ci.yml tests/sabotage-check.sh tests/test-ci-workflow.sh CLAUDE.md |
 <!-- /progress-block -->
 ### Blocked
 
@@ -4391,3 +4392,46 @@ since the design was measured, which is the whole of the 951/1 261 → 951/1 266
   The gates are present and working in deployed code; what is missing is mutation PROOF, not a live
   §1 hole. Recording a known-uncovered guarantee and leaving the ledger honest-but-silent for one
   night is the smaller cost, and this entry is the record that it was a decision.
+
+- [2026-09-09 23:55] MEASURED, and the advice added five hours earlier REPRODUCED THE FAILURE IT
+  WARNS ABOUT. `101a229` told the reader of a red-ledger issue to *"copy the label only"*.
+  `SABOTAGE_FILTER` is applied as an EXTENDED REGEX (`grep -qE -- "$_filter" <<<"$label"`), not as a
+  literal, so a pasted label is a pattern: measured over every extracted label, **377 of 816 do not
+  self-match**, 374 of them because they contain `(` or `)`, which ERE reads as grouping. The
+  operator follows the instruction exactly and gets `0 sabotage(s) detected, 0 undetected` under a
+  PARTIAL RUN banner, exit 0 — the clean-looking result that ran nothing. The strip list was also
+  short by one: the ledger prints `printf '    - %s\n'` and the harvest renders
+  `[shard N] ${l.trim()}`, so the line carries a `- ` bullet the advice never mentioned. Rewritten
+  to name the regex, list all three things to strip, and prescribe a metacharacter-free SUBSTRING;
+  the fenced example's placeholder changed with it, and the rendered body was read back through
+  `node` rather than assumed.
+
+- [2026-09-09 23:55] MEASURED, twice, and it is the funniest defect of the milestone: the repair for
+  a miscount cited `grep -c 'failed_labels+='` as *"the only figure that cannot drift"*, and that
+  command answers **8** — the instruction is the eighth match. Naming a longer literal answers 8 as
+  well, because ANY literal written in the file matches itself; this is the *"a self-referential
+  idempotence guard is not one"* entry in this repo's own gotchas, committed inside the fix for the
+  count it was correcting. Only an anchor escapes: `grep -c '^ *failed_labels+='` answers **7**, and
+  it still answers 7 with the sentence documenting it in place — verified after the edit, because
+  the first two attempts were not.
+
+- [2026-09-09 23:55] AGREED, and this one is a real gap rather than a wording fix: the
+  `undetected or unapplied:` contract was pinned on ONE of its two ends. `has()` in
+  `tests/test-ci-workflow.sh` greps the WORKFLOW, so line 111 proved `ci.yml` still HARVESTS the
+  string and NOTHING proved `tests/sabotage-check.sh` still PRINTS it. Renaming it in the ledger
+  alone leaves the harvest regex matching nothing, so a red night opens an issue whose case list is
+  EMPTY while every gate stays green — hard rule 2 inside the alert path, which is where this repo
+  has been bitten before. A producer-side check is added and sabotage-verified in both directions:
+  RED with the heading renamed (`FAIL and the LEDGER still prints the heading ci.yml harvests`,
+  60 passed / 1 failed), and the file restored byte-identically afterwards (`cmp`). Row 68's
+  *"both being pinned"* was true of the tally and overstated for the heading; it is true now.
+
+- [2026-09-09 23:55] AGREED: the retry-push §1 case is SCOPED, and it had been unscoped since it was
+  written. Its expression matched `digest()` (1167), `pushRetries()` (1673) and `floorDigest()`
+  (2680) — `changed=3`, measured — so a case labelled for one surface mutated three, three lines
+  from the comment naming that exact defect. Scoped it is `changed=1` and reddens
+  `SectionOneGateCallSitesTest` naming `RentScout::pushRetries`: same verdict, now attributable, and
+  the nightly is unaffected because the redness was structural either way. The guard's needle is
+  also corrected wherever this session described it — it is `->send(` PLUS a
+  `Formatter|formatter->|Notification` term, and the bare `notifier->send(` spelling is the
+  predecessor its own docblock records as defeated by renaming `$notifier` to `$channel`.

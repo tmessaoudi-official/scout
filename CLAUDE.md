@@ -2666,10 +2666,19 @@ var/claude/                 Reports, review outputs — gitignored scratch (hand
   reddening the wrong test is indistinguishable from a case working.
 - **AND THERE IS A SECOND SPECIES: THE RED COMES FROM A GUARD THAT IS NOT ABOUT THE LABEL
   (2026-09-09).** The species above truncates code; this one runs perfectly and still proves
-  nothing. Three §1 cases mutate `$refusal = null;`, which removes the `->refuses(` token — so what
-  reddens is `SectionOneGateCallSitesTest`, the STRUCTURAL guard requiring every method holding a
-  `notifier->send(` to consult the gate in that same method. Suite red, case `ok`, §1 tested by
-  nothing. Measured in a scratch tree whose own baseline was green (`OK 3128 / 12118`), mutating the
+  nothing. The §1 cases for `pushRetries()`, the `digest()` rollup filter, the `floorDigest()`
+  rollup filter and `announcePromotions()` mutate `$refusal = null;`, which removes the `->refuses(`
+  token — so what reddens is `SectionOneGateCallSitesTest`, the STRUCTURAL guard. Suite red, case
+  `ok`, §1 tested by nothing. **That guard's needle is `->send(` PLUS a `Formatter|formatter->|
+  Notification` term, never the literal `notifier->send(`** — its own docblock records the single
+  literal as the defeated predecessor, because renaming `$notifier` to `$channel` hid a whole
+  announcing method; cite it by behaviour, not by that string. The four are exactly the methods
+  holding ONE `->refuses(`, which is why deleting it leaves only the guard to answer;
+  `Pipeline::runOnce` holds TWO (the match gate and `$digestRefusal`), so its case is genuinely
+  behavioural. `announcePromotions()` is a knowing member — the plan rules it can have no fixture of
+  its own, the caller's filter removing every refused promotion before it is reached — so the open
+  gap is the other three. Measured in a scratch tree whose own baseline was green (`OK 3128 /
+  12118`), mutating the
   CONSEQUENCE instead so the call survives: `pushRetries()`, the `digest()` rollup filter and the
   `floorDigest()` rollup filter each go **changed=1, rc=0 — GREEN**. The shape was already ruled
   (`docs/plans/scout-unified-execution.plan.md`, the `de2a81e` entry): mutate the CONSEQUENCE,
