@@ -4087,7 +4087,12 @@ since the design was measured, which is the whole of the 951/1 261 → 951/1 266
   chosen from a two-day series — this repo's own *never predict a yield* rule), and accept the lag
   (a queue that never empties is the bin-nobody-drains failure §1's landing zone exists to avoid).
   Re-measure with `SELECT COUNT(*) FROM listings WHERE outcome='MATCH' AND notified_at IS NULL`
-  after two more 08:00 windows, then rule. **THE BASELINE THAT COUNT IS COMPARED AGAINST, taken
+  after two more 08:00 windows, then rule — **and pair that count with the tail's SOURCE
+  COMPOSITION, because a count cannot see the starvation shape below**: `SELECT source, COUNT(*)`
+  over the same predicate `ORDER BY seen_epoch ASC LIMIT -1 OFFSET 50` answers whether the rows the
+  cap leaves behind are the same In'li band every day. A cap ruling made on the total alone would
+  be ruling on the wrong statistic: the total can fall while the one source that states a floor and
+  a lift never drains at all. **THE BASELINE THAT COUNT IS COMPARED AGAINST, taken
   2026-09-09 13:51 on a `.backup` copy of the live store** (never `doctor`, which writes a run into
   the health baseline): **88 queued** (`outcome='MATCH' AND notified_at IS NULL`), **0 pending in
   the tenure bin** (`outcome='DIGEST' AND notified_at IS NULL` — which is why that afternoon's
