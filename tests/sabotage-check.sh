@@ -1564,6 +1564,19 @@ run_sabotage "the §1 gate stops reading the same dwelling under another ad id" 
   src/php/Rent/Cli/SectionOneGate.php \
   's%\$dwelling = ExcludedDwellings::match(\$listing, \$this->store->excludedDwellings(), \$this->dedup);%$dwelling = null;%'
 
+# THE FIFTH CALL SITE, AND IT HAD NO CASE AT ALL (2026-09-10). `ExcludedDwellings::match()` is
+# reached from five methods; the ledger covered four — the gate above, the drain, `reclassify` and
+# `reopen` — and never `Pipeline::storedDwellingClassification()`, the one that SHAPES a live pass's
+# verdict instead of refusing at a send. Found by auditing which cases redden only a repo-level
+# guard: this one was not mismeasuring, it was absent, and the audit that found it was looking for
+# the opposite defect. Measured before shipping, against a green scratch baseline (`OK 3128 /
+# 12118`): changed=1, scoped to the method, and it reddens
+# `PipelineRunTest::testAnExcludedDwellingIsNotAnnouncedInTheDigestEither` — a BEHAVIOURAL test
+# answers, not the call-site guard alone.
+run_sabotage "the live pass stops shaping its verdict from the re-advertised-flat veto" \
+  src/php/Rent/Cli/Pipeline.php \
+  '/private function storedDwellingClassification(/,/^    }$/ s%\$candidate = ExcludedDwellings::match(\$listing, \$excludedDwellings, \$this->dedup);%$candidate = null;%'
+
 # THE WIRING, per announcing surface. A gate nothing calls is the dead safety code this milestone
 # has already produced twice.
 run_sabotage "the live push path stops consulting the §1 gate" \
@@ -2864,6 +2877,18 @@ run_sabotage "the drain stops reading the row's own excluded tenure (the snapsho
   src/php/Rent/Cli/RentScout.php \
   's%if ($tenure === null || $tenure->isExcluded() || $tenure === Tenure::UNKNOWN) {%if (false) {%'
 
+# KNOWING MEMBER — SECOND SPECIES, AND DELIBERATELY LEFT AS IT IS (2026-09-10). Measured against a
+# green scratch baseline (`OK 3128 / 12118`): this case reddens ONLY
+# `ExcludedDwellingsCallersTest::testEveryBulletNamesARealCallSite`, the call-site guard —
+# `repo-guards=1, behavioural=0`. It is NOT a §1 hole. `SectionOneGate` re-reads this same route
+# fresh before every send, so the guarantee is defended twice: nulling BOTH layers reds nine
+# behavioural tests, among them
+# `RentScoutDigestTest::testAFlatRecordedExcludedUnderAnotherAdIdVetoesTheDrain`, which is written
+# for exactly the guarantee this label claims. A guarantee defended by two layers is green under
+# either single mutation and reads identically to a vacuous test; only mutating both separates them.
+# It cannot be repaired by compounding, because the two layers live in DIFFERENT FILES and
+# `run_sabotage` takes one target — the `announcePromotions` position. Recorded so the next audit
+# reads this instead of re-deriving it at the cost of three full-suite runs.
 run_sabotage "the drain stops reading the re-advertised-flat veto (§1's fourth persisted route)" \
   src/php/Rent/Cli/RentScout.php \
   's%$dwellingVeto = ExcludedDwellings::match($listing, $excludedDwellings, $dwellingDedup);%$dwellingVeto = null;%'

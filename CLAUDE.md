@@ -2565,6 +2565,13 @@ var/claude/                 Reports, review outputs — gitignored scratch (hand
   shows no scheduled row at all. The delay is not free: it lands the six shards in GitHub's busiest
   runner window, competing for the same wall clock as the **240-minute job cap** that cancelled four
   of eight nightlies before the shard split, and no shard count can address that.
+  **AND READ `date -u`, NEVER `uptime`, WHEN CHECKING THAT BAND (2026-09-10).** This box runs
+  `CEST` (UTC+2) and `uptime` prints LOCAL time, so a session that reads its clock as UTC is two
+  hours fast and concludes the nightly is late when it has not yet been created. That happened the
+  day after the entry above was written: "09:45Z, nothing has fired" was really 07:45Z, and the run
+  was created at **07:53:56Z** — inside the band, two seconds off the previous night's start. A
+  true observation (no scheduled row listed) on an invented cause, which is this repo's named
+  failure reached by misreading a timezone.
 - **§1 HAS ONE GATE NOW, AND THE REASON IT EXISTS IS THE SHAPE OF THREE ROUNDS OF FAILURE
   (`Rent/Cli/SectionOneGate`, 2026-09-07).** §1 is judged from FOUR persisted routes — the row's own
   durable reading, the group veto, the cross-track twin, the same dwelling under another ad id —
@@ -2700,6 +2707,22 @@ var/claude/                 Reports, review outputs — gitignored scratch (hand
   `Dedup::sameFlatReason()` requires both communes to agree positively — verified by executing it
   against a hydrated copy, which does match. Two of the three have no in-process seam at all, the
   `announcePromotions` position.
+  **THE SPECIES WAS THEN AUDITED ACROSS ALL THREE NEEDLES, AND IT IS NARROW (2026-09-10).** The
+  finding above came from the `->refuses(` needle alone; the other two literal tokens those guards
+  grep are `$source->acknowledge()` and `ExcludedDwellings::match(`, so every case whose `sed`
+  removes one was a candidate. Eight were measured one at a time against a green scratch baseline
+  (`OK 3128 / 12118`), partitioning the failing classes on `Scout\Tests\Repo\`: **seven carry
+  behavioural coverage and ONE does not** — `RentScout::collectDigest()`'s `$dwellingVeto`. **And
+  that one is a guarantee defended TWICE rather than a hole**, which the single mutation cannot
+  show: nulling the drain's read alone is behaviourally green because `SectionOneGate` re-reads the
+  route fresh before every send, while nulling BOTH reds nine behavioural tests including
+  `RentScoutDigestTest::testAFlatRecordedExcludedUnderAnotherAdIdVetoesTheDrain`. It cannot be
+  compounded into one case — the layers are in different FILES and `run_sabotage` takes one target
+  — so it is annotated in place. **The audit's real yield was the opposite defect**: the matcher has
+  FIVE call sites and the ledger covered four, `Pipeline::storedDwellingClassification()` — the one
+  that shapes a live pass's verdict rather than refusing at a send — having none. A case for it was
+  added and measured genuine (changed=1, behavioural red). **When auditing a needle, enumerate the
+  call sites too: a case that mismeasures and a case that is absent look identical from the tally.**
 - **AND THE TALLY CANNOT TELL YOU WHICH KIND YOU HAVE.** `$fail` counts copy failures, refused seds,
   inert expressions, timeouts, parse errors, harness breaks and genuine undetected cases alike,
   while the tally line and the `undetected or unapplied:` heading call all of them *undetected* — so

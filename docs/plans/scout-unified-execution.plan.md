@@ -4459,3 +4459,42 @@ since the design was measured, which is the whole of the 951/1 261 → 951/1 266
   window, which is a plausible contributor to the cancellations the six-way shard split was built to
   fix, and is NOT something the shard count can address. Not investigated further today; recorded so
   the next session does not re-derive the start time from the cron line.
+- [2026-09-10 08:20] MEASURED: **the second species was audited across every ledger case that
+  removes a literal token a repo-level guard greps for, and it is ONE case of eight, not the family
+  it looked like.** The 2026-09-09 finding was found on the `->refuses(` needle alone; three guards
+  in `tests/php/Repo/` grep literal call tokens (`->refuses(`, `$source->acknowledge()`,
+  `ExcludedDwellings::match(`), so every case whose `sed` removes one was a candidate. Eight were
+  run one at a time against a scratch tree whose own baseline was green (`OK 3128 / 12118`),
+  partitioning the failing test classes on `Scout\Tests\Repo\`. Seven carry behavioural coverage —
+  `Pipeline::runOnce` (3 behavioural), `PacedSource` (1), `RentScout::reclassify` (4),
+  `Store::reopen` (1), `SectionOneGate::refuses` (8), and both acknowledge deletions (3 each). ONE
+  is second species: **`RentScout::collectDigest()`'s `$dwellingVeto`**, `repo-guards=1,
+  behavioural=0`.
+- [2026-09-10 08:20] MEASURED, and it REVERSES the obvious reading of the line above: **that case is
+  a guarantee defended TWICE, not a §1 hole, and the counterweight is what separates them.** Nulling
+  `collectDigest()`'s dwelling read alone leaves the suite behaviourally green because
+  `SectionOneGate` re-reads the same route fresh before every send; nulling BOTH reds nine
+  behavioural tests, among them
+  `RentScoutDigestTest::testAFlatRecordedExcludedUnderAnotherAdIdVetoesTheDrain`, which is written
+  for exactly the guarantee the case's label claims. A two-layer guarantee is green under either
+  single mutation and reads identically to a vacuous test. **It cannot be repaired by compounding**
+  — the two layers live in DIFFERENT FILES and `run_sabotage` takes one target — so it is annotated
+  in place as a knowing member, the `announcePromotions` position, rather than left to be
+  re-derived at the cost of three full-suite runs.
+- [2026-09-10 08:20] FIXED, and the audit found it while looking for the opposite defect: **the
+  FIFTH `ExcludedDwellings::match()` call site had no ledger case at all.** The matcher is reached
+  from five methods — the gate, the drain, `reclassify`, `Store::reopen` and
+  `Pipeline::storedDwellingClassification()` — and the ledger covered four. The uncovered one is
+  the method that SHAPES a live pass's verdict rather than refusing at a send, so a regression there
+  is the §1-dangerous direction. A case was added and MEASURED before shipping (the seven failure
+  modes): changed=1, scoped to the method by address range, output parses, and it reddens
+  `PipelineRunTest::testAnExcludedDwellingIsNotAnnouncedInTheDigestEither` — a behavioural test
+  answers, not the call-site guard alone. Ledger is 817 cases, from 816.
+- [2026-09-10 08:20] CORRECTED, and the error is this repo's named failure in its cheapest form:
+  this session reported at "09:45Z" that the nightly had not fired and was two hours past its
+  observed band. **It had fired, on time — run `34452290242`, created `2026-09-10T07:53:56Z`, two
+  seconds off the previous night's start.** The clock was misread: `uptime` prints LOCAL time and
+  this box is `CEST` (UTC+2), so "09:45" was 07:45Z — eight minutes BEFORE the run was created. A
+  true observation (no scheduled row listed) attached to an invented cause (the nightly is late).
+  The cron entry in `CLAUDE.md` is confirmed rather than contradicted, by a ninth consecutive run;
+  what it gains is the trap — **read `date -u`, never `uptime`, when checking a UTC band.**
