@@ -2555,6 +2555,16 @@ var/claude/                 Reports, review outputs — gitignored scratch (hand
   directives are `PHP_INI_ALL`, restored in `finally`; the child probe likewise) instead of
   finding it. **Run `gh run list --limit 5` after every push** — the notification half of CI is
   the nightly ledger's issue, not the fast job's, and a red fast job is silent.
+- **THE NIGHTLY DOES NOT START WHEN ITS CRON SAYS, AND THE DECLARATION IS THE WRONG THING TO READ
+  (2026-09-10).** `ci.yml` declares `cron: '0 3 * * *'` (UTC); the last eight scheduled runs
+  actually started between **07:26 and 07:58 UTC** — a consistent 4.5–5 hour queue delay, which is
+  GitHub behaving as documented (`schedule` is best effort and is delayed at popular cron times).
+  So a session that checks shortly after 03:00 UTC, finds nothing, and reports the nightly broken is
+  reading the declaration rather than the history: `gh run list --event=schedule` settles it in one
+  request, and it is the only thing that does — `gh run list` alone is dominated by `push` runs and
+  shows no scheduled row at all. The delay is not free: it lands the six shards in GitHub's busiest
+  runner window, competing for the same wall clock as the **240-minute job cap** that cancelled four
+  of eight nightlies before the shard split, and no shard count can address that.
 - **§1 HAS ONE GATE NOW, AND THE REASON IT EXISTS IS THE SHAPE OF THREE ROUNDS OF FAILURE
   (`Rent/Cli/SectionOneGate`, 2026-09-07).** §1 is judged from FOUR persisted routes — the row's own
   durable reading, the group veto, the cross-track twin, the same dwelling under another ad id —

@@ -4435,3 +4435,27 @@ since the design was measured, which is the whole of the 951/1 261 → 951/1 266
   also corrected wherever this session described it — it is `->send(` PLUS a
   `Formatter|formatter->|Notification` term, and the bare `notifier->send(` spelling is the
   predecessor its own docblock records as defeated by renaming `$notifier` to `$channel`.
+- [2026-09-10 07:43] AGREED: the ORDER for row 70 is **read the nightly first, then design the
+  fixture** (developer ruling, asked at the Phase 8 close of the ledger-repair work). The four
+  repaired cases and the fifth coverage gap are landed and pushed (`101a229`, `f14879c`, `06ed6e1`,
+  `dc5192d`, `9f478d9`), CI green on the head. What the nightly six-shard run reports is the
+  FIRST evidence that the bracketed kind labels and the retry-push scoping behave in the six-shard
+  job rather than in a scratch tree — and row 70's design depends on which cases come back
+  `[UNDETECTED]` versus `[inconclusive-*]`, which is exactly the distinction issue #16 could not
+  make. Starting the fixture before reading it would design against last night's measurements
+  alone. Row 70 stays `todo` and its scope is unchanged: `pushRetries()` is the one surface with an
+  in-process seam (the injected notifier sends before it runs), and the two rollup filters still
+  need an `announcePromotions`-style disposition rather than a fixture.
+- [2026-09-10 07:43] MEASURED, while acting on the ruling above: **the nightly does not start at the
+  time its cron declares, and reading the declaration instead of the history is what made this
+  session say it would.** `ci.yml:42` is `cron: '0 3 * * *'` (UTC), and every one of the last EIGHT
+  scheduled runs started between **07:26 and 07:58 UTC** — a consistent 4.5–5 hour queue delay on
+  GitHub's hosted schedule pool, which documents `schedule` as best effort and delays runs at
+  popular cron times. So at 05:43 UTC on 2026-09-10 the run had not fired and there was nothing to
+  read. Two consequences worth carrying. **A session checking shortly after 03:00 UTC and finding
+  no run concludes the nightly is broken** — it is queued, and `gh run list --event=schedule` is
+  what settles it. And the delay eats into the same wall clock as the **240-minute job cap** that
+  cancelled four of the eight: a run beginning at 07:5x is competing for runners in GitHub's busiest
+  window, which is a plausible contributor to the cancellations the six-way shard split was built to
+  fix, and is NOT something the shard count can address. Not investigated further today; recorded so
+  the next session does not re-derive the start time from the cron line.
