@@ -65,6 +65,11 @@ final class JobClassifierTest extends TestCase
         yield 'remote days per week' => ['Développeur PHP', '2 jours de télétravail par semaine.', null, 'hybrid', 2.0];
         yield 'on-site days per week' => ['Développeur PHP', '3 jours sur site par semaine.', null, 'hybrid', 2.0];
         yield 'days written as words' => ['Développeur PHP', 'Deux jours de télétravail.', null, 'hybrid', 2.0];
+        // A per-month figure is not a weekly one: 2 days a month read as 2 a week scores a near-on-site post as hybrid.
+        yield 'remote days per month are not per week' => ['Développeur PHP', '2 jours de télétravail par mois.', null, null, null];
+        yield 'a per-month figure after the remote word' => ['Développeur PHP', 'Télétravail : 2 jours / mois.', 'hybrid', 'hybrid', null];
+        yield 'on-site days per month are not per week' => ['Développeur PHP', '3 jours sur site par mois.', 'hybrid', 'hybrid', null];
+        yield 'ten days a month is no weekly figure' => ['Développeur PHP', '10 jours de télétravail par mois.', 'hybrid', 'hybrid', null];
         yield 'hybrid with no days' => ['Développeur PHP', 'Organisation hybride.', null, 'hybrid', null];
         yield 'no remote at all' => ['Développeur PHP', 'Pas de télétravail.', null, 'onsite', 0.0];
         yield 'a negated full remote states nothing' => ['Développeur PHP', 'Pas de full remote.', null, null, null];

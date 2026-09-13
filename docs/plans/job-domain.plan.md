@@ -273,7 +273,8 @@ This is an implementation choice made under the "go" ruling, checked by `advisor
   - Scores run 6 / 21 / 51 (min / median / max). Histogram: 0–9 ×4, 10–19 ×27, 20–29 ×23,
     30–39 ×4, 40–49 ×5, 50–59 ×2.
   - The best card is 51, which is under the predicted 65, because no pay-carrying card also names
-    a back stack.]
+    a back stack. [Verified 2026-09-13: the two pay-carrying matches score 38 and 43, and a
+    back-stack read of each title returns nothing.]]
   The GREEN, RED and conditions vocabularies CANNOT be calibrated on cards. On title-only text one
   label fires across all 67 (`craft:modernisation`, once), RED fires on none and conditions on none.
   Whether the broad terms (`migrations?`, `support n1-3`) fire on most real descriptions stays
@@ -311,6 +312,13 @@ Evidence for the design, measured 2026-09-13 over the 20 captures:
     is a date to PHP, and would give an undated offer full freshness.
   - **Adjacent never adds to back.** It is read only when no back term fires, and the share takes back
     first. That guarantee is defended twice, so its sabotage case mutates both.
+  - **Remote days are a WEEKLY figure only.** `remoteDaysShare` has keys 0–5 only, and the index into
+    it is bounded by construction. The day word is `[1-5]` or `une`–`cinq`, the on-site form reads
+    `5 − n`, and a card field keeps only `0 < d < 5`. [Verified: pattern read, plus a probe where
+    `10 jours … par mois` reads no figure.] A per-month figure under 6 was NOT bounded in meaning:
+    `2 jours de télétravail par mois` read as 2 a week and scored a near-on-site post as hybrid,
+    under a correct-looking label. A figure followed by a month unit now reads as no figure. Four
+    provider cases pin it, and removing the guard reddens three of them.
 
 ### Rollback
 Additive. The domain is one registry entry, its own namespace, config dir, state file and compose

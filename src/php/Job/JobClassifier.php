@@ -58,7 +58,9 @@ final class JobClassifier
 
     private const string REMOTE_PLACE = '(?:de[ ]+|en[ ]+|of[ ]+)?(?:teletravail|remote|a distance|distanciel|home office|work from home)\b';
 
-    private const string ONSITE_PLACE = '(?:sur site|au bureau|en presentiel|on[- ]site|in (?:the )?office|dans nos locaux)\b';
+    private const string PER_MONTH = '~\G[ ]*(?:par mois|/[ ]*mois|per month|a month)\b~u';
+
+    private const string ONSITE_PLACE ='(?:sur site|au bureau|en presentiel|on[- ]site|in (?:the )?office|dans nos locaux)\b';
 
     private const array WORDS = ['un' => 1, 'une' => 1, 'deux' => 2, 'trois' => 3, 'quatre' => 4, 'cinq' => 5];
 
@@ -178,14 +180,26 @@ final class JobClassifier
         };
     }
 
+    /**
+     * A weekly figure only. A per-month one (`2 jours de télétravail par mois`) states no weekly count, and
+     * read as weekly it scores a near-on-site post as hybrid — so it reads as no figure at all.
+     */
     private static function remoteDays(string $text): ?float
     {
-        if (preg_match('~\b' . self::DAYS . self::REMOTE_PLACE . '~u', $text, $m) === 1
-            || preg_match('~\b(?:teletravail|remote)[ ]*:?[ ]*(?:jusqu[\'’]a[ ]+|up to[ ]+)?([1-5]|une?|deux|trois|quatre|cinq)[ ]*(?:j|jours?|days?)\b~u', $text, $m) === 1) {
-            return (float) self::count($m[1]);
-        }
-        if (preg_match('~\b' . self::DAYS . self::ONSITE_PLACE . '~u', $text, $m) === 1) {
-            return (float) (5 - self::count($m[1]));
+        foreach ([
+            ['~\b' . self::DAYS . self::REMOTE_PLACE . '~u', false],
+            ['~\b(?:teletravail|remote)[ ]*:?[ ]*(?:jusqu[\'’]a[ ]+|up to[ ]+)?([1-5]|une?|deux|trois|quatre|cinq)[ ]*(?:j|jours?|days?)\b~u', false],
+            ['~\b' . self::DAYS . self::ONSITE_PLACE . '~u', true],
+        ] as [$pattern, $onsite]) {
+            if (preg_match($pattern, $text, $m, PREG_OFFSET_CAPTURE) !== 1) {
+                continue;
+            }
+            if (preg_match(self::PER_MONTH, $text, $unit, 0, $m[0][1] + strlen($m[0][0])) === 1) {
+                return null;
+            }
+            $count = self::count($m[1][0]);
+
+            return (float) ($onsite ? 5 - $count : $count);
         }
 
         return null;
