@@ -1921,6 +1921,13 @@ run_sabotage "the text/plain part stops being preferred over HTML" \
   src/php/Adapters/Mail/EmailMessage.php \
   's%return \$plain ?? \$html ?? ..;%return $html ?? $plain ?? "";%'
 
+# The HTML alternative BESIDE the body (2026-09-13). LinkedIn's job alert states each card's work mode
+# and pay line only in its HTML part; a message whose `htmlText` came back empty would score both as
+# unknown on every card while the fetch reported healthy.
+run_sabotage "the HTML alternative stops being exposed beside the body (job cards lose work mode and pay)" \
+  src/php/Adapters/Mail/EmailMessage.php \
+  's%        \$htmlOut = \$html;%        $htmlOut = null;%'
+
 run_sabotage "block tags stop becoming newlines when HTML is stripped" \
   src/php/Adapters/Mail/EmailMessage.php \
   's%(p|div|br|li|tr|h%(XX|div|br|li|tr|h%'

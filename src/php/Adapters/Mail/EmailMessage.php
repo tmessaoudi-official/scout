@@ -22,11 +22,26 @@ final readonly class EmailMessage
     /**
      * @param array<string,string> $headers lower-cased names
      * @param list<string>         $links   every http(s) URL found, in order, de-duplicated
+     * @param string               $htmlText the stripped text of the text/html alternative, `''` when none
      */
     private function __construct(
         public array $headers,
         public string $body,
         public array $links,
+        /**
+         * THE HTML ALTERNATIVE, BESIDE THE BODY — never instead of it (2026-09-13).
+         *
+         * `body` prefers text/plain for the reasons {@see preferredPart()} gives, and that stays.
+         * But a portal can put facts in its HTML part that its plain part omits: LinkedIn's job
+         * alert lists the same offers in both, and only the HTML states each card's work mode and
+         * pay line (measured on 20 captures). This is that text, stripped, hrefs harvested and
+         * entities decoded exactly as `body` would have been, so a reader of it inherits every rule
+         * the body path learnt.
+         *
+         * Additive by construction: `body` and `links` are computed exactly as before, and nothing
+         * but a source that asks for this property reads it.
+         */
+        public string $htmlText = '',
     ) {}
 
     public function header(string $name): ?string
@@ -140,9 +155,10 @@ final readonly class EmailMessage
         $bodyBlock = $split[1] ?? '';
 
         $headers = self::parseHeaders($headerBlock);
-        $body = self::decodeEntities(self::decodeBody($headers, $bodyBlock));
+        $html = null;
+        $body = self::decodeEntities(self::decodeBody($headers, $bodyBlock, $html));
 
-        return new self($headers, $body, self::extractLinks($body));
+        return new self($headers, $body, self::extractLinks($body), self::decodeEntities($html ?? ''));
     }
 
     /** @return array<string,string> */
@@ -213,20 +229,26 @@ final readonly class EmailMessage
     }
 
     /** @param array<string,string> $headers */
-    private static function decodeBody(array $headers, string $body): string
+    private static function decodeBody(array $headers, string $body, ?string &$html = null): string
     {
         $contentType = $headers['content-type'] ?? 'text/plain';
 
         if (stripos($contentType, 'multipart/') !== false
             && preg_match('~boundary="?([^";]+)"?~i', $contentType, $m) === 1) {
-            return self::preferredPart($body, $m[1]);
+            return self::preferredPart($body, $m[1], $html);
         }
 
         $decoded = self::decodeTransfer($body, $headers['content-transfer-encoding'] ?? '');
         $charset = preg_match('~charset="?([^";]+)"?~i', $contentType, $c) === 1 ? $c[1] : 'UTF-8';
         $text = self::toUtf8($decoded, $charset);
 
-        return stripos($contentType, 'text/html') !== false ? self::stripHtml($text) : $text;
+        if (stripos($contentType, 'text/html') === false) {
+            return $text;
+        }
+
+        $html = self::stripHtml($text);
+
+        return $html;
     }
 
     /**
@@ -250,11 +272,12 @@ final readonly class EmailMessage
      * listings, no exception. Hard rule 3's exact shape, reached without a single `catch`; the
      * committed `email_demo` fixtures happen to omit a preamble, which is why the suite was green.
      */
-    private static function preferredPart(string $body, string $boundary): string
+    private static function preferredPart(string $body, string $boundary, ?string &$htmlOut = null): string
     {
         $parts = explode('--' . $boundary, $body);
         $plain = null;
         $html = null;
+        $nestedHtml = null;
 
         foreach ($parts as $index => $part) {
             // The preamble, structurally. Not "text that looked empty" — everything before the
@@ -276,9 +299,12 @@ final readonly class EmailMessage
 
             if (stripos($type, 'multipart/') !== false
                 && preg_match('~boundary="?([^";]+)"?~i', $type, $m) === 1) {
-                $nested = self::preferredPart($partBody, $m[1]);
+                $nested = self::preferredPart($partBody, $m[1], $nestedHtml);
                 if ($plain === null && $nested !== '') {
                     $plain = $nested;
+                }
+                if ($html === null && $nestedHtml !== null && $nestedHtml !== '') {
+                    $html = $nestedHtml;
                 }
 
                 continue;
@@ -304,6 +330,8 @@ final readonly class EmailMessage
                 }
             }
         }
+
+        $htmlOut = $html;
 
         return $plain ?? $html ?? '';
     }

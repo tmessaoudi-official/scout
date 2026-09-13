@@ -234,6 +234,61 @@ final class EmailMessageTest extends TestCase
         self::assertStringContainsString('Dupont & Fils', EmailMessage::parse($raw)->body);
     }
 
+    /**
+     * THE HTML ALTERNATIVE IS EXPOSED BESIDE THE BODY, AND THE BODY DOES NOT MOVE (2026-09-13).
+     *
+     * LinkedIn's job alert sends both alternatives, and they list the same offers, but only the HTML
+     * part states each card's work mode (`Aneo · Montrouge (Hybride)`) and pay line (`Entre 44 k €
+     * et 70 k € par an`) — measured on 20 real captures. `body` prefers text/plain, so a source
+     * reading it alone would score remote and pay as unknown on every card, for ever, while
+     * reporting a healthy fetch.
+     *
+     * The counterweight is the half that matters to the rest of the tree: `body` is unchanged.
+     * Bien'ici's listing IDENTITY is the links read out of it, so any change there re-keys a stored
+     * backlog and re-notifies it.
+     */
+    public function testTheHtmlAlternativeIsExposedBesideAnUnchangedBody(): void
+    {
+        $raw = self::multipart(
+            preamble: '',
+            plain: "Senior Software Engineer\nAneo\nMontrouge",
+            html: '<p>Aneo &middot; Montrouge (Hybride)</p><p>Entre 44 k € et 70 k € par an</p>'
+                . '<a href="https://www.linkedin.com/comm/jobs/view/4461976159/?x=1">Senior Software Engineer</a>',
+        );
+
+        $message = EmailMessage::parse($raw);
+
+        self::assertSame("Senior Software Engineer\nAneo\nMontrouge\n", $message->body, 'body still prefers text/plain, byte for byte');
+        self::assertStringContainsString('Aneo · Montrouge (Hybride)', $message->htmlText, 'entities decoded, like the body');
+        self::assertStringContainsString('Entre 44 k € et 70 k € par an', $message->htmlText);
+        self::assertStringContainsString(
+            'https://www.linkedin.com/comm/jobs/view/4461976159/?x=1',
+            $message->htmlText,
+            'hrefs are harvested into the HTML text, so a card segment can find its own link',
+        );
+        self::assertSame([], $message->links, 'links still come from the body alone');
+    }
+
+    public function testAPlainOnlyMessageHasNoHtmlText(): void
+    {
+        $raw = "Subject: alerte\nContent-Type: text/plain; charset=\"utf-8\"\n\nLoyer 980 €";
+
+        self::assertSame('', EmailMessage::parse($raw)->htmlText);
+    }
+
+    /** A single-part HTML message and an HTML-only multipart both expose what their body already is. */
+    public function testAnHtmlOnlyMessageExposesItsStrippedTextTwice(): void
+    {
+        $single = "Subject: alerte\nContent-Type: text/html; charset=\"utf-8\"\n\n<p>Chatou</p><p>Houilles</p>";
+        $multi = self::multipart(preamble: '', plain: '', html: '<p>Chatou</p><p>Houilles</p>');
+
+        foreach ([$single, $multi] as $raw) {
+            $message = EmailMessage::parse($raw);
+            self::assertStringContainsString('Houilles', $message->htmlText);
+            self::assertSame($message->body, $message->htmlText);
+        }
+    }
+
     private static function multipart(string $preamble, string $plain, string $html): string
     {
         return "Subject: alerte\n"
