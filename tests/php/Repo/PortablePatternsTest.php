@@ -33,7 +33,7 @@ final class PortablePatternsTest extends TestCase
     private static function configuredPatterns(): array
     {
         $out = [];
-        foreach (['config/rent/criteria.json', 'config/rent/sources.json', 'config/car/criteria.json', 'config/car/sources.json', 'config/job/criteria.json'] as $file) {
+        foreach (['config/rent/criteria.json', 'config/rent/sources.json', 'config/car/criteria.json', 'config/car/sources.json', 'config/job/criteria.json', 'config/job/sources.json'] as $file) {
             $path = self::ROOT . '/' . $file;
             if (!is_file($path)) {
                 continue;

@@ -306,6 +306,9 @@ final class FixtureSecretsTest extends TestCase
         'bienici.com', 'leboncoin.fr', 'alertes.seloger.com', 'pap.fr',
         'paruvendu.fr', 'capcar.fr', 'mailjet.com', 'mail-alerte.lacentrale.fr', 'lacentrale.fr',
         'agorastore.fr', 'alerts.agorastore.fr',
+        // The job alert sender, `jobalerts-noreply@linkedin.com`. A portal domain; the subscriber's
+        // own address is on a consumer domain and stays caught.
+        'linkedin.com',
         // NOT a domain: La Centrale's HTML names its retina assets `text1@2x.png`, `stars@2x.png`,
         // which match the address shape above. Listed so the guard stays quiet on asset names
         // rather than widened to skip anything ending in an image extension.

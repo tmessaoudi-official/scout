@@ -36,6 +36,11 @@ plan below is approved.
 - [2026-09-13 21:18] AGREED: step 4 (store) goes next; the monthly-pay reading gaps are recorded as a known issue and fixed against real slice 2 alerts, not guessed now.
 - [2026-09-13 21:49] NOTED: the job store records WHAT an offer was announced as, ROLLUP < MATCH and never demoted, from schema v1 — a design choice made in step 4 (not a ruling), because step 6 adds the rollup and no deployment exists to migrate.
 - [2026-09-13 21:49] NOTED: the Unicode id trim moved to `Core\Whitespace::trim()` and is shared by the rent and job stores; the car store still uses `trim()` (Known issues).
+- [2026-09-13 22:50] NOTED: the LinkedIn source reads its cards through config params (`card_link_pattern`, `footer_marker`, `place_pattern`, `pay_pattern`) and maps the three mode words in code; `pay_pattern` is deliberately not a counted pattern, because 7 of 115 real cards state pay — a design choice made in step 5 (not a ruling).
+- [2026-09-13 22:50] NOTED: `JOB_IMAP_MAILBOX` and `JOB_FEED_SILENT_DAYS` move from step 5 to step 6, where the CLI is their first reader (drift-scan S8(d): a declared key nothing reads is a finding).
+- [2026-09-13 22:50] NOTED: a card id repeated in one message is kept once and WARNED, never dropped in silence; the same id continues a card only across its title line (logo link, title, title link).
+- [2026-09-13 22:50] NOTED: the scrub check `grep -c otpToken=` must be 0 was unsatisfiable — the scrubber keeps parameter NAMES by design — and is replaced by: every decoded `otpToken` value is a `FIXTURE<n>` placeholder.
+- [2026-09-13 22:50] NOTED: step 5 adds no `publishedAt` round-trip test, because LinkedIn cards carry no date; the Fragile entry stays open for slice 2.
 
 ## Evidence gathered (2026-09-13)
 - `Cli/Domains::all()` is the registry — a new domain is one entry plus `Scout\<Slug>\`, `config/<slug>/` and `<SLUG>_*` keys.
@@ -159,8 +164,8 @@ says so on its own line and earns 0.
    - Each generic surface lands WITH the step that first makes it real, never ahead of it. Declaring a
      surface early is a key nothing reads (drift-scan S8(d)), or a compose service that crash-loops.
      - `JOB_SCOUT_DB` and `backup-state.sh` land with the store (step 4).
-     - `JOB_IMAP_MAILBOX`, `JOB_FEED_SILENT_DAYS` and the `PatternMissEscalationTest` scan dir land
-       with the source (step 5).
+     - The `PatternMissEscalationTest` scan dir and namespace land with the source (step 5).
+     - `JOB_IMAP_MAILBOX` and `JOB_FEED_SILENT_DAYS` land with the CLI (step 6), their first reader.
      - `JOB_NTFY_TOPIC`, `JOB_HEARTBEAT_HOURS` and the `job-scout` compose service land with the CLI
        and deploy (steps 6 and 9).
 2. **Model.** `JobListing` — title, company, commune/postcode, contract SET, salary
@@ -185,8 +190,9 @@ says so on its own line and earns 0.
      part (see *Design choice* below). Identity is the `/jobs/view/<id>/` number, and `params.from`
      scopes the source. The fixtures are scrubbed before any test is written against them. The
      scrub replaces the subscriber's name and headline in both parts and strips every tracking
-     parameter (`otpToken`, `midToken`, `trkEmail`, …). Two checks must come back 0 on the output:
-     `grep -c` for the surname, and `grep -c` for `otpToken=`. Then `FixtureSecretsTest` runs, and
+     parameter (`otpToken`, `midToken`, `trkEmail`, …). Two checks gate the output: `grep -ci` for the
+     name and surname must be 0, and every decoded `otpToken` VALUE must be a `FIXTURE<n>` placeholder
+     (the scrubber keeps parameter names, so `grep -c otpToken=` is never 0). Then `FixtureSecretsTest` runs, and
      only after that the commit. Captures 10 (pay 44–70 k) and 04 (pay 40–45 k, the H1 reject) are
      frozen first, with every value hand-read.
    - `FranceTravailSource` (OAuth2 client credentials, `JOB_FT_CLIENT_ID/SECRET`) — **only if the
@@ -348,7 +354,7 @@ after a rollback is harmless; reverting its commit removes it.
 | 2 | Model: JobListing + JobSnapshot | M | done | f5f664c | src/php/Job/JobListing.php src/php/Job/JobSnapshot.php tests/php/Job/JobSnapshotTest.php |
 | 3 | Judgement: JobClassifier, JobCriteria(+Loader), JobScorer | L | done | 0b1fdb7 | src/php/Job/** config/job/criteria.json tests/php/Job/** |
 | 4 | Store: JobStore composing RunStore | M | done | dd705cb | src/php/Job/** tests/php/Job/** src/php/Core/Whitespace.php src/php/Rent/Store/Store.php tests/sabotage-check.sh tools/backup-state.sh tests/test-backup-state.sh .env.example |
-| 5 | LinkedIn source: scrubbed fixtures, JobEmailSource | L | todo | - | src/php/Job/** config/job/sources.json tests/fixtures/job/** tests/php/Job/** |
+| 5 | LinkedIn source: scrubbed fixtures, JobEmailSource | L | doing | - | src/php/Job/** config/job/sources.json tests/fixtures/job/** tests/php/Job/** tests/php/Core/PatternMissEscalationTest.php tests/php/Repo/FixtureSecretsTest.php tests/php/Repo/PortablePatternsTest.php |
 | 6 | Pipeline, formatter, JobScout CLI | L | todo | - | src/php/Job/** tests/php/Job/** |
 | 7 | Sabotage ledger cases | M | todo | - | tests/sabotage-check.sh |
 | 8 | Docs | M | todo | - | CLAUDE.md README.md docs/** |
@@ -364,6 +370,10 @@ after a rollback is harmless; reverting its commit removes it.
   bare date. LinkedIn cards carry no date, so nothing reaches this path yet. The first source that
   writes `publishedAt` (step 5 or slice 2) must write that shape, and must add a test that its value
   round-trips — otherwise freshness reads unknown on every offer, in silence.
+  Step 5 writes no `publishedAt` (LinkedIn cards carry no date), so this stays open for slice 2.
+- `JobEmailSource` starts a LinkedIn card at its LOGO link, which precedes the title. If LinkedIn drops
+  that link, each title lands in the card above and every place line stops matching: `place_pattern`
+  misses on 100 % of cards and `health()` WARNs. Loud, not silent — pinned by the escalation tests.
 - `JobText::surface` turns `_` into a space on EVERY surface the classifier and criteria read, not
   only the role gate. No pattern depends on `_` today; S14 and S15 pin both directions.
 ### Known issues

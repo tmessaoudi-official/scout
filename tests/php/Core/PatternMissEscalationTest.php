@@ -158,10 +158,12 @@ final class PatternMissEscalationTest extends TestCase
     /** @return list<class-string> every loaded class implementing the interface */
     private function countingSources(): array
     {
-        foreach (['Rent/Adapters', 'Car'] as $dir) {
+        // A DIRECTORY WITHOUT ITS NAMESPACE LOADS NOTHING: the loop below only tries these FQCNs,
+        // so a class under a listed dir in a namespace missing here is never declared and never checked.
+        foreach (['Rent/Adapters', 'Car', 'Job'] as $dir) {
             foreach (glob(__DIR__ . '/../../../src/php/' . $dir . '/*.php') ?: [] as $path) {
                 $name = basename($path, '.php');
-                foreach (['Scout\\Rent\\Adapters\\' . $name, 'Scout\\Car\\' . $name] as $fqcn) {
+                foreach (['Scout\\Rent\\Adapters\\' . $name, 'Scout\\Car\\' . $name, 'Scout\\Job\\' . $name] as $fqcn) {
                     if (class_exists($fqcn)) {
                         break;
                     }

@@ -1,0 +1,24 @@
+{
+  "_comment": "Job sources, read strictly by Scout\\Job\\JobSourceLoader: an unknown key is refused, every *_pattern is compile-checked at load, and a params key no adapter reads is refused rather than ignored. `_`-prefixed keys are comments only while the key they annotate exists.",
+  "sources": {
+    "linkedin": {
+      "_why": "LinkedIn job alerts, the source of slice 1. Measured on 20 captures (2026-09-13): 115 cards, every one with a /jobs/view/<id>/ link, a title line, and a `company · location (mode)` line. Work mode and pay exist ONLY in the HTML part, so the adapter reads EmailMessage::htmlText.",
+      "_verified_at": "2026-09-13",
+      "enabled": true,
+      "family": "portal",
+      "type": "email_alert",
+      "params": {
+        "_from": "The sender scopes the source: the mailbox serves several portals. No subject_pattern, because LinkedIn uses three subject templates (`<title> chez <company>`, `… : jusqu'à N k € par an`, `<company> recrute au poste de …`).",
+        "from": "jobalerts-noreply@linkedin.com",
+        "_card_link_pattern": "Group 1 is the offer id, which is the identity. Each card links its logo AND its title to the same URL, so a doubled link is one card. The preheader (`Salaire entre …`) sits BEFORE the first card link and is never read.",
+        "card_link_pattern": "~^https://www\\.linkedin\\.com/comm/jobs/view/(\\d+)/~",
+        "_footer_marker": "Everything from this literal on is the footer and the `autres alertes` block, whose cards repeat ids from other alerts. Present in all 20 captures.",
+        "footer_marker": "Voir toutes les offres",
+        "_place_pattern": "The card's second line. The company is greedy, so the split is on the LAST ` · ` (exactly one in all 115 cards). The mode parenthesis is optional: 5 of 115 cards state none.",
+        "place_pattern": "~^(?<company>.+) · (?<location>.+?)(?: \\((?<mode>[^()]+)\\))?$~u",
+        "_pay_pattern": "A card line stating pay. Deliberately NOT a counted pattern: 7 of 115 cards carry one, so counting it would warn on every pass.",
+        "pay_pattern": "~€~u"
+      }
+    }
+  }
+}
