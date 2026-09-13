@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Scout\Cli;
 
 use Scout\Car\Cli\CarScout;
+use Scout\Job\Cli\JobScout;
 use Scout\Rent\Cli\RentScout;
 
 /**
@@ -22,6 +23,7 @@ final class Domains
         return [
             'rent' => new Domain('rent', 'rent-watch', 'RENT_', 'config/rent', RentScout::class),
             'car' => new Domain('car', 'car-watch', 'CAR_', 'config/car', CarScout::class),
+            'job' => new Domain('job', 'job-watch', 'JOB_', 'config/job', JobScout::class),
         ];
     }
 
