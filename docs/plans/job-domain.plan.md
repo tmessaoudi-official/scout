@@ -314,7 +314,7 @@ after a rollback is harmless; reverting its commit removes it.
 | 1 | Registry + JobScout (help only; generic surfaces land with the step that reads them) | M | done | cff36d3 | src/php/Cli/Domains.php src/php/Job/Cli/** tests/php/Job/Cli/** config/job/** |
 | 1b | Scrubber learns LinkedIn: per-recipient link tokens, soft-break-folded needles | S | done | d1193dd | tools/scrub-eml.php tests/test-scrub-eml.sh |
 | 2 | Model: JobListing + JobSnapshot | M | done | f5f664c | src/php/Job/JobListing.php src/php/Job/JobSnapshot.php tests/php/Job/JobSnapshotTest.php |
-| 3 | Judgement: JobClassifier, JobCriteria(+Loader), JobScorer | L | doing | - | src/php/Job/** config/job/criteria.json tests/php/Job/** |
+| 3 | Judgement: JobClassifier, JobCriteria(+Loader), JobScorer | L | done | 0b1fdb7 | src/php/Job/** config/job/criteria.json tests/php/Job/** |
 | 4 | Store: JobStore composing RunStore | M | todo | - | src/php/Job/** tests/php/Job/** |
 | 5 | LinkedIn source: scrubbed fixtures, JobEmailSource | L | todo | - | src/php/Job/** config/job/sources.json tests/fixtures/job/** tests/php/Job/** |
 | 6 | Pipeline, formatter, JobScout CLI | L | todo | - | src/php/Job/** tests/php/Job/** |
