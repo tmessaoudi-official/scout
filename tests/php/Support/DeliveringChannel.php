@@ -66,6 +66,20 @@ final class DeliveringChannel implements Channel
      */
     public string $refusalMessage = 'ntfy: HTTP 503 depuis ntfy.sh';
 
+    /**
+     * Called after each DELIVERED notification, so a test can play the concurrent writer.
+     *
+     * The §1 gate re-reads the store before every send precisely because a `run --watch` in
+     * another process can write `recordTwin()` between two sends of one drain, and a single-process
+     * seed cannot interleave with that — which is how three ledger cases reported `ok` while a
+     * structural guard answered for them (plan row 70). Opening a second `Store` handle in here
+     * simulates that writer at the exact seam the gate exists for. A closure that throws is wrapped
+     * by `Notifier::send()` into a refused send, so a test using this must assert the closure ran.
+     *
+     * @var (\Closure(Notification): void)|null
+     */
+    public ?\Closure $onSend = null;
+
     public function send(Notification $notification): void
     {
         if (\in_array($notification->kind, $this->refuses, true)) {
@@ -78,5 +92,9 @@ final class DeliveringChannel implements Channel
         }
 
         $this->sent[] = $notification;
+
+        if ($this->onSend !== null) {
+            ($this->onSend)($notification);
+        }
     }
 }

@@ -2693,8 +2693,8 @@ var/claude/                 Reports, review outputs — gitignored scratch (hand
   holding ONE `->refuses(`, which is why deleting it leaves only the guard to answer;
   `Pipeline::runOnce` holds TWO (the match gate and `$digestRefusal`), so its case is genuinely
   behavioural. `announcePromotions()` is a knowing member — the plan rules it can have no fixture of
-  its own, the caller's filter removing every refused promotion before it is reached — so the open
-  gap is the other three. Measured in a scratch tree whose own baseline was green (`OK 3128 /
+  its own, the caller's filter removing every refused promotion before it is reached — so the
+  gap was the other three, CLOSED by row 70 (2026-09-13, below). Measured in a scratch tree whose own baseline was green (`OK 3128 /
   12118`), mutating the
   CONSEQUENCE instead so the call survives: `pushRetries()`, the `digest()` rollup filter and the
   `floorDigest()` rollup filter each go **changed=1, rc=0 — GREEN**. The shape was already ruled
@@ -2705,8 +2705,15 @@ var/claude/                 Reports, review outputs — gitignored scratch (hand
   the reaching case proposed for these three (a snapshot-less row entering `$retries`) cannot fire
   at the gate either, because that row's rebuilt listing carries no commune and
   `Dedup::sameFlatReason()` requires both communes to agree positively — verified by executing it
-  against a hydrated copy, which does match. Two of the three have no in-process seam at all, the
-  `announcePromotions` position.
+  against a hydrated copy, which does match. **This sentence then said two of the three had no
+  in-process seam, and that was wrong: a claim about ORDER made without reading the order.** Row 70
+  (2026-09-13) read it. In `floorDigest()` the retries are pushed BEFORE the rollup filter, and in
+  `pushRetries()` one retry's send comes before the next retry's gate read. So a concurrent writer
+  simulated on the send (`DeliveringChannel::$onSend` recording a PLS twin) reaches both. The real
+  finding was the VERB: it read the gate before its retries and then mailed that stale list, which
+  breaks the gate's own *last moment* contract. It now reads the gate again after the retries.
+  All three cases mutate the consequence, and each one reddens a behavioural test. **Before
+  declaring a seam absent, read the send order: any send that comes before a gate read is a seam.**
   **THE SPECIES WAS THEN AUDITED ACROSS ALL THREE NEEDLES, AND IT IS NARROW (2026-09-10).** The
   finding above came from the `->refuses(` needle alone; the other two literal tokens those guards
   grep are `$source->acknowledge()` and `ExcludedDwellings::match(`, so every case whose `sed`

@@ -3484,7 +3484,7 @@ tool/guard) and say which ones the fix covers.**
 | 67 | `422e27a` rotted four `pushRetries` cases at once — three into parse errors and the rent FLOOR into a valid assignment chain reporting `ok`; four retargets (car scoped) and one new fixture for the fifth, a genuine coverage gap | M | done | eeaa30c | tests/sabotage-check.sh tests/php/Rent/Store/StoreTest.php |
 | 68 | The ledger's tally called a parse error an undetected regression, and the red-ledger issue described two kinds for a list holding seven — each label now carries its kind; tally line and heading untouched, both being pinned | S | done | 51bfd7a | tests/sabotage-check.sh .github/workflows/ci.yml |
 | 69 | Row 68's own comment said `$fail` counts "six" over a list of seven, and the issue's reproduce line told the reader to paste a label that ugrep reads as a character class — numeral deleted rather than corrected, filter usage spelled out | S | done | 101a229 | tests/sabotage-check.sh .github/workflows/ci.yml |
-| 70 | Three §1 gate cases redden the STRUCTURAL guard rather than a behavioural test and report `ok`; all three measured GREEN on a consequence mutation, and the recommended repair refuted for two of them — expressions left honest-but-silent for one night, fixture design is the next work | M | todo | - | tests/sabotage-check.sh tests/php/Rent/Cli/** |
+| 70 | Three §1 gate cases redden the STRUCTURAL guard rather than a behavioural test and report `ok`; all three measured GREEN on a consequence mutation. Closed with one behavioural fixture each (a `DeliveringChannel::$onSend` concurrent writer) and the consequence shape — and the fixture design found the digest VERB read §1 before its retries and mailed the stale list, fixed to re-read at send time | M | done | - | tests/sabotage-check.sh tests/php/Rent/Cli/** tests/php/Support/DeliveringChannel.php src/php/Rent/Cli/RentScout.php |
 | 71 | Row 69's own advice was true and INSUFFICIENT — the filter is an ERE, so 377 of 816 labels do not self-match; and its count command answered 8 by matching itself. Advice rewritten, count anchored, the retry-push case scoped (it mutated 3 sites), and the `undetected or unapplied:` contract pinned on its PRODUCER end for the first time | M | done | - | .github/workflows/ci.yml tests/sabotage-check.sh tests/test-ci-workflow.sh CLAUDE.md |
 <!-- /progress-block -->
 ### Blocked
@@ -4498,3 +4498,40 @@ since the design was measured, which is the whole of the 951/1 261 → 951/1 266
   true observation (no scheduled row listed) attached to an invented cause (the nightly is late).
   The cron entry in `CLAUDE.md` is confirmed rather than contradicted, by a ninth consecutive run;
   what it gains is the trap — **read `date -u`, never `uptime`, when checking a UTC band.**
+- [2026-09-13 13:00] AGREED (developer ruling at row 70's 3C gate): row 70 is WIDENED from
+  "fixtures" to fixtures plus ONE `src/` fix, because reading the code for the fixture design
+  refuted two premises of the 2026-09-09 23:25 entry above. **(a)** `pushRetries()`'s seam is not
+  *"the notifier sends the digest BEFORE it runs"*: in `digest()` the retries run first
+  (`RentScout.php:1247`) and the digest mail follows (`:1256`), so the in-process seam is retry N's
+  send preceding retry N+1's gate read. **(b)** *"the two rollup filters have none"* is false for
+  the floor: `floorDigest()` pushes the retries (`:2665`) BEFORE its filter (`:2679`), so a writer
+  during those pushes is visible to the filter. And the VERB had the opposite order — filter
+  (`:1166`) → retries (`:1247`) → mail (`:1256`) — so its mail carried a §1 read taken before N
+  sends, against `SectionOneGate`'s own *"at the last moment, immediately before the send"*
+  contract, which the floor honours. Fix: the verb re-reads the gate over its rollup list after
+  `pushRetries()`, keeping the early pass for the dry-run display. All three cases then take the
+  consequence shape, each answered by a behavioural fixture through a `DeliveringChannel::$onSend`
+  hook that plays the concurrent `run --watch` writer; no compound case is needed.
+- [2026-09-13 13:00] AGREED: row 70's certification tier is `advisor()` only (asked at 3C; the
+  milestone panel stays for a milestone boundary).
+- [2026-09-13 13:25] MEASURED, row 70 closed. In a scratch tree (`cp -a`, vendor copied) whose own
+  baseline was green (`OK 3131 / 12143`; the one runner warning is the measurement's own
+  `--do-not-cache-result` flag), each consequence mutation was applied ALONE and restored
+  byte-identical (`cmp`):
+
+  | case | mutation | changed | red |
+  |---|---|---|---|
+  | retry push | `pushRetries()` `if ($refusal !== null)` → `if (false)` | 1 | `RentScoutDigestTest::testATwinRecordedBetweenTwoRetriesStopsTheSecondPush` only |
+  | verb rollup | `digest()` `if ($atSend === null)` → `if (true)` | 1 | `RentScoutDigestTest::testATwinRecordedDuringTheRetriesKeepsTheRollupOutOfTheVerbsMail` only |
+  | floor rollup | `floorDigest()` `if ($refusal === null)` → `if (true)` | 1 | `RentScoutDigestFloorTest::testATwinRecordedDuringTheFloorsRetriesKeepsTheRollupOut` only |
+
+  Zero `Scout\Tests\Repo\` failures in any of the three, so each red is behavioural. The verb test
+  was written FIRST and went red on the unfixed code for the stated reason (`[MATCH, ROLLUP]` sent
+  where `[MATCH]` was expected); the other two were green on unfixed code, as they should be — the
+  retry and floor gates already worked and only lacked proof. Two corrections ride with it:
+  `RentScoutDigestFloorTest::testAFlatWhoseTwinSaysPLSIsNeitherRolledUpNorAnnouncedAsAnEmptyMail`'s
+  docblock claimed the send-time re-read and the round-5 all-refused path; its twin is written
+  before the run, so `collectDigest()` vetoes at collect time and the floor returns at its first
+  emptiness check — the new floor test is what reaches both. And the verb's early filter survives
+  for the dry-run display and is defended twice (a mutation of it alone is green because the
+  send-time read catches the same row), so the case targets the read that decides what is SENT.

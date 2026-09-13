@@ -840,6 +840,103 @@ final class RentScoutDigestTest extends TestCase
     }
 
     /**
+     * §1 BETWEEN TWO RETRIES OF ONE DRAIN — the seam `pushRetries()` has, and a single-process seed
+     * never reaches (plan row 70).
+     *
+     * `collectDigest()` reads every route at COLLECT time; the drain then sends one retry after
+     * another. A `run --watch` in another process can record a `PLS` twin in between — the store is
+     * WAL with a concurrent-writer contract — and the next retry's gate read must see it. The
+     * double's `onSend` plays that writer on the first push, for BOTH keys, so the assertions hold
+     * whichever queued row the drain happens to take first.
+     *
+     * Until this existed the ledger case for this gate reddened only the structural call-site guard
+     * and reported `ok`: mutating the refusal's CONSEQUENCE left the whole suite green.
+     */
+    public function testATwinRecordedBetweenTwoRetriesStopsTheSecondPush(): void
+    {
+        $root = $this->tempRoot();
+        $first = $this->seedQueuedMatch($root, $this->queueable('inli', 'SEAM-R1'));
+        $second = $this->seedQueuedMatch($root, new RawListing(
+            sourceName: 'inli', externalId: 'SEAM-R2', title: 'Appartement 3 pièces',
+            description: 'Logement intermédiaire (LLI).', fields: ['financement' => 'LLI'],
+            commune: 'Sartrouville', postcode: '78500', rentCc: 1250, surfaceM2: 71.0, rooms: 3,
+        ));
+
+        $channel = $this->delivering();
+        $wrote = false;
+        $channel->onSend = function (\Scout\Core\Notify\Notification $sent) use ($root, $first, $second, &$wrote): void {
+            if ($wrote || $sent->kind !== NotificationKind::MATCH) {
+                return;
+            }
+            $writer = Store::open($root . '/state/rent-watch.sqlite3');
+            $writer->recordTwin($first, Tenure::PLS, 'seloger', 9000);
+            $writer->recordTwin($second, Tenure::PLS, 'seloger', 9000);
+            $wrote = true;
+        };
+
+        $result = $this->scout($root, ['digest'], $channel);
+
+        self::assertSame(0, $result['code'], $result['out'] . $result['err']);
+        self::assertTrue($wrote, 'premise: the concurrent writer ran — a closure that throws reads as a refused send');
+        self::assertCount(1, $channel->sent, 'the first retry went out; the second met the twin at its own gate read');
+        self::assertStringContainsString('§1 — ', $result['out'] . $result['err'], 'and the refusal is voiced');
+
+        $store = Store::open($root . '/state/rent-watch.sqlite3');
+        self::assertSame(
+            1,
+            (int) $store->wasNotifiedAs($first, 'MATCH') + (int) $store->wasNotifiedAs($second, 'MATCH'),
+            'exactly one key left the queue — the refused one waits for `reclassify`',
+        );
+    }
+
+    /**
+     * §1 ON THE VERB'S ROLLUP IS READ AT SEND TIME — and until row 70 it was read before the retries.
+     *
+     * The verb filtered its rollup list, THEN pushed every retry, THEN sent the mail that stale list
+     * built. `SectionOneGate`'s own contract is *called at the last moment, immediately before the
+     * send*; the daily floor honoured it and the verb did not, so a twin recorded by a concurrent
+     * `run --watch` during the retries was announced and marked `ROLLUP` — out of the queue for
+     * ever. A retry over the gate and a rollup row under it give the seam (the elevator bonus is
+     * what separates them, as in the straddling test above); the double writes the twin on the push.
+     */
+    public function testATwinRecordedDuringTheRetriesKeepsTheRollupOutOfTheVerbsMail(): void
+    {
+        $root = $this->tempRoot(['notify' => ['push_min_score' => 60]]);
+        $retry = $this->seedQueuedMatch($root, new RawListing(
+            sourceName: 'inli', externalId: 'SEAM-OVER', title: 'Appartement 3 pièces',
+            description: 'Logement intermédiaire (LLI).', fields: ['financement' => 'LLI'],
+            commune: 'Sartrouville', postcode: '78500', rentCc: 1450, surfaceM2: 88.0, rooms: 4,
+            floor: 2, hasElevator: true,
+        ));
+        $rollup = $this->seedQueuedMatch($root, $this->queueable('inli', 'SEAM-UNDER'));
+
+        $channel = $this->delivering();
+        $wrote = false;
+        $channel->onSend = function (\Scout\Core\Notify\Notification $sent) use ($root, $rollup, &$wrote): void {
+            if ($wrote || $sent->kind !== NotificationKind::MATCH) {
+                return;
+            }
+            Store::open($root . '/state/rent-watch.sqlite3')->recordTwin($rollup, Tenure::PLS, 'seloger', 9000);
+            $wrote = true;
+        };
+
+        $result = $this->scout($root, ['digest'], $channel);
+
+        self::assertSame(0, $result['code'], $result['out'] . $result['err']);
+        self::assertTrue($wrote, 'premise: the retry was pushed and the concurrent writer ran');
+        self::assertSame(
+            [NotificationKind::MATCH],
+            array_map(static fn (\Scout\Core\Notify\Notification $n): NotificationKind => $n->kind, $channel->sent),
+            'the retry was pushed, and NO rollup mail followed — its only row met the twin at send time',
+        );
+        self::assertStringContainsString('retirée du récapitulatif', $result['out'] . $result['err'], 'and the refusal is voiced');
+
+        $store = Store::open($root . '/state/rent-watch.sqlite3');
+        self::assertTrue($store->wasNotifiedAs($retry, 'MATCH'));
+        self::assertFalse($store->wasNotified($rollup), 'the refused row is neither rolled up nor pushed — it stays queued');
+    }
+
+    /**
      * A listing the temp root's criteria accept: the drain RE-SCORES from the snapshot, and a row
      * today's criteria reject is left waiting rather than announced.
      */

@@ -7,6 +7,8 @@ namespace Scout\Tests\Rent\Cli;
 use PHPUnit\Framework\TestCase;
 use Scout\Rent\Cli\RentScout;
 use Scout\Core\Notify\ConsoleChannel;
+use Scout\Core\Notify\Notification;
+use Scout\Core\Notify\NotificationKind;
 use Scout\Core\Notify\Notifier;
 use Scout\Rent\Core\RawListing;
 use Scout\Rent\Core\Tenure;
@@ -335,25 +337,25 @@ final class RentScoutDigestFloorTest extends TestCase
     }
 
     /**
-     * §1 ON THE DEPLOYED DRAIN, AND THE ALL-REFUSED DAY — one scenario carrying both halves.
+     * §1 ON THE DEPLOYED DRAIN — a twin already on record when the floor runs.
      *
      * The floor is the drain that runs unattended, so of the two it is the one that matters. A
      * queued MATCH whose CROSS-TRACK TWIN says `PLS` must not be rolled up: the twin is one of §1's
-     * four persisted routes, and nothing about a row's own `MATCH` outcome releases it. What this
-     * pins is that the floor re-reads the gate AT SEND TIME — a collect-time read alone misses a
-     * twin written by a concurrent `run --watch` in the window between the two.
+     * four persisted routes, and nothing about a row's own `MATCH` outcome releases it.
      *
-     * AND WHEN THE GATE REFUSES THE WHOLE ROLLUP, THE FLOOR STAYS SILENT. It used to test the
-     * UNFILTERED list for emptiness while the filter ran seven lines below, so an all-refused rollup
-     * fell through, sent `Vérifié, score bas : 0 annonce(s)` — a mail saying nothing — and then
-     * wrote the marker, recording the window as SERVED. Q34's ruling is verbatim the opposite, and a
-     * doubt arriving later that same day would then have waited until tomorrow.
+     * WHAT THIS DOES NOT PIN, corrected in plan row 70: this docblock claimed the test pinned the
+     * floor re-reading the gate AT SEND TIME. It cannot — the twin is written BEFORE the run, so
+     * `collectDigest()` vetoes the row at collect time and the floor returns at its first emptiness
+     * check, never reaching the send-time filter or the post-filter emptiness check below it. The
+     * send-time read, and the all-refused day it guards (an empty `Vérifié, score bas : 0` mail
+     * that then wrote the marker, C2 round 5), are pinned by
+     * {@see testATwinRecordedDuringTheFloorsRetriesKeepsTheRollupOut}, which writes the twin
+     * DURING the drain. What stays here is the collect-time half, and the silence that follows it.
      *
-     * A first pass at this milestone REMOVED the all-refused test as unreachable, reasoning that
+     * A first pass at this milestone REMOVED an all-refused test as unreachable, reasoning that
      * `collectDigest()` refuses such a row upstream through all four routes. That reasoning holds
-     * for ONE process; the twin is written by another, which is the documented shape that made the
-     * retry case reachable two rounds earlier. **Failing to construct a case is not evidence that
-     * none exists** — this repo has now paid for that inference three times.
+     * for ONE process; the twin is written by another. **Failing to construct a case is not
+     * evidence that none exists** — this repo has now paid for that inference three times.
      */
     public function testAFlatWhoseTwinSaysPLSIsNeitherRolledUpNorAnnouncedAsAnEmptyMail(): void
     {
@@ -381,6 +383,55 @@ final class RentScoutDigestFloorTest extends TestCase
         );
     }
 
+    /**
+     * §1 BETWEEN THE RETRIES AND THE ROLLUP, ON THE DEPLOYED DRAIN (plan row 70).
+     *
+     * `floorDigest()` pushes the retries and only THEN filters its rollup list through the gate, so
+     * a twin recorded by a concurrent `run --watch` during those pushes must keep the rollup row out.
+     * A retry over the gate, a rollup row under it (the elevator bonus separates them), and the
+     * double writing a `PLS` twin for the rollup row on the push. Without the send-time filter the
+     * row is rolled up and marked `ROLLUP`, which takes it out of the queue for ever.
+     *
+     * It is also the only test that reaches the round-5 all-refused path: the doubt bin is empty
+     * and every rollup row is refused, so the floor must send NO mail — not an empty one — and must
+     * not write the marker, or the day's window is recorded as served.
+     */
+    public function testATwinRecordedDuringTheFloorsRetriesKeepsTheRollupOut(): void
+    {
+        $root = $this->tempRoot(['notify' => ['push_min_score' => 60]]);
+        $retry = $this->seedQueuedMatch($root, 'SEAM-OVER', floor: 2, hasElevator: true);
+        $rollup = $this->seedQueuedMatch($root, 'SEAM-UNDER');
+
+        $channel = new DeliveringChannel();
+        $wrote = false;
+        $channel->onSend = function (Notification $sent) use ($root, $rollup, &$wrote): void {
+            if ($wrote || $sent->kind !== NotificationKind::MATCH) {
+                return;
+            }
+            Store::open($root . '/state/rent-watch.sqlite3')->recordTwin($rollup, Tenure::PLS, 'cdc_habitat', 9000);
+            $wrote = true;
+        };
+
+        $r = $this->watch($root, channel: $channel);
+
+        self::assertSame(0, $r['code'], $r['err']);
+        self::assertTrue($wrote, 'premise: the retry was pushed and the concurrent writer ran');
+
+        // The watch also beats (HEARTBEAT), so the kinds are counted rather than listed.
+        $kinds = array_map(static fn (Notification $n): NotificationKind => $n->kind, $channel->sent);
+        self::assertCount(1, array_keys($kinds, NotificationKind::MATCH, true), 'the retry was pushed exactly once');
+        self::assertNotContains(NotificationKind::ROLLUP, $kinds, 'and no rollup mail followed — its only row met the twin at send time');
+        self::assertNotContains(NotificationKind::DIGEST, $kinds, 'nor a digest carrying it');
+
+        $store = Store::open($root . '/state/rent-watch.sqlite3');
+        self::assertTrue($store->wasNotifiedAs($retry, 'MATCH'));
+        self::assertFalse($store->wasNotified($rollup), 'the refused row is neither rolled up nor pushed — it stays queued');
+        self::assertFileDoesNotExist(
+            $root . '/state/rent-digest.txt',
+            'a floor whose whole rollup was refused announced nothing, so it must not consume the window',
+        );
+    }
+
     /** Under a gate it really fell short of, the same floor rolls it up and marks it ROLLUP. */
     public function testTheFloorRollsUpAMatchThatReallyFellShortOfTheGate(): void
     {
@@ -402,7 +453,7 @@ final class RentScoutDigestFloorTest extends TestCase
      * outcome with no `notified_at`. Its facts sit inside this class's criteria, because the drain
      * re-scores from the snapshot and leaves a row today's criteria reject waiting.
      */
-    private function seedQueuedMatch(string $root, string $id): string
+    private function seedQueuedMatch(string $root, string $id, ?int $floor = null, ?bool $hasElevator = null): string
     {
         $listing = new RawListing(
             sourceName: 'inli',
@@ -415,6 +466,8 @@ final class RentScoutDigestFloorTest extends TestCase
             rentCc: 1450,
             surfaceM2: 88.0,
             rooms: 4,
+            floor: $floor,
+            hasElevator: $hasElevator,
         );
 
         $store = Store::open($root . '/state/rent-watch.sqlite3');
@@ -430,8 +483,9 @@ final class RentScoutDigestFloorTest extends TestCase
     /** @return array{code: int, out: string, err: string} */
     /**
      * @param list<\Scout\Core\Notify\NotificationKind> $refuses kinds the channel will not deliver
+     * @param DeliveringChannel|null                    $channel a double the test keeps a handle on
      */
-    private function watch(string $root, int $passes = 1, array $refuses = []): array
+    private function watch(string $root, int $passes = 1, array $refuses = [], ?DeliveringChannel $channel = null): array
     {
         putenv('SCOUT_MAX_PASSES=' . $passes);
 
@@ -442,8 +496,10 @@ final class RentScoutDigestFloorTest extends TestCase
 
         putenv('RENT_SCOUT_DB=' . $root . '/state/rent-watch.sqlite3');
 
-        $channel = new DeliveringChannel();
-        $channel->refuses = $refuses;
+        $channel ??= new DeliveringChannel();
+        if ($refuses !== []) {
+            $channel->refuses = $refuses;
+        }
         $notifier = new Notifier([new ConsoleChannel($out), $channel]);
         $code = (new RentScout($root, $out, $err, self::NOW, null, $notifier))->run(['run', '--watch']);
 

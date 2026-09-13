@@ -1585,36 +1585,24 @@ run_sabotage "the live push path stops consulting the §1 gate" \
 
 # RESTORED (C2 round 4). Round 3 made this a documented NON-case on the reasoning that
 # `collectDigest()` refuses such a row upstream through all four routes, so nothing reaching
-# `pushRetries()` could be refused here — and a test written for it stayed green with the guard
-# bypassed, which was read as proof. **Both halves were wrong**, and a lens showed it two ways:
+# `pushRetries()` could be refused here. That holds for ONE process only: a concurrent `run --watch`
+# can write `recordTwin()` between collect and push on a WAL store with a documented
+# concurrent-writer contract. **The test failing to reach the branch is not the branch being
+# unreachable.**
 #
-#   - `digest` calls `collectDigest()`, then builds the notifier and runs its checks, and only then
-#     `pushRetries()`. A concurrent `run --watch` in a SEPARATE PROCESS writes `recordTwin()` in that
-#     window; the store is WAL with a documented concurrent-writer contract. Demonstrated with two
-#     `Store::open()` handles: all four routes NULL at collect, `jumeau / PLS` at push.
-#   - The dwelling route sits BELOW the snapshot-less `continue`, so a row whose payload will not
-#     encode enters `$retries` never having been dwelling-checked at all.
+# SCOPED 2026-09-09 (it matched `digest()`, `pushRetries()` and `floorDigest()` — changed=3).
 #
-# The single-process seed could not produce the interleave. **That was the test failing to reach the
-# branch, not the branch being unreachable** — and turning that into a non-case removed the one
-# thing that would have said so.
-# SCOPED 2026-09-09, and it was UNSCOPED for as long as it has existed: the same expression matches
-# `digest()` (1167), `pushRetries()` (1673) and `floorDigest()` (2680), so a case labelled for ONE
-# surface mutated all THREE — `changed=3`, measured. That is this file's own documented defect (the
-# 2026-09-07 unscoped-sed entry) sitting three lines from the comment that names it, and
-# `test-sabotage-applies.sh` is blind to it: it proves an expression MATCHES, never that it matches
-# ONE thing. Scoped, the mutation is `changed=1` and reddens `SectionOneGateCallSitesTest` naming
-# `RentScout::pushRetries` — the same verdict, now attributable.
-#
-# THE REDNESS IS STRUCTURAL, NOT BEHAVIOURAL, and that is a KNOWN OPEN GAP rather than a claim of
-# coverage — see plan row 70. `$refusal = null;` removes the `->refuses(` token, so what answers is
-# the call-site guard. Measured 2026-09-09 against a green scratch baseline: mutating the
-# CONSEQUENCE instead (`if ($refusal !== null)` -> `if (false)`, scoped) leaves the whole suite
-# GREEN here and at both rollup filters below. Do not "fix" that by swapping the expression alone —
-# that converts a silent gap into three `[UNDETECTED]`s without closing it. The fixture comes first.
+# AND IT MUTATES THE CONSEQUENCE since row 70 (2026-09-13). It used to write `$refusal = null;`,
+# which deletes the `->refuses(` token, so the only thing that reddened was
+# `SectionOneGateCallSitesTest` — the STRUCTURAL guard — and the case reported `ok` while §1 was
+# tested by nothing. Measured: the consequence mutation left the whole suite green. The seam is
+# BETWEEN TWO RETRIES of one drain (retry N's send precedes retry N+1's gate read), and
+# `RentScoutDigestTest::testATwinRecordedBetweenTwoRetriesStopsTheSecondPush` reaches it through
+# `DeliveringChannel::$onSend`, which records a PLS twin on the first push. Expression and fixture
+# landed in ONE commit, as this comment used to require.
 run_sabotage "the retry push stops consulting the §1 gate" \
   src/php/Rent/Cli/RentScout.php \
-  '/private function pushRetries(/,/^    }/ s%\$refusal = \$sectionOne->refuses(\$entry\[.listing.\], \$entry\[.key.\]);%$refusal = null;%'
+  '/private function pushRetries(/,/^    }/ s%if (\$refusal !== null) {%if (false) {%'
 
 # THE GATE READS FRESH — hoisting its state is what both round-3 P0s were, and a cached candidate
 # list would pass every route test above while re-opening the defect the gate exists to close.
@@ -1640,13 +1628,24 @@ run_sabotage "a §1 refusal on the live pass is counted and never voiced" \
 
 # THE ROLLUP HALF of both digest drains: those are MATCHES held back by the score gate, and they
 # reached the wire on collect-time reads alone.
+#
+# BOTH MUTATE THE CONSEQUENCE since row 70 (2026-09-13), for the reason given on the retry case
+# above: `$refusal = null;` reddened only the structural call-site guard. Each is answered by a
+# behavioural fixture that records a PLS twin DURING the retries, which precede the send-time read:
+#   - the verb: `RentScoutDigestTest::testATwinRecordedDuringTheRetriesKeepsTheRollupOutOfTheVerbsMail`.
+#     Row 70 found the verb read the gate BEFORE its retries and announced the stale list, so it now
+#     reads again after them (`$atSend`). The early filter survives for the dry-run display and is
+#     defended twice — a mutation of it alone is green because the send-time read catches the same
+#     row — so the case targets the read that decides what is SENT.
+#   - the floor: `RentScoutDigestFloorTest::testATwinRecordedDuringTheFloorsRetriesKeepsTheRollupOut`,
+#     which also reaches the round-5 all-refused path (no mail, no marker).
 run_sabotage "the digest verb announces a rolled-up match the §1 gate refuses" \
   src/php/Rent/Cli/RentScout.php \
-  '/private function digest(/,/private function pushRetries/ s%\$refusal = \$sectionOne->refuses(\$entry\[.listing.\], \$entry\[.key.\]);%$refusal = null;%'
+  '/private function digest(/,/private function collectDigest(/ s%if (\$atSend === null) {%if (true) {%'
 
 run_sabotage "the DAILY FLOOR announces a rolled-up match the §1 gate refuses (the deployed drain)" \
   src/php/Rent/Cli/RentScout.php \
-  '/private function floorDigest/,/^    }/ s%\$refusal = \$sectionOne->refuses(\$entry\[.listing.\], \$entry\[.key.\]);%$refusal = null;%'
+  '/private function floorDigest/,/^    }/ s%if (\$refusal === null) {%if (true) {%'
 
 run_sabotage "announcePromotions sends without re-reading §1 in the sending method" \
   src/php/Rent/Cli/RentScout.php \

@@ -1246,6 +1246,29 @@ final readonly class RentScout
         // backlog moved and claimed it had.
         $drainedKeys = $this->pushRetries($notifier, $store, $batch->retries, $now);
 
+        // §1 READ AGAIN, AT SEND TIME (plan row 70). The filter above ran BEFORE the retries, and
+        // `SectionOneGate`'s contract is "at the last moment, immediately before the send": every
+        // retry is a send, so a twin recorded by a concurrent `run --watch` while they went out was
+        // invisible to a list built before they started, and the mail below announced it and marked
+        // it ROLLUP — out of the queue for ever. `floorDigest()` already filters after its retries;
+        // the verb did not. The early pass stays: the dry-run display needs a filtered list and
+        // returns before any retry runs. A row it already removed is not re-warned here.
+        $lowScore = array_values(array_filter($lowScore, function (array $entry) use ($sectionOne): bool {
+            $atSend = $sectionOne->refuses($entry['listing'], $entry['key']);
+            if ($atSend === null) {
+                return true;
+            }
+            $this->warn(sprintf(
+                '%s — §1 : %s (%s) — retirée du récapitulatif',
+                $entry['key'],
+                $atSend['detail'],
+                $atSend['route'],
+            ));
+
+            return false;
+        }));
+        $notification = (new Formatter())->digest($entries, $lowScore);
+
         if ($entries === [] && $lowScore === []) {
             // Nothing to send, so nothing can land: the retries are the whole story.
             $this->reportRemainder($batch, $drainedKeys, false, $lowScore);
