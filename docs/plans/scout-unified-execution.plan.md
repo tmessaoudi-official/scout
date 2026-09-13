@@ -4514,9 +4514,10 @@ since the design was measured, which is the whole of the 951/1 261 → 951/1 266
   hook that plays the concurrent `run --watch` writer; no compound case is needed.
 - [2026-09-13 13:00] AGREED: row 70's certification tier is `advisor()` only (asked at 3C; the
   milestone panel stays for a milestone boundary).
-- [2026-09-13 13:25] MEASURED, row 70 closed. In a scratch tree (`cp -a`, vendor copied) whose own
-  baseline was green (`OK 3131 / 12143`; the one runner warning is the measurement's own
-  `--do-not-cache-result` flag), each consequence mutation was applied ALONE and restored
+- [2026-09-13 13:10] MEASURED, row 70 closed. In a scratch tree (`cp -a`, vendor copied) whose own
+  baseline was green (`OK 3131 / 12143`; its one PHPUnit warning and one deprecation come from the
+  measurement's own `--do-not-cache-result` flag — verified, since the full run on the repo tree
+  printed a clean `OK 3131 / 12143` with neither), each consequence mutation was applied ALONE and restored
   byte-identical (`cmp`):
 
   | case | mutation | changed | red |
@@ -4535,3 +4536,8 @@ since the design was measured, which is the whole of the 951/1 261 → 951/1 266
   emptiness check — the new floor test is what reaches both. And the verb's early filter survives
   for the dry-run display and is defended twice (a mutation of it alone is green because the
   send-time read catches the same row), so the case targets the read that decides what is SENT.
+  STATED COST of reading at send time: the verb's console display is printed from the EARLY list,
+  and it cannot move below the retries, because it has to come before the dry-run return. So when
+  the send-time read drops a row, the console title and count show one more entry than the mail and
+  the closing "émise(s)" line. The `retirée du récapitulatif` warning printed between them names the
+  row. That is the price of the last-moment read, not a defect to repair.
