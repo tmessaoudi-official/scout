@@ -74,6 +74,17 @@ plan below is approved.
     - The headline in the footer is also identifying.
     - `tools/scrub-eml.php` learns all of these, each with a case in `tests/test-scrub-eml.sh`,
       before any job fixture is committed.
+    - **Needles cannot remove the headline**, measured on captures 04, 09 and 10. Its `·` is
+      `=C2=B7` in QP, so a byte-literal needle never matches across it. Its generic half,
+      `Lead Developer`, is also a card title in capture 09, so it can never be a needle. The
+      scrubber therefore removes the whole footer sentence: from `destin=C3=A9 =C3=A0 ` (identical
+      bytes in every capture) through the closing `)`, replaced with `abonne`. Trial on 04 and 10:
+      2 of 2 footers replaced per capture, generic-half counts drop only by the footer occurrences,
+      the 6 job ids are identical, and the parser reads them back.
+    - **A re-folded placeholder used to join lines.** The link-token replacer consumed the soft
+      breaks inside a folded value and wrote the placeholder inline, so capture 10 came out with a
+      335-byte line (raw body maximum 76). `$refold` now puts the placeholder on lines of its own;
+      the trial's maximum body line is back to 76.
   - A first census cut the HTML part at the first `\n--` and reported 82 vs 119 cards. That figure is wrong: a line inside the HTML starts with `--`. The figures above come from the boundary split.
 
 ## Research inputs (2026-09-13)

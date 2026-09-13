@@ -403,6 +403,9 @@ check "and the listing survives, because it is the payload" \
 # The literal needle replace cannot see `Jea=\nnne`. The recoverability check can, so the tool
 # refused every such capture. That is the correct refusal of a scrub that cannot finish, but it made
 # the capture uncommittable. The repair is to strip THROUGH the fold, never to relax the check.
+# The fold sits in a GREETING here, not in LinkedIn's footer sentence, on purpose: the footer rule
+# below now removes that whole sentence first, so a footer fixture would pass with the needle path
+# deleted, and this case would test nothing.
 message_needle_split_by_soft_break() {
   cat <<'EOF'
 From: Portal <no_reply@portal.test>
@@ -411,10 +414,10 @@ Subject: 1 nouvelle offre
 Content-Type: text/html; charset=utf-8
 Content-Transfer-Encoding: quoted-printable
 
+<p>Bonjour Jea=
+nne DUBOIS,</p>
 <p>Senior Software Engineer</p>
 <a href=3D"https://www.portal.test/comm/jobs/view/4461976159/">Voir</a>
-<p>Cet e-mail est destin=C3=A9 =C3=A0 Jea=
-nne DUBOIS (Lead Developer)</p>
 EOF
 }
 
@@ -490,6 +493,85 @@ if [[ -f "$work/linkedin.out.eml" ]]; then
             exit(str_contains($m->htmlText, "/jobs/view/4461976159/") ? 0 : 1);' "$work/linkedin.out.eml" "$repo/vendor/autoload.php"
 else
   check "and the per-recipient values are gone" false
+fi
+
+# ── THE FOOTER HEADLINE: the whole parenthetical after "destiné à <name>", fold- and QP-aware ──────
+# Measured 2026-09-13: LinkedIn's footer reads `Cet e-mail est destiné à <name> (<profile headline>)`.
+# Fragment needles cannot remove the headline. `·` is `=C2=B7` in quoted-printable, so a byte-literal
+# needle never matches it. Its generic half (`Lead Developer | Senior Fullstack`) is a JOB TITLE that
+# must survive in the cards. So the rule is scoped to the footer sentence, and the card above it keeps
+# its words.
+message_linkedin_footer() {
+  cat <<'EOF'
+From: LinkedIn Job Alerts <jobalerts-noreply@linkedin.com>
+To: <subscriber.person@example.test>
+Subject: 1 nouvelle offre
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<p>Lead Developer | Senior Fullstack</p>
+<a href=3D"https://www.linkedin.com/comm/jobs/view/4464558133/">Voir</a>
+<p>Cet e-mail est destin=C3=A9 =C3=A0 Jeanne DUBOIS (Lead Developer | Senior Fullstack | PHP =C2=
+=B7 Symfony =C2=B7 Hexapod Weaving Rituals | Oracle Of Legacy Cathedrals)</p>
+EOF
+}
+
+message_linkedin_footer >"$work/footer.eml"
+footer_status=0
+php "$repo/tools/scrub-eml.php" "$work/footer.eml" "$work/footer.out.eml" "$address" Jeanne DUBOIS \
+  >"$work/footer.log" 2>&1 || footer_status=$?
+
+check "a LinkedIn footer naming the subscriber and their headline is scrubbed" test "$footer_status" -eq 0
+if [[ -f "$work/footer.out.eml" ]]; then
+  decoded_qp "$work/footer.out.eml" >"$work/footer.decoded"
+  refute "and the distinctive headline words are gone once decoded" grep -qiE 'Hexapod|Oracle Of Legacy' "$work/footer.decoded"
+  refute "and so is the footer's generic headline half" grep -qE 'destiné à .*Lead Developer' "$work/footer.decoded"
+  check "but the CARD title with the same words survives, because it is the payload" \
+    grep -qE '^<p>Lead Developer \| Senior Fullstack</p>$' "$work/footer.decoded"
+  check "and the footer sentence keeps its shape" grep -qE 'destiné à abonne' "$work/footer.decoded"
+else
+  check "and the distinctive headline words are gone once decoded" false
+fi
+
+# ── A RE-FOLDED REPLACEMENT KEEPS EVERY LINE WITHIN THE QP LIMIT ─────────────────────────────────────
+# Measured 2026-09-13: a replacement that consumed the soft breaks inside a folded value was written
+# back INLINE, which joined the lines around it. A real LinkedIn capture whose longest body line was
+# 76 came out with a 335-byte line. The input below keeps every line at or under 76, so any longer
+# output line was made by the scrubber.
+message_folds_within_limit() {
+  cat <<'EOF'
+From: LinkedIn Job Alerts <jobalerts-noreply@linkedin.com>
+To: <subscriber.person@example.test>
+Subject: 1 nouvelle offre
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<a href=3D"https://www.linkedin.com/comm/jobs/view/4461976159/?otpToken=3D=
+MTAwOTE3ZTQxMzJiY2RiNGI0MjQ0NGU0NDMxOGUzYjA0ODE5ZDNmMzk3YWE4ZTYxNzZjZDAwN2=
+YwNjlmNjUxMmM1MjY3YWU4ZDQ1YTBjOTM5ZmYxN2VjOTQ5N2VkMTE2OGEwMDg4YTYxMThjMzBm=
+Yjg4N2MzOGRlYSwxLDE%3D&amp;trk=3Deml-email_job_alert_digest_01-job_card-0-x=
+">Senior Software Engineer</a>
+<p>Cet e-mail est destin=C3=A9 =C3=A0 Jeanne DUBOIS (Lead Developer | Senio=
+r Fullstack | PHP =C2=B7 Symfony =C2=B7 Hexapod Weaving Rituals)</p>
+EOF
+}
+
+message_folds_within_limit >"$work/folds.eml"
+refute "the fold fixture itself keeps every line within 76 (else this case proves nothing)" \
+  grep -qE '^.{77,}' "$work/folds.eml"
+folds_status=0
+php "$repo/tools/scrub-eml.php" "$work/folds.eml" "$work/folds.out.eml" "$address" Jeanne DUBOIS \
+  >"$work/folds.log" 2>&1 || folds_status=$?
+
+check "a capture with folded tokens and a folded footer is scrubbed" test "$folds_status" -eq 0
+if [[ -f "$work/folds.out.eml" ]]; then
+  refute "and no line of the scrubbed file grows past the QP limit of 76" grep -qE '^.{77,}' "$work/folds.out.eml"
+  decoded_qp "$work/folds.out.eml" >"$work/folds.decoded"
+  refute "and the folded otpToken value is gone once decoded" grep -qF 'MTAwOTE3ZTQxMzJi' "$work/folds.decoded"
+  check "and the folded footer still reads destiné à abonne once decoded" grep -qF 'destiné à abonne' "$work/folds.decoded"
+  check "and the job id survives" grep -qF 'jobs/view/4461976159' "$work/folds.decoded"
+else
+  check "and no line of the scrubbed file grows past the QP limit of 76" false
 fi
 
 # ── MUST REFUSE ───────────────────────────────────────────────────────────────────────────────────

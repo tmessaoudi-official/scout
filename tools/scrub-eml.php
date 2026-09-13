@@ -237,7 +237,7 @@ $message = preg_replace_callback(
         // the part this whole tool exists to preserve.
         return str_contains($m[0], '=')
             && preg_match('~=\r?\n~', $m[0]) === 1
-            ? rtrim(chunk_split($token, 60, '=' . $eol), '=' . $eol)
+            ? '=' . $eol . chunk_split($token, 60, '=' . $eol)
             : $token;
     },
     $message,
@@ -253,9 +253,13 @@ $message = preg_replace_callback(
 // unbroken tokens matched nothing on real mail and left the identifier in place. That exact defect
 // is why the JWT pattern above carries the same note.
 $unfold = static fn (string $s): string => (string) preg_replace('~=\r?\n~', '', $s);
+// A FOLDED ORIGINAL GETS ITS REPLACEMENT ON LINES OF ITS OWN (2026-09-13). The match consumed every soft
+// break inside the value, so writing the placeholder inline JOINED the lines around it: a LinkedIn
+// link came out on one 335-byte line from a capture whose longest body line was 76. A fold before
+// and after the re-chunked placeholder keeps every line at or under the limit, whatever the prefix.
 $refold = static fn (string $replacement, string $original): string
     => preg_match('~=\r?\n~', $original) === 1
-        ? rtrim(chunk_split($replacement, 60, '=' . $eol), '=' . $eol)
+        ? '=' . $eol . chunk_split($replacement, 60, '=' . $eol)
         : $replacement;
 
 // NAMED PER-RECIPIENT LINK PARAMETERS (2026-09-13, LinkedIn job alerts). Every LinkedIn link carries
@@ -376,6 +380,26 @@ if ($address !== null && $address !== '') {
         $message = str_replace($local, 'alertes', $message);
     }
 }
+
+// THE FOOTER SENTENCE THAT NAMES THE SUBSCRIBER, AND THEIR PROFILE HEADLINE WITH IT (2026-09-13).
+// LinkedIn ends every job alert, in both parts, with `Cet e-mail est destiné à <name> (<headline>)`.
+// The headline is the member's own profile line — `Lead Developer | Senior Fullstack | PHP · Symfony
+// · …` — and needles cannot remove it. Its `·` is `=C2=B7` in quoted-printable, so a byte-literal
+// needle never matches across it. Its generic half is also a JOB TITLE that must survive in the cards
+// above: a card in the same capture is titled `Lead Developer`. So the rule is scoped to that one
+// sentence: the name and the whole parenthetical become `abonne`, and nothing outside the sentence is
+// touched. Byte-wise and fold-aware for the needle loop's reason. Measured on the real captures: the
+// anchor bytes are `destin=C3=A9 =C3=A0 ` in every one. A folded original is re-folded by `$refold`.
+$qpByte = static fn (string $utf8): string => '(?:' . preg_quote($utf8, '~') . '|'
+    . implode('', array_map(static fn (string $b): string => '=' . strtoupper(bin2hex($b)), str_split($utf8))) . ')';
+$fold = '(?:=\r?\n)?';
+$gap = $fold . '(?:\x20|\t|=20|=C2=A0|\xC2\xA0)' . $fold;
+$message = preg_replace_callback(
+    '~(' . $foldable('destin') . $fold . $qpByte('é') . $gap . $qpByte('à') . $gap . ')'
+        . '((?:[^()\r\n]|=\r?\n){1,160}?\((?:[^()\r\n]|=\r?\n){1,600}\))~i',
+    static fn (array $m): string => $m[1] . $refold('abonne', $m[2]),
+    $message,
+) ?? $message;
 
 foreach ($needles as $needle) {
     // Case-insensitively, because a portal's greeting capitalises what its account record does not.
