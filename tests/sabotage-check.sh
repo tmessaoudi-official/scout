@@ -760,7 +760,7 @@ run_sabotage "timestamp round-trip check dropped (2026-02-30 rolls forward to 2 
   's%&& $parsed->format($format) === $normalised%%'
 
 run_sabotage "Unicode trim reverts to ASCII trim (an nbsp id collapses the whole run)" \
-  src/php/Rent/Store/Store.php \
+  src/php/Core/Whitespace.php \
   's%trim($value, ".*")%trim($value)%'
 
 run_sabotage "no-information floor removed (id-less, url-less, title-less listings share one key)" \
@@ -1143,7 +1143,7 @@ run_sabotage "the stoplist boundary reverts to \\b (accented entries go dead)" \
   "s%')(?!\[A-Za-z0-9_\]))'%')..b)'%"
 
 run_sabotage "the byte-fallback trim loses \\x85 and \\xAD" \
-  src/php/Rent/Store/Store.php \
+  src/php/Core/Whitespace.php \
   's%.x85.xA0.xAD%\\xA0%'
 
 run_sabotage "the counting window loses its upper edge (a future-stamped row alerts forever)" \

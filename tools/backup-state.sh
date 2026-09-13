@@ -25,12 +25,17 @@ _keep="${SCOUT_BACKUP_KEEP:-7}"
 
 _root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 _db="${1:-${RENT_SCOUT_DB:-$_root/state/rent-watch.sqlite3}}"
-# BOTH DOMAINS when called bare (2026-08-29): the car store is the same kind of unrecoverable state.
+# EVERY DOMAIN when called bare (car 2026-08-29, job 2026-09-13): each store is the same kind of
+# unrecoverable state.
 # Recursion with an explicit path, so each store gets its own verified copy under its own name.
 if [[ $# -eq 0 ]]; then
   _car="${CAR_SCOUT_DB:-$_root/state/car-watch.sqlite3}"
   [[ "$_car" = /* ]] || _car="$_root/$_car"
   if [[ -f "$_car" ]]; then "$0" "$_car"; fi
+  # The JOB store (2026-09-13), same guards: a deployment without it is not a refusal on the cron path.
+  _job="${JOB_SCOUT_DB:-$_root/state/job-watch.sqlite3}"
+  [[ "$_job" = /* ]] || _job="$_root/$_job"
+  if [[ -f "$_job" ]]; then "$0" "$_job"; fi
 fi
 _base="${_db##*/}"
 _base="${_base%.sqlite3}"
@@ -78,7 +83,7 @@ if [[ "$_integrity" != "ok" ]]; then
   die "la copie ne passe pas integrity_check ($_integrity) — supprimée plutôt que gardée"
 fi
 
-_rows="$(sqlite3 "$_out" 'SELECT COUNT(*) FROM listings;' 2>/dev/null || sqlite3 "$_out" 'SELECT COUNT(*) FROM vehicle_listings;' 2>/dev/null || echo '?')"
+_rows="$(sqlite3 "$_out" 'SELECT COUNT(*) FROM listings;' 2>/dev/null || sqlite3 "$_out" 'SELECT COUNT(*) FROM vehicle_listings;' 2>/dev/null || sqlite3 "$_out" 'SELECT COUNT(*) FROM job_listings;' 2>/dev/null || echo '?')"
 
 # Prune OLDEST-FIRST. Keeping the oldest N would be worse than keeping none: the copy wanted after a
 # bad migration is the most recent good one, and a retention rule that discards it is a trap wearing

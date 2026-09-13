@@ -32,6 +32,8 @@ plan below is approved.
 - [2026-09-13 15:37] AGREED: go — build slice 1 (scaffold → model/criteria/store → LinkedIn source with scrubbed fixtures → pipeline/CLI → tests + sabotage → docs → deploy), commit per green step, progress posted to the job ntfy topic.
 - [2026-09-13 15:37] AGREED: Phase 3C certification tier for slice 1 is `advisor()` only.
 - [2026-09-13 16:31] AGREED: `JOB_NTFY_TOPIC` is regenerated to the documented `jw-<32 hex>` scheme, the same strength as the `rw-`/`cw-` topics. The first topic had 20 hex, a generation slip, and it is retired.
+- [2026-09-13 21:18] AGREED: a gross MONTHLY salary is tested against the 59 k€ floor on ×13 and scored on ×12 — ratifying the step 3 choice, which refines the 14:25 "monthly gross ×12" ruling for the floor only.
+- [2026-09-13 21:18] AGREED: step 4 (store) goes next; the monthly-pay reading gaps are recorded as a known issue and fixed against real slice 2 alerts, not guessed now.
 
 ## Evidence gathered (2026-09-13)
 - `Cli/Domains::all()` is the registry — a new domain is one entry plus `Scout\<Slug>\`, `config/<slug>/` and `<SLUG>_*` keys.
@@ -168,6 +170,14 @@ says so on its own line and earns 0.
    unknown component says so).
 4. **Store.** `JobStore` — own tables, composing `Core\RunStore`; seen-set, notified-at, the verdict
    snapshot.
+   - Schema v1 records WHAT an offer was announced as, `ROLLUP < MATCH`, and a push is never demoted
+     (the rent `notified_as` shape, two levels — this domain has no digest bin). Chosen at v1 because
+     step 6 adds the rollup, and no deployment exists to migrate; the car store's missing kind column
+     is the gap this avoids.
+   - The id is trimmed by `Core\Whitespace::trim()`, moved out of the rent store so there is one
+     implementation; the rent store forwards to it and its two ledger cases target the new file.
+   - No pay history: no ruling makes a salary change an event. The rollup queue (`pendingRollup`,
+     `counts`) lands with step 6, which first reads it.
 5. **Sources.**
    - `JobEmailSource` with the **LinkedIn job alert** as source #1. It reads cards from the HTML
      part (see *Design choice* below). Identity is the `/jobs/view/<id>/` number, and `params.from`
@@ -355,6 +365,17 @@ after a rollback is harmless; reverting its commit removes it.
 - `JobText::surface` turns `_` into a space on EVERY surface the classifier and criteria read, not
   only the role gate. No pattern depends on `_` today; S14 and S15 pin both directions.
 ### Known issues
+- Monthly pay shapes `JobPay` does not read, measured 2026-09-13 by probe: the unit BEFORE the figure
+  (`Salaire mensuel : 4 500 €`, `Rémunération mensuelle brute de 4 500 €`), a leading currency sign
+  (`€4,000 - €5,000 per month`), and a stated 13th month on a monthly figure (`… / mois sur 13 mois`,
+  `x 13`), which is read but scored on ×12. All fail safe: an unread figure never rejects, and the
+  13th month under-scores by 1/13. LinkedIn sent 0 monthly figures in 20 captures (8 € lines, all
+  annual), so these are fixed against real slice 2 alerts (HelloWork, Indeed, APEC), never guessed.
+- The CAR store still checks an id with `trim()` (`VehicleStore::dedupKey()`/`record()`), so an id of
+  one no-break space passes and collapses a pass's cars onto one key. Found while building the job
+  store, which uses `Core\Whitespace::trim()`. Not fixed in step 4: it changes a deployed domain. Reach
+  is unmeasured — a content hash cannot be blank, but the Agorastore `ref` group is itself `trim()`med,
+  and the link-basename and sitemap ids were not checked for a whitespace-only value.
 - An empty `green` map scores the green component 0 for every offer, silently lowering the ceiling to
   85. The car scorer awards the share when no preference is configured, so an absolute threshold does
   not move. To settle with `push_min_score` in step 6: award the share when no group is configured.

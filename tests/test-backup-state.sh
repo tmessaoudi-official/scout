@@ -91,6 +91,30 @@ if [[ "$rows" == 2 ]]; then ok "the copy READS BACK with every row present"; els
 integrity="$(sqlite3 "$copy" "PRAGMA integrity_check;" 2>&1)"
 if [[ "$integrity" == "ok" ]]; then ok "the copy passes SQLite's own integrity check"; else no "integrity check (got '$integrity')"; fi
 
+# ── the job store (2026-09-13) ───────────────────────────────────────────────────────────────────
+#
+# The row count reads a table by NAME, and a job database has no `listings` and no `vehicle_listings`:
+# without its own fallback every job backup would report `? annonces`, and a backup that cannot say
+# what it holds is one nobody checks. What this does NOT cover is the BARE call's recursion into the
+# job store — with no arguments the tool writes under the real `state/backups/`, so no case here runs
+# it, for the car store or the job one.
+jobdb="$tmp/job-watch.sqlite3"
+sqlite3 "$jobdb" "CREATE TABLE job_listings (dedup_key TEXT PRIMARY KEY, title TEXT);
+                  INSERT INTO job_listings VALUES ('a', 'x'), ('b', 'y'), ('c', 'z');
+                  PRAGMA journal_mode=WAL;" >/dev/null
+jobout="$("$tool" "$jobdb" "$tmp/jobbackups" 2>&1)"
+if grep -q '(3 annonces' <<<"$jobout"; then
+  ok "a job database reports its own row count"
+else
+  no "a job database reports its own row count (got: $jobout)"
+fi
+jobcopy="$(find "$tmp/jobbackups" -name 'job-watch.*.sqlite3' | head -1)"
+if [[ -n "$jobcopy" ]] && [[ "$(sqlite3 "$jobcopy" 'SELECT COUNT(*) FROM job_listings;' 2>&1)" == 3 ]]; then
+  ok "…and the job copy READS BACK under its own name"
+else
+  no "the job copy reads back under its own name"
+fi
+
 # ── the refusals, which are the half a `cp` one-liner does not have ──────────────────────────────
 
 check "a missing database is a LOUD refusal, never an empty backup" 1 "$tool" "$tmp/nope.sqlite3" "$tmp/backups"
