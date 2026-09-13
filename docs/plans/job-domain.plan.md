@@ -377,6 +377,7 @@ after a rollback is harmless; reverting its commit removes it.
 - `JobText::surface` turns `_` into a space on EVERY surface the classifier and criteria read, not
   only the role gate. No pattern depends on `_` today; S14 and S15 pin both directions.
 ### Known issues
+- Step 8 docs also owe the job SOURCE: a `linkedin` entry in `docs/SOURCES-LIVE.md` (adapter, identity, pay basis, stated costs) and the `src/php/Job/` sources in the CLAUDE.md layer table. A LinkedIn message with no HTML part counts a miss on both `card_link_pattern` and `footer_marker`, and escalates only if every claimed message in the pass does — one such message among normal ones stays silent (the partial-miss gap). Untested.
 - Step 8 docs owe two lines found in step 4: `Core\Whitespace` is missing from the CLAUDE.md Core layer
   list and `docs/ARCHITECTURE.md`; and the CLAUDE.md JIT gotcha's `PHP_INI_SCAN_DIR` recipe must say
   `php --ini` prints the scan dir IN QUOTES (unstripped, 12 extensions drop and the ledger aborts red).
