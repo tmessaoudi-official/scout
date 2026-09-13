@@ -285,6 +285,20 @@ Evidence for the design, measured 2026-09-13 over the 20 captures:
   failed `\bengineer\b` and was rejected. `JobText::surface` now spaces `_` out AFTER the URL query
   strip; before it, a tracking token's tail would survive the strip (`?trk=php_symfony` read Symfony).
   Both directions are pinned by `JobCriteriaTest`.
+- **Scorer choices (step 3c)**, implementation choices under the "go" ruling, none a new ruling:
+  - **H1 and H2 are one set (N2).** Pay rejects only when EVERY stated line is comparable AND under
+    its floor. A net line, a package line or a portage-only salary is not comparable, so its presence
+    keeps the offer. A gross monthly line is floored on 13 months and scored on 12.
+  - **An unreadable text REJECTS, named.** The classifier returns `texte illisible : …` instead of
+    facts, so H1–H8 cannot be applied to it. The rejection is logged like every disqualifier.
+    [Speculative — reversible to a score-0 match that says so, if unreadable offers turn up in real
+    alerts.]
+  - **Pay is scored on gross salary and TJM lines only**, best line wins, clamped to the full share.
+    A net or package figure is shown as `non comparable — hors score`.
+  - **The publication date is parsed strictly by round-trip.** `new \DateTimeImmutable('yesterday')`
+    is a date to PHP, and would give an undated offer full freshness.
+  - **Adjacent never adds to back.** It is read only when no back term fires, and the share takes back
+    first. That guarantee is defended twice, so its sabotage case mutates both.
 
 ### Rollback
 Additive. The domain is one registry entry, its own namespace, config dir, state file and compose
