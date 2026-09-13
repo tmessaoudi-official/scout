@@ -22,7 +22,7 @@ final class AcknowledgeCallSitesTest extends TestCase
 {
     private const string ROOT = __DIR__ . '/../../..';
 
-    public function testOnlyTheTwoPipelinesAcknowledgeSourcesAndNeitherCliDoes(): void
+    public function testOnlyThePipelinesAcknowledgeSourcesAndNoCliDoes(): void
     {
         $callers = [];
         foreach (self::phpFilesUnder(self::ROOT . '/src/php') as $file) {
@@ -33,9 +33,9 @@ final class AcknowledgeCallSitesTest extends TestCase
         }
         sort($callers);
 
-        self::assertSame(['Pipeline.php', 'VehiclePipeline.php'], $callers, 'a source is acknowledged by a run pass and nothing else');
+        self::assertSame(['JobPipeline.php', 'Pipeline.php', 'VehiclePipeline.php'], $callers, 'a source is acknowledged by a run pass and nothing else');
 
-        foreach (['src/php/Rent/Cli/RentScout.php', 'src/php/Car/Cli/CarScout.php'] as $cli) {
+        foreach (['src/php/Rent/Cli/RentScout.php', 'src/php/Car/Cli/CarScout.php', 'src/php/Job/Cli/JobScout.php'] as $cli) {
             self::assertStringNotContainsString('acknowledge(', (string) file_get_contents(self::ROOT . '/' . $cli), $cli . ' — doctor and dump must never mark mail');
         }
     }

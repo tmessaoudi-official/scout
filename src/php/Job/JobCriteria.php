@@ -59,6 +59,8 @@ final readonly class JobCriteria
         public array $levelShares,
         public int $freshnessPeakDays,
         public array $weights,
+        /** Where a match goes, and whether a gate holds the weaker ones for the daily rollup. */
+        public JobNotifyPolicy $notify,
     ) {}
 
     /**

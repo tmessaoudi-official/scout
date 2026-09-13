@@ -174,5 +174,7 @@
   "_freshness": "Full share up to `peak_days` since publication, 0 at twice it. A LinkedIn card carries no publication date, so on that source the component is always unknown and says so — the weights are NOT rebalanced for it.",
   "freshness": {"peak_days": 7},
   "_weights": "Ruled 2026-09-13 15:37 — sum to 100, re-measured after a week of real rows. RED is outside the 100.",
-  "weights": {"stack": 25, "pay": 20, "level": 15, "green": 15, "remote": 15, "freshness": 10}
+  "weights": {"stack": 25, "pay": 20, "level": 15, "green": 15, "remote": 15, "freshness": 10},
+  "_notify": "Where a match goes. `console` alone ships, as on the car and rent sides: the phone channels (`ntfy`, `email`) come from a gitignored criteria.local.json at deploy, never from this committed file. `push_min_score` is deliberately ABSENT, so every match is pushed on its own: the weights are re-measured after a week of real rows (ruled 15:37), and a gate set before that is tuned to nothing. Once set, a match under it waits for the daily rollup — drained by `scout --domain=job rollup` and, under --watch only, by the floor at `rollup_hour` (local time). `source_alert_cooldown_hours` bounds a broken-source alert to one per window. There is no `high_priority_score`: a job push is always normal priority.",
+  "notify": {"channels": ["console"], "rollup_hour": 8, "source_alert_cooldown_hours": 12}
 }

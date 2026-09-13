@@ -189,6 +189,39 @@ final readonly class JobStore
         return (int) $this->pdo->query('SELECT COUNT(*) FROM job_listings')->fetchColumn() === 0;
     }
 
+    /**
+     * The rollup queue: offers judged MATCH that no announcement covers yet — held back by the push
+     * gate, or left by a push the channel refused. Least recently SEEN first: `seen_epoch` is the last
+     * sighting instant.
+     *
+     * @return list<array{dedup_key: string, source: string, external_id: string, url: ?string, title: string, company: string, score: ?int, snapshot_json: ?string}>
+     */
+    public function pendingRollup(int $limit = 50): array
+    {
+        $q = $this->pdo->prepare("SELECT dedup_key, source, external_id, url, title, company, score, snapshot_json FROM job_listings WHERE outcome = 'MATCH' AND notified_at IS NULL ORDER BY seen_epoch ASC, dedup_key ASC LIMIT :l");
+        $q->bindValue('l', max(1, $limit), \PDO::PARAM_INT);
+        $q->execute();
+
+        /** @var list<array{dedup_key: string, source: string, external_id: string, url: ?string, title: string, company: string, score: ?int, snapshot_json: ?string}> $rows */
+        $rows = $q->fetchAll();
+
+        return $rows;
+    }
+
+    /** Every queued offer, whatever the batch cap — what `doctor` and the remainder line count. */
+    public function pendingRollupCount(): int
+    {
+        return (int) $this->pdo->query("SELECT COUNT(*) FROM job_listings WHERE outcome = 'MATCH' AND notified_at IS NULL")->fetchColumn();
+    }
+
+    /** @return array{count: int, notified: int, matches: int} */
+    public function counts(): array
+    {
+        $row = $this->pdo->query("SELECT COUNT(*) c, SUM(notified_at IS NOT NULL) n, SUM(outcome = 'MATCH') m FROM job_listings")->fetch();
+
+        return ['count' => (int) $row['c'], 'notified' => (int) $row['n'], 'matches' => (int) $row['m']];
+    }
+
     /** @throws \RuntimeException for a snapshot that does not decode — never degraded to "no evidence" */
     public function snapshot(string $dedupKey): ?JobListing
     {

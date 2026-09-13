@@ -93,6 +93,34 @@ final class JobStoreTest extends TestCase
         self::assertTrue($store->wasNotifiedAs($key, JobStore::AS_MATCH), 'a later rollup write must not demote a push');
     }
 
+    // ── the rollup queue: judged matches nobody was told about ────────────────────────────────
+
+    public function testTheRollupQueueIsJudgedMatchesNobodyWasToldLeastRecentlySeenFirst(): void
+    {
+        $store = JobStore::open($this->path);
+        $old = $store->record($this->offer('1'), '2026-09-13T08:00:00Z')->dedupKey;
+        $new = $store->record($this->offer('2', company: 'Aneo'), '2026-09-13T09:00:00Z')->dedupKey;
+        $rejected = $store->record($this->offer('3'), '2026-09-13T07:00:00Z')->dedupKey;
+        $store->recordVerdict($new, JobVerdict::matched(31, []), $this->offer('2', company: 'Aneo'));
+        $store->recordVerdict($old, JobVerdict::matched(44, []), $this->offer('1'));
+        $store->recordVerdict($rejected, JobVerdict::rejected(['intitulé exclu : data']), $this->offer('3'));
+
+        $queue = $store->pendingRollup();
+        self::assertSame([$old, $new], array_column($queue, 'dedup_key'), 'MATCH only, least recently seen first');
+        self::assertSame(['linkedin', '1', 'Lead Developer', 'Acme', 44], [$queue[0]['source'], $queue[0]['external_id'], $queue[0]['title'], $queue[0]['company'], (int) $queue[0]['score']]);
+        self::assertNotNull($queue[0]['snapshot_json']);
+        self::assertSame(2, $store->pendingRollupCount());
+        self::assertSame([$old], array_column($store->pendingRollup(1), 'dedup_key'), 'the batch is capped; the count is not');
+        self::assertSame(['count' => 3, 'notified' => 0, 'matches' => 2], $store->counts());
+
+        $store->markNotified($old, '2026-09-13T10:00:00Z', JobStore::AS_ROLLUP);
+        $store->markNotified($new, '2026-09-13T10:00:00Z', JobStore::AS_MATCH);
+
+        self::assertSame([], $store->pendingRollup(), 'announced either way, an offer leaves the queue');
+        self::assertSame(0, $store->pendingRollupCount());
+        self::assertSame(['count' => 3, 'notified' => 2, 'matches' => 2], $store->counts());
+    }
+
     public function testAnUnknownKindIsRefusedAndNothingIsWritten(): void
     {
         $store = JobStore::open($this->path);

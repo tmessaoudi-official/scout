@@ -145,6 +145,15 @@ final class JobCriteriaLoader
             throw ConfigError::at($pointer . '.weights', 'des poids de somme 100 sont attendus, reçu ' . array_sum($weights));
         }
 
+        $n = $r->requireObject('notify');
+        $notify = new JobNotifyPolicy(
+            channels: $n->requireStringList('channels'),
+            sourceAlertCooldownHours: $n->optInt('source_alert_cooldown_hours', 12, 1, 720) ?? 12,
+            pushMinScore: $n->optInt('push_min_score', null, 0, 100),
+            rollupHour: $n->optInt('rollup_hour', null, 0, 23),
+        );
+        $n->done();
+
         $r->done();
 
         return new JobCriteria(
@@ -155,7 +164,7 @@ final class JobCriteriaLoader
             adjacentShare: $adjacentShare, adjacentStack: $adjacent, otherStack: $other,
             green: $green, redPenalty: $redPenalty, redCap: $redCap, red: $redTerms,
             remoteDaysShare: $daysShare, hybridUnstatedShare: $hybridUnstated, conditionsBonus: $conditionsBonus, conditions: $conditions,
-            levelShares: $levels, freshnessPeakDays: $peakDays, weights: $weights,
+            levelShares: $levels, freshnessPeakDays: $peakDays, weights: $weights, notify: $notify,
         );
     }
 

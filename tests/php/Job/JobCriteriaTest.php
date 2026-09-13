@@ -229,6 +229,22 @@ final class JobCriteriaTest extends TestCase
         yield 'an adjacent share above the back share' => [static function (array &$d): void { $d['stack']['adjacent']['share'] = 0.7; }, 'adjacent'];
         yield 'a RED cap below one penalty' => [static function (array &$d): void { $d['red']['cap'] = 4; }, 'cap'];
         yield 'a missing remote day' => [static function (array &$d): void { unset($d['remote']['days_share']['3']); }, 'days_share'];
+        yield 'a missing notify block' => [static function (array &$d): void { unset($d['notify']); }, 'notify'];
+        yield 'no notification channel' => [static function (array &$d): void { $d['notify']['channels'] = []; }, 'channels'];
+        yield 'a push gate above 100' => [static function (array &$d): void { $d['notify']['push_min_score'] = 101; }, 'push_min_score'];
+        yield 'a rollup hour past 23' => [static function (array &$d): void { $d['notify']['rollup_hour'] = 24; }, 'rollup_hour'];
+        yield 'a zero alert cooldown' => [static function (array &$d): void { $d['notify']['source_alert_cooldown_hours'] = 0; }, 'source_alert_cooldown_hours'];
+        yield 'a car-only notify key' => [static function (array &$d): void { $d['notify']['high_priority_score'] = 50; }, 'high_priority_score'];
+    }
+
+    public function testTheNotifyBlockShipsTheConsoleAloneNoPushGateAndAMorningFloor(): void
+    {
+        $notify = self::shipped()->notify;
+
+        self::assertSame(['console'], $notify->channels, 'the phone channels come from a gitignored local override at deploy');
+        self::assertNull($notify->pushMinScore, 'no gate until real rows calibrate one — every match is pushed');
+        self::assertSame(8, $notify->rollupHour);
+        self::assertSame(12, $notify->sourceAlertCooldownHours);
     }
 
     /** @param callable(array<string, mixed>&): void $mutate */

@@ -41,6 +41,10 @@ plan below is approved.
 - [2026-09-13 22:50] NOTED: a card id repeated in one message is kept once and WARNED, never dropped in silence; the same id continues a card only across its title line (logo link, title, title link).
 - [2026-09-13 22:50] NOTED: the scrub check `grep -c otpToken=` must be 0 was unsatisfiable — the scrubber keeps parameter NAMES by design — and is replaced by: every decoded `otpToken` value is a `FIXTURE<n>` placeholder.
 - [2026-09-13 22:50] NOTED: step 5 adds no `publishedAt` round-trip test, because LinkedIn cards carry no date; the Fragile entry stays open for slice 2.
+- [2026-09-13 23:29] NOTED: the job CLI imports `Rent\Core\DigestSchedule` and `Rent\Notify\Formatter` exactly as the car CLI does; two domains now import them, and the next shared import is the moment to lift them into `Core` — a design choice made in step 6 (not a ruling).
+- [2026-09-13 23:29] NOTED: the job pipeline's push check is `wasNotifiedAs(MATCH)`, so an offer already in a sent rollup is still pushed once when it later clears the gate, and an offer is counted as held back only while no announcement covers it — a design choice made in step 6 (not a ruling).
+- [2026-09-13 23:29] NOTED: `config/job/criteria.json` ships `notify.channels: ["console"]`, no `push_min_score` and `rollup_hour` 8, so every match is pushed until real rows calibrate a gate; the phone channels arrive through a gitignored `criteria.local.json` at deploy (step 9), as on the car and rent sides — a design choice made in step 6 (not a ruling).
+- [2026-09-13 23:29] NOTED: a job push is always NORMAL priority, with no `!!` marker, because no score bar has been calibrated to earn one — a design choice made in step 6 (not a ruling).
 
 ## Evidence gathered (2026-09-13)
 - `Cli/Domains::all()` is the registry — a new domain is one entry plus `Scout\<Slug>\`, `config/<slug>/` and `<SLUG>_*` keys.
@@ -215,8 +219,10 @@ says so on its own line and earns 0.
 ### Slice 2 and later
 - More alerts as they arrive: WTTJ, APEC, HelloWork, Free-Work, Indeed.
 - Greenhouse/Lever boards for a company watch-list.
-- Commute — this means moving `CommutePlanner` out of `Rent\Enrich` into `Core`, because a domain
-  must not import another domain.
+- Commute — this means moving `CommutePlanner` out of `Rent\Enrich` into `Core` first. A domain
+  importing another domain's class already happens twice: the car and job CLIs both import
+  `Rent\Core\DigestSchedule` and `Rent\Notify\Formatter` (step 6). That is recorded, not endorsed:
+  the next shared import is the moment to lift all of them into `Core`.
 - Twin detection across portals (C12).
 - Seniority, language, scam, clearance, travel, astreintes.
 - Extracting a shared card-segmenting email reader. Speculative: two copies exist today, and a third
@@ -338,6 +344,40 @@ Evidence for the design, measured 2026-09-13 over the 20 captures:
     under a correct-looking label. A figure followed by a month unit now reads as no figure. Four
     provider cases pin it, and removing the guard reddens three of them.
 
+### Step 6 design — pipeline, formatter, CLI (2026-09-13, pre-work check)
+This is an implementation choice made under the "go" ruling, checked by `advisor()` in two rounds, not
+a new ruling.
+- **The car shape, minus what this domain lacks.** `JobPipeline` keeps every car rule:
+  - a throwing source is one failed source, never an empty pass;
+  - each offer is recorded at its own `observedAt`;
+  - `--seed` marks everything announced without pushing;
+  - messages are acknowledged after the store records the pass;
+  - health alerts fire once per cooldown, with one recovery notice;
+  - the same-filter warning is counted per source.
+  There are no price drops and no sitemap branch.
+- **What an offer was announced as decides the push.** The push check is `wasNotifiedAs(MATCH)`, not
+  `wasNotified`. An offer below `push_min_score` stays queued, and counts as held back only while no
+  announcement covers it. A delivered push is marked `MATCH`, the rollup marks `ROLLUP`, and a retry
+  out of the queue marks `MATCH`.
+- **`notify` is required in `criteria.json`** — channels, `push_min_score` (absent), `rollup_hour`,
+  `source_alert_cooldown_hours`. There is no `high_priority_score`: `JobFormatter::match()` is always
+  NORMAL.
+- **`JobStore` gains the queue** — `pendingRollup()`, `pendingRollupCount()`, `counts()` — the car
+  queries, plus `company` for the headline.
+- **`JobScout` mirrors `CarScout` verb for verb**: `doctor`, `dump`, `run --once/--seed/--watch`,
+  `--source=`, `test-notify`, `rollup [--dry-run]`.
+  - Kept: the Q36 refusal; the Q27 refusal note, cleared only on delivery, with a forced beat under
+    `--once`; the Q37 pacer with the beat and the rollup floor in `finally`; `SCOUT_MAX_PASSES`; the
+    one `remainingAfterDrain()`.
+  - Its own keys: `JOB_SCOUT_DB`, `JOB_IMAP_MAILBOX` (default `job-watch/portails`), `JOB_NTFY_TOPIC`,
+    `JOB_HEARTBEAT_HOURS`, `JOB_FEED_SILENT_DAYS`. Its markers: `job-heartbeat.txt`, `job-rollup.txt`,
+    `job-last-refusal.txt`. The IMAP cap is the shared `ImapMailbox::maxMessages()`.
+- **The drain re-judges each snapshot.** A REJECT today stays queued with a warning. At or over the
+  gate, or with no gate, the offer is re-pushed as a match; otherwise it joins the rollup. A snapshot
+  that will not decode is announced from the stored columns and its stored score, with a warning.
+- **`dump` lists every `JobListing` property by reflection**, so a field added to the model cannot
+  vanish from it.
+
 ### Rollback
 Additive. The domain is one registry entry, its own namespace, config dir, state file and compose
 service. Removing those five restores today exactly. The one change to the generic core is the
@@ -355,7 +395,7 @@ after a rollback is harmless; reverting its commit removes it.
 | 3 | Judgement: JobClassifier, JobCriteria(+Loader), JobScorer | L | done | 0b1fdb7 | src/php/Job/** config/job/criteria.json tests/php/Job/** |
 | 4 | Store: JobStore composing RunStore | M | done | dd705cb | src/php/Job/** tests/php/Job/** src/php/Core/Whitespace.php src/php/Rent/Store/Store.php tests/sabotage-check.sh tools/backup-state.sh tests/test-backup-state.sh .env.example |
 | 5 | LinkedIn source: scrubbed fixtures, JobEmailSource | L | done | a482832 | src/php/Job/** config/job/sources.json tests/fixtures/job/** tests/php/Job/** tests/php/Core/PatternMissEscalationTest.php tests/php/Repo/FixtureSecretsTest.php tests/php/Repo/PortablePatternsTest.php |
-| 6 | Pipeline, formatter, JobScout CLI | L | todo | - | src/php/Job/** tests/php/Job/** |
+| 6 | Pipeline, formatter, JobScout CLI | L | doing | - | src/php/Job/** tests/php/Job/** config/job/criteria.json .env.example tests/php/Repo/AcknowledgeCallSitesTest.php |
 | 7 | Sabotage ledger cases | M | todo | - | tests/sabotage-check.sh |
 | 8 | Docs | M | todo | - | CLAUDE.md README.md docs/** |
 | 9 | Deploy + first live pass | M | todo | - | compose.yaml |
