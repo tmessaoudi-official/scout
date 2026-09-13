@@ -244,6 +244,48 @@ This is an implementation choice made under the "go" ruling, not a new ruling.
 - The IMAP cap comes from the shared `ImapMailbox::maxMessages()`. At ~10 alerts a day, a 7-day window
   holds more than the car CLI's literal 50.
 
+### Step 3 design — reading, criteria, verdict (2026-09-13, pre-work check)
+This is an implementation choice made under the "go" ruling, checked by `advisor()`, not a new ruling.
+- **Three layers.** `JobClassifier` READS facts and knows no config: contracts, work mode and
+  remote days, title level, pay lines (`JobPay` → `PayLine`), an eligibility clause. `JobCriteria`
+  holds every rule the developer can move: role words, title rejects, stack groups, GREEN/RED terms,
+  the IdF and outside-IdF place names, the H7 switch, the weights. `JobScorer` applies H1–H8 and then
+  the six components. Nothing in this domain is a non-overridable set, so `tenure-guard.sh` does not
+  cover it, and the classifier's docblock says so.
+- **The pay kind lives in the words, not on `JobListing`.** A structured `salaryMinEur`/`salaryMaxEur`
+  is gross annual by contract. A source that can only say `package` or `net` leaves those fields null
+  and puts the words in `payText`, where `JobPay` marks the basis. This keeps N1 (a package never
+  rejects) and "a net figure is never compared" true with no second field to keep in sync.
+- **The config seeds from the RULINGS where they differ from the research.** Stack scoring is the
+  grouped BACK/FRONT/ADJACENT ruling, not C8's 0.6 PHP/Symfony share. Non-dev roles are handled by
+  the positive role gate, not by C7(b)'s exclude list. RED (−5 each, capped at −15) is its own key,
+  outside the 100. An EMPTY role-word list is refused at load: a gate that rejects everything is a
+  disabled feature dressed as a configured one. `notify` lands with the CLI (step 6).
+- **H8 fails open.** A place recognised as neither IdF nor outside it is UNKNOWN and never rejects.
+- **The realistic LinkedIn ceiling is lower than 90/70.** Freshness is always unknown on a card
+  (−10). Pay is stated on 7 of 115 cards. Few titles name a stack word. So a typical card tops out
+  around 65, or around 45 without pay. That is the population `push_min_score` gets calibrated
+  against, and it is not a defect.
+
+Evidence for the design, measured 2026-09-13 over the 20 captures:
+- **Card census.** The 20 captures carry 115 cards with 57 distinct titles.
+  - Work-mode suffix: `Hybride` 69, `À distance` 29, `Sur site` 12, none on 5.
+  - Pay lines: 7 cards carry one, in 4 distinct forms. All read `Entre X k € et Y k € par an`, with
+    U+00A0 between the figure, the `k` and the `€`.
+  - Locations: 13 forms. Every one is in Île-de-France or a bare `France`, so no card exercises H8.
+- **Classifier trial** over the same 115 cards:
+  - 0 unreadable.
+  - Pay: all 7 lines read, 0 missed.
+  - Contracts: `cdi` on 8 cards, all from titles.
+  - Levels: lead 28, senior 27, confirmé 7, unlabelled 53.
+  - Modes agree with the card suffix on every card.
+- **Criteria trial (step 3b).** The shipped role gate passes all 57 captured titles and no title reject
+  fires on any of them — but only after one fix the trial forced. `Text::fold` keeps `_`, and `_` is a
+  word character to `\b`, so the real title `Forward Deployed Engineer_3202` (a requisition number)
+  failed `\bengineer\b` and was rejected. `JobText::surface` now spaces `_` out AFTER the URL query
+  strip; before it, a tracking token's tail would survive the strip (`?trk=php_symfony` read Symfony).
+  Both directions are pinned by `JobCriteriaTest`.
+
 ### Rollback
 Additive. The domain is one registry entry, its own namespace, config dir, state file and compose
 service. Removing those five restores today exactly. The one change to the generic core is the

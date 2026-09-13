@@ -1,0 +1,178 @@
+{
+  "_comment": "The job domain's criteria — the rulings of 2026-09-13 in docs/plans/job-domain.plan.md. Every rule here is movable: the one eligibility rule is a switch, and nothing is a non-overridable set. Patterns are regex fragments applied with ~…~u to FOLDED text (lowercase, accents stripped, U+00A0 as a space). A gitignored criteria.local.json beside this file overrides field by field. Unknown keys are refused.",
+  "_role_words": "H5 — the MANDATORY filter is a TITLE role gate: a title that was read and matches none of these is rejected; an empty title never is. Stems where French inflects (`developpeu` covers développeur, développeuse, développeur.euse, développeur(se)), because a gate that misses a feminine or inclusive form rejects a real offer in silence. Every one of the 57 distinct titles in the 20 LinkedIn captures passes (JobCriteriaTest). An EMPTY list is refused at load.",
+  "role_words": [
+    "\\bdeveloppeu",
+    "\\bdevelopers?\\b",
+    "\\bdev\\b",
+    "\\bingenieu(?:r|rs|re|res)\\b",
+    "\\bengineers?\\b",
+    "\\btech(?:nical)?[- ]?leads?\\b",
+    "\\blead tech(?:nique)?\\b",
+    "\\bsoftware leads?\\b",
+    "\\bprogrammeu",
+    "\\bprogrammers?\\b",
+    "\\barchitecte?s? (?:logiciel|software|technique|applicati|solutions?)",
+    "\\bfull[- ]?stack\\b",
+    "\\bback[- ]?end\\b",
+    "\\bfront[- ]?end\\b",
+    "\\bcto\\b"
+  ],
+  "_title_rejects": "H6, plus H4's business-developer family — title words that REJECT even though the role gate passed (`Business Developer` contains `developer`, `Data Engineer` contains `engineer`). The first label that fires names the rejection. DevOps is deliberately absent: a developer role asking for some DevOps is wanted (ruled). `apprentissage automatique` is machine learning, so it is a DATA reject and never an alternance one.",
+  "title_rejects": {
+    "junior": ["\\bjuniors?\\b", "\\bjr\\b", "\\bdebutant(?:e|s|es)?\\b", "\\bjeunes? diplome", "\\bentry[- ]level\\b", "\\bgraduates?\\b"],
+    "stage": ["\\bstages?\\b", "\\bstagiaires?\\b", "\\binternships?\\b", "\\bintern\\b"],
+    "alternance": ["\\balternances?\\b", "\\balternant", "\\bapprenti(?:e|s|es)?\\b", "\\bapprentissage\\b(?! automatique)", "\\bwork[- ]study\\b"],
+    "commercial": ["\\bbusiness develop", "\\bbiz ?dev\\b", "\\b(?:developpeu|ingenieu)\\w* (?:commercia|d'affaires)", "\\bsales\\b", "\\baccount (?:manager|executive)\\b", "\\bpre[- ]?sales?\\b"],
+    "recrutement": ["\\brecrut", "\\brecruit", "\\btalent acquisition\\b"],
+    "data": ["\\bdata (?:engineers?|scientists?|analysts?|analystes?|ingenieu)", "\\bingenieu\\w* (?:de |des )?donnees\\b", "\\bdata science\\b", "\\bml engineers?\\b", "\\bmachine learning\\b", "\\bmlops\\b", "\\bapprentissage automatique\\b"]
+  },
+  "_exclude_patterns": "H4 — the developer's own extra exclusions over title AND description. Empty on purpose: the ruled rejects are above, and this is the ordinary user list.",
+  "exclude_patterns": [],
+  "_contracts": "H3 — a STATED contract set made ONLY of these rejects. CDI, freelance and portage are the ruled scope; a dual offer is a set, and one ruled contract keeps it. Intérim, VIE and contractuel are not listed (N5: shown, not rejected). Only the classifier's canonical words may appear here.",
+  "contracts": {
+    "rejected": ["cdd", "stage", "alternance"]
+  },
+  "_pay": "H1/H2 and the pay component. REJECTED only when a STATED gross salary's upper bound (13 months for a monthly figure) is under the salary floor, or a stated TJM's upper bound is under the TJM floor — and on a dual offer only when EVERY stated line is under its floor (N2). Never on unknown pay, a net figure, a package (N1) or a portage salary (N6). Scored from the floor (0) to the target (full share) on the upper bound.",
+  "pay": {
+    "salary_floor_eur": 59000,
+    "salary_target_eur": 65000,
+    "tjm_floor_eur": 450,
+    "tjm_target_eur": 550
+  },
+  "_eligibility": "H7 (N3) — one switch. While false, an offer STATING French nationality or a defence clearance as required is rejected (negation read first). The developer flips it after naturalisation.",
+  "eligibility": {
+    "french_nationality": false
+  },
+  "_location": "H8 (N4) — rejected only when the place is stated OUTSIDE Île-de-France AND on-site or hybrid work is stated. LinkedIn gives no postcode, so places are recognised by NAME. A place matching neither list is UNKNOWN and never rejects; a bare `France` is unknown. Outside wins a collision (`Saint-Denis, La Réunion`). Read on the listing's location field only — a head office named in a description is not the job's place.",
+  "location": {
+    "idf_patterns": [
+      "\\bile[- ]de[- ]france\\b", "\\bparis\\b", "\\bla defense\\b", "\\bmarne[- ]la[- ]vallee\\b",
+      "\\bseine[- ]et[- ]marne\\b", "\\byvelines\\b", "\\bessonne\\b", "\\bhauts[- ]de[- ]seine\\b", "\\bseine[- ]saint[- ]denis\\b", "\\bval[- ]de[- ]marne\\b", "\\bval[- ]d'oise\\b",
+      "\\bcourbevoie\\b", "\\bputeaux\\b", "\\bnanterre\\b", "\\bboulogne[- ]billancourt\\b", "\\bissy[- ]les[- ]moulineaux\\b", "\\blevallois[- ]perret\\b", "\\bneuilly[- ]sur[- ]seine\\b",
+      "\\bsaint[- ]denis\\b", "\\bmontrouge\\b", "\\bmontevrain\\b", "\\bvillebon[- ]sur[- ]yvette\\b", "\\bmassy\\b", "\\bsaclay\\b", "\\bpalaiseau\\b", "\\bles ulis\\b",
+      "\\bguyancourt\\b", "\\bvelizy\\b", "\\bversailles\\b", "\\brueil[- ]malmaison\\b", "\\bsaint[- ]cloud\\b", "\\bsuresnes\\b", "\\bclichy\\b", "\\bsaint[- ]ouen\\b",
+      "\\bivry[- ]sur[- ]seine\\b", "\\bvincennes\\b", "\\bmontreuil\\b", "\\bnoisy[- ]le[- ]grand\\b", "\\bcergy\\b", "\\bcreteil\\b", "\\bevry\\b", "\\brungis\\b",
+      "\\bgennevilliers\\b", "\\bcolombes\\b", "\\bmeudon\\b", "\\bchatillon\\b", "\\bmalakoff\\b", "\\bpantin\\b", "\\baubervilliers\\b", "\\bfontenay[- ]sous[- ]bois\\b",
+      "\\bcharenton\\b", "\\bmaisons[- ]alfort\\b", "\\bvitry[- ]sur[- ]seine\\b", "\\bsaint[- ]quentin[- ]en[- ]yvelines\\b"
+    ],
+    "outside_patterns": [
+      "\\bauvergne\\b", "\\brhone[- ]alpes\\b", "\\bbourgogne\\b", "\\bfranche[- ]comte\\b", "\\bbretagne\\b", "\\bcentre[- ]val de loire\\b", "\\bcorse\\b", "\\bgrand est\\b",
+      "\\bhauts[- ]de[- ]france\\b", "\\bnormandie\\b", "\\bnouvelle[- ]aquitaine\\b", "\\boccitanie\\b", "\\bpays de (?:la )?loire\\b", "\\bprovence\\b", "\\bcote d'azur\\b",
+      "\\bguadeloupe\\b", "\\bmartinique\\b", "\\bguyane\\b", "\\breunion\\b", "\\bmayotte\\b",
+      "\\blyon\\b", "\\bmarseille\\b", "\\btoulouse\\b", "\\bnantes\\b", "\\bbordeaux\\b", "\\blille\\b", "\\brennes\\b", "\\bstrasbourg\\b", "\\bmontpellier\\b", "\\bgrenoble\\b",
+      "\\bsophia[- ]antipolis\\b", "\\baix[- ]en[- ]provence\\b", "\\bniort\\b", "\\brouen\\b", "\\bcaen\\b", "\\bdijon\\b", "\\bmetz\\b", "\\bnancy\\b", "\\bclermont[- ]ferrand\\b", "\\bbrest\\b", "\\bangers\\b", "\\breims\\b", "\\bamiens\\b", "\\blimoges\\b", "\\bannecy\\b", "\\bbesancon\\b",
+      "\\bbelgique\\b", "\\bbelgium\\b", "\\bsuisse\\b", "\\bswitzerland\\b", "\\bluxembourg\\b", "\\ballemagne\\b", "\\bgermany\\b", "\\broyaume[- ]uni\\b", "\\bunited kingdom\\b", "\\blondon\\b", "\\blondres\\b",
+      "\\bespagne\\b", "\\bspain\\b", "\\bportugal\\b", "\\bitalie\\b", "\\bitaly\\b", "\\bpays[- ]bas\\b", "\\bnetherlands\\b", "\\bmaroc\\b", "\\bmorocco\\b", "\\btunisie\\b", "\\bcanada\\b", "\\betats[- ]unis\\b", "\\bunited states\\b", "\\birlande\\b", "\\bireland\\b"
+    ]
+  },
+  "_stack": "Multi-stack and GROUPED (ruled). A BACK term earns the back share; with no back term, an ADJACENT term earns the adjacent share (half of back); a FRONT term adds the front share. back + front = 1. With none of those, an OTHER primary stack is named and earns 0; with no stack word at all the component is unknown and says so. Never a reject. Boundary traps are pinned by JobCriteriaTest: Java vs JavaScript, `vue` the French word, `go` as gigaoctet, Scala vs scalable, .NET vs internet, React vs réactivité, TS inside words.",
+  "stack": {
+    "back": {
+      "share": 0.6,
+      "terms": {
+        "PHP": "\\bphp",
+        "Symfony": "\\bsymfony\\b|\\bsymphony\\b|\\bapi platform\\b|\\bsylius\\b",
+        "Laravel": "\\blaravel\\b",
+        "Java": "\\bjava\\b(?![ -]?script)",
+        "Spring": "\\bspring(?:[ -]?boot)?\\b",
+        "Node.js": "\\bnode(?:\\.?js)?\\b",
+        "NestJS": "\\bnest\\.?js\\b",
+        "TypeScript": "\\btypescript\\b|(?<=/)ts\\b|\\bts(?=/)"
+      }
+    },
+    "front": {
+      "share": 0.4,
+      "terms": {
+        "Angular": "\\bangular(?:js)?\\b",
+        "Vue.js": "\\bvue\\.?js\\b|\\bvue ?[23]\\b|\\bnuxt(?:\\.?js)?\\b",
+        "React": "\\breact(?:\\.?js)?\\b|\\bnext\\.?js\\b"
+      }
+    },
+    "adjacent": {
+      "share": 0.3,
+      "terms": {
+        "Python": "\\bpython\\b",
+        "Go": "\\bgolang\\b|\\bgo (?:developer|engineer|backend)\\b|(?<=/)go\\b|\\bgo(?=/)",
+        "Kotlin": "\\bkotlin\\b",
+        ".NET": "(?<![a-z0-9])\\.net\\b|\\basp\\.net\\b|\\bdotnet\\b|\\bc#"
+      }
+    },
+    "other": {
+      "Ruby": "\\bruby\\b|\\brails\\b",
+      "Rust": "\\brust\\b",
+      "Scala": "\\bscala\\b",
+      "C++": "\\bc\\+\\+",
+      "Elixir": "\\belixir\\b",
+      "Swift": "\\bswift\\b",
+      "Flutter": "\\bflutter\\b",
+      "Salesforce": "\\bsalesforce\\b"
+    }
+  },
+  "_green": "GREEN signals (ruled): each GROUP that fires earns an equal part of the green share, a group counts once however many of its terms fire, and every term is read NEGATION FIRST. Legacy modernisation sits in craft. `ai` is the tool sense only — AI as a way of writing code, never an AI product. `bdd` is deliberately absent: in French it is a database.",
+  "green": {
+    "craft": {
+      "architecture hexagonale": "\\bhexagona",
+      "DDD": "\\bddd\\b|\\bdomain[- ]driven\\b",
+      "TDD": "\\btdd\\b|\\btest[- ]driven\\b",
+      "clean architecture": "\\bclean (?:code|architecture)\\b",
+      "CQRS": "\\bcqrs\\b",
+      "event sourcing": "\\bevent[- ]sourcing\\b",
+      "craftsmanship": "\\bcraft(?:s?manship)?\\b",
+      "pair programming": "\\b(?:pair|mob)[- ]programming\\b",
+      "revue de code": "\\bcode reviews?\\b|\\brevues? de code\\b",
+      "refonte": "\\brefontes?\\b",
+      "migration": "\\bmigrations?\\b",
+      "modernisation": "\\bmoderni[sz]",
+      "legacy vers moderne": "\\blegacy (?:to|vers) (?:modern|moderne)\\b|\\bsortie du legacy\\b",
+      "from scratch": "\\bfrom scratch\\b|\\bpartir de zero\\b",
+      "greenfield": "\\bgreenfield\\b"
+    },
+    "ai": {
+      "Copilot": "\\bcopilot\\b",
+      "Cursor": "\\bcursor\\b",
+      "Claude Code": "\\bclaude code\\b",
+      "développement assisté par l'IA": "\\bai[- ]augmented\\b|\\bai[- ]assisted (?:development|coding)\\b|\\bdeveloppement assiste par (?:l'?)?ia\\b|\\bagentic coding\\b"
+    },
+    "product": {
+      "éditeur": "\\bediteur (?:de logiciels?|de solutions?|saas)\\b",
+      "SaaS": "\\bsaas\\b",
+      "produit": "\\bnotre produit\\b|\\bproduct company\\b|\\bequipe produit\\b|\\bsoftware house\\b",
+      "startup": "\\bstart[- ]?up\\b|\\bscale[- ]?up\\b"
+    }
+  },
+  "_red": "RED signals (ruled): run-only work. Each term that fires takes `penalty` points off the total, capped at `cap` — outside the 100, so the weights still sum to 100. A RED signal names itself on the push and NEVER hides an offer. Negation first: `pas d'astreinte` is not an astreinte.",
+  "red": {
+    "penalty": 5,
+    "cap": 15,
+    "terms": {
+      "TMA": "\\btma\\b",
+      "maintenance corrective": "\\bmaintenance (?:corrective|applicative)\\b",
+      "support N1-N3": "\\bsupport (?:niveau )?n?[123]\\b",
+      "astreintes": "\\bastreintes?\\b",
+      "WordPress": "\\bwordpress\\b",
+      "Drupal": "\\bdrupal\\b",
+      "Magento": "\\bmagento\\b",
+      "PrestaShop": "\\bprestashop\\b",
+      "régie": "\\bregie\\b",
+      "déplacements fréquents": "\\bdeplacements? frequents?\\b"
+    }
+  },
+  "_remote": "Remote & work conditions, one component. The share follows the stated remote days per week; a hybrid offer that states no days earns `hybrid_unstated_share` [Speculative — the LinkedIn card says `Hybride` and nothing more on 69 of 115 cards, so this number decides most of them; re-measure after a week]. An UNSTATED mode is unknown and says so — never read as on site. A work condition adds `conditions_bonus`, clamped at the full share. Conditions are read negation first.",
+  "remote": {
+    "days_share": {"0": 0.0, "1": 0.3, "2": 0.5, "3": 0.75, "4": 0.9, "5": 1.0},
+    "hybrid_unstated_share": 0.5,
+    "conditions_bonus": 0.2,
+    "conditions": {
+      "RTT": "\\brtt\\b",
+      "semaine de 4 jours": "\\bsemaine de (?:4|quatre) jours\\b|\\b4[- ]day week\\b",
+      "horaires flexibles": "\\bhoraires? flexibles?\\b|\\bflexible (?:hours|working)\\b"
+    }
+  },
+  "_level": "Title level shares (research C7, speculative until measured). An unlabelled title is a real reading — it states no level — so it earns a middle share rather than `hors score`.",
+  "level": {"lead": 1.0, "senior": 0.7, "confirme": 0.3, "junior": 0.0, "unlabelled": 0.4},
+  "_freshness": "Full share up to `peak_days` since publication, 0 at twice it. A LinkedIn card carries no publication date, so on that source the component is always unknown and says so — the weights are NOT rebalanced for it.",
+  "freshness": {"peak_days": 7},
+  "_weights": "Ruled 2026-09-13 15:37 — sum to 100, re-measured after a week of real rows. RED is outside the 100.",
+  "weights": {"stack": 25, "pay": 20, "level": 15, "green": 15, "remote": 15, "freshness": 10}
+}
