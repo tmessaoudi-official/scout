@@ -34,6 +34,8 @@ plan below is approved.
 - [2026-09-13 16:31] AGREED: `JOB_NTFY_TOPIC` is regenerated to the documented `jw-<32 hex>` scheme, the same strength as the `rw-`/`cw-` topics. The first topic had 20 hex, a generation slip, and it is retired.
 - [2026-09-13 21:18] AGREED: a gross MONTHLY salary is tested against the 59 k€ floor on ×13 and scored on ×12 — ratifying the step 3 choice, which refines the 14:25 "monthly gross ×12" ruling for the floor only.
 - [2026-09-13 21:18] AGREED: step 4 (store) goes next; the monthly-pay reading gaps are recorded as a known issue and fixed against real slice 2 alerts, not guessed now.
+- [2026-09-13 21:49] NOTED: the job store records WHAT an offer was announced as, ROLLUP < MATCH and never demoted, from schema v1 — a design choice made in step 4 (not a ruling), because step 6 adds the rollup and no deployment exists to migrate.
+- [2026-09-13 21:49] NOTED: the Unicode id trim moved to `Core\Whitespace::trim()` and is shared by the rent and job stores; the car store still uses `trim()` (Known issues).
 
 ## Evidence gathered (2026-09-13)
 - `Cli/Domains::all()` is the registry — a new domain is one entry plus `Scout\<Slug>\`, `config/<slug>/` and `<SLUG>_*` keys.
@@ -345,7 +347,7 @@ after a rollback is harmless; reverting its commit removes it.
 | 1b | Scrubber learns LinkedIn: per-recipient link tokens, soft-break-folded needles | S | done | d1193dd | tools/scrub-eml.php tests/test-scrub-eml.sh |
 | 2 | Model: JobListing + JobSnapshot | M | done | f5f664c | src/php/Job/JobListing.php src/php/Job/JobSnapshot.php tests/php/Job/JobSnapshotTest.php |
 | 3 | Judgement: JobClassifier, JobCriteria(+Loader), JobScorer | L | done | 0b1fdb7 | src/php/Job/** config/job/criteria.json tests/php/Job/** |
-| 4 | Store: JobStore composing RunStore | M | todo | - | src/php/Job/** tests/php/Job/** |
+| 4 | Store: JobStore composing RunStore | M | done | dd705cb | src/php/Job/** tests/php/Job/** src/php/Core/Whitespace.php src/php/Rent/Store/Store.php tests/sabotage-check.sh tools/backup-state.sh tests/test-backup-state.sh .env.example |
 | 5 | LinkedIn source: scrubbed fixtures, JobEmailSource | L | todo | - | src/php/Job/** config/job/sources.json tests/fixtures/job/** tests/php/Job/** |
 | 6 | Pipeline, formatter, JobScout CLI | L | todo | - | src/php/Job/** tests/php/Job/** |
 | 7 | Sabotage ledger cases | M | todo | - | tests/sabotage-check.sh |
@@ -365,6 +367,9 @@ after a rollback is harmless; reverting its commit removes it.
 - `JobText::surface` turns `_` into a space on EVERY surface the classifier and criteria read, not
   only the role gate. No pattern depends on `_` today; S14 and S15 pin both directions.
 ### Known issues
+- Step 8 docs owe two lines found in step 4: `Core\Whitespace` is missing from the CLAUDE.md Core layer
+  list and `docs/ARCHITECTURE.md`; and the CLAUDE.md JIT gotcha's `PHP_INI_SCAN_DIR` recipe must say
+  `php --ini` prints the scan dir IN QUOTES (unstripped, 12 extensions drop and the ledger aborts red).
 - Monthly pay shapes `JobPay` does not read, measured 2026-09-13 by probe: the unit BEFORE the figure
   (`Salaire mensuel : 4 500 €`, `Rémunération mensuelle brute de 4 500 €`), a leading currency sign
   (`€4,000 - €5,000 per month`), and a stated 13th month on a monthly figure (`… / mois sur 13 mois`,
