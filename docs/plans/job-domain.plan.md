@@ -266,6 +266,18 @@ This is an implementation choice made under the "go" ruling, checked by `advisor
   (−10). Pay is stated on 7 of 115 cards. Few titles name a stack word. So a typical card tops out
   around 65, or around 45 without pay. That is the population `push_min_score` gets calibrated
   against, and it is not a defect.
+  [Verified 2026-09-13 with `JobScorer` and the shipped criteria over the 67 distinct cards among
+  the 115 (`var/claude/jobs/trial-scorer.log`):
+  - 65 match and 2 reject. Both rejects are stated salaries under the floor, 45k and 55k (H1,
+    correct by ruling). No other disqualifier fires.
+  - Scores run 6 / 21 / 51 (min / median / max). Histogram: 0–9 ×4, 10–19 ×27, 20–29 ×23,
+    30–39 ×4, 40–49 ×5, 50–59 ×2.
+  - The best card is 51, which is under the predicted 65, because no pay-carrying card also names
+    a back stack.]
+  The GREEN, RED and conditions vocabularies CANNOT be calibrated on cards. On title-only text one
+  label fires across all 67 (`craft:modernisation`, once), RED fires on none and conditions on none.
+  Whether the broad terms (`migrations?`, `support n1-3`) fire on most real descriptions stays
+  UNMEASURED until a source supplies descriptions. Measure it before `push_min_score` is set.
 
 Evidence for the design, measured 2026-09-13 over the 20 captures:
 - **Card census.** The 20 captures carry 115 cards with 57 distinct titles.
@@ -328,4 +340,13 @@ after a rollback is harmless; reverting its commit removes it.
 ### Needs research
 - Keyword list widening (Java/Spring, Vue.js, …) — seeded in step 3 from `var/claude/jobs/criteria-research.md`.
 ### Fragile
+- `JobScorer::instant()` accepts exactly `Y-m-d\TH:i:s` plus `Z` or an offset: no fractional seconds, no
+  bare date. LinkedIn cards carry no date, so nothing reaches this path yet. The first source that
+  writes `publishedAt` (step 5 or slice 2) must write that shape, and must add a test that its value
+  round-trips — otherwise freshness reads unknown on every offer, in silence.
+- `JobText::surface` turns `_` into a space on EVERY surface the classifier and criteria read, not
+  only the role gate. No pattern depends on `_` today; S14 and S15 pin both directions.
 ### Known issues
+- An empty `green` map scores the green component 0 for every offer, silently lowering the ceiling to
+  85. The car scorer awards the share when no preference is configured, so an absolute threshold does
+  not move. To settle with `push_min_score` in step 6: award the share when no group is configured.
