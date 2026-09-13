@@ -4536,8 +4536,11 @@ since the design was measured, which is the whole of the 951/1 261 → 951/1 266
   emptiness check — the new floor test is what reaches both. And the verb's early filter survives
   for the dry-run display and is defended twice (a mutation of it alone is green because the
   send-time read catches the same row), so the case targets the read that decides what is SENT.
-  STATED COST of reading at send time: the verb's console display is printed from the EARLY list,
-  and it cannot move below the retries, because it has to come before the dry-run return. So when
-  the send-time read drops a row, the console title and count show one more entry than the mail and
-  the closing "émise(s)" line. The `retirée du récapitulatif` warning printed between them names the
-  row. That is the price of the last-moment read, not a defect to repair.
+  STATED COST of reading at send time: the verb's console display is printed ONCE, from the EARLY
+  list, above the dry-run return. A second print after the send-time read would be possible on the
+  real-send branch; keeping one display site is a choice, not a constraint. So when the send-time
+  read drops a row, the console title and count show one more entry than the mail and the closing
+  "émise(s)" line. The `retirée du récapitulatif` warning printed between them names the row. When
+  the read leaves BOTH lists empty, no mail is sent and no "émise(s)" line prints: the console shows
+  the batch, the warnings and the remainder line only. That is the price of the last-moment read,
+  not a defect to repair.
