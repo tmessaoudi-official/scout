@@ -258,6 +258,43 @@ $refold = static fn (string $replacement, string $original): string
         ? rtrim(chunk_split($replacement, 60, '=' . $eol), '=' . $eol)
         : $replacement;
 
+// NAMED PER-RECIPIENT LINK PARAMETERS (2026-09-13, LinkedIn job alerts). Every LinkedIn link carries
+// `lipi`, `midToken`, `midSig`, `eid`, `trk`, `trkEmail`, `otpToken`, `trackingId` and `refId`, and
+// the "all offers" link a `savedSearchId`. None of them decodes to the address, so the recoverability
+// check below has nothing to find, and the tool reported `scrubbed` on a capture whose 41 `otpToken`
+// values each tied a link to one member's account. The rule is the one `qs=` follows: the VALUE
+// goes, the NAME stays. It is QP-aware on both sides — `=3D` before the value, soft breaks inside
+// it — and the replacement is re-folded when the original was. Matched by NAME, and only these
+// names: a generic "any long value" rule would also eat the job id the fixture exists to carry.
+//
+// FOLDS THROUGH THE NAME, TOO. On a real capture a soft break fell through the middle of `otpToken` and
+// between `midSig` and its `=3D`, and 20 values survived a pattern that expected unbroken names. An
+// encoder never splits an `=3D` escape but folds anywhere else, so the name is matched with an optional
+// soft break between every byte, and the separator with one before it. A bare `=` counts as a
+// separator only when it is NOT a soft break. The matched name and separator are written back
+// untouched, folds included.
+$foldable = static fn (string $word): string => implode('(?:=\r?\n)?', array_map(
+    static fn (string $byte): string => preg_quote($byte, '~'),
+    str_split($word),
+));
+$linkParams = ['trackingId', 'refId', 'lipi', 'midToken', 'midSig', 'trkEmail', 'trk', 'eid', 'otpToken', 'savedSearchId'];
+$message = preg_replace_callback(
+    '~(?<![A-Za-z0-9_])(' . implode('|', array_map($foldable, $linkParams)) . ')'
+        . '((?:=\r?\n)?(?:=3D|=(?!\r?\n)))((?:[^&"\'<>\s=]|=3D|=\r?\n)+)~',
+    static function (array $m) use (&$tokenSeq, $unfold, $refold): string {
+        ++$tokenSeq;
+        $seq = str_pad((string) $tokenSeq, 3, '0', STR_PAD_LEFT);
+        $flat = $unfold($m[3]);
+        // A numeric id stays numeric, so a reader expecting digits still meets digits.
+        $placeholder = ctype_digit($flat)
+            ? str_pad($seq, max(strlen($flat), strlen($seq)), '0', STR_PAD_LEFT)
+            : 'FIXTURE' . $seq;
+
+        return $m[1] . $m[2] . $refold($placeholder, $m[3]);
+    },
+    $message,
+) ?? $message;
+
 $uuidSeq = 0;
 $message = preg_replace_callback(
     '~(?<![0-9a-fA-F-])(?:[0-9a-fA-F-]|=\r?\n){36,60}(?![0-9a-fA-F-])~',
@@ -342,7 +379,42 @@ if ($address !== null && $address !== '') {
 
 foreach ($needles as $needle) {
     // Case-insensitively, because a portal's greeting capitalises what its account record does not.
-    $message = (string) preg_replace('~' . preg_quote($needle, '~') . '~i', 'abonne', $message);
+    //
+    // AND THROUGH A QUOTED-PRINTABLE SOFT BREAK (2026-09-13). LinkedIn's job alert names the
+    // subscriber in its footer, and in the QP-encoded HTML part one occurrence is folded mid-name
+    // (`Jea=\nnne`). The literal replace missed it, the recoverability check below found it, and the
+    // tool refused four captures of twenty. The refusal was correct; the miss was the defect. Each
+    // fold is put BACK at the same offset in the replacement, so the scrub cannot lengthen a line
+    // or erase the soft-break shape the parser has to keep meeting (the `$refold` discipline).
+    // Bytes, not characters: a QP body is ASCII, and a `u` pattern over an 8bit Latin-1 body fails
+    // to compile its subject and returns null.
+    $pattern = '~' . implode('(?:=\r?\n)?', array_map(
+        static fn (string $byte): string => preg_quote($byte, '~'),
+        str_split($needle),
+    )) . '~i';
+    $message = preg_replace_callback(
+        $pattern,
+        static function (array $m): string {
+            $segments = preg_split('~(=\r?\n)~', $m[0], -1, PREG_SPLIT_DELIM_CAPTURE) ?: [$m[0]];
+            $replacement = 'abonne';
+            $out = '';
+            $taken = 0;
+            foreach ($segments as $i => $segment) {
+                if ($i % 2 === 1) {
+                    $out .= $segment;     // the fold itself, byte for byte (`=\n` or `=\r\n`)
+
+                    continue;
+                }
+                $last = $i === count($segments) - 1;
+                $length = $last ? strlen($replacement) - $taken : min(strlen($segment), strlen($replacement) - $taken);
+                $out .= substr($replacement, $taken, max(0, $length));
+                $taken += max(0, $length);
+            }
+
+            return $out;
+        },
+        $message,
+    ) ?? $message;
 }
 
 // The ESP's list/subscriber ids, which survive in bounce addresses and campaign strings.

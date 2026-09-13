@@ -396,6 +396,102 @@ refute "and the greeting name is gone" grep -qiF 'DUBOIS' "$work/overlap.out.eml
 check "and the listing survives, because it is the payload" \
   grep -qF 'annonce/abc' "$work/overlap.out.eml"
 
+# ── A NEEDLE SPLIT BY A QUOTED-PRINTABLE SOFT BREAK MUST STILL BE STRIPPED ────────────────────────
+# Measured 2026-09-13 on real LinkedIn job alerts. The footer names the subscriber in both parts. In
+# the QP-encoded HTML part, one occurrence is folded by a soft break through the middle of the name.
+# The raw file carries the name 8 times and the QP-decoded file 9 times, on four captures of twenty.
+# The literal needle replace cannot see `Jea=\nnne`. The recoverability check can, so the tool
+# refused every such capture. That is the correct refusal of a scrub that cannot finish, but it made
+# the capture uncommittable. The repair is to strip THROUGH the fold, never to relax the check.
+message_needle_split_by_soft_break() {
+  cat <<'EOF'
+From: Portal <no_reply@portal.test>
+To: <subscriber.person@example.test>
+Subject: 1 nouvelle offre
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<p>Senior Software Engineer</p>
+<a href=3D"https://www.portal.test/comm/jobs/view/4461976159/">Voir</a>
+<p>Cet e-mail est destin=C3=A9 =C3=A0 Jea=
+nne DUBOIS (Lead Developer)</p>
+EOF
+}
+
+message_needle_split_by_soft_break >"$work/softbreak.eml"
+softbreak_status=0
+php "$repo/tools/scrub-eml.php" "$work/softbreak.eml" "$work/softbreak.out.eml" "$address" Jeanne DUBOIS \
+  >"$work/softbreak.log" 2>&1 || softbreak_status=$?
+
+check "a needle folded by a QP soft break is scrubbed rather than refused" test "$softbreak_status" -eq 0
+if [[ -f "$work/softbreak.out.eml" ]]; then
+  decoded_qp "$work/softbreak.out.eml" >"$work/softbreak.decoded"
+  refute "and the folded first name is gone once decoded" grep -qiF 'Jeanne' "$work/softbreak.decoded"
+  refute "and the surname is gone" grep -qiF 'DUBOIS' "$work/softbreak.decoded"
+  check "and the job link survives, because it is the payload" \
+    grep -qF 'jobs/view/4461976159' "$work/softbreak.decoded"
+  check "and the soft-break STRUCTURE survives (the fold is a shape the parser must keep meeting)" \
+    grep -qE '=$' "$work/softbreak.out.eml"
+else
+  check "and the folded first name is gone once decoded" false
+  check "and the surname is gone" false
+  check "and the job link survives, because it is the payload" false
+  check "and the soft-break STRUCTURE survives (the fold is a shape the parser must keep meeting)" false
+fi
+
+# ── LINKEDIN'S PER-RECIPIENT LINK PARAMETERS: the VALUE goes, the NAME stays ──────────────────────
+# Measured 2026-09-13 on a real LinkedIn job alert: every link carries `lipi`, `midToken`, `midSig`
+# and `eid` (49 each), `trk`, `trkEmail` and `otpToken` (46), `trackingId` and `refId` (24), plus
+# `savedSearchId`. None of these decodes to the address, so the recoverability check passes on them.
+# The name had already gone, and the scrub reported success while 41 `otpToken=` values tied every
+# link in the file to one member's account. A token that carries no address is still an identifier.
+# Values below are synthetic, and the capture's QP shape is kept: `=3D` escapes, a folded token.
+message_linkedin_tokens() {
+  cat <<'EOF'
+From: LinkedIn Job Alerts <jobalerts-noreply@linkedin.com>
+To: <subscriber.person@example.test>
+Subject: Aneo recrute au poste de Senior Software Engineer
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<a href=3D"https://www.linkedin.com/comm/jobs/view/4461976159/?trackingId=3DtRkIdSyNtHeTiC0001%3D%3D&amp;refId=3DrEfIdSyNtHeTiC0002%3D%3D&amp;lipi=3Durn%3Ali%3Apage%3Aemail_email_job_alert_digest_01%3BlIpIsYnThEtIc0003&amp;midToken=3DAQHmIdToKeNsYnThEtIc0004&amp;midSig=3D0mIdSiGsYnThEtIc0005&amp;trk=3Deml-email_job_alert_digest_01-job_card-0-jobcard_body_text&amp;trkEmail=3Deml-email_job_alert_digest_01-job_card-0-jobcard_body_text-null-tRkEmAiLsYnThEtIc0006&amp;eid=3DeIdSyNtHeTiC0007&amp;otpToken=3DMTAwOTE3ZTQxMzJiY2RiNGI0MjQ0NGU0NDMxOGUzYjA0ODE5ZDNmMzk3YW=
+E4ZTYxNzZjZDAwN2YwNjlmNjUxMmM1MjY3YWU4ZDQ1YTBjOTM5ZmYxN2VjOTQ5N2VkMTE2OGEw=
+MDg4YTYxMThjMzBmYjg4N2MzOGRlYSwxLDE%3D">Senior Software Engineer</a>
+<a href=3D"https://www.linkedin.com/comm/jobs/view/4461976160/?midSig=
+=3D0fOlDbEfOrEsEpSyNtH0008&amp;otpTo=
+ken=3DfOlDiNnAmEsYnThEtIc0009">Autre offre</a>
+<a href=3D"https://www.linkedin.com/comm/jobs/search?savedSearchId=3D1805245866&amp;origin=3DJOB_ALERT_EMAIL">Voir toutes les offres</a>
+EOF
+}
+# The second link carries the two fold shapes measured on the real capture, where the pattern
+# matched nothing and 20 values survived: a soft break between a NAME and its `=3D`, and a soft
+# break through the middle of a NAME. QP encoders never split an `=3D` escape, but they fold
+# anywhere else.
+
+message_linkedin_tokens >"$work/linkedin.eml"
+linkedin_status=0
+scrub "$work/linkedin.eml" "$work/linkedin.out.eml" >"$work/linkedin.log" 2>&1 || linkedin_status=$?
+
+check "a LinkedIn alert carrying per-recipient link parameters is scrubbed" test "$linkedin_status" -eq 0
+if [[ -f "$work/linkedin.out.eml" ]]; then
+  decoded_qp "$work/linkedin.out.eml" >"$work/linkedin.decoded"
+  for token in tRkIdSyNtHeTiC0001 rEfIdSyNtHeTiC0002 lIpIsYnThEtIc0003 AQHmIdToKeNsYnThEtIc0004 \
+    0mIdSiGsYnThEtIc0005 tRkEmAiLsYnThEtIc0006 eIdSyNtHeTiC0007 MTAwOTE3ZTQxMzJiY2RiNGI0MjQ0NGU0 1805245866 \
+    0fOlDbEfOrEsEpSyNtH0008 fOlDiNnAmEsYnThEtIc0009; do
+    refute "and the per-recipient value $token is gone (checked DECODED)" grep -qF "$token" "$work/linkedin.decoded"
+  done
+  for name in trackingId refId lipi midToken midSig trkEmail eid otpToken savedSearchId; do
+    check "but the parameter NAME $name stays, because the link shape is what the fixture exercises" \
+      grep -qF "${name}=" "$work/linkedin.decoded"
+  done
+  check "and the job id survives, because it is the payload" grep -qF 'jobs/view/4461976159' "$work/linkedin.decoded"
+  check "and the parser still reads the job link out of the scrubbed HTML" \
+    php -r 'require $argv[2]; $m = Scout\Adapters\Mail\EmailMessage::parse(file_get_contents($argv[1]));
+            exit(str_contains($m->htmlText, "/jobs/view/4461976159/") ? 0 : 1);' "$work/linkedin.out.eml" "$repo/vendor/autoload.php"
+else
+  check "and the per-recipient values are gone" false
+fi
+
 # ── MUST REFUSE ───────────────────────────────────────────────────────────────────────────────────
 message_with_opaque >"$work/opaque.eml"
 opaque_status=0
