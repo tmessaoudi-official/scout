@@ -4538,9 +4538,10 @@ since the design was measured, which is the whole of the 951/1 261 → 951/1 266
   send-time read catches the same row), so the case targets the read that decides what is SENT.
   STATED COST of reading at send time: the verb's console display is printed ONCE, from the EARLY
   list, above the dry-run return. A second print after the send-time read would be possible on the
-  real-send branch; keeping one display site is a choice, not a constraint. So when the send-time
-  read drops a row, the console title and count show one more entry than the mail and the closing
-  "émise(s)" line. The `retirée du récapitulatif` warning printed between them names the row. When
-  the read leaves BOTH lists empty, no mail is sent and no "émise(s)" line prints: the console shows
-  the batch, the warnings and the remainder line only. That is the price of the last-moment read,
-  not a defect to repair.
+  real-send branch; keeping one display site is a choice, not a constraint. So the console title and
+  count show one more entry than the mail and the closing "annonce(s) émise(s)" line for EACH row
+  the send-time read drops, and the `retirée du récapitulatif` warning printed between them names
+  every such row. When the read leaves BOTH lists empty, no digest mail is sent and that closing line
+  does not print; after the display the console carries only what the retries and the remainder
+  report, when they have anything to say. That is the price of the last-moment read, not a defect
+  to repair.
