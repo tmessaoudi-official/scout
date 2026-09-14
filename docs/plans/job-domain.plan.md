@@ -396,7 +396,7 @@ after a rollback is harmless; reverting its commit removes it.
 | 4 | Store: JobStore composing RunStore | M | done | dd705cb | src/php/Job/** tests/php/Job/** src/php/Core/Whitespace.php src/php/Rent/Store/Store.php tests/sabotage-check.sh tools/backup-state.sh tests/test-backup-state.sh .env.example |
 | 5 | LinkedIn source: scrubbed fixtures, JobEmailSource | L | done | a482832 | src/php/Job/** config/job/sources.json tests/fixtures/job/** tests/php/Job/** tests/php/Core/PatternMissEscalationTest.php tests/php/Repo/FixtureSecretsTest.php tests/php/Repo/PortablePatternsTest.php |
 | 6 | Pipeline, formatter, JobScout CLI | L | done | 7450db2 | src/php/Job/** tests/php/Job/** config/job/criteria.json .env.example tests/php/Repo/AcknowledgeCallSitesTest.php |
-| 7 | Sabotage ledger cases | M | todo | - | tests/sabotage-check.sh |
+| 7 | Sabotage ledger cases | M | done | 53c7969 | tests/sabotage-check.sh tests/php/Job/Cli/JobScoutTest.php |
 | 8 | Docs | M | todo | - | CLAUDE.md README.md docs/** |
 | 9 | Deploy + first live pass | M | todo | - | compose.yaml |
 <!-- /progress-block -->
