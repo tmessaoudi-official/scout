@@ -1,4 +1,4 @@
-# scout — the image both domains run from (compose sets the domain in each ENTRYPOINT); the deployment ruled by Q8: Docker on a VPS, `state/` on a mounted volume,
+# scout — the image every domain runs from (compose sets the domain in each ENTRYPOINT); the deployment ruled by Q8: Docker on a VPS, `state/` on a mounted volume,
 # `scout run --watch` owning its own schedule rather than cron.
 #
 # GitHub Actions is ruled OUT for running this, explicitly and for a concrete reason: no persistent

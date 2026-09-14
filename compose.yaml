@@ -5,7 +5,7 @@
 #     cp .env.example .env && $EDITOR .env      # a push channel, or nothing reaches you
 #     docker compose run --rm rent-scout doctor      # sources reachable? journal WAL? channels usable?
 #     docker compose run --rm rent-scout run --once --seed
-#     docker compose up -d                      # both watchers
+#     docker compose up -d                      # every watcher (rent, car, job)
 #
 # The seed step is not optional and skipping it is not silent-but-fine. Q36 makes `run` REFUSE on an
 # empty seen-set, because an empty seen-set is what a forgotten volume mount looks like and the
@@ -90,6 +90,44 @@ services:
     # the rent seed instead (2026-08-29 22:2x — measured, and repaired). With it here, every verb
     # typed after the service name is a car verb.
     entrypoint: ["php", "/app/bin/scout", "--domain=car"]
+    command: ["run", "--watch"]
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+    user: "${SCOUT_UID:-1000}:${SCOUT_GID:-1000}"
+    volumes:
+      - ./state:/app/state
+      - ./config:/app/config:ro
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      TZ: ${TZ:-Europe/Paris}
+    restart: unless-stopped
+    stop_grace_period: 5m
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "5"
+
+  # THE JOB DOMAIN (2026-09-14): the same image, its own database in the same mounted volume
+  # (`state/job-watch.sqlite3`), its own heartbeat marker and push topic (`JOB_NTFY_TOPIC`). One
+  # source, LinkedIn alerts over IMAP. Seed it first, for the same Q36 reason as the other two — the
+  # 7-day IMAP window holds every alert of the week, and an unseeded first pass would push them all.
+  # Push channels come from the gitignored `config/job/criteria.local.json`; the shipped criteria
+  # notify the console only.
+  #
+  #     docker compose run --rm job-scout doctor
+  #     docker compose run --rm job-scout run --once --seed
+  #     docker compose up -d job-scout
+  job-scout:
+    image: scout:local
+    # In the ENTRYPOINT for the car service's reason: a verb typed after the service name must be a
+    # job verb.
+    entrypoint: ["php", "/app/bin/scout", "--domain=job"]
     command: ["run", "--watch"]
     security_opt:
       - no-new-privileges:true
