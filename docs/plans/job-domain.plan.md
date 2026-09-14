@@ -45,6 +45,9 @@ plan below is approved.
 - [2026-09-13 23:29] NOTED: the job pipeline's push check is `wasNotifiedAs(MATCH)`, so an offer already in a sent rollup is still pushed once when it later clears the gate, and an offer is counted as held back only while no announcement covers it — a design choice made in step 6 (not a ruling).
 - [2026-09-13 23:29] NOTED: `config/job/criteria.json` ships `notify.channels: ["console"]`, no `push_min_score` and `rollup_hour` 8, so every match is pushed until real rows calibrate a gate; the phone channels arrive through a gitignored `criteria.local.json` at deploy (step 9), as on the car and rent sides — a design choice made in step 6 (not a ruling).
 - [2026-09-13 23:29] NOTED: a job push is always NORMAL priority, with no `!!` marker, because no score bar has been calibrated to earn one — a design choice made in step 6 (not a ruling).
+- [2026-09-14 13:19] NOTED: measured before deploy on the live mailbox, console-only: `--seed` records and marks without judging, so a separate `run --once -v` judged the window — 156 cards, 93 distinct offers, 88 MATCH and 5 REJECT, match scores p50 21 · p90 43 · max 51, 12 at ≥ 40, and 7–17 new offers per UTC day, i.e. ~12 pushes/day with no gate.
+- [2026-09-14 13:19] AGREED: the deployed job watcher pushes individually at `push_min_score` 40 and drains the rest in a daily rollup at 09:00 (`rollup_hour` 9), both set in the gitignored `config/job/criteria.local.json` beside the ntfy and email channels.
+- [2026-09-14 13:19] AGREED: the live reject of `Architecte Php` as `intitulé hors métier` is recorded as a known issue and fixed as a follow-up step with a failing test first; it does not block the deploy.
 
 ## Evidence gathered (2026-09-13)
 - `Cli/Domains::all()` is the registry — a new domain is one entry plus `Scout\<Slug>\`, `config/<slug>/` and `<SLUG>_*` keys.
@@ -460,3 +463,8 @@ after a rollback is harmless; reverting its commit removes it.
   85. The car scorer awards the share when no preference is configured, so an absolute threshold does
   not move. Step 6 shipped no `push_min_score`, so it was not settled there; settle it when the gate is
   calibrated from real rows: award the share when no group is configured.
+- The title filter rejected a live LinkedIn offer titled `Architecte Php` (`linkedin:4465457633`) as
+  `intitulé hors métier` on 2026-09-14 — most likely an over-rejection, and a silent one: a reject is
+  logged only, so the offer never reaches the user. Ruled 2026-09-14 13:19: fixed as a follow-up
+  step, failing test first; the other two title rejects of that pass (`Senior Member of Technical
+  Staff, Multimodal AI`, `Low-Code Product Builder H/F`) get checked in the same step.
