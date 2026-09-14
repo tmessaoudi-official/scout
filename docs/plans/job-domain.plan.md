@@ -397,7 +397,7 @@ after a rollback is harmless; reverting its commit removes it.
 | 5 | LinkedIn source: scrubbed fixtures, JobEmailSource | L | done | a482832 | src/php/Job/** config/job/sources.json tests/fixtures/job/** tests/php/Job/** tests/php/Core/PatternMissEscalationTest.php tests/php/Repo/FixtureSecretsTest.php tests/php/Repo/PortablePatternsTest.php |
 | 6 | Pipeline, formatter, JobScout CLI | L | done | 7450db2 | src/php/Job/** tests/php/Job/** config/job/criteria.json .env.example tests/php/Repo/AcknowledgeCallSitesTest.php |
 | 7 | Sabotage ledger cases | M | done | 53c7969 | tests/sabotage-check.sh tests/php/Job/Cli/JobScoutTest.php |
-| 8 | Docs | M | todo | - | CLAUDE.md README.md docs/** |
+| 8 | Docs | M | done | 9eee7fa | CLAUDE.md README.md docs/** |
 | 9 | Deploy + first live pass | M | todo | - | compose.yaml |
 <!-- /progress-block -->
 ### Blocked
@@ -430,22 +430,21 @@ after a rollback is harmless; reverting its commit removes it.
   mis-landing. After reshaping a file under `src/php/Job/`, re-run `SABOTAGE_FILTER='^job:'` and read
   WHICH test goes red, not only that one does.
 ### Known issues
-- Stated cost of the drain, which step 8 must document: when a queued offer's snapshot will not
+- ~~Step 8 owed the drain cost below, the three-domain corrections, the LinkedIn register row and the
+  `Core\Whitespace` and `php --ini` lines~~ — landed in `9eee7fa`. The drain cost itself STANDS; it is
+  now stated in CLAUDE.md beside the car one. Kept below for the record:
+- Stated cost of the drain: when a queued offer's snapshot will not
   decode, `JobScout::collectRollup()` skips the re-judge and announces the offer from its stored
   columns. If the stored score clears the gate, the offer is pushed again as a match. So an offer
   that today's criteria would REJECT (a new title reject term, a higher `salary_floor_eur`) can still be
   pushed. The shipped config has no `push_min_score`, so there every such offer is pushed. CLAUDE.md records the same cost for `CarScout::collectRollup()`. The job domain has no §1,
   so this pushes an offer the user does not want. It never pushes an offer the user cannot take.
-- Step 8 must also fix sentences that the third domain made false, not just add the missing ones:
-  - CLAUDE.md file layout: RUNBOOK "verified against the two CLI parsers", and SOURCES-LIVE "the live
-    register for BOTH domains".
-  - `docs/SOURCES-LIVE.md:1` "both domains"; `docs/RUNBOOK.md:57` "shared by both domains".
-  - `docs/ARCHITECTURE.md:42` ChannelFactory "both domains".
-  - README `:206`, `:561` and `:684`: check each against the job rollup before changing it.
-- Step 8 docs also owe the job SOURCE: a `linkedin` entry in `docs/SOURCES-LIVE.md` (adapter, identity, pay basis, stated costs) and the `src/php/Job/` sources in the CLAUDE.md layer table. A LinkedIn message with no HTML part counts a miss on both `card_link_pattern` and `footer_marker`, and escalates only if every claimed message in the pass does — one such message among normal ones stays silent (the partial-miss gap). Untested.
-- Step 8 docs owe two lines found in step 4: `Core\Whitespace` is missing from the CLAUDE.md Core layer
-  list and `docs/ARCHITECTURE.md`; and the CLAUDE.md JIT gotcha's `PHP_INI_SCAN_DIR` recipe must say
-  `php --ini` prints the scan dir IN QUOTES (unstripped, 12 extensions drop and the ledger aborts red).
+- A LinkedIn message with no HTML part counts a miss on both `card_link_pattern` and `footer_marker`, and
+  escalates only if every claimed message in the pass does — one such message among normal ones stays
+  silent (the partial-miss gap). Documented in `docs/SOURCES-LIVE.md` by step 8; still untested.
+- `.claude/skills/add-source/SKILL.md` (lines 41–48) is scoped to the RENT domain with a car carve-out and
+  says nothing about the job domain or `config/job/sources.json`. Slice 2 must extend it before a second
+  job source is onboarded through it. Not edited in step 8: `.claude/**` is outside that step's Files cell.
 - Monthly pay shapes `JobPay` does not read, measured 2026-09-13 by probe: the unit BEFORE the figure
   (`Salaire mensuel : 4 500 €`, `Rémunération mensuelle brute de 4 500 €`), a leading currency sign
   (`€4,000 - €5,000 per month`), and a stated 13th month on a monthly figure (`… / mois sur 13 mois`,
@@ -459,4 +458,5 @@ after a rollback is harmless; reverting its commit removes it.
   and the link-basename and sitemap ids were not checked for a whitespace-only value.
 - An empty `green` map scores the green component 0 for every offer, silently lowering the ceiling to
   85. The car scorer awards the share when no preference is configured, so an absolute threshold does
-  not move. To settle with `push_min_score` in step 6: award the share when no group is configured.
+  not move. Step 6 shipped no `push_min_score`, so it was not settled there; settle it when the gate is
+  calibrated from real rows: award the share when no group is configured.
