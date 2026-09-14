@@ -422,6 +422,25 @@ after a rollback is harmless; reverting its commit removes it.
 - `JobText::surface` turns `_` into a space on EVERY surface the classifier and criteria read, not
   only the role gate. No pattern depends on `_` today; S14 and S15 pin both directions.
 ### Known issues
+- Step 7 owes three things found at the step-6 gate. (1) Port the 34 step-6 mutations, kept at
+  `var/claude/jobs/sab6.php` with their logs (`sab6.log`, `sab6b.log`); the commit message only
+  summarises them. (2) A case for the in-loop heartbeat. Under a fixed clock it cannot be reached: the
+  startup beat writes the marker at NOW, and `isDue(NOW, NOW)` is false. The car ledger reaches it
+  with an unwritable marker directory. (3) `--source=` force-running a disabled source is untested on
+  the job side: the warning, and the fact that an ordinary pass skips it. `sources.json` has only
+  `linkedin`, enabled, so no fixture reaches either branch. A temporary `sources.json` closes it.
+- Stated cost of the drain, which step 8 must document: when a queued offer's snapshot will not
+  decode, `JobScout::collectRollup()` skips the re-judge and announces the offer from its stored
+  columns. If the stored score clears the gate, the offer is pushed again as a match. So an offer
+  that today's criteria would REJECT (a new title reject term, a higher `salary_floor_eur`) can still be
+  pushed. The shipped config has no `push_min_score`, so there every such offer is pushed. CLAUDE.md records the same cost for `CarScout::collectRollup()`. The job domain has no §1,
+  so this pushes an offer the user does not want. It never pushes an offer the user cannot take.
+- Step 8 must also fix sentences that the third domain made false, not just add the missing ones:
+  - CLAUDE.md file layout: RUNBOOK "verified against the two CLI parsers", and SOURCES-LIVE "the live
+    register for BOTH domains".
+  - `docs/SOURCES-LIVE.md:1` "both domains"; `docs/RUNBOOK.md:57` "shared by both domains".
+  - `docs/ARCHITECTURE.md:42` ChannelFactory "both domains".
+  - README `:206`, `:561` and `:684`: check each against the job rollup before changing it.
 - Step 8 docs also owe the job SOURCE: a `linkedin` entry in `docs/SOURCES-LIVE.md` (adapter, identity, pay basis, stated costs) and the `src/php/Job/` sources in the CLAUDE.md layer table. A LinkedIn message with no HTML part counts a miss on both `card_link_pattern` and `footer_marker`, and escalates only if every claimed message in the pass does — one such message among normal ones stays silent (the partial-miss gap). Untested.
 - Step 8 docs owe two lines found in step 4: `Core\Whitespace` is missing from the CLAUDE.md Core layer
   list and `docs/ARCHITECTURE.md`; and the CLAUDE.md JIT gotcha's `PHP_INI_SCAN_DIR` recipe must say
