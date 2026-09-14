@@ -5598,6 +5598,505 @@ run_sabotage "the meublé rule loses its negation lookahead (an unfurnished flat
   config/rent/criteria.json \
   "s%meuble(?!(?:es|e|s)?\\\\\\\\s\*(?:ou\\\\\\\\s+non|:\\\\\\\\s\*non)\\\\\\\\b)%meuble(?!zzzz)%"
 
+
+# ── THE JOB DOMAIN (docs/plans/job-domain.plan.md, step 7) ───────────────────────────────────────────
+# Steps 3–6 each proved their guarantees with a mutation run in a scratch tree, and those runs lived
+# only on the development machine (`var/claude/jobs/sab*.php`, gitignored). These cases are those runs,
+# ported, plus the three step 7 owed: the in-loop heartbeat and `--source=` force-running a disabled
+# source, both ways. Every label starts `job:`, so `SABOTAGE_FILTER='^job:'` selects exactly them.
+#
+# The port was generated, not hand-copied, and each case was measured on its own before it landed:
+# the expression applied with this file's own `sed -i "$expr"`, the changed-line count and the
+# resulting file compared with the intended mutation, `php -l`, and the one BEHAVIOURAL test the
+# original run named going red. A multi-line mutation became one `s` per changed line: a removed line
+# is blanked rather than deleted and an added line is folded onto its neighbour, so the line count
+# never moves. A line that is not unique is addressed from the nearest unique line above it, and a
+# case's commands run bottom-up, because sed tests an address against the line as earlier commands
+# left it.
+#
+# NOT PORTED, and why:
+#   * `tools/backup-state.sh`'s job row-count fallback (step 4 B1). This ledger symlinks `tools/`
+#     into the scratch tree, so a sed there would edit the REAL script, and PHPUnit could not see it
+#     anyway. `tests/test-backup-state.sh` carries that guarantee.
+#   * Two exact duplicates: step 4 S17 (same mutation as S16, rent-side expectation) and step 5 S16
+#     (same mutation as S15, a Repo structural guard). One case each is kept, the behavioural one.
+
+# ── job step 3a ──
+run_sabotage "job: not-pay anchor ignored (step 3a M1)" \
+  src/php/Job/JobPay.php \
+  's%if (\$anchor === '\''not-pay'\'') {%if (false) {%'
+run_sabotage "job: thousands separator crosses a line (both guards) (step 3a M2)" \
+  src/php/Job/JobPay.php \
+  's%private const string NUM = '\''(\\d{1,3}(?:\[ \.]\\d{3})+|\\d+(?:\[\.,]\\d{1,2})?)'\'';%private const string NUM = '\''(\\d{1,3}(?:[\\s.]\\d{3})+|\\d+(?:[.,]\\d{1,2})?)'\'';%; s%\$plain = str_replace('\'' '\'', '\'''\'', \$num);%$plain = (string) preg_replace('\''~\\s~'\'', '\'''\'', $num);%'
+run_sabotage "job: hourly guard removed (step 3a M3)" \
+  src/php/Job/JobPay.php \
+  's%return null; // N8: an hourly rate is ignored, never converted%// N8 guard removed%'
+run_sabotage "job: floor annualised over 12 (step 3a M4)" \
+  src/php/Job/PayLine.php \
+  's%self::MONTH => \$this->maxEur \* 13,%self::MONTH => $this->maxEur * 12,%'
+run_sabotage "job: k does not carry (step 3a M5)" \
+  src/php/Job/JobPay.php \
+  's%if (\$bNum !== null && \$bK && !\$aK && \$a < 1000) {%if (false) {%'
+run_sabotage "job: TTC not converted (step 3a M6)" \
+  src/php/Job/JobPay.php \
+  's%if (preg_match('\''~\^\[\^\\n]{0,15}?\\bttc\\b~u'\'', \$after) === 1) {%if (false) {%'
+run_sabotage "job: net read as gross (step 3a M7)" \
+  src/php/Job/JobPay.php \
+  's%return \$m\[1] === '\''net'\'' ? PayLine::NET : PayLine::GROSS;%return PayLine::GROSS;%'
+run_sabotage "job: package read as gross (step 3a M8)" \
+  src/php/Job/JobPay.php \
+  's%return PayLine::PACKAGE;%return PayLine::GROSS;%'
+run_sabotage "job: any pay anchor wins over the nearest (step 3a M8b)" \
+  src/php/Job/JobPay.php \
+  's%return (\$notPay ?? -1) > (\$pay ?? -1) ? '\''not-pay'\'' : '\''pay'\'';%return $pay !== null ? '\''pay'\'' : '\''not-pay'\'';%'
+run_sabotage "job: only the first figure examined (step 3a M23)" \
+  src/php/Job/JobPay.php \
+  's%foreach (\$matches as \$m) {%foreach (array_slice($matches, 0, 1) as $m) {%'
+run_sabotage "job: stage and alternance read in descriptions (step 3a M9)" \
+  src/php/Job/JobClassifier.php \
+  's%private const array DESCRIPTION_CONTRACTS = \['\''cdd'\'', '\''cdi'\'', '\''freelance'\'', '\''interim'\'', '\''portage'\'', '\''vie'\''];%private const array DESCRIPTION_CONTRACTS = ['\''cdd'\'', '\''cdi'\'', '\''freelance'\'', '\''interim'\'', '\''portage'\'', '\''vie'\'', '\''stage'\'', '\''alternance'\''];%'
+run_sabotage "job: negation BEFORE ignored (step 3a M10)" \
+  src/php/Job/JobText.php \
+  's%if (preg_match(self::NEGATION_BEFORE, \$before) !== 1 && preg_match(self::NEGATION_AFTER, \$after) !== 1) {%if (preg_match(self::NEGATION_AFTER, $after) !== 1) {%'
+run_sabotage "job: negation AFTER ignored (step 3a M11)" \
+  src/php/Job/JobText.php \
+  's%if (preg_match(self::NEGATION_BEFORE, \$before) !== 1 && preg_match(self::NEGATION_AFTER, \$after) !== 1) {%if (preg_match(self::NEGATION_BEFORE, $before) !== 1) {%'
+run_sabotage "job: apprentissage automatique read as alternance (step 3a M12)" \
+  src/php/Job/JobClassifier.php \
+  's%'\''alternance'\'' => '\''~\\balternances?\\b|\\balternant(?:e|s|es)?\\b|\\bapprenti(?:e|s|es)?\\b|\\bapprentissage\\b(?! automatique)|\\bwork\[- ]study\\b|\\bcontrat de professionnalisation\\b~u'\'',%'\''alternance'\'' => '\''~\\balternances?\\b|\\balternant(?:e|s|es)?\\b|\\bapprenti(?:e|s|es)?\\b|\\bapprentissage\\b|\\bwork[- ]study\\b|\\bcontrat de professionnalisation\\b~u'\'',%'
+run_sabotage "job: bare remote read in descriptions (step 3a M13)" \
+  src/php/Job/JobClassifier.php \
+  's%if (JobText::stated(\$all, self::REMOTE) || JobText::stated(\$title, self::TITLE_REMOTE)) {%if (JobText::stated($all, self::REMOTE) || JobText::stated($all, self::TITLE_REMOTE)) {%'
+run_sabotage "job: level read from the description (step 3a M14)" \
+  src/php/Job/JobClassifier.php \
+  's%level: self::level(\$title),%level: self::level($all),%'
+run_sabotage "job: bare habilitation is a clearance (step 3a M15)" \
+  src/php/Job/JobClassifier.php \
+  's%private const string CLEARANCE = '\''~\\bhabilitations? (?:au |de )?(?:niveau )?(?:secret|confidentiel|tres secret)(?:\[- ]defense)?\\b|\\bhabilitables?\\b|\\bhabilitations? defense\\b|\\beligible a (?:une |l\[\\'\''’])?habilitation\\b|\\bsecurity clearance\\b~u'\'';%private const string CLEARANCE = '\''~\\bhabilitations?\\b|\\bhabilitables?\\b|\\bhabilitations? defense\\b|\\beligible a (?:une |l[\\'\''’])?habilitation\\b|\\bsecurity clearance\\b~u'\'';%'
+run_sabotage "job: contradicting modes resolved (step 3a M16)" \
+  src/php/Job/JobClassifier.php \
+  's%if (isset(\$modes\['\''onsite'\'']) && count(\$modes) > 1) {%if (false) {%'
+run_sabotage "job: unrecognised structured contract dropped (step 3a M17)" \
+  src/php/Job/JobClassifier.php \
+  's%foreach (\$hits === \[] && \$folded !== '\'''\'' ? \[\$folded] : \$hits as \$contract) {%foreach ($hits as $contract) {%'
+run_sabotage "job: vie is a VIE (step 3a M18)" \
+  src/php/Job/JobClassifier.php \
+  's%'\''vie'\'' => '\''~\\bv\\\.i\\\.e\\b|\\bvolontariat international\\b~u'\'',%'\''vie'\'' => '\''~\\bvie\\b~u'\'',%'
+run_sabotage "job: the card field does not win (step 3a M19)" \
+  src/php/Job/JobClassifier.php \
+  's%if (\$field !== null) {%if (false) {%'
+run_sabotage "job: mission is freelance (step 3a M20)" \
+  src/php/Job/JobClassifier.php \
+  's%'\''freelance'\'' => '\''~\\bfree\[- ]?lances?\\b|\\bfreelancers?\\b~u'\'',%'\''freelance'\'' => '\''~\\bfree[- ]?lances?\\b|\\bfreelancers?\\b|\\bmissions?\\b~u'\'',%'
+run_sabotage "job: on-site days counted as remote days (step 3a M22)" \
+  src/php/Job/JobClassifier.php \
+  's%return (float) (\$onsite ? 5 - \$count : \$count);%return (float) $count;%'
+run_sabotage "job: a per-month figure read as weekly (step 3a M25)" \
+  src/php/Job/JobClassifier.php \
+  's%if (preg_match(self::PER_MONTH, \$text, \$unit, 0, \$m\[0]\[1] + strlen(\$m\[0]\[0])) === 1) {%if (false) {%'
+run_sabotage "job: only the first occurrence examined (step 3a M24)" \
+  src/php/Job/JobText.php \
+  's%foreach (\$m\[0] as \[\$word, \$at]) {%foreach (array_slice($m[0], 0, 1) as [$word, $at]) {%'
+
+# ── job step 3b ──
+run_sabotage "job: hits ignores negation-first (step 3b S1)" \
+  src/php/Job/JobTerms.php \
+  's%if (\$negationFirst ? JobText::stated(\$folded, \$regex) : preg_match(\$regex, \$folded) === 1) {%if (preg_match($regex, $folded) === 1) {%'
+run_sabotage "job: inside wins a collision (step 3b S2)" \
+  src/php/Job/JobCriteria.php \
+  's%if (\$this->outsidePlaces->hits(\$folded) !== \[]) {%if ($this->idfPlaces->hits($folded) === [] \&\& $this->outsidePlaces->hits($folded) !== []) {%'
+run_sabotage "job: the role gate rejects an unread title (step 3b S3)" \
+  src/php/Job/JobCriteria.php \
+  's%return true;%return false;%'
+run_sabotage "job: weights need not sum to 100 (step 3b S4)" \
+  src/php/Job/JobCriteriaLoader.php \
+  's%if (array_sum(\$weights) !== 100) {%if (false) {%'
+run_sabotage "job: an empty role gate is accepted (step 3b S5)" \
+  src/php/Job/JobCriteriaLoader.php \
+  's%\$roleWords = self::fromList(\$r->requireStringList('\''role_words'\''), \$pointer \. '\''\.role_words'\'');%$roleWords = self::fromList($r->requireStringList('\''role_words'\'', allowEmptyList: true), $pointer . '\''.role_words'\'');%'
+run_sabotage "job: no compile check (step 3b S6)" \
+  src/php/Job/JobCriteriaLoader.php \
+  's%if (@preg_match(JobTerms::regex(\$fragment), '\'''\'') === false) {%if (false) {%'
+run_sabotage "job: salary target at its floor (step 3b S7)" \
+  src/php/Job/JobCriteriaLoader.php \
+  's%if (\$salaryTarget <= \$salaryFloor) {%if (false) {%'
+run_sabotage "job: TJM target under its floor (step 3b S8)" \
+  src/php/Job/JobCriteriaLoader.php \
+  's%if (\$tjmTarget <= \$tjmFloor) {%if (false) {%'
+run_sabotage "job: any rejected contract word (step 3b S9)" \
+  src/php/Job/JobCriteriaLoader.php \
+  's%if (!in_array(\$contract, JobFacts::CONTRACTS, true)) {%if (false) {%'
+run_sabotage "job: back + front need not be 1 (step 3b S10)" \
+  src/php/Job/JobCriteriaLoader.php \
+  's%if (abs(\$backShare + \$frontShare - 1\.0) > self::SHARE_EPSILON) {%if (false) {%'
+run_sabotage "job: adjacent may outrank back (step 3b S11)" \
+  src/php/Job/JobCriteriaLoader.php \
+  's%if (\$adjacentShare > \$backShare) {%if (false) {%'
+run_sabotage "job: cap under one penalty (step 3b S12)" \
+  src/php/Job/JobCriteriaLoader.php \
+  's%if (\$redCap < \$redPenalty) {%if (false) {%'
+run_sabotage "job: a missing remote day (step 3b S13)" \
+  src/php/Job/JobCriteriaLoader.php \
+  's%if (!is_int(\$value) && !is_float(\$value)) {%if (false) {%'
+run_sabotage "job: underscore stays a word character (step 3b S14)" \
+  src/php/Job/JobText.php \
+  's%return str_replace('\''_'\'', '\'' '\'', (string) preg_replace('\''~(https?://\[\^\\s?#]+)\[?#]\\S\*~u'\'', '\''\$1'\'', Text::fold(\$raw)));%return ((string) preg_replace('\''~(https?://[^\\s?#]+)[?#]\\S*~u'\'', '\''$1'\'', Text::fold($raw)));%'
+run_sabotage "job: underscores spaced BEFORE the query strip (step 3b S15)" \
+  src/php/Job/JobText.php \
+  's%return str_replace('\''_'\'', '\'' '\'', (string) preg_replace('\''~(https?://\[\^\\s?#]+)\[?#]\\S\*~u'\'', '\''\$1'\'', Text::fold(\$raw)));%return (string) preg_replace('\''~(https?://[^\\s?#]+)[?#]\\S*~u'\'', '\''$1'\'', str_replace('\''_'\'', '\'' '\'', Text::fold($raw)));%'
+run_sabotage "job: the local override is ignored (step 3b S16)" \
+  src/php/Job/JobCriteriaLoader.php \
+  's%if (\$localPath !== null && is_file(\$localPath)) {%if (false) {%'
+run_sabotage "job: an override replaces a whole object (step 3b S17)" \
+  src/php/Job/JobCriteriaLoader.php \
+  's%\$base\[\$k] = is_array(\$v) && is_array(\$base\[\$k] ?? null) && !array_is_list(\$v) ? self::deepMerge(\$base\[\$k], \$v) : \$v;%$base[$k] = is_array($v) \&\& is_array($base[$k] ?? null) \&\& !array_is_list($v) ? $v : $v;%'
+run_sabotage "job: the exclusion list reads nothing (step 3b S18)" \
+  src/php/Job/JobCriteria.php \
+  's%return \$folded === null ? null : \$this->excludePatterns->first(\$folded);%return null;%'
+
+# ── job step 3c ──
+run_sabotage "job: an unreadable text is judged (step 3c C1)" \
+  src/php/Job/JobScorer.php \
+  's%if (\$facts->unreadable !== null) {%if (false) {%'
+run_sabotage "job: N2: one line under rejects (step 3c C2)" \
+  src/php/Job/JobScorer.php \
+  '/if (\$line->maxEur >= \$criteria->tjmFloorEur) {/,/return null;/ s%return null;%continue;%'
+run_sabotage "job: a net figure is compared (step 3c C3)" \
+  src/php/Job/JobScorer.php \
+  's%if (\$line->basis !== PayLine::GROSS || \$portageOnly || \$annual === null || \$annual >= \$criteria->salaryFloorEur) {%if ($portageOnly || $annual === null || $annual >= $criteria->salaryFloorEur) {%'
+run_sabotage "job: a portage salary has a floor (step 3c C4)" \
+  src/php/Job/JobScorer.php \
+  's%if (\$line->basis !== PayLine::GROSS || \$portageOnly || \$annual === null || \$annual >= \$criteria->salaryFloorEur) {%if ($line->basis !== PayLine::GROSS || $annual === null || $annual >= $criteria->salaryFloorEur) {%'
+run_sabotage "job: the floor annualises over 12 (step 3c C5)" \
+  src/php/Job/JobScorer.php \
+  's%\$annual = \$line->annualMaxForFloor();%$annual = $line->annualMaxForScore();%'
+run_sabotage "job: the floor is exclusive (step 3c C6)" \
+  src/php/Job/JobScorer.php \
+  's%if (\$line->basis !== PayLine::GROSS || \$portageOnly || \$annual === null || \$annual >= \$criteria->salaryFloorEur) {%if ($line->basis !== PayLine::GROSS || $portageOnly || $annual === null || $annual > $criteria->salaryFloorEur) {%'
+run_sabotage "job: H3 on any rejected contract (step 3c C7)" \
+  src/php/Job/JobScorer.php \
+  's%if (\$facts->contracts !== \[] && array_diff(\$facts->contracts, \$criteria->rejectedContracts) === \[]) {%if ($facts->contracts !== [] \&\& array_intersect($facts->contracts, $criteria->rejectedContracts) !== []) {%'
+run_sabotage "job: H3 on an empty contract set (step 3c C8)" \
+  src/php/Job/JobScorer.php \
+  's%if (\$facts->contracts !== \[] && array_diff(\$facts->contracts, \$criteria->rejectedContracts) === \[]) {%if (array_diff($facts->contracts, $criteria->rejectedContracts) === []) {%'
+run_sabotage "job: the nationality switch is ignored (step 3c C9)" \
+  src/php/Job/JobScorer.php \
+  's%if (!\$criteria->frenchNationality && \$facts->eligibility !== null) {%if ($facts->eligibility !== null) {%'
+run_sabotage "job: H8 fails closed on an unknown place (step 3c C10)" \
+  src/php/Job/JobScorer.php \
+  's%if (\$criteria->locationClass(\$offer->location) === JobCriteria::OUTSIDE && in_array(\$facts->workMode, \['\''onsite'\'', '\''hybrid'\''], true)) {%if ($criteria->locationClass($offer->location) !== JobCriteria::IDF \&\& in_array($facts->workMode, ['\''onsite'\'', '\''hybrid'\''], true)) {%'
+run_sabotage "job: H8 ignores the mode (step 3c C11)" \
+  src/php/Job/JobScorer.php \
+  's%if (\$criteria->locationClass(\$offer->location) === JobCriteria::OUTSIDE && in_array(\$facts->workMode, \['\''onsite'\'', '\''hybrid'\''], true)) {%if ($criteria->locationClass($offer->location) === JobCriteria::OUTSIDE) {%'
+run_sabotage "job: H5 removed (step 3c C12)" \
+  src/php/Job/JobScorer.php \
+  's%if (!\$criteria->passesRoleGate(\$offer->title)) {%if (false) {%'
+run_sabotage "job: H6 removed (step 3c C13)" \
+  src/php/Job/JobScorer.php \
+  's%if (\$label !== null) {%if (false) {%'
+run_sabotage "job: H4 removed (step 3c C14)" \
+  src/php/Job/JobScorer.php \
+  's%if (\$pattern !== null) {%if (false) {%'
+run_sabotage "job: adjacent outranks back (both guards) (step 3c C15)" \
+  src/php/Job/JobScorer.php \
+  's%\$adjacent = \$back === \[] ? \$criteria->adjacentStack->hits(\$text) : \[];%$adjacent = $criteria->adjacentStack->hits($text);%; s%\$share = (\$back !== \[] ? \$criteria->backShare : (\$adjacent !== \[] ? \$criteria->adjacentShare : 0\.0))%$share = ($adjacent !== [] ? $criteria->adjacentShare : ($back !== [] ? $criteria->backShare : 0.0))%'
+run_sabotage "job: front is not additive (step 3c C16)" \
+  src/php/Job/JobScorer.php \
+  's%+ (\$front !== \[] ? \$criteria->frontShare : 0\.0);%%; s%\$share = (\$back !== \[] ? \$criteria->backShare : (\$adjacent !== \[] ? \$criteria->adjacentShare : 0\.0))%$share = ($back !== [] ? $criteria->backShare : ($adjacent !== [] ? $criteria->adjacentShare : 0.0));%'
+run_sabotage "job: an other stack earns the share (step 3c C17)" \
+  src/php/Job/JobScorer.php \
+  's%return \[0\.0, \$other === \[] ? '\''stack inconnue — hors score'\'' : implode('\'', '\'', \$other) \. '\'' — stack hors préférences'\''];%return [$other === [] ? 0.0 : 1.0, $other === [] ? '\''stack inconnue — hors score'\'' : implode('\'', '\'', $other) . '\'' — stack hors préférences'\''];%'
+run_sabotage "job: the first pay line, not the best (step 3c C18)" \
+  src/php/Job/JobScorer.php \
+  's%\$best = max(\$best ?? 0\.0, max(0\.0, min(1\.0, \$share)));%$best ??= max(0.0, min(1.0, $share));%'
+run_sabotage "job: pay above target not clamped (step 3c C19)" \
+  src/php/Job/JobScorer.php \
+  's%\$best = max(\$best ?? 0\.0, max(0\.0, min(1\.0, \$share)));%$best = max($best ?? 0.0, max(0.0, $share));%'
+run_sabotage "job: a net figure is scored (step 3c C20)" \
+  src/php/Job/JobScorer.php \
+  's%} elseif (\$line->basis === PayLine::GROSS && \$line->annualMaxForScore() !== null) {%} elseif ($line->annualMaxForScore() !== null) {%'
+run_sabotage "job: an unlabelled title reads as junior (step 3c C21)" \
+  src/php/Job/JobScorer.php \
+  's%\$level = \$facts->level ?? '\''unlabelled'\'';%$level = $facts->level ?? JobFacts::JUNIOR;%'
+run_sabotage "job: green ignores negation (step 3c C22)" \
+  src/php/Job/JobScorer.php \
+  's%\$hits = \$terms->hits(\$text, true);%$hits = $terms->hits($text);%'
+run_sabotage "job: one green group takes the whole share (step 3c C23)" \
+  src/php/Job/JobScorer.php \
+  's%return \[count(\$fired) / count(\$criteria->green), \$fired === \[] ? '\''aucun signal vert'\'' : '\''signaux verts : '\'' \. implode('\'' ; '\'', \$fired)];%return [min(1, count($fired)), $fired === [] ? '\''aucun signal vert'\'' : '\''signaux verts : '\'' . implode('\'' ; '\'', $fired)];%'
+run_sabotage "job: an unstated mode reads as on site (step 3c C24)" \
+  src/php/Job/JobScorer.php \
+  's%return \[0\.0, '\''mode de travail inconnu — hors score'\''];%return [0.0, '\''sur site'\''];%'
+run_sabotage "job: stated remote days ignored (step 3c C25)" \
+  src/php/Job/JobScorer.php \
+  's#\$facts->remoteDays !== null => \[\$criteria->remoteDaysShare\[(int) round(\$facts->remoteDays)], sprintf('\''hybride — %d jour(s) de télétravail'\'', (int) round(\$facts->remoteDays))],#false => [$criteria->remoteDaysShare[(int) round($facts->remoteDays)], sprintf('\''hybride — %d jour(s) de télétravail'\'', (int) round($facts->remoteDays))],#'
+run_sabotage "job: the conditions bonus is not clamped (step 3c C26)" \
+  src/php/Job/JobScorer.php \
+  's%\$share = min(1\.0, \$share + \$criteria->conditionsBonus);%$share = $share + $criteria->conditionsBonus;%'
+run_sabotage "job: conditions ignore negation (step 3c C27)" \
+  src/php/Job/JobScorer.php \
+  's%\$conditions = \$criteria->conditions->hits(\$text, true);%$conditions = $criteria->conditions->hits($text);%'
+run_sabotage "job: a lenient date parser (step 3c C28)" \
+  src/php/Job/JobScorer.php \
+  's%return \$parsed !== false && \$parsed->format('\''Y-m-d\\TH:i:sP'\'') === \$normalised ? \$parsed : null;%return $parsed !== false ? $parsed : (strtotime((string) $iso) !== false ? new \\DateTimeImmutable((string) $iso) : null);%'
+run_sabotage "job: no decay past the peak (step 3c C29)" \
+  src/php/Job/JobScorer.php \
+  's%\$share = \$days <= \$peakDays ? 1\.0 : max(0\.0, 1 - (\$days - \$peakDays) / \$peakDays);%$share = $days <= $peakDays ? 1.0 : 0.0;%'
+run_sabotage "job: RED is not capped (step 3c C30)" \
+  src/php/Job/JobScorer.php \
+  's%\$penalty = min(\$criteria->redCap, \$criteria->redPenalty \* count(\$red));%$penalty = $criteria->redPenalty * count($red);%'
+run_sabotage "job: RED ignores negation (step 3c C31)" \
+  src/php/Job/JobScorer.php \
+  's%\$red = \$criteria->red->hits(\$text, true);%$red = $criteria->red->hits($text);%'
+run_sabotage "job: no clamp at zero (step 3c C32)" \
+  src/php/Job/JobScorer.php \
+  's%return JobVerdict::matched((int) max(0, min(100, round(\$score))), \$reasons);%return JobVerdict::matched((int) min(100, round($score)), $reasons);%'
+
+# ── job step 4 ──
+run_sabotage "job: a stale sighting is current (step 4 S1)" \
+  src/php/Job/JobStore.php \
+  's%\$isCurrent = \$isNew || \$epoch >= (int) \$row\['\''seen_epoch'\''];%$isCurrent = true;%'
+run_sabotage "job: a rollup write demotes a push (step 4 S2)" \
+  src/php/Job/JobStore.php \
+  's%notified_as = CASE WHEN notified_as = \\'\''MATCH\\'\'' THEN \\'\''MATCH\\'\'' ELSE :as END%notified_as = :as%'
+run_sabotage "job: a newer schema is opened (step 4 S3)" \
+  src/php/Job/JobStore.php \
+  's%if (\$current > self::SCHEMA_VERSION) {%if (false) {%'
+run_sabotage "job: the id is ASCII-trimmed (step 4 S4)" \
+  src/php/Job/JobStore.php \
+  's%\$id = Whitespace::trim(\$offer->externalId);%$id = trim($offer->externalId);%'
+run_sabotage "job: record takes a deferred transaction (step 4 S5)" \
+  src/php/Job/JobStore.php \
+  '/\$epoch = self::epoch(\$atIso);/,/\$this->pdo->exec('\''BEGIN IMMEDIATE'\'');/ s%\$this->pdo->exec('\''BEGIN IMMEDIATE'\'');%$this->pdo->exec('\''BEGIN'\'');%'
+run_sabotage "job: a corrupt snapshot reads as no evidence (step 4 S6)" \
+  src/php/Job/JobStore.php \
+  's%throw new \\RuntimeException('\''instantané stocké illisible pour '\'' \. \$dedupKey \. '\'' : '\'' \. \$e->getMessage(), 0, \$e);%return null;%'
+run_sabotage "job: a corrupt outcome reads as not judged (step 4 S7)" \
+  src/php/Job/JobStore.php \
+  's#?? throw new \\RuntimeException(sprintf('\''issue stockée inconnue « %s » pour %s'\'', (string) \$v, \$dedupKey));#;#'
+run_sabotage "job: an empty title erases the known one (step 4 S8)" \
+  src/php/Job/JobStore.php \
+  's%title = CASE WHEN :t = \\'\''\\'\'' THEN title ELSE :t END,%title = :t,%'
+run_sabotage "job: an empty company erases the known one (step 4 S9)" \
+  src/php/Job/JobStore.php \
+  's%company = CASE WHEN :c = \\'\''\\'\'' THEN company ELSE :c END%company = :c%'
+run_sabotage "job: an unknown kind is accepted (step 4 S10)" \
+  src/php/Job/JobStore.php \
+  's%default => throw new \\InvalidArgumentException('\''type d\\'\''annonce inconnu : '\'' \. \$as),%default => 0,%'
+run_sabotage "job: marking an unknown offer is silent (step 4 S11)" \
+  src/php/Job/JobStore.php \
+  '/\$q->execute(\['\''k'\'' => \$dedupKey, '\''at'\'' => \$atIso, '\''as'\'' => \$as]);/,/if (\$q->rowCount() === 0) {/ s%if (\$q->rowCount() === 0) {%if (false) {%'
+run_sabotage "job: a verdict for an unknown offer is silent (step 4 S12)" \
+  src/php/Job/JobStore.php \
+  '/\$q->execute(\['\''k'\'' => \$dedupKey, '\''o'\'' => \$verdict->outcome->value, '\''sc'\'' => \$verdict->score, '\''j'\'' => JobSnapshot::encode(\$offer)]);/,/if (\$q->rowCount() === 0) {/ s%if (\$q->rowCount() === 0) {%if (false) {%'
+run_sabotage "job: identity is not scoped to the source (step 4 S13)" \
+  src/php/Job/JobStore.php \
+  's%return \$offer->sourceName \. '\'':id:'\'' \. rawurlencode(\$id);%return '\''id:'\'' . rawurlencode($id);%'
+run_sabotage "job: the seen-set always reads empty (step 4 S14)" \
+  src/php/Job/JobStore.php \
+  's%return (int) \$this->pdo->query('\''SELECT COUNT(\*) FROM job_listings'\'')->fetchColumn() === 0;%return (int) $this->pdo->query('\''SELECT COUNT(*) FROM job_listings'\'')->fetchColumn() >= 0;%'
+run_sabotage "job: a rollup reads as a push (step 4 S15)" \
+  src/php/Job/JobStore.php \
+  's%return self::rank((string) \$row\['\''notified_as'\'']) >= \$wanted;%return true;%'
+run_sabotage "job: the Latin-1 byte fallback is dropped (job side) (step 4 S16)" \
+  src/php/Core/Whitespace.php \
+  's%return \$trimmed ?? trim(\$value, " \\t\\n\\r\\0\\x0B\\x85\\xA0\\xAD");%return $trimmed ?? trim($value);%'
+run_sabotage "job: the Unicode pattern is ASCII-only (step 4 S18)" \
+  src/php/Core/Whitespace.php \
+  's%\$trimmed = preg_replace('\''/\^\[\\p{Z}\\p{C}\\s]+|\[\\p{Z}\\p{C}\\s]+\$/u'\'', '\'''\'', \$value);%$trimmed = preg_replace('\''/^\\s+|\\s+$/u'\'', '\'''\'', $value);%'
+
+# ── job step 5 ──
+run_sabotage "job: the footer is not cut (step 5 S1)" \
+  src/php/Job/JobEmailSource.php \
+  's%\$text = substr(\$text, 0, \$cut);%$text = $text;%'
+run_sabotage "job: the preheader becomes a card (step 5 S2)" \
+  src/php/Job/JobEmailSource.php \
+  's%if (\$line !== '\'''\'' && \$last !== null) {%if ($line !== '\'''\'' \&\& $last === null) { $cards[] = ['\''0'\'', '\'''\'', [$line]]; } elseif ($line !== '\'''\'') {%'
+run_sabotage "job: the doubled title link splits a card (step 5 S3)" \
+  src/php/Job/JobEmailSource.php \
+  's%if (\$last === null || \$cards\[\$last]\[0] !== \$id || count(\$cards\[\$last]\[2]) > 1) {%if ($last === null || $cards[$last][0] !== $id || count($cards[$last][2]) > 0) {%'
+run_sabotage "job: a repeated card merges into the one before (step 5 S4)" \
+  src/php/Job/JobEmailSource.php \
+  's%if (\$last === null || \$cards\[\$last]\[0] !== \$id || count(\$cards\[\$last]\[2]) > 1) {%if ($last === null || $cards[$last][0] !== $id ) {%'
+run_sabotage "job: a duplicate id is kept twice (step 5 S5)" \
+  src/php/Job/JobEmailSource.php \
+  's%if (isset(\$seen\[\$id])) {%if (false) {%'
+run_sabotage "job: an unknown mode word is dropped from the location (step 5 S6)" \
+  src/php/Job/JobEmailSource.php \
+  's%\$location = trim(\$location \. '\'' ('\'' \. \$word \. '\'')'\'');%$location = trim($location);%'
+run_sabotage "job: an unknown mode word is not a miss (step 5 S7)" \
+  src/php/Job/JobEmailSource.php \
+  's%\$this->patternMisses->record('\''mode_word'\'', \$mode !== null);%$this->patternMisses->record('\''mode_word'\'', true);%'
+run_sabotage "job: a card with no parenthesis enters the mode ratio (step 5 S8)" \
+  src/php/Job/JobEmailSource.php \
+  's%if (\$word !== '\'''\'') {%if (true) {%'
+run_sabotage "job: pay is counted (step 5 S9)" \
+  src/php/Job/JobEmailSource.php \
+  's%\$payText = \$line;%$payText = $line; $this->patternMisses->record('\''pay_pattern'\'', true);%'
+run_sabotage "job: observedAt is dropped (step 5 S10)" \
+  src/php/Job/JobEmailSource.php \
+  's%observedAt: \$observedAt,%observedAt: null,%'
+run_sabotage "job: the url keeps its tracking query (step 5 S11)" \
+  src/php/Job/JobEmailSource.php \
+  's%? "\\n" \. self::CARD \. \$g\[1] \. '\'' '\'' \. (preg_replace('\''~\[?#]\.\*\$~'\'', '\'''\'', \$m\[0]) ?? \$m\[0]) \. "\\n"%? "\\n" . self::CARD . $g[1] . '\'' '\'' . $m[0] . "\\n"%'
+run_sabotage "job: every sender is claimed (step 5 S12)" \
+  src/php/Job/JobEmailSource.php \
+  's%if (\$from !== '\'''\'' && !str_contains(strtolower(\$message->from()), \$from)) {%if (false) {%'
+run_sabotage "job: a mailbox failure becomes an empty list (step 5 S13)" \
+  src/php/Job/JobEmailSource.php \
+  's%throw new SourceError(\$this->name(), \$e->getMessage(), \$e);%return [];%'
+run_sabotage "job: an acknowledge refusal is swallowed (step 5 S14)" \
+  src/php/Job/JobEmailSource.php \
+  's%throw new SourceError(\$this->name(), '\''marquage des courriers traités refusé — '\'' \. \$e->getMessage(), \$e);%return;%'
+run_sabotage "job: health is not escalated (behaviour) (step 5 S15)" \
+  src/php/Job/JobEmailSource.php \
+  '/\$this->store->runs()->health(\$this->name(), \$nowIso, \$this->definition->feedSilentDays),/,/);/ s%);%%; s%\$this->store->runs()->health(\$this->name(), \$nowIso, \$this->definition->feedSilentDays),%%; s%return \$this->patternMisses->escalate(%return $this->store->runs()->health($this->name(), $nowIso, $this->definition->feedSilentDays);%'
+run_sabotage "job: the count spans fetches (step 5 S17)" \
+  src/php/Job/JobEmailSource.php \
+  's%\$this->patternMisses->reset();%%'
+run_sabotage "job: a message with no card link is not a miss (step 5 S18)" \
+  src/php/Job/JobEmailSource.php \
+  's%\$this->patternMisses->record('\''card_link_pattern'\'', \$cards !== \[]);%$this->patternMisses->record('\''card_link_pattern'\'', true);%'
+run_sabotage "job: a missing footer is not a miss (step 5 S19)" \
+  src/php/Job/JobEmailSource.php \
+  's%\$this->patternMisses->record('\''footer_marker'\'', \$cut !== false);%$this->patternMisses->record('\''footer_marker'\'', true);%'
+run_sabotage "job: invisible characters survive (step 5 S20)" \
+  src/php/Job/JobEmailSource.php \
+  's%\$line = trim(preg_replace('\''~\[\\x{034F}\\s]+~u'\'', '\'' '\'', \$raw) ?? '\'''\'');%$line = trim(preg_replace('\''~ +~'\'', '\'' '\'', $raw) ?? '\'''\'');%'
+run_sabotage "job: a misspelt param loads (step 5 L1)" \
+  src/php/Job/JobSourceLoader.php \
+  's%if (!in_array(\$key, \$read, true)) {%if (false) {%'
+run_sabotage "job: an uncompilable pattern loads (step 5 L2)" \
+  src/php/Job/JobSourceLoader.php \
+  's%if ((\$params\[\$key] ?? '\'''\'') !== '\'''\'' && @preg_match(\$params\[\$key], '\'''\'') === false) {%if (false) {%'
+run_sabotage "job: an enabled source needs nothing (step 5 L3)" \
+  src/php/Job/JobSourceLoader.php \
+  's%if (\$enabled) {%if (false) {%'
+run_sabotage "job: a place pattern needs no groups (step 5 L4)" \
+  src/php/Job/JobSourceLoader.php \
+  's%if (\$place !== '\'''\'') {%if (false) {%'
+run_sabotage "job: feed_silent_days 0 loads (step 5 L5)" \
+  src/php/Job/JobSourceLoader.php \
+  's%if (\$feedSilentDays !== null && \$feedSilentDays < 1) {%if (false) {%'
+
+# ── job step 6 ──
+run_sabotage "job: a rollup counts as a push (step 6 P1)" \
+  src/php/Job/JobPipeline.php \
+  's%if (\$this->store->wasNotifiedAs(\$sighting->dedupKey, JobStore::AS_MATCH)) {%if ($this->store->wasNotified($sighting->dedupKey)) {%'
+run_sabotage "job: seed marks nothing (step 6 P2)" \
+  src/php/Job/JobPipeline.php \
+  '/if (\$seedOnly) {/,/\$this->store->markNotified(\$sighting->dedupKey, \$nowIso, JobStore::AS_MATCH);/ s%\$this->store->markNotified(\$sighting->dedupKey, \$nowIso, JobStore::AS_MATCH);%%'
+run_sabotage "job: an offer at the gate is held (step 6 P3)" \
+  src/php/Job/JobPipeline.php \
+  's%if (\$pushMin !== null && (\$verdict->score ?? 0) < \$pushMin) {%if ($pushMin !== null \&\& ($verdict->score ?? 0) <= $pushMin) {%'
+run_sabotage "job: a rolled-up offer is counted as queued again (step 6 P4)" \
+  src/php/Job/JobPipeline.php \
+  's%if (!\$this->store->wasNotified(\$sighting->dedupKey)) {%if (true) {%'
+run_sabotage "job: a refused push is marked (step 6 P5)" \
+  src/php/Job/JobPipeline.php \
+  's%if (\$this->notifier->delivered(\$this->notifier->send(\$this->formatter->match(\$offer, \$verdict)))) {%if ([] === $this->notifier->send($this->formatter->match($offer, $verdict)) || true) {%'
+run_sabotage "job: recorded at the pass time (step 6 P6)" \
+  src/php/Job/JobPipeline.php \
+  's%\$sighting = \$this->store->record(\$offer, \$offer->observedAt ?? \$nowIso);%$sighting = $this->store->record($offer, $nowIso);%'
+run_sabotage "job: a stale sighting overwrites the verdict (step 6 P7)" \
+  src/php/Job/JobPipeline.php \
+  's%if (\$sighting->isCurrent) {%if (true) {%'
+run_sabotage "job: the same-filter tally counts nothing (step 6 P8)" \
+  src/php/Job/JobPipeline.php \
+  's%SameFilterWarning::count(\$filterTally, \$source->name(), \$verdict->outcome === JobOutcome::REJECT ? (\$verdict->reasons\[0] ?? null) : null);%SameFilterWarning::count($filterTally, $source->name(), null);%'
+run_sabotage "job: no recovery notice (step 6 P9)" \
+  src/php/Job/JobPipeline.php \
+  's%if (\$runs->clearAlerts(\$source->name())) {%if (false) {%'
+run_sabotage "job: an unstated mode reads on site (step 6 F1)" \
+  src/php/Job/JobFormatter.php \
+  '/\$parts\[] = self::MODE_LABELS\[\$offer->workMode];/,/}/ s%}%%; s%\$parts\[] = self::MODE_LABELS\[\$offer->workMode];%%; s%if (\$offer->workMode !== null) {%$parts[] = self::MODE_LABELS[$offer->workMode ?? '\''onsite'\''];%'
+run_sabotage "job: failed passes last (step 6 F2)" \
+  src/php/Job/JobFormatter.php \
+  's%array_unshift(\$reasons, \$failedPasses \. '\'' passe(s) EN ÉCHEC — voir les journaux'\'');%array_push($reasons, $failedPasses . '\'' passe(s) EN ÉCHEC — voir les journaux'\'');%'
+run_sabotage "job: the rollup is normal priority (step 6 F3)" \
+  src/php/Job/JobFormatter.php \
+  's%priority: Priority::LOW,%priority: Priority::NORMAL,%'
+run_sabotage "job: the queue is newest first (step 6 T1)" \
+  src/php/Job/JobStore.php \
+  's%\$q = \$this->pdo->prepare("SELECT dedup_key, source, external_id, url, title, company, score, snapshot_json FROM job_listings WHERE outcome = '\''MATCH'\'' AND notified_at IS NULL ORDER BY seen_epoch ASC, dedup_key ASC LIMIT :l");%$q = $this->pdo->prepare("SELECT dedup_key, source, external_id, url, title, company, score, snapshot_json FROM job_listings WHERE outcome = '\''MATCH'\'' AND notified_at IS NULL ORDER BY seen_epoch DESC, dedup_key ASC LIMIT :l");%'
+run_sabotage "job: the batch cap is ignored (step 6 T2)" \
+  src/php/Job/JobStore.php \
+  's%\$q->bindValue('\''l'\'', max(1, \$limit), \\PDO::PARAM_INT);%$q->bindValue('\''l'\'', 50, \\PDO::PARAM_INT);%'
+run_sabotage "job: a push gate over 100 is accepted (step 6 L1)" \
+  src/php/Job/JobCriteriaLoader.php \
+  's%pushMinScore: \$n->optInt('\''push_min_score'\'', null, 0, 100),%pushMinScore: $n->optInt('\''push_min_score'\'', null, 0, 1000),%'
+run_sabotage "job: an unknown notify key is accepted (step 6 L2)" \
+  src/php/Job/JobCriteriaLoader.php \
+  's%\$n->done();%%'
+run_sabotage "job: no Q36 refusal (step 6 C1)" \
+  src/php/Job/Cli/JobScout.php \
+  's%if (!\$seed && \$store->isSeenSetEmpty()) {%if (false) {%'
+run_sabotage "job: no forced beat under --once (step 6 C2)" \
+  src/php/Job/Cli/JobScout.php \
+  's%if (\$code === 0 && !\$seed && \$this->pendingRefusal() !== null) {%if (false) {%'
+run_sabotage "job: doctor consumes the refusal (step 6 C3)" \
+  src/php/Job/Cli/JobScout.php \
+  's%\$this->line('\''  refus    : '\'' \. \$pending);%$this->line('\''  refus    : '\'' . $pending); $this->clearLastRefusal();%'
+run_sabotage "job: a re-judged REJECT is announced (step 6 C4)" \
+  src/php/Job/Cli/JobScout.php \
+  's%if (\$judged->outcome !== JobOutcome::MATCH) {%if (false) {%'
+run_sabotage "job: no retries, everything rolled up (step 6 C5)" \
+  src/php/Job/Cli/JobScout.php \
+  's%if (\$pushMin === null || (\$score !== null && \$score >= \$pushMin)) {%if (false) {%'
+run_sabotage "job: a rollup marks MATCH (step 6 C6)" \
+  src/php/Job/Cli/JobScout.php \
+  's%\$store->markNotified(\$entry\['\''key'\''], \$this->now(), JobStore::AS_ROLLUP);%$store->markNotified($entry['\''key'\''], $this->now(), JobStore::AS_MATCH);%'
+run_sabotage "job: a refused rollup verb marks (step 6 C7)" \
+  src/php/Job/Cli/JobScout.php \
+  '/\$failures = \$notifier->send(\$notification);/,/if (!\$notifier->delivered(\$failures)) {/ s%if (!\$notifier->delivered(\$failures)) {%if (false) {%'
+run_sabotage "job: a refused floor writes its marker (step 6 C8)" \
+  src/php/Job/Cli/JobScout.php \
+  '/\$failures = \$notifier->send((new JobFormatter())->rollup(\$entries));/,/if (!\$notifier->delivered(\$failures)) {/ s%if (!\$notifier->delivered(\$failures)) {%if (false) {%'
+run_sabotage "job: the floor pushes no retries (step 6 C9)" \
+  src/php/Job/Cli/JobScout.php \
+  's%\$drained = \$this->pushRetries(\$notifier, \$store, \$retries, \$now);%$drained = 0;%'
+run_sabotage "job: the verb pushes no retries (step 6 C10)" \
+  src/php/Job/Cli/JobScout.php \
+  's%\$drained = \$this->pushRetries(\$notifier, \$store, \$retries, \$this->now());%$drained = 0;%'
+run_sabotage "job: a retry marks ROLLUP (step 6 C11)" \
+  src/php/Job/Cli/JobScout.php \
+  's%\$store->markNotified(\$entry\['\''key'\''], \$now, JobStore::AS_MATCH);%$store->markNotified($entry['\''key'\''], $now, JobStore::AS_ROLLUP);%'
+run_sabotage "job: dry run sends (step 6 C12)" \
+  src/php/Job/Cli/JobScout.php \
+  's%if (\$dryRun) {%if (false) {%'
+run_sabotage "job: a corrupt snapshot kills the drain (step 6 C13)" \
+  src/php/Job/Cli/JobScout.php \
+  's%\$unreadable = true;%throw $e;%'
+run_sabotage "job: an unusable heartbeat interval is not refused (step 6 C14)" \
+  src/php/Job/Cli/JobScout.php \
+  's%return \$this->failRun(\$e->getMessage());%$e = null;%'
+run_sabotage "job: test-notify accepts the console (step 6 C15)" \
+  src/php/Job/Cli/JobScout.php \
+  's%if (!\$notifier->hasRemoteChannel()) {%if (false) {%'
+run_sabotage "job: a zero feed-silence threshold is accepted (step 6 C16)" \
+  src/php/Job/Cli/JobScout.php \
+  '/return 3;/,/if (!ctype_digit(trim(\$raw)) || (int) \$raw < 1) {/ s%if (!ctype_digit(trim(\$raw)) || (int) \$raw < 1) {%if (!ctype_digit(trim($raw))) {%'
+run_sabotage "job: the remainder ignores delivery (step 6 C17)" \
+  src/php/Job/Cli/JobScout.php \
+  's%return \$waiting - (\$announced ? count(\$entries) : 0) - \$drained;%return $waiting - count($entries) - $drained;%'
+run_sabotage "job: no startup floor (step 6 C18)" \
+  src/php/Job/Cli/JobScout.php \
+  '/\$rollupZone = DigestSchedule::zoneFromEnv((\$tz = getenv('\''TZ'\'')) === false ? null : \$tz);/,/if (\$rollupSchedule !== null && \$rollupSchedule->isDue(\$this->lastRollup(), \$this->now(), \$rollupZone)) {/ s%if (\$rollupSchedule !== null && \$rollupSchedule->isDue(\$this->lastRollup(), \$this->now(), \$rollupZone)) {%if (false) {%'
+
+# ── job step 7 ──
+run_sabotage "job: the in-loop beat loses its heartbeat policy (step 7 H1)" \
+  src/php/Job/Cli/JobScout.php \
+  's%pass: function () use (\$pipeline, \$sources, &\$passes, &\$notified, &\$failedPasses, \$verbose, \$heartbeat, \$beat, \$rollupSchedule, \$rollupZone, \$notifier, \$store): void {%pass: function () use ($pipeline, $sources, \&$passes, \&$notified, \&$failedPasses, $verbose, $beat, $rollupSchedule, $rollupZone, $notifier, $store): void {%'
+run_sabotage "job: a named source no longer forces a disabled one (step 7 F1)" \
+  src/php/Job/Cli/JobScout.php \
+  's%if (!\$definition->enabled && !\$forced) {%if (!$definition->enabled) {%'
+run_sabotage "job: an ordinary pass runs a disabled source (step 7 F2)" \
+  src/php/Job/Cli/JobScout.php \
+  's%if (!\$definition->enabled && !\$forced) {%if (false) {%'
+run_sabotage "job: a forced disabled source is not announced (step 7 F3)" \
+  src/php/Job/Cli/JobScout.php \
+  's%if (!\$definition->enabled) {%if (false) {%'
+
 # THE ABORT COMES BEFORE THE TALLY, and that ordering is the finding rather than a nicety (C2
 # round 7, resilience P3). The alert job harvests the `N sabotage(s) detected, M undetected` line;
 # printed AFTER it, a shard that selected no case ended its log with a clean-looking `0 / 0` and the

@@ -421,18 +421,15 @@ after a rollback is harmless; reverting its commit removes it.
   misses on 100 % of cards and `health()` WARNs. Loud, not silent — pinned by the escalation tests.
 - `JobText::surface` turns `_` into a space on EVERY surface the classifier and criteria read, not
   only the role gate. No pattern depends on `_` today; S14 and S15 pin both directions.
+- The `job:` ledger cases are a line-by-line TRANSLATION of the step 3–6 mutation runs: each
+  multi-line mutation became one `s` per changed line, blanked or folded so the line count never
+  moves, and addressed from the nearest unique line above when a line repeats. That translation was
+  measured once (changed-line count, resulting file, `php -l`, the named test red). A later refactor
+  that keeps a guarded line matching but moves what sits around it can make a case land on the right
+  pattern and cut the wrong thing — `tests/test-sabotage-applies.sh` sees only INERT, not a
+  mis-landing. After reshaping a file under `src/php/Job/`, re-run `SABOTAGE_FILTER='^job:'` and read
+  WHICH test goes red, not only that one does.
 ### Known issues
-- Step 7 owes three things found at the step-6 gate. (1) Port the mutation runs of EVERY step, not only
-  step 6: `var/claude/jobs/sab3a.php` (25), `sab3b.php` (18), `sab3c.php` (32), `sab4.php` (19, one of
-  them on `tools/backup-state.sh`), `sab5.php` (25) and `sab6.php` (34), about 153 in all. The logs sit
-  beside them. These files exist only on the development machine (`var/` is gitignored), and the commit
-  messages only summarise them. There is room: the 2026-09-13 nightly shards took 50–57 min of their
-  240-min cap at 818 cases. The 3C tier chosen for step 7 is advisor() only (asked 2026-09-14, not yet
-  run). (2) A case for the in-loop heartbeat. Under a fixed clock it cannot be reached: the
-  startup beat writes the marker at NOW, and `isDue(NOW, NOW)` is false. The car ledger reaches it
-  with an unwritable marker directory. (3) `--source=` force-running a disabled source is untested on
-  the job side: the warning, and the fact that an ordinary pass skips it. `sources.json` has only
-  `linkedin`, enabled, so no fixture reaches either branch. A temporary `sources.json` closes it.
 - Stated cost of the drain, which step 8 must document: when a queued offer's snapshot will not
   decode, `JobScout::collectRollup()` skips the re-judge and announces the offer from its stored
   columns. If the stored score clears the gate, the offer is pushed again as a match. So an offer

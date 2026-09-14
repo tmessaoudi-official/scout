@@ -60,7 +60,7 @@ final class JobScoutTest extends TestCase
             putenv($key);
         }
         foreach (glob($this->dir . '/*') ?: [] as $f) {
-            @unlink($f);
+            is_dir($f) ? @rmdir($f) : @unlink($f);
         }
         @rmdir($this->dir);
 
@@ -368,6 +368,53 @@ final class JobScoutTest extends TestCase
         self::assertStringContainsString('JOB_HEARTBEAT_HOURS', $r['err']);
     }
 
+    /**
+     * The in-loop beat is the one that fires on day two, and under a fixed clock the startup beat's
+     * marker makes it unreachable. An unwritable marker — a directory where the file goes — reaches
+     * it: every check is then due, so two beats is the documented bias rather than a spam bug.
+     */
+    public function testTheInLoopBeatIsReachedWhenTheMarkerCannotBeWritten(): void
+    {
+        $this->seedWithOneThrowawayOffer();
+        mkdir($this->dir . '/job-heartbeat.txt');
+        $channel = new DeliveringChannel();
+
+        $r = $this->watchOnce($channel);
+
+        self::assertSame(0, $r['code'], $r['out'] . $r['err']);
+        self::assertStringNotContainsString('battement de cœur non émis', $r['err']);
+        self::assertCount(2, $this->ofKind($channel, NotificationKind::HEARTBEAT), 'the startup beat and the in-loop beat');
+    }
+
+    // ── --source= force-runs a disabled source ──────────────────────────────────────────────────
+
+    public function testANamedSourceRunsEvenWhenDisabledAndSaysSo(): void
+    {
+        $root = $this->rootWithLinkedinDisabled();
+        $this->seedWithOneThrowawayOffer();
+        $channel = new DeliveringChannel();
+
+        $r = $this->scout(['--domain=job', 'run', '--once', '--source=linkedin'], $channel, $root);
+
+        self::assertSame(0, $r['code'], $r['out'] . $r['err']);
+        self::assertStringContainsString('source linkedin est `enabled: false` — forcée par --source=', $r['err']);
+        self::assertCount(self::MATCHES, $this->ofKind($channel, NotificationKind::MATCH));
+    }
+
+    /** The counterweight: deleting the enabled check would satisfy the test above on its own. */
+    public function testAnOrdinaryPassStillSkipsADisabledSource(): void
+    {
+        $root = $this->rootWithLinkedinDisabled();
+        $this->seedWithOneThrowawayOffer();
+        $channel = new DeliveringChannel();
+
+        $r = $this->scout(['--domain=job', 'run', '--once'], $channel, $root);
+
+        self::assertSame(2, $r['code'], $r['out'] . $r['err']);
+        self::assertStringContainsString('aucune source activée', $r['err']);
+        self::assertSame([], $channel->sent);
+    }
+
     // ── doctor, dump, test-notify ───────────────────────────────────────────────────────────────
 
     public function testDoctorReportsTheStoreTheChannelsAndTheSource(): void
@@ -523,6 +570,17 @@ final class JobScoutTest extends TestCase
         }
         file_put_contents($root . '/config/job/criteria.local.json', (string) json_encode(['notify' => ['push_min_score' => $gate]]));
         $this->tempRoots[] = $root;
+
+        return $root;
+    }
+
+    private function rootWithLinkedinDisabled(): string
+    {
+        $root = $this->rootWithPushGate(0);
+        unlink($root . '/config/job/criteria.local.json');
+        $sources = json_decode((string) file_get_contents($root . '/config/job/sources.json'), true, flags: JSON_THROW_ON_ERROR);
+        $sources['sources']['linkedin']['enabled'] = false;
+        file_put_contents($root . '/config/job/sources.json', json_encode($sources, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
 
         return $root;
     }
