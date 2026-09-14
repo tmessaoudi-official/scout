@@ -395,7 +395,7 @@ after a rollback is harmless; reverting its commit removes it.
 | 3 | Judgement: JobClassifier, JobCriteria(+Loader), JobScorer | L | done | 0b1fdb7 | src/php/Job/** config/job/criteria.json tests/php/Job/** |
 | 4 | Store: JobStore composing RunStore | M | done | dd705cb | src/php/Job/** tests/php/Job/** src/php/Core/Whitespace.php src/php/Rent/Store/Store.php tests/sabotage-check.sh tools/backup-state.sh tests/test-backup-state.sh .env.example |
 | 5 | LinkedIn source: scrubbed fixtures, JobEmailSource | L | done | a482832 | src/php/Job/** config/job/sources.json tests/fixtures/job/** tests/php/Job/** tests/php/Core/PatternMissEscalationTest.php tests/php/Repo/FixtureSecretsTest.php tests/php/Repo/PortablePatternsTest.php |
-| 6 | Pipeline, formatter, JobScout CLI | L | doing | - | src/php/Job/** tests/php/Job/** config/job/criteria.json .env.example tests/php/Repo/AcknowledgeCallSitesTest.php |
+| 6 | Pipeline, formatter, JobScout CLI | L | done | 7450db2 | src/php/Job/** tests/php/Job/** config/job/criteria.json .env.example tests/php/Repo/AcknowledgeCallSitesTest.php |
 | 7 | Sabotage ledger cases | M | todo | - | tests/sabotage-check.sh |
 | 8 | Docs | M | todo | - | CLAUDE.md README.md docs/** |
 | 9 | Deploy + first live pass | M | todo | - | compose.yaml |
@@ -406,6 +406,11 @@ after a rollback is harmless; reverting its commit removes it.
 ### Needs research
 - Keyword list widening (Java/Spring, Vue.js, …) — seeded in step 3 from `var/claude/jobs/criteria-research.md`.
 ### Fragile
+- `JobScout::watch()` runs the rollup floor TWICE per start: before the first pass, and in each pass's
+  `finally`. The step-6 mutation run (2026-09-14) showed a test named for the startup floor passing
+  with that floor deleted, because the in-loop floor drains the same queue one pass later. It now
+  asserts ORDER (the floor's line before the pass report) and that the pass holds nothing back again.
+  Any future floor test must assert where the drain ran, never only that it ran.
 - `JobScorer::instant()` accepts exactly `Y-m-d\TH:i:s` plus `Z` or an offset: no fractional seconds, no
   bare date. LinkedIn cards carry no date, so nothing reaches this path yet. The first source that
   writes `publishedAt` (step 5 or slice 2) must write that shape, and must add a test that its value
