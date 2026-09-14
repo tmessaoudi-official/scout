@@ -101,6 +101,7 @@ docker compose run --rm rent-scout test-notify  # ✔ a message actually reaches
 ```bash
 docker compose run --rm rent-scout run --once --seed
 docker compose run --rm car-scout  run --once --seed
+docker compose run --rm job-scout  run --once --seed
 docker compose up -d
 bash tools/verify-deploy.sh                     # ✔ the step that says whether any of it landed
 ```

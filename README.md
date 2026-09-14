@@ -771,8 +771,11 @@ starts at a `/jobs/view/<id>/` link, and that id is the offer's identity.
 - The source's stated costs are in [`docs/SOURCES-LIVE.md`](docs/SOURCES-LIVE.md) § Job.
 
 ```bash
+docker compose run --rm job-scout doctor                  # sources, seen-set, channels, rollup queue
+docker compose run --rm job-scout run --once --seed       # mandatory before --watch
+docker compose up -d job-scout
 JOB_SCOUT_DB=$(mktemp -u) MAILBOX_DIR=tests/fixtures/job/linkedin php bin/scout --domain=job doctor --source=linkedin   # offline: 16 offres, ok
-php bin/scout --domain=job run --once --seed      # mandatory before --watch
+php bin/scout --domain=job run --once --seed      # the host form, mandatory before --watch
 php bin/scout --domain=job rollup [--dry-run]     # the "vérifié, score bas" rollup, on demand
 php bin/scout --domain=job test-notify            # exits 2 while console is the only channel
 ```

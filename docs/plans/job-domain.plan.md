@@ -463,7 +463,10 @@ after a rollback is harmless; reverting its commit removes it.
 - An empty `green` map scores the green component 0 for every offer, silently lowering the ceiling to
   85. The car scorer awards the share when no preference is configured, so an absolute threshold does
   not move. Step 6 shipped no `push_min_score`, so it was not settled there; settle it when the gate is
-  calibrated from real rows: award the share when no group is configured.
+  calibrated from real rows: award the share when no group is configured. **The gate WAS calibrated
+  on 2026-09-14 — at 40, on live scores whose green component is 0 for every offer.** Awarding the
+  share lifts every score by 15 and puts 40 near the median, loosening the gate about fivefold, so
+  fixing green must re-rule `push_min_score` in the same step.
 - The title filter rejected a live LinkedIn offer titled `Architecte Php` (`linkedin:4465457633`) as
   `intitulé hors métier` on 2026-09-14 — most likely an over-rejection, and a silent one: a reject is
   logged only, so the offer never reaches the user. Ruled 2026-09-14 13:19: fixed as a follow-up
