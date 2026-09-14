@@ -48,6 +48,7 @@ plan below is approved.
 - [2026-09-14 13:19] NOTED: measured before deploy on the live mailbox, console-only: `--seed` records and marks without judging, so a separate `run --once -v` judged the window — 156 cards, 93 distinct offers, 88 MATCH and 5 REJECT, match scores p50 21 · p90 43 · max 51, 12 at ≥ 40, and 7–17 new offers per UTC day, i.e. ~12 pushes/day with no gate.
 - [2026-09-14 13:19] AGREED: the deployed job watcher pushes individually at `push_min_score` 40 and drains the rest in a daily rollup at 09:00 (`rollup_hour` 9), both set in the gitignored `config/job/criteria.local.json` beside the ntfy and email channels.
 - [2026-09-14 13:19] AGREED: the live reject of `Architecte Php` as `intitulé hors métier` is recorded as a known issue and fixed as a follow-up step with a failing test first; it does not block the deploy.
+- [2026-09-14 13:29] NOTED: step 9's Files cell widened from `compose.yaml` to the Dockerfile, CLAUDE.md, README.md, docs/**, .env.example and tools/verify-deploy.sh, because the deploy made every "not deployed / no compose service / both watchers" claim false and the Dockerfile header had to change before the image build; the step landed as `ac76abd` (service), `7c79cb9` (rulings) and `c5be0df` (docs), and `c5be0df` is cited as the evidence because it touches the widened cell — a scoping record, not a ruling.
 
 ## Evidence gathered (2026-09-13)
 - `Cli/Domains::all()` is the registry — a new domain is one entry plus `Scout\<Slug>\`, `config/<slug>/` and `<SLUG>_*` keys.
@@ -401,7 +402,7 @@ after a rollback is harmless; reverting its commit removes it.
 | 6 | Pipeline, formatter, JobScout CLI | L | done | 7450db2 | src/php/Job/** tests/php/Job/** config/job/criteria.json .env.example tests/php/Repo/AcknowledgeCallSitesTest.php |
 | 7 | Sabotage ledger cases | M | done | 53c7969 | tests/sabotage-check.sh tests/php/Job/Cli/JobScoutTest.php |
 | 8 | Docs | M | done | 9eee7fa | CLAUDE.md README.md docs/** |
-| 9 | Deploy + first live pass | M | todo | - | compose.yaml |
+| 9 | Deploy + first live pass | M | done | c5be0df | compose.yaml Dockerfile CLAUDE.md README.md docs/** .env.example tools/verify-deploy.sh |
 <!-- /progress-block -->
 ### Blocked
 ### Needs input
