@@ -36,9 +36,9 @@ produced it. The runbook is the checklist; this is the reasoning behind it.
 
 **It runs. Eight sources are live: four institutional landlords and four private portals.**
 
-**A third domain, `scout --domain=job`, is built and NOT deployed (2026-09-14)** — one source,
-LinkedIn job alerts over IMAP, runnable from the host only until it has a compose service. See
-§ *The job domain* below.
+**A third domain, `scout --domain=job`, is built and deployed (2026-09-14)** — one source,
+LinkedIn job alerts over IMAP, watched by the `job-scout` compose service. See § *The job domain*
+below.
 
 > **Corrected 2026-08-29.** This section said *six* sources and *schema v8* from 2026-08-25, and
 > listed the transit layer and classifier tier 4 as "genuinely absent" — all four claims had been
@@ -127,7 +127,7 @@ Everything a domain owns follows ONE scheme, so the next domain is one registry 
 | mailbox label | `rent-watch/portails` | `car-watch/portails` | `job-watch/portails` | `<slug>-watch/portails` |
 | push label | `rent-watch` | `car-watch` | `job-watch` | `<slug>-watch` leads every subject and title |
 | ntfy topic | `rw-<32 hex>` | `cw-<32 hex>` | `jw-<32 hex>` | `<initial>w-<32 hex>`, `openssl rand -hex 16` — the topic IS the secret |
-| compose service | `rent-scout` | `car-scout` | **none yet** — host only until plan step 9 | the flag sits in the service's ENTRYPOINT, so `docker compose run --rm car-scout doctor` is a car verb |
+| compose service | `rent-scout` | `car-scout` | `job-scout` | the flag sits in the service's ENTRYPOINT, so `docker compose run --rm car-scout doctor` is a car verb |
 
 The generic layer is what no domain owns: `Text`, `Redact`, `Pacer`, `Heartbeat`, source health,
 the notification channels and transports, the HTTP and IMAP clients, `WatchLoop`, `ChannelFactory`.
@@ -244,7 +244,7 @@ docker compose up -d --remove-orphans   # --remove-orphans matters ONCE after 20
 bash tools/verify-deploy.sh             # and this is the step that says whether any of it landed
 ```
 
-**`up -d` printing `Started` is not a deployment, so check it.** Both watchers set
+**`up -d` printing `Started` is not a deployment, so check it.** Every watcher sets
 `stop_grace_period: 5m` and the loop stops only after the pass in flight finishes, so a recreate can
 sit for minutes; compose renames the old container while it waits, and twice on 2026-08-31 that
 wedged — once failing outright on `Conflict. The container name … is already in use` with rent-scout
@@ -750,8 +750,10 @@ confirms, so a refused send leaves the window open. `doctor` prints the queue as
 
 ## The job domain — `scout --domain=job`
 
-**Built 2026-09-13 → 09-14 and NOT deployed: there is no `job-scout` compose service yet**, so it runs
-from the host only. The plan, and what is still open, is
+**Built 2026-09-13 → 09-14 and deployed 2026-09-14 as the `job-scout` compose service.** The
+deployment pushes a match individually at score 40 and rolls the rest up at 09:00, both set in the
+gitignored `config/job/criteria.local.json`; the shipped criteria notify the console and push every
+match. The plan, and what is still open, is
 [`docs/plans/job-domain.plan.md`](docs/plans/job-domain.plan.md).
 
 It watches job offers on its own database (`state/job-watch.sqlite3`), config (`config/job/`),

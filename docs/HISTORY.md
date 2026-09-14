@@ -82,7 +82,7 @@ figures. No default can supply those.
 | Date | Landed |
 |---|---|
 | 09-13 | **The job domain**, `--domain=job`: the registry entry first, with every unbuilt verb refusing by name. The offer model and its snapshot; the classifier and the criteria; **the verdict** — H1–H8 reject, six components score. The store, composing `RunStore`. **LinkedIn as source #1**, its cards read from the alert's HTML part. |
-| 09-14 | The pipeline, the formatter and the `JobScout` CLI. Every step's mutation runs ported into the sabotage ledger. **Not deployed** — no compose service yet. |
+| 09-14 | The pipeline, the formatter and the `JobScout` CLI. Every step's mutation runs ported into the sabotage ledger. **Deployed the same day** as the `job-scout` compose service: 93 offers seeded from the live mailbox, a push gate of 40 ruled on the measured scores. |
 
 ---
 

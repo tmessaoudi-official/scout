@@ -1449,7 +1449,7 @@ covering 60 % of the fleet discriminates MORE, not less.
 > recommends** — a finding can be right about the defect and wrong about the fix.
 
 **THE JOB DOMAIN EXISTS AS OF 2026-09-13 — `scout --domain=job`, `src/php/Job/`, `config/job/` —
-AND IT IS NOT DEPLOYED.** A third domain, slice 1 of `docs/plans/job-domain.plan.md`: `JobListing` +
+AND IT IS DEPLOYED AS `job-scout` SINCE 2026-09-14.** A third domain, slice 1 of `docs/plans/job-domain.plan.md`: `JobListing` +
 `JobSnapshot`, `JobClassifier` (what an offer states: contracts, work mode, level, pay lines,
 eligibility), `JobCriteria` + `JobScorer`, `JobStore` (its own `job_meta` v1 and `job_listings`,
 composing `Core/RunStore`), `JobEmailSource`, `JobPipeline`, `JobFormatter` and `Job/Cli/JobScout`.
@@ -1479,8 +1479,10 @@ Four things before touching it:
   counted as a miss, and a message with NO HTML part counts misses that escalate only when every
   claimed message does, so one among normal ones is silent — UNTESTED; if LinkedIn drops a card's
   logo link `place_pattern` misses on every card (counted, so it escalates); monthly pay shapes are
-  unread and fail safe; and **there is no `job-scout` compose service until plan step 9**, so the
-  domain runs from the host only and `tools/verify-deploy.sh` has nothing of it to check.
+  unread and fail safe; and **the deployed gate lives outside the repo** — `push_min_score` 40 and
+  a 09:00 rollup in the gitignored `config/job/criteria.local.json` (ruled 2026-09-14) — so a clone
+  runs the shipped criteria, which push every match, and the shipped-criteria costs above describe
+  a clone rather than the running watcher.
 
 `src/phorj/` is **ON INDEFINITE HOLD** (developer ruling, 2026-08-19) — not blocked, deprioritised.
 Do not start it; `docs/PHORJ-REQUIREMENTS.md` remains the record of what it would need.
@@ -1826,7 +1828,7 @@ impossible by design rather than by omission (`docs/PHORJ-REQUIREMENTS.md`).
 | Core (generic) | `src/php/Core/` | What no domain owns: `Text`, `Whitespace` (a Unicode-aware `trim()`), `Redact` (masks secrets in adapter error text), `RecoverableForms` (the ONE decode cascade the fixture scrubber and its CI guard share), `Pacer`, `Heartbeat`, `health` (`SourceHealth` + `SourceStatus`), **`RunStore`** (the run log, health verdicts, feed silence and alert cooldowns — see below), `Offline`, `SameFilterWarning` (every card of a source failing one filter), `MalformedText`, `MutableByDesign`, and the Notify channels/transports |
 | Rent domain | `src/php/Rent/{Core,Config,Adapters,Store,Enrich,Notify,Cli}/` · later `src/phorj/core/` | Everything housing-bound: `models`, `tenure` (the classifier), `criteria` (score + hard disqualifiers), `dedup`, the SQLite store, the field maps and source contract, transit enrichment, the rent formatter and `Cli/RentScout` |
 | Car domain | `src/php/Car/` | The vehicle twin — `Vehicle*` listing, classifier, criteria, scorer, store, sources, pipeline, formatter — and `Cli/CarScout` |
-| Job domain | `src/php/Job/` | The job twin — `JobListing`/`JobSnapshot`, `JobClassifier`, `JobCriteria`(+`Loader`), `JobScorer`, `JobStore` (composes `Core/RunStore`), `JobEmailSource`, `JobPipeline`, `JobFormatter` — and `Cli/JobScout`. Not deployed |
+| Job domain | `src/php/Job/` | The job twin — `JobListing`/`JobSnapshot`, `JobClassifier`, `JobCriteria`(+`Loader`), `JobScorer`, `JobStore` (composes `Core/RunStore`), `JobEmailSource`, `JobPipeline`, `JobFormatter` — and `Cli/JobScout`. Deployed as `job-scout` since 2026-09-14 |
 | Store | `src/php/Rent/Store/` | SQLite seen-set, price history and the schema-v4 cross-portal `group_key`. The run log and health are DELEGATED to `Core/RunStore`, which it composes on its own PDO handle. **PHP-only** — it touches a database, so phorj will not transpile it. |
 | Notify | `src/php/Core/Notify/` | One module per channel. Every notification carries `score` + human-readable `reasons[]`. |
 | Adapters | `src/php/Adapters/` (generic: `Http/*`, `Mail/*`, `SourceError`, `FeedFreshness`) · `src/php/Rent/Adapters/` (the `Source` interface, `http_json`, `html`, `email_alert` (IMAP), `browser` (Playwright, opt-in), `sites/` for per-site overrides) | Site-specific code lives ONLY here |
@@ -2278,8 +2280,8 @@ src/php/Rent/               the rent domain — Core (models, tenure classifier,
                             rows), Config, Adapters,
                             Store, Enrich, Notify (Formatter), Cli/RentScout
 src/php/Car/                the car domain — the Vehicle* classes and Cli/CarScout
-src/php/Job/                the job domain — the Job* classes and Cli/JobScout. NOT DEPLOYED: no
-                            compose service until docs/plans/job-domain.plan.md step 9
+src/php/Job/                the job domain — the Job* classes and Cli/JobScout. Deployed as the
+                            `job-scout` compose service since 2026-09-14
 src/php/Core/Pacer.php      the Q37 cadence; clock, sleeper and RNG all injected so it is testable
 src/php/Cli/WatchLoop.php   the `--watch` loop; survives a failing pass, stops after the one in flight
 src/php/Rent/Adapters/PacedSource.php   decorator applying Pacer, so Pipeline never learns time exists

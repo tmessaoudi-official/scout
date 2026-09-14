@@ -20,7 +20,7 @@ matches. It runs three **domains** today:
 |---|---|---|---|
 | `--domain=rent` | rental listings in Île-de-France | `state/rent-watch.sqlite3` | `src/php/Rent/Cli/RentScout.php` |
 | `--domain=car` | used cars | `state/car-watch.sqlite3` | `src/php/Car/Cli/CarScout.php` |
-| `--domain=job` | job offers — **not deployed** (no compose service yet) | `state/job-watch.sqlite3` | `src/php/Job/Cli/JobScout.php` |
+| `--domain=job` | job offers — deployed 2026-09-14 as `job-scout` | `state/job-watch.sqlite3` | `src/php/Job/Cli/JobScout.php` |
 
 `src/php/Cli/Scout.php` is the dispatcher and **never defaults** — `bin/scout doctor` without a
 domain is refused, because a defaulting dispatcher silently runs the wrong watcher. The domain
@@ -74,7 +74,7 @@ flowchart TB
         VCli["VehiclePipeline · CarScout"]
     end
 
-    subgraph JOB["src/php/Job — the job domain, not deployed"]
+    subgraph JOB["src/php/Job — the job domain"]
         JCore["JobClassifier · JobCriteria · JobScorer"]
         JAdapt["JobEmailSource"]
         JStore["JobStore"]

@@ -112,17 +112,17 @@ state neither year nor mileage, and the reference already supplies the evidence 
 
 ---
 
-## Job — one enabled source, not deployed
+## Job — one enabled source
 
-**Enabled and polled by nothing.** `config/job/sources.json` enables it, but there is no `job-scout`
-compose service until step 9 of [`docs/plans/job-domain.plan.md`](plans/job-domain.plan.md), so the
-figures below come from the frozen captures, dated **2026-09-14**, and not from a live store. There
-is no §1 here: an offer is rejected because the user does not want it, not because they cannot take
-it.
+**Live since 2026-09-14**, polled by the `job-scout` compose service
+([`docs/plans/job-domain.plan.md`](plans/job-domain.plan.md) step 9). The first live `doctor` read
+**156 cards, `ok`, ~21 s**; the seeded store holds **93 distinct offers**, and a judging pass over
+them found **88 matches and 5 rejects**. There is no §1 here: an offer is rejected because the user
+does not want it, not because they cannot take it.
 
 | # | Source | Kind | Adapter | Identity | Pay basis | Rows on record |
 |---|---|---|---|---|---|---|
-| 1 | **linkedin** | portal | `email_alert` (`JobEmailSource`), the HTML part | link — the job id in `/jobs/view/<id>/` | annual gross or a daily rate, when the card states one | 0 — not deployed |
+| 1 | **linkedin** | portal | `email_alert` (`JobEmailSource`), the HTML part | link — the job id in `/jobs/view/<id>/` | annual gross or a daily rate, when the card states one | 93 (2026-09-14) |
 
 Offline, `bin/scout --domain=job doctor --source=linkedin` over `tests/fixtures/job/linkedin/`
 reads **16 offers, `ok`** (three captures).

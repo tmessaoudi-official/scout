@@ -24,12 +24,10 @@ Confusing these is the commonest first-hour mistake.
 | **On the host**, from the repo | `bin/scout --domain=rent doctor` | you name the domain |
 | **Through compose** | `docker compose run --rm rent-scout doctor` | the domain is in the **`entrypoint`**, so the command replaces only the verb |
 
-`docker compose run --rm car-scout doctor` is the car one. Passing `--domain=` through compose is
+`docker compose run --rm car-scout doctor` is the car one, and `docker compose run --rm job-scout
+doctor` the job one (its service since 2026-09-14). Passing `--domain=` through compose is
 redundant, and putting the flag in `command:` instead of `entrypoint:` is how the first deploy ran
 the *rent* doctor from the car service.
-
-**The job domain has no compose service yet** (`docs/plans/job-domain.plan.md` step 9), so it has
-only the host shape: `bin/scout --domain=job doctor`.
 
 ---
 
@@ -111,7 +109,7 @@ bash tools/verify-deploy.sh                     # ✔ the step that says whether
 exactly what a forgotten volume mount looks like and the alternative is notifying the entire back
 catalogue at once. With `restart: unless-stopped` that refusal becomes a restart loop.
 
-**`up -d` printing `Started` is not a deployment.** Both watchers set `stop_grace_period: 5m` and stop
+**`up -d` printing `Started` is not a deployment.** Every watcher sets `stop_grace_period: 5m` and stops
 only after the pass in flight finishes, so a recreate can sit for minutes and has twice wedged — and
 `docker compose ps` without `-a` **omits** a service that is not running, so the failure renders as a
 shorter list. `verify-deploy.sh` asserts the four things that output cannot show you: every declared
@@ -189,14 +187,14 @@ classifier-version column that does not exist.
 There is no `digest` and no `reclassify` on the car side: no tenure means no doubt bin, and no
 persisted classification to re-judge.
 
-### `--domain=job` — host only, no compose service yet
+### `--domain=job` — compose service `job-scout`
 
 | Command | Does |
 |---|---|
 | `doctor` | per-source state, seen-set, channels, and the criteria in one line |
 | `dump <source>` | the first offer read + its reading + its verdict |
 | `run --once [-v]` / `run --once --seed` / `run --watch [-v]` | as above; the heartbeat marker is `state/job-heartbeat.txt` |
-| `rollup [--dry-run]` | emits the pending *« vérifié, score bas »* rollup. No `push_min_score` ships, so that queue holds only pushes that failed |
+| `rollup [--dry-run]` | emits the pending *« vérifié, score bas »* rollup. The shipped criteria set no `push_min_score`, so there that queue holds only pushes that failed; the deployment sets 40 and a 09:00 floor in the gitignored `config/job/criteria.local.json` |
 | `test-notify` | proves the job channel. **Exit 2** while `console` is the only channel |
 
 **Flags:** `--source=<name>` (repeatable; limits a run, and force-runs a disabled source) ·

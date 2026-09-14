@@ -2,7 +2,7 @@
 #
 # Did the redeploy actually land? — the mechanical half of F25.
 #
-# `docker compose up -d` is not a deployment. Both watchers set `stop_grace_period: 5m` and
+# `docker compose up -d` is not a deployment. Every watcher sets `stop_grace_period: 5m` and
 # `WatchLoop` stops only after the pass in flight finishes, so a recreate can sit for minutes;
 # compose renames the old container while it waits, and twice on 2026-08-31 that wedged — once
 # failing outright (`Conflict. The container name "/scout-car-scout-1" is already in use`) with
