@@ -422,9 +422,13 @@ after a rollback is harmless; reverting its commit removes it.
 - `JobText::surface` turns `_` into a space on EVERY surface the classifier and criteria read, not
   only the role gate. No pattern depends on `_` today; S14 and S15 pin both directions.
 ### Known issues
-- Step 7 owes three things found at the step-6 gate. (1) Port the 34 step-6 mutations, kept at
-  `var/claude/jobs/sab6.php` with their logs (`sab6.log`, `sab6b.log`); the commit message only
-  summarises them. (2) A case for the in-loop heartbeat. Under a fixed clock it cannot be reached: the
+- Step 7 owes three things found at the step-6 gate. (1) Port the mutation runs of EVERY step, not only
+  step 6: `var/claude/jobs/sab3a.php` (25), `sab3b.php` (18), `sab3c.php` (32), `sab4.php` (19, one of
+  them on `tools/backup-state.sh`), `sab5.php` (25) and `sab6.php` (34), about 153 in all. The logs sit
+  beside them. These files exist only on the development machine (`var/` is gitignored), and the commit
+  messages only summarise them. There is room: the 2026-09-13 nightly shards took 50–57 min of their
+  240-min cap at 818 cases. The 3C tier chosen for step 7 is advisor() only (asked 2026-09-14, not yet
+  run). (2) A case for the in-loop heartbeat. Under a fixed clock it cannot be reached: the
   startup beat writes the marker at NOW, and `isDue(NOW, NOW)` is false. The car ledger reaches it
   with an unwritable marker directory. (3) `--source=` force-running a disabled source is untested on
   the job side: the warning, and the fact that an ordinary pass skips it. `sources.json` has only
