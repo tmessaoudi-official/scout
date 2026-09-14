@@ -820,7 +820,7 @@ for the finding that names it**.
 The car half is closed. Three things about it are worth knowing before touching either domain:
 
 - **The class lives in `Scout\Core` now**, with `Scout\Core\CountsPatternMisses` as the READ side.
-  Both CLIs gate their miss report on the interface, never on `instanceof EmailAlertSource` — that
+  Every domain CLI (rent, car, job) gates its miss report on the interface, never on `instanceof EmailAlertSource` — that
   class check is *why* the report existed on one adapter, and it would have had to be remembered
   again for every adapter that learned to count.
 - **The car adapter cannot have one funnel, so its guard is SET MEMBERSHIP instead.** Its four
@@ -1448,6 +1448,40 @@ covering 60 % of the fleet discriminates MORE, not less.
 > the model. **Re-read the code an audit recommendation reasons about before building the thing it
 > recommends** — a finding can be right about the defect and wrong about the fix.
 
+**THE JOB DOMAIN EXISTS AS OF 2026-09-13 — `scout --domain=job`, `src/php/Job/`, `config/job/` —
+AND IT IS NOT DEPLOYED.** A third domain, slice 1 of `docs/plans/job-domain.plan.md`: `JobListing` +
+`JobSnapshot`, `JobClassifier` (what an offer states: contracts, work mode, level, pay lines,
+eligibility), `JobCriteria` + `JobScorer`, `JobStore` (its own `job_meta` v1 and `job_listings`,
+composing `Core/RunStore`), `JobEmailSource`, `JobPipeline`, `JobFormatter` and `Job/Cli/JobScout`.
+One source, `linkedin`, over IMAP. Prove a change offline with
+`JOB_SCOUT_DB=$(mktemp -u) MAILBOX_DIR=tests/fixtures/job/linkedin bin/scout --domain=job doctor --source=linkedin`
+— **16 offres, `ok`** over three captures (2026-09-14); the ledger half is `SABOTAGE_FILTER='^job:'`.
+Four things before touching it:
+
+- **It has no §1.** H1–H8 reject and six components score (stack 25 · pay 20 · level 15 · green 15
+  · remote 15 · freshness 10), but what it rejects is an offer the user does not want, not one they
+  cannot take. So the car domain's stated cost below — a drain announcing a row whose snapshot will
+  not decode from its stored columns — is an unwanted push here, never an ineligible one.
+- **A LinkedIn card carries no date**, so freshness is unscored on every offer (`date de publication
+  inconnue — hors score`) and the reachable score is **90** — **70** on a card stating no pay, which
+  is most of them (7 of 115 measured cards state one). An unknown component scores 0 and says so,
+  the car rule; nothing is renormalised.
+- **The card is read from the HTML part** (`EmailMessage::htmlText`): it starts at a
+  `/jobs/view/<id>/` link, that id is its identity, and it ends at the next distinct id. Nothing
+  before the first card is read, because the preheader quotes the subscriber's own pay filter —
+  PAP's search-criteria trap a second time — and nothing from `footer_marker` on.
+- **Stated costs, each written down rather than left to be found:** no `push_min_score` ships, so
+  every match is pushed individually and the rollup queue holds only pushes that FAILED; a queued
+  offer whose snapshot will not decode is announced from its stored columns without a re-judge
+  (`JobScout::collectRollup()`, the car cost again), so an offer today's criteria would reject can
+  be pushed; an empty `green` map scores that component 0 for every offer (`JobScorer::green()`),
+  lowering the ceiling by 15 where the car scorer awards the share — OPEN; `pay_pattern` is not
+  counted as a miss, and a message with NO HTML part counts misses that escalate only when every
+  claimed message does, so one among normal ones is silent — UNTESTED; if LinkedIn drops a card's
+  logo link `place_pattern` misses on every card (counted, so it escalates); monthly pay shapes are
+  unread and fail safe; and **there is no `job-scout` compose service until plan step 9**, so the
+  domain runs from the host only and `tools/verify-deploy.sh` has nothing of it to check.
+
 `src/phorj/` is **ON INDEFINITE HOLD** (developer ruling, 2026-08-19) — not blocked, deprioritised.
 Do not start it; `docs/PHORJ-REQUIREMENTS.md` remains the record of what it would need.
 
@@ -1788,15 +1822,16 @@ impossible by design rather than by omission (`docs/PHORJ-REQUIREMENTS.md`).
 
 | Layer | Path | Responsibility |
 |---|---|---|
-| Entry point | `src/php/Cli/` | `Scout` — the `--domain=<slug>` dispatcher, which NEVER defaults — plus `Domains` (the registry: a new domain is one entry), `WatchLoop`, `ChannelFactory`. `bin/scout --domain=rent …` / `--domain=car …` |
-| Core (generic) | `src/php/Core/` | What no domain owns: `Text`, `Redact` (masks secrets in adapter error text), `RecoverableForms` (the ONE decode cascade the fixture scrubber and its CI guard share), `Pacer`, `Heartbeat`, `health` (`SourceHealth` + `SourceStatus`), **`RunStore`** (the run log, health verdicts, feed silence and alert cooldowns — see below), `Offline`, `SameFilterWarning` (every card of a source failing one filter), `MalformedText`, `MutableByDesign`, and the Notify channels/transports |
+| Entry point | `src/php/Cli/` | `Scout` — the `--domain=<slug>` dispatcher, which NEVER defaults — plus `Domains` (the registry: a new domain is one entry), `WatchLoop`, `ChannelFactory`. `bin/scout --domain=rent …` / `--domain=car …` / `--domain=job …` |
+| Core (generic) | `src/php/Core/` | What no domain owns: `Text`, `Whitespace` (a Unicode-aware `trim()`), `Redact` (masks secrets in adapter error text), `RecoverableForms` (the ONE decode cascade the fixture scrubber and its CI guard share), `Pacer`, `Heartbeat`, `health` (`SourceHealth` + `SourceStatus`), **`RunStore`** (the run log, health verdicts, feed silence and alert cooldowns — see below), `Offline`, `SameFilterWarning` (every card of a source failing one filter), `MalformedText`, `MutableByDesign`, and the Notify channels/transports |
 | Rent domain | `src/php/Rent/{Core,Config,Adapters,Store,Enrich,Notify,Cli}/` · later `src/phorj/core/` | Everything housing-bound: `models`, `tenure` (the classifier), `criteria` (score + hard disqualifiers), `dedup`, the SQLite store, the field maps and source contract, transit enrichment, the rent formatter and `Cli/RentScout` |
 | Car domain | `src/php/Car/` | The vehicle twin — `Vehicle*` listing, classifier, criteria, scorer, store, sources, pipeline, formatter — and `Cli/CarScout` |
+| Job domain | `src/php/Job/` | The job twin — `JobListing`/`JobSnapshot`, `JobClassifier`, `JobCriteria`(+`Loader`), `JobScorer`, `JobStore` (composes `Core/RunStore`), `JobEmailSource`, `JobPipeline`, `JobFormatter` — and `Cli/JobScout`. Not deployed |
 | Store | `src/php/Rent/Store/` | SQLite seen-set, price history and the schema-v4 cross-portal `group_key`. The run log and health are DELEGATED to `Core/RunStore`, which it composes on its own PDO handle. **PHP-only** — it touches a database, so phorj will not transpile it. |
 | Notify | `src/php/Core/Notify/` | One module per channel. Every notification carries `score` + human-readable `reasons[]`. |
 | Adapters | `src/php/Adapters/` (generic: `Http/*`, `Mail/*`, `SourceError`, `FeedFreshness`) · `src/php/Rent/Adapters/` (the `Source` interface, `http_json`, `html`, `email_alert` (IMAP), `browser` (Playwright, opt-in), `sites/` for per-site overrides) | Site-specific code lives ONLY here |
 | Enrich | `src/php/Rent/Enrich/` | `transit` (IDFM / PRIM door-to-door commute), `geo` (commune → INSEE code, coords) |
-| Config | `config/<domain>/` — `config/rent/`, `config/car/` | `criteria.json` (user criteria), `sources.json` (source definitions + field maps) — both committed. **JSON, not YAML** — ruled 2026-08-07 (Q22): no `ext-yaml` here and no way to install one. `_`-prefixed keys are comments; any other unknown key is a validation error. A gitignored `criteria.local.json` overrides field-by-field |
+| Config | `config/<domain>/` — `config/rent/`, `config/car/`, `config/job/` | `criteria.json` (user criteria), `sources.json` (source definitions + field maps) — both committed. **JSON, not YAML** — ruled 2026-08-07 (Q22): no `ext-yaml` here and no way to install one. `_`-prefixed keys are comments; any other unknown key is a validation error. A gitignored `criteria.local.json` overrides field-by-field |
 | Fixtures | `tests/fixtures/<domain>/<source>/` | Frozen HTML/JSON payloads, and frozen `.eml` alerts for an `email_alert` source. Parser tests run **offline**. No network in CI. |
 | Classifier corpus | `tests/fixtures/rent/tenure/corpus.json` | **Language-neutral.** Read by both implementations — that shared file is what makes the differential test mean anything. |
 
@@ -2204,13 +2239,13 @@ docs/ARCHITECTURE.md        The shape of the program in one sitting: layers, the
                             the five test layers. Written 2026-09-08 from the code, not from this
                             file — CLAUDE.md carries sentences it marks stale itself
 docs/RUNBOOK.md             The operator's checklist: zero-to-running, every verb and flag verified
-                            against the two CLI parsers, the two contexts (host `bin/scout
+                            against the three CLI parsers, the two contexts (host `bin/scout
                             --domain=rent` vs compose `run --rm rent-scout`, whose domain is in the
                             ENTRYPOINT), and a symptom->check->fix table. It LINKS README's
                             § Deploying it for the reasoning rather than restating it — a second copy
                             of a rationale is the copy that drifts
-docs/SOURCES-LIVE.md        The live register for BOTH domains — adapter, identity scheme, rent
-                            basis (CC vs HC), and the STATED COST of each of the fourteen enabled
+docs/SOURCES-LIVE.md        The live register for EVERY domain — adapter, identity scheme, rent
+                            basis (CC vs HC), and the STATED COST of each of the fifteen enabled
                             sources. docs/SOURCES.md is rent-only and is a candidate catalogue, so
                             the six car sources had no home anywhere until this file
 docs/HISTORY.md             Dated build record derived from git log, plus the five failure patterns
@@ -2243,6 +2278,8 @@ src/php/Rent/               the rent domain — Core (models, tenure classifier,
                             rows), Config, Adapters,
                             Store, Enrich, Notify (Formatter), Cli/RentScout
 src/php/Car/                the car domain — the Vehicle* classes and Cli/CarScout
+src/php/Job/                the job domain — the Job* classes and Cli/JobScout. NOT DEPLOYED: no
+                            compose service until docs/plans/job-domain.plan.md step 9
 src/php/Core/Pacer.php      the Q37 cadence; clock, sleeper and RNG all injected so it is testable
 src/php/Cli/WatchLoop.php   the `--watch` loop; survives a failing pass, stops after the one in flight
 src/php/Rent/Adapters/PacedSource.php   decorator applying Pacer, so Pipeline never learns time exists
@@ -2269,6 +2306,8 @@ tests/fixtures/rent/pap/         The fourth portal's, and the first DIRECT-FROM-
                             here for its HEADER, not its flat: `Date: Sat, 5 Sep 2026`, the
                             single-digit day RFC 5322 allows and this repo's strict parser
                             refused for a month
+tests/fixtures/job/linkedin/     The job domain's LinkedIn alerts, scrubbed — the scrubber learned their
+                            per-recipient link tokens first. Cards are read from the HTML part
 tools/scrub-eml.php         Turns a captured .eml into a committable fixture; REFUSES to write
                             while the address is RECOVERABLE — decoding base64url runs and
                             quoted-printable before it looks, not merely grepping for it
@@ -2363,7 +2402,7 @@ var/claude/                 Reports, review outputs — gitignored scratch (hand
 
 - **A FIXTURE-BACKED `doctor` WRITES A RUN INTO THE LIVE STORE, and that is how a healthy source is
   made to report `broken`.** `MAILBOX_DIR=…` swaps the mailbox; it does NOT swap the database, so the
-  run is recorded against the default `RENT_SCOUT_DB` / `CAR_SCOUT_DB` and its item count becomes
+  run is recorded against the default `RENT_SCOUT_DB` / `CAR_SCOUT_DB` / `JOB_SCOUT_DB` and its item count becomes
   part of the 7-day baseline every later LIVE run is judged against. Observed 2026-09-01: proving
   the new car source offline wrote `leboncoin item_count=5` into `state/car-watch.sqlite3`; every
   live pass after it returned 0, because that portal's alerts are unlabelled and the source reads a
@@ -2764,7 +2803,7 @@ var/claude/                 Reports, review outputs — gitignored scratch (hand
 - **EVERY CARD OF A SOURCE FAILING THE SAME HARD FILTER IS A WARNING (row 41, 2026-09-05), and
   it is the instrument the round-5 P2 asked for.** With no band on the mapped path, a selector
   drifting onto a 5-digit field extracts `95240` cleanly — no miss counted, every card rejected
-  by `max_rent_cc`, health `ok`. `Core/SameFilterWarning` is ONE implementation for both pipelines:
+  by `max_rent_cc`, health `ok`. `Core/SameFilterWarning` is ONE implementation for every pipeline (rent, car, job):
   each judged card counts into a per-source tally keyed on its disqualifier with the numbers
   normalised, and when every card of a source (three or more) failed the same filter the pass
   carries one warning naming the source, the count and the filter — `RunResult::$warnings`, printed
@@ -2819,7 +2858,7 @@ var/claude/                 Reports, review outputs — gitignored scratch (hand
   `EXAMINE` + `BODY.PEEK[]` exactly as before; the one write is `acknowledge()` — a second session,
   `SELECT`, one `UID STORE … +FLAGS.SILENT (\Seen)` — on the messages a source CLAIMED (passed its
   `params.from` and `subject_pattern`, whatever they then yielded) and that do not already carry
-  the flag, so steady state opens no write session. It is called by the two pipelines ONLY, after
+  the flag, so steady state opens no write session. It is called by the domain pipelines ONLY (rent, car, job), after
   the store has recorded the pass, through `Scout\Adapters\AcknowledgesMessages` (gated on the
   interface, forwarded by `PacedSource`, so `--watch` marks exactly what `--once` marks); `doctor`
   and `tools/dump-eml.php` never mark, pinned by `AcknowledgeCallSitesTest`. A refusal lands in
@@ -2976,7 +3015,10 @@ var/claude/                 Reports, review outputs — gitignored scratch (hand
   three different cases across two runs on 2026-08-30, each detecting fine on the other run. CI is
   unaffected. For a local run, disable the JIT WITHOUT dropping the original ini scan dir:
   `PHP_INI_SCAN_DIR="<phpbrew var/db/cli>:<a dir holding opcache.jit=off>"` — dropping the original
-  loses `iconv` and reddens the baseline for an unrelated reason (measured: 18 errors).
+  loses `iconv` and reddens the baseline for an unrelated reason (measured: 18 errors). Take the
+  phpbrew dir from `php --ini`, and **strip the double quotes it prints around the scan dir**: pasted
+  with them the path matches nothing, twelve extensions drop and the ledger baseline aborts red
+  (measured 2026-09-13).
 
 ## Credentials & stateful data
 

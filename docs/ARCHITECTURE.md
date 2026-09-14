@@ -1,12 +1,12 @@
 # Architecture
 
 > **What this file is.** The shape of the program in one sitting: the layers, the lifecycle of a
-> single pass, the one gate every announcement passes through, the three stores, the health model,
+> single pass, the one gate every announcement passes through, the stores, the health model,
 > the adapter types and the test architecture.
 >
 > **What it is not.** It is not the rules (`CLAUDE.md`), not the product specification
 > (`spec/PROJECT_BRIEF.md`), not the operator's checklist (`docs/RUNBOOK.md`) and not the source
-> register (`docs/SOURCES-LIVE.md`). Every claim below was read out of the code on **2026-09-08**;
+> register (`docs/SOURCES-LIVE.md`). Every claim below was read out of the code on **2026-09-08** (the job domain on **2026-09-14**);
 > where a number can drift, the command that re-measures it is given instead of the number.
 
 ---
@@ -14,16 +14,17 @@
 ## 1. What the program is
 
 One PHP binary, `bin/scout`, that watches for things and pushes a notification when one of them
-matches. It runs two **domains** today:
+matches. It runs three **domains** today:
 
 | Domain | Watches | Store | Entry point |
 |---|---|---|---|
 | `--domain=rent` | rental listings in Île-de-France | `state/rent-watch.sqlite3` | `src/php/Rent/Cli/RentScout.php` |
 | `--domain=car` | used cars | `state/car-watch.sqlite3` | `src/php/Car/Cli/CarScout.php` |
+| `--domain=job` | job offers — **not deployed** (no compose service yet) | `state/job-watch.sqlite3` | `src/php/Job/Cli/JobScout.php` |
 
 `src/php/Cli/Scout.php` is the dispatcher and **never defaults** — `bin/scout doctor` without a
 domain is refused, because a defaulting dispatcher silently runs the wrong watcher. The domain
-registry is `src/php/Cli/Domains.php`; adding a third domain is one entry there.
+registry is `src/php/Cli/Domains.php`; adding another domain is one entry there.
 
 No runtime Composer dependencies. PHP 8.5, PSR-4 `Scout\` → `src/php/`, `vendor/` is 56 KB of
 generated autoloader. The test runner is PHPUnit's official PHAR at `tools/phpunit.phar`
@@ -39,11 +40,11 @@ flowchart TB
         Scout["Scout — --domain, never defaults"]
         Domains["Domains — the registry"]
         WatchLoop["WatchLoop — survives a failing pass"]
-        ChannelFactory["ChannelFactory — one place both domains build channels"]
+        ChannelFactory["ChannelFactory — one place every domain builds channels"]
     end
 
     subgraph CORE["src/php/Core — what no domain owns"]
-        Text["Text · Redact · MalformedText"]
+        Text["Text · Whitespace · Redact · MalformedText"]
         Recover["RecoverableForms — the ONE decode cascade"]
         Pacer["Pacer — the Q37 cadence"]
         Heartbeat["Heartbeat — liveness policy"]
@@ -73,28 +74,39 @@ flowchart TB
         VCli["VehiclePipeline · CarScout"]
     end
 
-    Scout --> Domains --> RCli & VCli
+    subgraph JOB["src/php/Job — the job domain, not deployed"]
+        JCore["JobClassifier · JobCriteria · JobScorer"]
+        JAdapt["JobEmailSource"]
+        JStore["JobStore"]
+        JCli["JobPipeline · JobScout"]
+    end
+
+    Scout --> Domains --> RCli & VCli & JCli
     RCli --> RCore & RAdapt & RStore & REnrich
     VCli --> VCore & VAdapt & VStore
+    JCli --> JCore & JAdapt & JStore
     RAdapt --> Http & Mail
     VAdapt --> Http & Mail
+    JAdapt --> Mail
     RCli --> Notify
     VCli --> Notify
+    JCli --> Notify
     RStore --> RunStore
     VStore --> RunStore
+    JStore --> RunStore
 ```
 
-**The split rule.** A thing lives in `Core/` when it belongs to neither domain — a portal changing
+**The split rule.** A thing lives in `Core/` when it belongs to no domain — a portal changing
 its email template is neither a housing fact nor a vehicle one, so `PatternMissLog` moved there. A
-thing lives in `Rent/` or `Car/` when it encodes that domain's judgement. Two consequences worth
+thing lives in `Rent/`, `Car/` or `Job/` when it encodes that domain's judgement. Two consequences worth
 knowing:
 
 - `Core/RunStore` (run log, health verdicts, feed silence, alert cooldowns) is **composed**, not
-  inherited, by both domain stores, on its own PDO handle, with **its own `run_meta` version table**
+  inherited, by every domain store, on its own PDO handle, with **its own `run_meta` version table**
   — it must not adopt `schema_meta`, because the rent file records `12` there and a v1 store reading
   it would refuse to open the database that produces the matches.
-- `Core/Notify/` holds every channel and transport; `Rent/Notify/Formatter.php` and
-  `Car/VehicleFormatter.php` compose the message text. Channels are shared, wording is not.
+- `Core/Notify/` holds every channel and transport; `Rent/Notify/Formatter.php`,
+  `Car/VehicleFormatter.php` and `Job/JobFormatter.php` compose the message text. Channels are shared, wording is not.
 
 ---
 
@@ -146,7 +158,8 @@ it was notified — a pass that matches nothing still marks its mail, and a refu
 reported on the banner while the pass carries on, because the listings are already on disk.
 
 The car pipeline (`Car\VehiclePipeline`) is the same shape with three stages absent: no tenure, no
-clustering across tracks, no detail hydration.
+clustering across tracks, no detail hydration. The job pipeline (`Job\JobPipeline`) is the car shape
+again, over one email source.
 
 ---
 
@@ -229,6 +242,8 @@ config/rent/criteria.local.json  gitignored — overrides field by field (commut
 config/rent/sources.json         committed — the source definitions and their field maps
 config/car/criteria.json         committed
 config/car/sources.json          committed
+config/job/criteria.json         committed
+config/job/sources.json          committed
 .env                             gitignored — every secret; .env.example is the template
 ```
 
@@ -325,13 +340,14 @@ eats the budget while a genuinely new listing is notified unhydrated.
 
 ## 7. The stores
 
-Two SQLite files, three independent version counters — the third belongs to a store both files carry.
+Three SQLite files, four independent version counters — the fourth belongs to a store every file carries.
 
 | File | Owner | Version key | Tables |
 |---|---|---|---|
 | `state/rent-watch.sqlite3` | `Rent\Store\Store` | `schema_meta` (**v12**) | `listings`, `price_history`, `listing_detail`, `commute_cache` |
 | `state/car-watch.sqlite3` | `Car\VehicleStore` | `vehicle_meta` (**v1**) | `vehicle_listings`, `vehicle_price_history` |
-| both, composed | `Core\RunStore` | `run_meta` (**v1**) | `source_runs`, `source_alerts` |
+| `state/job-watch.sqlite3` | `Job\JobStore` | `job_meta` (**v1**) | `job_listings` |
+| all three, composed | `Core\RunStore` | `run_meta` (**v1**) | `source_runs`, `source_alerts` |
 
 > Observed 2026-09-08: the car file also carries a `schema_meta` row reading `12`, left from before
 > `RunStore` was split out of the rent store on 2026-09-01. `VehicleStore` reads `vehicle_meta`, so

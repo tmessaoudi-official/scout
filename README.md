@@ -36,6 +36,10 @@ produced it. The runbook is the checklist; this is the reasoning behind it.
 
 **It runs. Eight sources are live: four institutional landlords and four private portals.**
 
+**A third domain, `scout --domain=job`, is built and NOT deployed (2026-09-14)** — one source,
+LinkedIn job alerts over IMAP, runnable from the host only until it has a compose service. See
+§ *The job domain* below.
+
 > **Corrected 2026-08-29.** This section said *six* sources and *schema v8* from 2026-08-25, and
 > listed the transit layer and classifier tier 4 as "genuinely absent" — all four claims had been
 > false since 2026-08-26, when leboncoin and PAP went live (sources #7 and #8), `src/php/Rent/Enrich/`
@@ -111,19 +115,19 @@ lists that domain's verbs.
 Everything a domain owns follows ONE scheme, so the next domain is one registry entry
 (`src/php/Cli/Domains.php`) plus its own tree:
 
-| What | rent | car | the rule |
-|---|---|---|---|
-| namespace | `Scout\Rent\…` | `Scout\Car\…` | `Scout\<Slug>\…` over a generic `Scout\Core` / `Scout\Adapters` / `Scout\Cli` |
-| CLI | `Scout\Rent\Cli\RentScout` | `Scout\Car\Cli\CarScout` | `--domain=<slug>` dispatches to it |
-| config | `config/rent/` | `config/car/` | `criteria.json` + `sources.json` (+ gitignored `criteria.local.json`) |
-| fixtures | `tests/fixtures/rent/<source>/` | `tests/fixtures/car/<source>/` | under the domain that reads them |
-| env keys | `RENT_SCOUT_DB`, `RENT_IMAP_MAILBOX`, `RENT_NTFY_TOPIC`, `RENT_HEARTBEAT_HOURS`, `RENT_FEED_SILENT_DAYS` | `CAR_*` | `<SLUG>_*`; the IMAP/SMTP account, `NTFY_SERVER`, `IMAP_SINCE_DAYS`, `IMAP_MAX_MESSAGES`, `TZ` are shared |
-| database | `state/rent-watch.sqlite3` | `state/car-watch.sqlite3` | `state/<slug>-watch.sqlite3` |
-| markers | `state/rent-heartbeat.txt`, `rent-digest.txt`, `rent-last-refusal.txt` | `state/car-heartbeat.txt`, `car-rollup.txt`, `car-last-refusal.txt` | `state/<slug>-*.txt` |
-| mailbox label | `rent-watch/portails` | `car-watch/portails` | `<slug>-watch/portails` |
-| push label | `rent-watch` | `car-watch` | `<slug>-watch` leads every subject and title |
-| ntfy topic | `rw-<32 hex>` | `cw-<32 hex>` | `<initial>w-<32 hex>`, `openssl rand -hex 16` — the topic IS the secret |
-| compose service | `rent-scout` | `car-scout` | the flag sits in the service's ENTRYPOINT, so `docker compose run --rm car-scout doctor` is a car verb |
+| What | rent | car | job | the rule |
+|---|---|---|---|---|
+| namespace | `Scout\Rent\…` | `Scout\Car\…` | `Scout\Job\…` | `Scout\<Slug>\…` over a generic `Scout\Core` / `Scout\Adapters` / `Scout\Cli` |
+| CLI | `Scout\Rent\Cli\RentScout` | `Scout\Car\Cli\CarScout` | `Scout\Job\Cli\JobScout` | `--domain=<slug>` dispatches to it |
+| config | `config/rent/` | `config/car/` | `config/job/` | `criteria.json` + `sources.json` (+ gitignored `criteria.local.json`) |
+| fixtures | `tests/fixtures/rent/<source>/` | `tests/fixtures/car/<source>/` | `tests/fixtures/job/<source>/` | under the domain that reads them |
+| env keys | `RENT_SCOUT_DB`, `RENT_IMAP_MAILBOX`, `RENT_NTFY_TOPIC`, `RENT_HEARTBEAT_HOURS`, `RENT_FEED_SILENT_DAYS` | `CAR_*` | `JOB_*` | `<SLUG>_*`; the IMAP/SMTP account, `NTFY_SERVER`, `IMAP_SINCE_DAYS`, `IMAP_MAX_MESSAGES`, `TZ` are shared |
+| database | `state/rent-watch.sqlite3` | `state/car-watch.sqlite3` | `state/job-watch.sqlite3` | `state/<slug>-watch.sqlite3` |
+| markers | `state/rent-heartbeat.txt`, `rent-digest.txt`, `rent-last-refusal.txt` | `state/car-heartbeat.txt`, `car-rollup.txt`, `car-last-refusal.txt` | `state/job-heartbeat.txt`, `job-rollup.txt`, `job-last-refusal.txt` | `state/<slug>-*.txt` |
+| mailbox label | `rent-watch/portails` | `car-watch/portails` | `job-watch/portails` | `<slug>-watch/portails` |
+| push label | `rent-watch` | `car-watch` | `job-watch` | `<slug>-watch` leads every subject and title |
+| ntfy topic | `rw-<32 hex>` | `cw-<32 hex>` | `jw-<32 hex>` | `<initial>w-<32 hex>`, `openssl rand -hex 16` — the topic IS the secret |
+| compose service | `rent-scout` | `car-scout` | **none yet** — host only until plan step 9 | the flag sits in the service's ENTRYPOINT, so `docker compose run --rm car-scout doctor` is a car verb |
 
 The generic layer is what no domain owns: `Text`, `Redact`, `Pacer`, `Heartbeat`, source health,
 the notification channels and transports, the HTTP and IMAP clients, `WatchLoop`, `ChannelFactory`.
@@ -203,7 +207,7 @@ to the same cron that runs the pass:
 
 Both are safe to run when there is nothing pending — they say so and send nothing. Every `--once`
 pass that holds a match back names the verb it is waiting for, and `doctor` says the floor is
-`--watch` only, on both domains.
+`--watch` only, on every domain.
 
 **File ownership is the one thing that bites on a first deploy.** `state/` is bind-mounted from the
 host, so it belongs to whoever created it, while the container runs as its own uid. Compose defaults
@@ -351,7 +355,7 @@ Q9 rules every channel optional and `console` always available, so the stack sta
 can and cannot reach rather than refusing to parse. A channel is turned on in **two** places and
 neither alone is enough: it is listed under `notify.channels`, and its credentials are in `.env`. A
 channel listed without its credentials is **disabled loudly** at startup (`⚠ canal ntfy désactivé :
-the ntfy topic is not set (RENT_NTFY_TOPIC or CAR_NTFY_TOPIC, per domain)…`) — never silently, because hard rule 2 counts an alert computed and never
+the ntfy topic is not set (RENT_NTFY_TOPIC)…`, naming the running domain's key — `CAR_NTFY_TOPIC` or `JOB_NTFY_TOPIC` on the others) — never silently, because hard rule 2 counts an alert computed and never
 sent as worse than no alert at all.
 
 > **⚠ `console` is not a channel, and neither is `email` over `SMTP_TRANSPORT=file`.** Both write
@@ -558,7 +562,7 @@ store records the announcement kind (`DIGEST < ROLLUP < MATCH`, monotone), so a 
 lifts a rolled-up flat over the line is pushed once, as a promotion, and a flat already pushed is
 never demoted. Remove the key to push every match individually again. Every pass says how many
 matches it held back — and names the drain that will empty it, which differs by run mode — and
-`doctor` prints the gate, the queue and the floor's `--watch` scope as `rollup :`, on both domains.
+`doctor` prints the gate, the queue and the floor's `--watch` scope as `rollup :`, on every domain.
 
 **A queued row is not always a low score.** The queue is *matched, and nobody was told* — which is
 also what a push that FAILED leaves behind, and on a deployment with no gate configured it is the
@@ -743,6 +747,33 @@ stored matches: about one in four arrives individually) waits in the store; `rol
 queue on demand, and under `--watch` a daily floor at `notify.rollup_hour` (8, local `TZ`) drains
 it, marking on delivery only — the marker `state/car-rollup.txt` is written after the channel
 confirms, so a refused send leaves the window open. `doctor` prints the queue as `rollup :`.
+
+## The job domain — `scout --domain=job`
+
+**Built 2026-09-13 → 09-14 and NOT deployed: there is no `job-scout` compose service yet**, so it runs
+from the host only. The plan, and what is still open, is
+[`docs/plans/job-domain.plan.md`](docs/plans/job-domain.plan.md).
+
+It watches job offers on its own database (`state/job-watch.sqlite3`), config (`config/job/`),
+heartbeat marker and push topic (`JOB_NTFY_TOPIC`), over the same generic machinery as the other
+two. Its one source is **LinkedIn's job alert email**, read from the message's HTML part: a card
+starts at a `/jobs/view/<id>/` link, and that id is the offer's identity.
+
+- **Hard disqualifiers H1–H8, and six score components**: stack 25 · pay 20 · level 15 · green
+  signals 15 · remote 15 · freshness 10. There is no §1 here — what the domain rejects is an offer
+  the user does not want, not one they cannot take.
+- **A LinkedIn card carries no date**, so freshness is unscored on every offer: the reachable score
+  is 90, and 70 on a card that states no pay — which is most of them.
+- **No `push_min_score` ships**, so every match is pushed individually and `rollup` only retries
+  pushes that failed.
+- The source's stated costs are in [`docs/SOURCES-LIVE.md`](docs/SOURCES-LIVE.md) § Job.
+
+```bash
+JOB_SCOUT_DB=$(mktemp -u) MAILBOX_DIR=tests/fixtures/job/linkedin php bin/scout --domain=job doctor --source=linkedin   # offline: 16 offres, ok
+php bin/scout --domain=job run --once --seed      # mandatory before --watch
+php bin/scout --domain=job rollup [--dry-run]     # the "vérifié, score bas" rollup, on demand
+php bin/scout --domain=job test-notify            # exits 2 while console is the only channel
+```
 
 ## Legal posture
 

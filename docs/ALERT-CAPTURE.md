@@ -3,6 +3,9 @@
 > **Why this file exists.** Six saved-search alerts are live across two domains and **not one of
 > their payloads has been read**. Every source in this project is built against a real message, never
 > against a guess, and that is not caution — it is a measured price.
+>
+> *That premise is dated: it was written when six alerts across the rent and car domains were live.
+> A seventh — LinkedIn, the job domain's first — was captured and read on 2026-09-13 (checklist).*
 
 ## The four times this repo paid for writing config blind
 
@@ -93,8 +96,8 @@ Three things to know before using it:
   neither docs nor test for its first weeks, which is what this section closes.
 - **The FOLDER argument matters and defaults to `INBOX`.** An alert routed to a Gmail label has been
   archived out of the inbox, so a search there finds nothing and reports `aucun message` — which
-  reads exactly like a portal that has sent nothing. `IMAP_MAILBOX` / `CAR_IMAP_MAILBOX` in `.env`
-  name the folders the sources themselves read.
+  reads exactly like a portal that has sent nothing. `RENT_IMAP_MAILBOX` / `CAR_IMAP_MAILBOX` /
+  `JOB_IMAP_MAILBOX` in `.env` name the folders the sources themselves read.
 
 ---
 
@@ -210,6 +213,7 @@ nothing errors, the source simply looks like a quiet market.
 - [ ] **leboncoin `vous propose`** — `From:` header first, then capture
 - [x] **ParuVendu** — read 2026-08-28. **The search name is NOT in the subject** — it carries the CRITERIA instead (`🚗 25 nouvelles annonces - Voiture d'occasion / Jusqu'à 30 000 € / A partir de 2019 / Jusqu'à 100 000 km`), so the filter falls back to the sender `info@paruvendu.fr` — which serves the RENT alert too, and the rent alert is currently landing in the car label because of it
 - [x] **Agorastore** — captured and read 2026-08-28. **Vehicles only** (`Votre recherche : Voiture`), so no scoping work is needed. But zero prices and zero closing times — same rule-2 refusal as Alcopa — but for the EMAIL ROUTE ONLY: its API host api.auctelia.com is open, so a hydration route could still supply the closing time. It does carry real lot references
+- [x] **LinkedIn** (job domain) — captured 2026-09-13 (n=3): cards read from the HTML part, scrubbed into `tests/fixtures/job/linkedin/`
 - [x] **Autohero** — captured 2026-08-29 (n=2): one car per message, subject names it. Raw in `var/claude/captures/car-watch-portails/`, not yet scrubbed into `tests/fixtures/`
 - [ ] **ParuVendu RENT → car label** — still misrouted on 2026-08-29 (07:30 on the 28th AND the 29th, n=3). The mechanism is ruled (filter on the saved-search NAME, which the subject does not carry — so on the RENT subject `🏠 Nouvelles annonces location` instead); the Gmail filter is an operator action and is not written
 - [ ] **AutoScout24** — no alert has fired as of 2026-08-29; only the confirmation (27 Aug) and a newsletter from a different sender (`mails.autoscout24.fr`). Worth one look at the saved search's frequency setting (Part D rule 2)

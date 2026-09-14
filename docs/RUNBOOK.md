@@ -8,7 +8,10 @@
 > restating it, because a second copy of a rationale is a copy that drifts.
 >
 > Verified against the code on **2026-09-08**: verbs and flags read out of `Rent\Cli\RentScout` and
-> `Car\Cli\CarScout`, env keys out of `.env.example`.
+> `Car\Cli\CarScout`, env keys out of `.env.example`. The job verbs were verified on **2026-09-14**
+> against a throwaway database and the frozen LinkedIn fixtures: `help`, `doctor`, `dump`,
+> `run --once`, `run --once --seed`, `run --watch` (bounded by `SCOUT_MAX_PASSES=1`),
+> `rollup --dry-run` and `test-notify`.
 
 ---
 
@@ -24,6 +27,9 @@ Confusing these is the commonest first-hour mistake.
 `docker compose run --rm car-scout doctor` is the car one. Passing `--domain=` through compose is
 redundant, and putting the flag in `command:` instead of `entrypoint:` is how the first deploy ran
 the *rent* doctor from the car service.
+
+**The job domain has no compose service yet** (`docs/plans/job-domain.plan.md` step 9), so it has
+only the host shape: `bin/scout --domain=job doctor`.
 
 ---
 
@@ -54,7 +60,7 @@ cp .env.example .env && $EDITOR .env
 | Key | What it is |
 |---|---|
 | `RENT_SCOUT_DB` | the seen-set. Default `state/rent-watch.sqlite3`. **Not** under `var/` — that tree is documented as scratch someone may delete. |
-| `IMAP_HOST` `IMAP_PORT` `IMAP_USER` `IMAP_PASSWORD` | the alert mailbox. Account-level, shared by both domains. |
+| `IMAP_HOST` `IMAP_PORT` `IMAP_USER` `IMAP_PASSWORD` | the alert mailbox. Account-level, shared by every domain. |
 | `RENT_IMAP_MAILBOX` | the folder/label the rent alerts are filed under. **A dedicated label, not `INBOX`** — a run marks the mail it claimed `\Seen`. |
 | one push channel | `RENT_NTFY_TOPIC` (+ `NTFY_SERVER`), **or** the `SMTP_*` set. Without one, nothing ever reaches you. |
 | `TZ` | e.g. `Europe/Paris`. The daily floors are computed in it. |
@@ -67,6 +73,9 @@ cp .env.example .env && $EDITOR .env
 **For the car domain**, uncomment: `CAR_SCOUT_DB` · `CAR_IMAP_MAILBOX` · `CAR_NTFY_TOPIC` ·
 `CAR_HEARTBEAT_HOURS` · `CAR_FEED_SILENT_DAYS`.
 
+**For the job domain**, uncomment: `JOB_SCOUT_DB` · `JOB_IMAP_MAILBOX` · `JOB_NTFY_TOPIC` ·
+`JOB_HEARTBEAT_HOURS` · `JOB_FEED_SILENT_DAYS`.
+
 > ⚠ **Two `.env` traps, both silent.**
 > **(a)** `Config\DotEnv` applies the **first** occurrence of a key and skips every later one, and an
 > empty string counts as set — so appending `IDFM_API_KEY=…` to a template line that is already there
@@ -76,7 +85,7 @@ cp .env.example .env && $EDITOR .env
 > `HEARTBEAT_HOURS`, `FEED_SILENT_DAYS`) are **refused at startup**, naming their successor. That is
 > deliberate: a silently accepted alias keeps both spellings valid for ever.
 
-Then tune what a good result is — `config/rent/criteria.json` and `config/car/criteria.json`, or a
+Then tune what a good result is — `config/rent/criteria.json`, `config/car/criteria.json` and `config/job/criteria.json`, or a
 gitignored `criteria.local.json` beside either, which overrides **field by field**. Commute scoring
 lives only in the local file, because it needs a personal address.
 
@@ -180,6 +189,19 @@ classifier-version column that does not exist.
 There is no `digest` and no `reclassify` on the car side: no tenure means no doubt bin, and no
 persisted classification to re-judge.
 
+### `--domain=job` — host only, no compose service yet
+
+| Command | Does |
+|---|---|
+| `doctor` | per-source state, seen-set, channels, and the criteria in one line |
+| `dump <source>` | the first offer read + its reading + its verdict |
+| `run --once [-v]` / `run --once --seed` / `run --watch [-v]` | as above; the heartbeat marker is `state/job-heartbeat.txt` |
+| `rollup [--dry-run]` | emits the pending *« vérifié, score bas »* rollup. No `push_min_score` ships, so that queue holds only pushes that failed |
+| `test-notify` | proves the job channel. **Exit 2** while `console` is the only channel |
+
+**Flags:** `--source=<name>` (repeatable; limits a run, and force-runs a disabled source) ·
+`--verbose` / `-v` · `--dry-run` on `rollup`. No `digest` and no `reclassify`, for the car's reason.
+
 ### `reclassify --reopen=<dedup_key>` — the one way back
 
 A durably-excluded row has exactly one repair route. `--reopen` prints where the exclusion came from
@@ -238,6 +260,7 @@ swallowed silently.
 ```bash
 tools/backup-state.sh                       # → state/backups/rent-watch.<stamp>.sqlite3
 tools/backup-state.sh state/car-watch.sqlite3
+tools/backup-state.sh state/job-watch.sqlite3
 ```
 
 **Do not use `cp`, and the reason is silent.** The watcher holds the database open in WAL, so a byte

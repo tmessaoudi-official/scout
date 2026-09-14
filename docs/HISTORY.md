@@ -12,7 +12,8 @@
 
 ## The arc in one paragraph
 
-A Python prototype and a written brief became, in five weeks, a two-domain watcher with fourteen live
+By 2026-09-08 — before the third, job domain of Week 6 below — a Python prototype and a written brief
+had become, in five weeks, a two-domain watcher with fourteen live
 sources, a fail-closed French housing-tenure classifier, a SQLite state layer at rent schema
 v12 across two databases, transit-time scoring against a live public API, a sharded nightly sabotage ledger that proves the
 tests would *notice* a regression, and a Dockerised deployment with its own liveness beat. The shape
@@ -72,6 +73,16 @@ figures. No default can supply those.
 | 09-05 | A processed alert email is marked `\Seen`, after the store recorded it and by a `run` pass only. **CapCar #4, La Centrale #5, Agorastore #6** — content-addressed identity, labelled-block cards, and the first auction. `reclassify --reopen`. **The push gate**: a match under the line waits for the rollup. The sabotage ledger sharded six ways. |
 | 09-06 → 09-07 | **§1 collapses into one gate.** A certification panel ran three rounds against the four-routes × three-surfaces matrix and found 9, then 8, then 17 defects — *in every round the majority were in the previous round's fixes*. `SectionOneGate` reads all four routes fresh at the last moment before every send, and two reflection-driven guards make an unguarded surface fail the suite rather than ship. |
 | 09-07 | The health-alert flap: a single failed run had counted as a broken source, costing 77 flap emails in four days. A failed run's zero is now *unknown*, not *zero listings*. |
+
+## Week 6 — a third domain (2026-09-13 → 09-14)
+
+> The rent and car commits of 09-08 → 09-12 are not re-derived here yet; this section covers the job
+> domain only.
+
+| Date | Landed |
+|---|---|
+| 09-13 | **The job domain**, `--domain=job`: the registry entry first, with every unbuilt verb refusing by name. The offer model and its snapshot; the classifier and the criteria; **the verdict** — H1–H8 reject, six components score. The store, composing `RunStore`. **LinkedIn as source #1**, its cards read from the alert's HTML part. |
+| 09-14 | The pipeline, the formatter and the `JobScout` CLI. Every step's mutation runs ported into the sabotage ledger. **Not deployed** — no compose service yet. |
 
 ---
 

@@ -1,4 +1,4 @@
-# The live source register — both domains
+# The live source register — every domain
 
 > **What this file is.** What is *enabled and polling today*, per domain: how each source is read,
 > how a listing on it is identified, what it costs, and what it is known **not** to be able to tell
@@ -112,6 +112,27 @@ state neither year nor mileage, and the reference already supplies the evidence 
 
 ---
 
+## Job — one enabled source, not deployed
+
+**Enabled and polled by nothing.** `config/job/sources.json` enables it, but there is no `job-scout`
+compose service until step 9 of [`docs/plans/job-domain.plan.md`](plans/job-domain.plan.md), so the
+figures below come from the frozen captures, dated **2026-09-14**, and not from a live store. There
+is no §1 here: an offer is rejected because the user does not want it, not because they cannot take
+it.
+
+| # | Source | Kind | Adapter | Identity | Pay basis | Rows on record |
+|---|---|---|---|---|---|---|
+| 1 | **linkedin** | portal | `email_alert` (`JobEmailSource`), the HTML part | link — the job id in `/jobs/view/<id>/` | annual gross or a daily rate, when the card states one | 0 — not deployed |
+
+Offline, `bin/scout --domain=job doctor --source=linkedin` over `tests/fixtures/job/linkedin/`
+reads **16 offers, `ok`** (three captures).
+
+| Source | Stated cost |
+|---|---|
+| **linkedin** | **No date on the card**, so freshness is unscored on every offer and the reachable score is 90 — **70** on a card stating no pay. **Pay is stated on 7 of 115 measured cards**, which is why `pay_pattern` is not counted as a miss. Nothing before the first card is read, because the preheader quotes the subscriber's own pay filter. A card ends at the next distinct job id, and the message at `Voir toutes les offres`; **if LinkedIn drops a card's logo link, `place_pattern` misses on every card** — counted, so it escalates. A message with **no HTML part** counts misses that escalate only when every claimed message in the pass does, so one such message among normal ones is silent (untested). Monthly pay shapes — the unit before the figure, a leading `€`, a 13th month — are unread and fail safe. |
+
+---
+
 ## The two rules that decide whether a source is worth adding
 
 Learned the expensive way; both are in [`docs/SOURCES.md`](SOURCES.md) with their measurements.
@@ -144,10 +165,13 @@ sqlite3 "file:state/rent-watch.sqlite3?mode=ro" \
   "SELECT source, COUNT(*), SUM(notified_at IS NOT NULL) FROM listings GROUP BY source ORDER BY 2 DESC;"
 sqlite3 "file:state/car-watch.sqlite3?mode=ro" \
   "SELECT source, COUNT(*), SUM(notified_at IS NOT NULL) FROM vehicle_listings GROUP BY source ORDER BY 2 DESC;"
+sqlite3 "file:state/job-watch.sqlite3?mode=ro" \
+  "SELECT source, COUNT(*), SUM(notified_at IS NOT NULL) FROM job_listings GROUP BY source ORDER BY 2 DESC;"
 
 # what each says about itself right now — NOTE: this polls, and writes a run into the baseline
 bin/scout --domain=rent doctor
 bin/scout --domain=car  doctor
+bin/scout --domain=job  doctor
 ```
 
 > ⚠ **A fixture-backed `doctor` writes a run into the live store.** `MAILBOX_DIR=` swaps the mailbox;
@@ -158,9 +182,11 @@ bin/scout --domain=car  doctor
 > ```bash
 > RENT_SCOUT_DB=$(mktemp -u) MAILBOX_DIR=tests/fixtures/rent/pap \
 >   bin/scout --domain=rent doctor --source=pap
+> JOB_SCOUT_DB=$(mktemp -u) MAILBOX_DIR=tests/fixtures/job/linkedin \
+>   bin/scout --domain=job doctor --source=linkedin
 > ```
 
 To add a source, use the `/add-source` skill: it walks live-endpoint discovery, field-map building,
 fixture capture, tenure labelling and the health baseline, so that adding one stays **config-only**.
-`src/php/Adapters/sites/` is the bespoke-adapter fallback — **it does not exist**, because fourteen
+`src/php/Adapters/sites/` is the bespoke-adapter fallback — **it does not exist**, because fifteen
 sources have been onboarded and none has needed it. Having to create it is itself the finding.
