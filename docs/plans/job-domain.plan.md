@@ -49,6 +49,11 @@ plan below is approved.
 - [2026-09-14 13:19] AGREED: the deployed job watcher pushes individually at `push_min_score` 40 and drains the rest in a daily rollup at 09:00 (`rollup_hour` 9), both set in the gitignored `config/job/criteria.local.json` beside the ntfy and email channels.
 - [2026-09-14 13:19] AGREED: the live reject of `Architecte Php` as `intitulé hors métier` is recorded as a known issue and fixed as a follow-up step with a failing test first; it does not block the deploy.
 - [2026-09-14 13:29] NOTED: step 9's Files cell widened from `compose.yaml` to the Dockerfile, CLAUDE.md, README.md, docs/**, .env.example and tools/verify-deploy.sh, because the deploy made every "not deployed / no compose service / both watchers" claim false and the Dockerfile header had to change before the image build; the step landed as `ac76abd` (service), `7c79cb9` (rulings) and `c5be0df` (docs), and `c5be0df` is cited as the evidence because it touches the widened cell — a scoping record, not a ruling.
+- [2026-09-14 13:56] AGREED: an architect title passes the H5 role gate when it names a stack word the criteria already score (`Architecte Php`, `Architect Java`, `Architecte .NET`); an architect naming no stack (`d'intérieur`, `réseau`, `cloud`) stays rejected, and the stated cost is that a new stack word must be added to both `stack` and `role_words`.
+- [2026-09-14 13:56] NOTED: the architect rule is written for both word orders (`PHP Architect` too), because the ruling's discriminator is the stack word and "followed by" described the live title rather than scoping the order; the 93-row store holds no reversed title today.
+- [2026-09-14 13:56] AGREED: `member of technical staff` is a role word, so `Senior Member of Technical Staff, Multimodal AI` (`linkedin:4272080636`) passes the gate.
+- [2026-09-14 13:56] AGREED: `Low-Code Product Builder H/F` (`linkedin:4394433858`) is a correct title reject and is pinned as a must-reject case beside the architect counterweights.
+- [2026-09-14 13:56] NOTED: the two pay-floor rejects of the same first pass were re-judged from their stored rows and are correct; nothing changes for them.
 
 ## Evidence gathered (2026-09-13)
 - `Cli/Domains::all()` is the registry — a new domain is one entry plus `Scout\<Slug>\`, `config/<slug>/` and `<SLUG>_*` keys.
@@ -465,10 +470,20 @@ after a rollback is harmless; reverting its commit removes it.
   not move. Step 6 shipped no `push_min_score`, so it was not settled there; settle it when the gate is
   calibrated from real rows: award the share when no group is configured. **The gate WAS calibrated
   on 2026-09-14 — at 40, on live scores whose green component is 0 for every offer.** Awarding the
-  share lifts every score by 15 and puts 40 near the median, loosening the gate about fivefold, so
-  fixing green must re-rule `push_min_score` in the same step.
-- The title filter rejected a live LinkedIn offer titled `Architecte Php` (`linkedin:4465457633`) as
-  `intitulé hors métier` on 2026-09-14 — most likely an over-rejection, and a silent one: a reject is
-  logged only, so the offer never reaches the user. Ruled 2026-09-14 13:19: fixed as a follow-up
-  step, failing test first; the other two title rejects of that pass (`Senior Member of Technical
-  Staff, Multimodal AI`, `Low-Code Product Builder H/F`) get checked in the same step.
+  share lifts every score by 15 — measured 2026-09-14 over the 88 stored matches, 31 would clear 40
+  instead of 12, about 2.6 times as many individual pushes — so fixing green must re-rule
+  `push_min_score` in the same step.
+- RESOLVED (step 10, 2026-09-14): the title filter rejected the live LinkedIn offer `Architecte Php`
+  (`linkedin:4465457633`) as `intitulé hors métier`, silently, since a reject is logged only. Two role
+  words fix it — an architect beside a scored stack word, either order, and `member of technical
+  staff` — and `JobCriteriaTest` pins the must-pass titles beside the must-reject counterweights
+  (`Architecte d'intérieur`, `réseau`, `cloud`, `DPLG`, `Low-Code Product Builder H/F`). Over all 93
+  stored titles the gate changes for exactly two, and none is lost. **Stated cost:** the seed marked
+  every stored row as notified (`notified_as = MATCH`), so the two admitted offers are re-judged as
+  matches on the next pass and never pushed; only offers first seen after the restart benefit.
+- `JobScoutTest` reads `config/job/` from the repo root, and so reads the gitignored
+  `criteria.local.json` too. On the deploy machine, whose override sets `push_min_score: 40`, three of
+  its no-gate tests go red (1 push against 15). CI and a clean clone have no override and stay green.
+  Measured 2026-09-14 in a clean worktree: 29/29 without the override, the same 3 failures with it
+  copied in. It is a test-isolation gap, not a product defect: the tests should copy the shipped
+  config into their temp root, the way the gate tests already do. OPEN.

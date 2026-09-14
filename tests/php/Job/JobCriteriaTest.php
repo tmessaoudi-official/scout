@@ -89,6 +89,24 @@ final class JobCriteriaTest extends TestCase
         self::assertTrue($c->passesRoleGate(''), 'an empty title was not read: the gate cannot reject on it');
     }
 
+    /**
+     * Two live LinkedIn titles the gate rejected as `intitulé hors métier` on the first deployed pass
+     * (job store, 2026-09-14), ruled developer roles the same day: an architect NAMING a scored stack
+     * word, in either word order, and the AI labs' engineer title. The counterweight is the ruled
+     * boundary — an architect naming no stack is a building, network or cloud role, and the low-code
+     * builder from that same pass is not a developer role.
+     */
+    public function testTheRoleGateAcceptsAStackArchitectAndAMemberOfTechnicalStaffOnly(): void
+    {
+        $c = self::shipped();
+        foreach (['Architecte Php', 'Architecte Symfony', 'Architect Java', 'Architecte .NET', 'PHP Architect', 'Senior Member of Technical Staff, Multimodal AI'] as $title) {
+            self::assertTrue($c->passesRoleGate($title), 'the role gate rejects a ruled developer title: ' . $title);
+        }
+        foreach (['Architecte d\'intérieur', 'Architecte réseau', 'Architecte cloud', 'Architecte DPLG', 'Low-Code Product Builder H/F'] as $title) {
+            self::assertFalse($c->passesRoleGate($title), 'the role gate admits a title outside the ruled boundary: ' . $title);
+        }
+    }
+
     /** @return iterable<string, array{string, ?string}> */
     public static function titleRejects(): iterable
     {
