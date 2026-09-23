@@ -54,6 +54,8 @@ plan below is approved.
 - [2026-09-14 13:56] AGREED: `member of technical staff` is a role word, so `Senior Member of Technical Staff, Multimodal AI` (`linkedin:4272080636`) passes the gate.
 - [2026-09-14 13:56] AGREED: `Low-Code Product Builder H/F` (`linkedin:4394433858`) is a correct title reject and is pinned as a must-reject case beside the architect counterweights.
 - [2026-09-14 13:56] NOTED: the two pay-floor rejects of the same first pass were re-judged from their stored rows and are correct; nothing changes for them.
+- [2026-09-23 15:37] AGREED: next job sources, in order — Free-Work saved-search alert, then Welcome to the Jungle alert, then a re-measure of the job score weights on the week of real rows; France Travail, company ATS boards, Apec, HelloWork and Indeed are deferred.
+- [2026-09-23 15:37] NOTED: the job domain keys offers on each source's own id and has no cross-source matching, so the second source must ship with it (company + normalised title + commune), or an offer seen on two sources is pushed twice.
 
 ## Evidence gathered (2026-09-13)
 - `Cli/Domains::all()` is the registry — a new domain is one entry plus `Scout\<Slug>\`, `config/<slug>/` and `<SLUG>_*` keys.
