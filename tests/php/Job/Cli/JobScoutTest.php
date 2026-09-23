@@ -506,7 +506,7 @@ final class JobScoutTest extends TestCase
         self::assertIsResource($out);
         self::assertIsResource($err);
 
-        $code = (new Scout($root ?? self::ROOT, $out, $err, self::NOW, null, $channel === null ? null : new Notifier([$channel])))->run($argv);
+        $code = (new Scout($root ?? $this->shippedRoot(), $out, $err, self::NOW, null, $channel === null ? null : new Notifier([$channel])))->run($argv);
 
         rewind($out);
         rewind($err);
@@ -558,6 +558,27 @@ final class JobScoutTest extends TestCase
         $store->recordVerdict($key, JobVerdict::matched($storedScore, ['jugée avant ce changement']), $offer);
 
         return $key;
+    }
+
+    /**
+     * A private root carrying the SHIPPED config and nothing else — the default for every run.
+     *
+     * The repo root also carries the developer's gitignored `config/job/criteria.local.json`, and
+     * the loader applies it: with the deployed `push_min_score: 40` present, three push-count tests
+     * went red on that machine alone (1 pushed of 15) while CI, which has no such file, stayed
+     * green. A test must assert the shipped criteria, never whatever one checkout overrides them
+     * with — the rent CLI tests learned the same thing at `test-notify`.
+     */
+    private function shippedRoot(): string
+    {
+        $root = sys_get_temp_dir() . '/scout-job-root-' . bin2hex(random_bytes(4));
+        mkdir($root . '/config/job', 0o777, true);
+        foreach (['criteria.json', 'sources.json'] as $f) {
+            copy(self::ROOT . '/config/job/' . $f, $root . '/config/job/' . $f);
+        }
+        $this->tempRoots[] = $root;
+
+        return $root;
     }
 
     /** A private root carrying the SHIPPED config with one key overridden, through the loader's own local-override mechanism. */
