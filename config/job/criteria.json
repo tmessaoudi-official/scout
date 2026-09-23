@@ -1,6 +1,6 @@
 {
   "_comment": "The job domain's criteria — the rulings of 2026-09-13 in docs/plans/job-domain.plan.md. Every rule here is movable: the one eligibility rule is a switch, and nothing is a non-overridable set. Patterns are regex fragments applied with ~…~u to FOLDED text (lowercase, accents stripped, U+00A0 as a space). A gitignored criteria.local.json beside this file overrides field by field. Unknown keys are refused.",
-  "_role_words": "H5 — the MANDATORY filter is a TITLE role gate: a title that was read and matches none of these is rejected; an empty title never is. Stems where French inflects (`developpeu` covers développeur, développeuse, développeur.euse, développeur(se)), because a gate that misses a feminine or inclusive form rejects a real offer in silence. Every one of the 57 distinct titles in the 20 LinkedIn captures passes (JobCriteriaTest). An architect passes only when a stack word the criteria score sits next to it, in either order (`Architecte Php`, `PHP Architect`) — an architect naming no stack is a building, network or cloud role — so a stack word added to `stack` must be added to both architect entries too. `member of technical staff` is the AI labs' engineer title. Both were live over-rejections on 2026-09-14. An EMPTY list is refused at load.",
+  "_role_words": "H5 — the MANDATORY filter is a TITLE role gate: a title that was read and matches none of these is rejected; an empty title never is. Stems where French inflects (`developpeu` covers développeur, développeuse, développeur.euse, développeur(se)), because a gate that misses a feminine or inclusive form rejects a real offer in silence. Every one of the 57 distinct titles in the 20 LinkedIn captures passes (JobCriteriaTest). An architect passes only when a stack word the criteria score sits next to it, in either order (`Architecte Php`, `PHP Architect`) — an architect naming no stack is a building, network or cloud role — so a stack word added to `stack` must be added to both architect entries too. `member of technical staff` is the AI labs' engineer title. Both were live over-rejections on 2026-09-14. Engineering management (engineering manager, head/VP of engineering, directeur/responsable technique) and DevOps/SRE were ruled wanted on 2026-09-23 when the portal alerts went broad — each word is QUALIFIED, never a bare `manager`, `head` or `responsable`, and `responsable technique` is the one that also admits a building-maintenance title, which the stack component then scores 0. An EMPTY list is refused at load.",
   "role_words": [
     "\\bdeveloppeu",
     "\\bdevelopers?\\b",
@@ -19,7 +19,15 @@
     "\\bcto\\b",
     "\\barchitect(?:e|es|s)?[ ]+(?:php|symfony|laravel|java(?:script)?|typescript|node(?:\\.?js)?|nest(?:js)?|react|angular|vue(?:\\.?js)?|python|\\.net|dotnet|golang|kotlin)\\b",
     "(?<![a-z0-9.])(?:php|symfony|laravel|java(?:script)?|typescript|node(?:\\.?js)?|nest(?:js)?|react|angular|vue(?:\\.?js)?|python|\\.net|dotnet|golang|kotlin)[ ]+architect(?:e|es|s)?\\b",
-    "\\bmembers? of (?:the )?technical staff\\b"
+    "\\bmembers? of (?:the )?technical staff\\b",
+    "\\bengineering managers?\\b",
+    "\\bhead of (?:engineering|software|development|tech(?:nology)?)\\b",
+    "\\b(?:vp|vice[- ]president) (?:of )?engineering\\b",
+    "\\bdirect(?:eur|rice)s? techniques?\\b",
+    "\\bresponsables? (?:techniques?|du developpement|des developpements)\\b",
+    "\\bdevops\\b",
+    "\\bsre\\b",
+    "\\bsite reliability\\b"
   ],
   "_title_rejects": "H6, plus H4's business-developer family — title words that REJECT even though the role gate passed (`Business Developer` contains `developer`, `Data Engineer` contains `engineer`). The first label that fires names the rejection. DevOps is deliberately absent: a developer role asking for some DevOps is wanted (ruled). `apprentissage automatique` is machine learning, so it is a DATA reject and never an alternance one.",
   "title_rejects": {

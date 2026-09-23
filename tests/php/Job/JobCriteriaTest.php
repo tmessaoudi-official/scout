@@ -107,6 +107,28 @@ final class JobCriteriaTest extends TestCase
         }
     }
 
+    /**
+     * The broad portal alerts of 2026-09-23 bring engineering-management and DevOps/SRE titles, ruled
+     * wanted that day: `\bengineers?\b` does not match `engineering`, and a bare `DevOps` or `SRE`
+     * names neither a developer nor an engineer, so each of these was rejected as `intitulé hors
+     * métier` in silence. The counterweight is a manager, a head, a director and a responsable of
+     * something that is NOT engineering — the new words are qualified, never bare `manager`/`head`.
+     */
+    public function testTheRoleGateAcceptsEngineeringManagementAndDevOpsTitles(): void
+    {
+        $c = self::shipped();
+        foreach ([
+            'Engineering Manager', 'Senior Engineering Manager (H/F)', 'Head of Engineering', 'VP Engineering',
+            'VP of Engineering', 'Directeur technique', 'Directrice Technique H/F', 'Responsable technique',
+            'Responsable du développement', 'DevOps Senior', 'DevOps (H/F)', 'SRE', 'Site Reliability', 'Platform Engineer',
+        ] as $title) {
+            self::assertTrue($c->passesRoleGate($title), 'the role gate rejects a ruled title: ' . $title);
+        }
+        foreach (['Office Manager', 'Head of Sales', 'Directeur commercial', 'Responsable RH', 'Manager de rayon', 'VP Marketing'] as $title) {
+            self::assertFalse($c->passesRoleGate($title), 'the role gate admits a title outside the ruled boundary: ' . $title);
+        }
+    }
+
     /** @return iterable<string, array{string, ?string}> */
     public static function titleRejects(): iterable
     {
