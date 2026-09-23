@@ -408,6 +408,7 @@ after a rollback is harmless; reverting its commit removes it.
 | 7 | Sabotage ledger cases | M | done | 53c7969 | tests/sabotage-check.sh tests/php/Job/Cli/JobScoutTest.php |
 | 8 | Docs | M | done | 9eee7fa | CLAUDE.md README.md docs/** |
 | 9 | Deploy + first live pass | M | done | c5be0df | compose.yaml Dockerfile CLAUDE.md README.md docs/** .env.example tools/verify-deploy.sh |
+| 10 | Title gate: stack architect + member of technical staff (live over-rejection) | S | done | aeb40c2 | config/job/criteria.json tests/php/Job/JobCriteriaTest.php docs/plans/job-domain.plan.md |
 <!-- /progress-block -->
 ### Blocked
 ### Needs input
