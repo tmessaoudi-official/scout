@@ -58,7 +58,7 @@ plan below is approved.
 - [2026-09-23 15:37] NOTED: the job domain keys offers on each source's own id and has no cross-source matching, so the second source must ship with it (company + normalised title + commune), or an offer seen on two sources is pushed twice.
 - [2026-09-23 21:59] AGREED: portal alerts are BROAD and scout does the sorting — four role families (dev, lead/management, architecture, DevOps/SRE), any stack, Île-de-France or remote, CDI + freelance, no salary filter; LinkedIn, Free-Work and WTTJ feed `job-watch/portails`, while HelloWork and Apec alerts are created now but routed to a separate parked label that no source reads, so real captures build up before their readers are built.
 - [2026-09-23 21:59] AGREED: widen `role_words` (test-first) so the management and DevOps/SRE titles the new alerts bring are not rejected in silence — engineering manager, head/VP of engineering, directeur/responsable technique, devops, sre, platform engineer; a bare architect stays rejected as ruled 2026-09-14.
-- [2026-09-23 22:39] NOTED: portal alerts set up in the developer's browser — LinkedIn 5 broad keyword alerts (4 Île-de-France families + 1 France remote; two older narrow ones kept), Free-Work 4 (Île-de-France, CDI + freelance), HelloWork 4 parked (`scout - Dev/Lead/Management/Architecture/DevOps/SRE IDF`, CDI + indépendant + freelance, 3 job titles each from HelloWork's own list — no boolean keywords there). WTTJ alerts are SUSPENDED site-wide ("your alerts are getting a makeover"), so WTTJ cannot be source #3 until they return; Apec is not set up: the browser extension holds no action permission on apec.fr (reads worked, clicks and screenshots were refused — the extension, not the site); the developer already has one Apec saved search, `Ingénieur développement`.
+- [2026-09-23 22:39] NOTED: portal alerts set up in the developer's browser — LinkedIn 5 broad keyword alerts (4 Île-de-France families + 1 France remote; two older narrow ones kept), Free-Work 4 (Île-de-France, CDI + freelance), HelloWork 4 parked (`scout - Dev/Lead/Management/Architecture/DevOps/SRE IDF`, CDI + indépendant + freelance, 3 job titles each from HelloWork's own list — no boolean keywords there). WTTJ alerts are SUSPENDED site-wide ("your alerts are getting a makeover"), so WTTJ cannot be source #3 until they return; Apec 4 parked (`scout - Dev/Lead/Management/Architecture/DevOps/SRE IDF`, Île-de-France, no contract filter — Apec is mostly CDI, and its keyword field takes `OR`: `développeur OR devops` returned 1 963 against 1 259 and 1 020 alone), beside the developer's older `Ingénieur développement` search — Apec caps an account at FIVE searches, so all five slots are used. A first attempt at Apec failed with a per-domain permission error that turned out to be a transient extension glitch, not a restriction.
 
 ## Evidence gathered (2026-09-13)
 - `Cli/Domains::all()` is the registry — a new domain is one entry plus `Scout\<Slug>\`, `config/<slug>/` and `<SLUG>_*` keys.
@@ -415,11 +415,12 @@ after a rollback is harmless; reverting its commit removes it.
 | 9 | Deploy + first live pass | M | done | c5be0df | compose.yaml Dockerfile CLAUDE.md README.md docs/** .env.example tools/verify-deploy.sh |
 | 10 | Title gate: stack architect + member of technical staff (live over-rejection) | S | done | aeb40c2 | config/job/criteria.json tests/php/Job/JobCriteriaTest.php docs/plans/job-domain.plan.md |
 | 11 | Title gate: engineering management + DevOps/SRE (broad alerts, ruled 2026-09-23) | S | done | c102458 | config/job/criteria.json tests/php/Job/JobCriteriaTest.php docs/plans/job-domain.plan.md |
+| 12 | JobScoutTest runs on a shipped-config temp root, never the checkout's gitignored criteria.local.json | S | done | 2e3d632 | tests/php/Job/Cli/JobScoutTest.php |
 <!-- /progress-block -->
 ### Blocked
 - WTTJ as a source: its saved-search alerts are suspended site-wide (checked 2026-09-23); re-check `welcometothejungle.com/fr/me/alerts`.
 ### Needs input
-- Gmail: add the Free-Work sender to the `job-watch/portails` filter once its first alert shows the address; a separate parked label + filter for HelloWork (and Apec).
+- Gmail: add the Free-Work sender to the `job-watch/portails` filter once its first alert shows the address; a separate parked label + filter for HelloWork and Apec.
 - Slice 2: job-alert subscriptions on WTTJ, APEC, HelloWork, Free-Work and Indeed, into `job-watch/portails`.
 ### Needs research
 - Keyword list widening (Java/Spring, Vue.js, …) — seeded in step 3 from `var/claude/jobs/criteria-research.md`.
@@ -448,7 +449,6 @@ after a rollback is harmless; reverting its commit removes it.
   mis-landing. After reshaping a file under `src/php/Job/`, re-run `SABOTAGE_FILTER='^job:'` and read
   WHICH test goes red, not only that one does.
 ### Known issues
-- `JobScoutTest` reads the developer's gitignored `config/job/criteria.local.json`: with the deployed `push_min_score: 40` present, three push-count tests fail locally (1 pushed of 15) and pass with it moved aside; CI has no local file and is green. The test should pin its own criteria directory (found 2026-09-23).
 - ~~Step 8 owed the drain cost below, the three-domain corrections, the LinkedIn register row and the
   `Core\Whitespace` and `php --ini` lines~~ — landed in `9eee7fa`. The drain cost itself STANDS; it is
   now stated in CLAUDE.md beside the car one. Kept below for the record:
