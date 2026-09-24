@@ -1,0 +1,3870 @@
+DomainKey-Signature: a=rsa-sha1; c=nofws; q=dns;
+	s=neolane;
+	d=diffusion.apec.fr;
+	h=From:Subject:Date:To:Reply-To:MIME-Version:X-mailer:Message-ID:Content-Type:Content-Transfer-Encoding;
+	b=u3UxA0fjFI9XCnwho6zclUdWv2zSN1C3h+RE0H+NcRzEKEF/JH0RWKuJ2AgvWo6/oV/EIBa6USm0bJ/ZqXbd+fB0i2sixTIGC6JAtP7Xln0rHfk3BieeRlDGsGGjuTLLxaBjxUkZ04qdE4aOzCgfKxUIS4VX9WBuzcE8D1F6KlM=
+From: "APEC" <offres@diffusion.apec.fr>
+Subject: 552 offres Apec du 24/09/2026
+Date: Thu, 24 Sep 2026 07:21:50 +0200
+MIME-Version: 1.0
+X-mailer: nlserver, Build 6.7.0
+Content-Type: text/html;
+	charset="windows-1252"
+Content-Transfer-Encoding: quoted-printable
+Message-ID: <fixture-8800b28d57f3@example.invalid>
+To: <alertes@example.invalid>
+
+  
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.=
+w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+<head>
+
+
+<!--[if !mso]><!-- -->
+<meta http-equiv=3D"X-UA-Compatible" content=3D"IE=3Dedge">
+<!--<![endif]-->
+<meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3DUTF-8">
+<meta name=3D"viewport" content=3D"width=3Ddevice-width, initial-scale=3D1,=
+ shrink-to-fit=3Dno" />        
+        
+<title>Push offres</title>
+<style>
+
+  /* -------------------------------------
+      GLOBAL
+  ------------------------------------- */
+  * {
+    margin:0;
+    padding:0;
+  }
+
+  * { font-family: Arial, Helvetica, sans-serif; }
+
+  img {
+    max-width: 100%;
+    /* border: 1px solid blue; */
+  }
+
+  body {
+    -webkit-font-smoothing:antialiased;
+    -webkit-text-size-adjust:none;
+    width: 100%!important;
+    height: 100%;
+    color: #000000;
+  }
+
+  td {
+    /* border: 1px dashed red; */
+  }
+
+
+
+  /* -------------------------------------
+      HEADER
+  ------------------------------------- */
+  table.head-wrap { width: 100%;}
+
+  .header.container table td.logo { padding: 15px; }
+  .header.container table td.label { padding: 15px; padding-left:0px;}
+
+
+
+  /* -------------------------------------
+      BODY
+  ------------------------------------- */
+  table.body-wrap { width: 100%;}
+
+
+
+  /* -------------------------------------
+      FOOTER
+  ------------------------------------- */
+  table.footer-wrap { width: 100%;  clear:both!important;
+  }
+  .footer-wrap .container td.content  p { border-top: 1px solid rgb(215,215=
+,215); padding-top:15px;}
+  .footer-wrap .container td.content p {
+    font-size: 10px;
+    font-weight: bold;
+
+  }
+
+
+
+  /* -------------------------------------
+      TYPO
+  ------------------------------------- */
+  h1,h2,h3,h4,h5,h6 {
+  font-family: Arial, Helvetica, sans-serif; line-height: 1.1; margin-botto=
+m:0; color:#000;
+  }
+  h1 small, h2 small, h3 small, h4 small, h5 small, h6 small { font-size: 6=
+0%; color: #6f6f6f; line-height: 0; text-transform: none; }
+
+  h1 { font-weight:200; font-size: 26px;}
+  h2 { font-weight:200; font-size: 21px;}
+  h3 { font-weight:500; font-size: 18px;}
+  h4 { font-weight:500; font-size: 23px;}
+  h5 { font-weight:900; font-size: 17px;}
+  h6 { font-weight:900; font-size: 14px; text-transform: uppercase; color:#=
+444;}
+
+  .collapse { margin:0!important;}
+
+  p, ul {
+    font-family: Arial, Helvetica, sans-serif;
+    margin-bottom: 10px;
+    font-weight: normal;
+    font-size:14px;
+    line-height:1.6;
+  }
+  p.lead { font-size:17px; }
+  p.last { margin-bottom:0px;}
+  p.company {font-size:18px; line-height: 1; color: #f38237; text-transform=
+: uppercase;}
+  p.place {font-size:16px; line-height: 1; color: #444444;}
+
+  ul li {
+    font-family: Arial, Helvetica, sans-serif;
+    margin-left:5px;
+    list-style-position: inside;
+  }
+
+  .orange {
+    color: #f38237;
+    font-weight: bold;
+  }
+
+  .info {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 12px;
+    color: #444444;
+  }
+
+  .title-article {
+    color: #00758b;
+    text-decoration: none;
+    font-family: Arial, Helvetica, sans-serif;
+  }
+
+  .date-article {
+    color: #444444;
+    text-decoration: none;
+    font-family: Arial, Helvetica, sans-serif;
+  }
+
+
+
+  /* ---------------------------------------------------
+      RESPONSIVE
+  ------------------------------------------------------ */
+
+  /* D=E9finit une largeur maximale et l'affiche sous forme de bloc de mani=
+=E8re =E0 ce qu'elle s'=E9tire automatiquement sur cette largeur, mais dimi=
+nue =E9galement sur un t=E9l=E9phone. */
+  .container {
+    display:block!important;
+    max-width:640px!important;
+    margin:0 auto!important; /* Centrage horizontal */
+    clear:both!important;
+  }
+
+  /* El=E9ment de bloc, de sorte qui remplit 100% du .container */
+  .content {
+    padding:5px;
+    max-width:640px;
+    margin:0 auto;
+    display: block;
+    float: none;
+    clear: both;
+    /* border-bottom: 1px solid #cccccc; */
+  }
+
+  .no-border-bottom {
+    border-bottom: 0;
+  }
+
+  .mirror-page {
+    border-bottom: 0;
+    padding: 15px 0 0 0;
+  }
+
+  .banner, .no-padding {
+    padding: 0;
+  }
+
+  /* Les tables de la zone de contenu sont =E0 100% en largeur */
+  .content table { width: 100%; }
+
+
+  /* .clear apr=E8s chaque ensemble de colonnes, par s=E9curit=E9 */
+  .clear { display: block; clear: both}
+
+  .table-button {
+    background-color: orange;
+    color: white;
+    border: 1px solid blue;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 200px !important;
+    display: block !important;
+    float: none !important;
+    clear: both !important;
+  }
+
+
+  /* -------------------------------------------
+      MOBILE
+      Pour les clients mails prenant en charge les medias queries
+  -------------------------------------------- */
+  @media only screen and (max-width: 640px) {
+
+    a[class=3D"btn"] { display:block!important; margin-bottom:10px!importan=
+t; background-image:none!important; margin-right:0!important;}
+
+    div[class=3D"column"] { width: auto!important; float:none!important;}
+
+    table.social div[class=3D"column"] {
+      width:auto!important;
+    }
+
+    img {
+      max-width: 100%;
+      height: auto;
+    }
+
+    img.squared-logo {
+      max-width: 100%;
+      height: auto;
+    }
+    .container {
+      width: auto;
+      max-width: 640px;
+    }
+
+  }
+
+</style>
+
+<!--[if mso]>
+  <style>
+    .container {
+      width: 640px;
+    }
+  </style>
+<![endif]-->
+
+</head>
+<body bgcolor=3D"#FFFFFF" topmargin=3D"0" leftmargin=3D"0" marginheight=3D"=
+0" marginwidth=3D"0">
+
+
+
+
+<img src=3D"https://www.apec.fr/info-apec=3Fxts=3D604259&xto=3DEPR-41-[Push=
+ offres]&type=3Demail" width=3D"0" height=3D"0" />
+
+<!-- BODY -->
+<table class=3D"body-wrap">
+  <tr>
+    <td></td>
+    <!-- Container -->
+    <td class=3D"container" align=3D"" bgcolor=3D"#FFFFFF">
+
+      <!-- content -->
+      <div class=3D"content mirror-page">
+        <table width=3D"100%">
+          <tr>
+            <td align=3D"center" class=3D"info" style=3D"font-family: Arial=
+, Helvetica">
+              D=E9couvrez votre s=E9lection d'offres. Si vous avez des diff=
+icult=E9s pour visualiser ce message, <a href=3D"https://neomarket.diffusio=
+n.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DFIXTURE&s=3DFIXTURE" style=3D"color=3D" title=3D"Push Offres APEC" ta=
+rget=3D"_blank">cliquez ici</a>.
+            </td>
+          </tr>
+        </table><!-- /content -->
+      </div>
+
+      <!-- content -->
+      <div class=3D"content banner">
+        <table cellspacing=3D"5" cellpading=3D"0">
+          <tr>
+            <td align=3D"center">
+              <p>
+              <!-- DEBUT DE LA BANNIERE PUSH DES OFFRES AVEC ET SANS COMPTE=
+ -->
+                 <div style=3D"background-color:#FFFFFF;">
+                    
+                  
+                  <!--[if mso | IE]>
+                  <table
+                     align=3D"center" border=3D"0" cellpadding=3D"0" cellsp=
+acing=3D"0" class=3D"" style=3D"width:640px;"
+                  >
+                    <tr>
+                      <td style=3D"line-height:0px;font-size:0px;mso-line-h=
+eight-rule:exactly;">
+                  <![endif]-->
+                
+                  
+                  <div style=3D"margin:0px auto;max-width:640px;">
+                    
+                    <table align=3D"center" border=3D"0" cellpadding=3D"0" =
+cellspacing=3D"0" role=3D"presentation" style=3D"width:100%;">
+                      <tbody>
+                        <tr>
+                          <td style=3D"direction:ltr;font-size:0px;padding:=
+9px 0px 9px 0px;text-align:center;">
+                            <!--[if mso | IE]>
+                              <table role=3D"presentation" border=3D"0" cel=
+lpadding=3D"0" cellspacing=3D"0">
+                <tr>
+                  <td
+                     class=3D"" style=3D"vertical-align:top;width:640px;"
+                  >
+                  <![endif]-->
+                        
+                  <div class=3D"mj-column-per-100 outlook-group-fix" style=
+=3D"font-size:0px;text-align:left;direction:ltr;display:inline-block;vertic=
+al-align:top;width:100%;">
+                    
+                  <table border=3D"0" cellpadding=3D"0" cellspacing=3D"0" r=
+ole=3D"presentation" style=3D"vertical-align:top;" width=3D"100%">
+                    
+                        <tr>
+                          <td align=3D"center" class=3D"hide_on_mobile" sty=
+le=3D"font-size:0px;padding:0px 0px 0px 0px;word-break:break-word;">
+                            
+                            <table border=3D"0" cellpadding=3D"0" cellspaci=
+ng=3D"0" role=3D"presentation" style=3D"border-collapse:collapse;border-spa=
+cing:0px;">
+                            <tbody>
+                              <tr>
+                              <td style=3D"width:640px;">
+                     
+                             <!DOCTYPE html>
+<html lang=3D"en">
+<head>
+<meta charset=3D"UTF-8">
+<meta name=3D"viewport" content=3D"width=3Ddevice-width, initial-scale=3D1.=
+0">
+<title>Banni=E9re responsive=3F</title>
+<style>
+        @media only screen and (max-width: 600px) {
+            .no-mobile {
+                text-indent: -99999em !important;
+                display: none !important;
+            }
+            .mobile-only {
+                text-indent: 0 !important;
+                display: block !important;
+                height: auto !important;
+                visibility: visible !important;
+                overflow: visible !important;
+                max-height: none !important;
+                margin : 0 auto;
+                padding-left : 35px;
+            }
+        }
+</style>
+</head>
+<body>
+<div class=3D"no-mobile">  <a href=3D"https://neomarket.diffusion.apec.fr/r=
+/=3F=
+id=3DFIXTURE&e=3DFIXTURE&s=3DFIXTURE" target=3D"_blank" style=3D"color: #0000E=
+E;"><img src=3D"https://neomarket.apec.fr/res/APECprod/Banniere_poc_large.j=
+pg" alt> </a></div>
+<div class=3D"mobile-only" style=3D" display:none"><a href=3D"https://neoma=
+rket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DFIXTURE&s=3DFIXTURE" target=3D"_blank=
+" style=3D"color: #0000EE;"><img src=3D"https://neomarket.apec.fr/res/APECp=
+rod/Banniere_poc_small.jpg" alt></div>    </a>
+</body>
+</html>
+                             
+                              </td>
+                              </tr>
+                            </tbody>
+                            </table>
+                
+                          </td>
+                        </tr>
+                      
+                  </table>
+                
+                  </div>
+                
+                      <!--[if mso | IE]>
+                        </td>
+                      
+                    </tr>
+                  
+                              </table>
+                            <![endif]-->
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                    
+                  </div>
+                
+                  
+                    
+                    
+                    
+                  </div>
+                
+                  
+                  <!--[if mso | IE]>
+                      </td>
+                    </tr>
+                  </table>
+                  <![endif]-->
+                
+                
+                  </div>
+                  
+                  <!-- FIN DE LA BANNIERE PUSH DES OFFRES AVEC ET SANS COMP=
+TE -->
+              </p>
+              <h1 style=3D"font-family: Arial, Helvetica; text-align: cente=
+r">Voici une s=E9lection d'offres d'emploi</h1>
+            </td>
+          </tr>
+        </table>
+      </div><!-- /content -->
+
+      <div class=3D"clear">
+          <!--img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0100000000000000000000000=
+.gif" /-->
+      <img src=3D"https://neomarket.apec.fr/res/APECprod/separator_poc.gif"=
+ />
+      </div>
+
+      <!-- / JGE [BOUCLE GLOBALE] -->
+      <!-- D=E9but profils et offres associ=E9es -->
+      
+      
+      
+      <!-- content -->
+      
+      <div class=3D"content">
+        <table cellspacing=3D"5" cellpading=3D"0">
+          <tr>
+            <td align=3D"center" valign=3D"middle">
+                
+                <h2 style=3D"font-family: Arial, Helvetica"><span class=3D"=
+orange">
+                  163 offres</span> correspondent =E0 votre recherche : <sp=
+an class=3D"orange">scout - Dev IDF</span>
+                </h2>
+                <br/>
+                
+                <span style=3D"font-family: Arial, Helvetica; font-size:18p=
+x; font-style: italic; color: #f38237; font-weight: normal">Voici les 
+                 
+                 12 premi=E8res :</span>
+                
+            </td>
+          </tr>
+        </table>
+      </div>
+      <!-- /content -->
+
+      <!-- / JGE [BOUCLE LISTE DES OFFRES] -->
+      
+          <div class=3D"clear">
+            <!--img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0100000000000000000000000=
+.gif" /-->
+            <img src=3D"https://neomarket.apec.fr/res/APECprod/separator_po=
+c.gif" />
+          </div>
+    
+          
+              <!-- content -->
+              <div class=3D"content">
+                <table cellspacing=3D"5" cellpading=3D"0">
+                  <tr>
+                    <td width=3D"20%" style=3D"vertical-align: middle; text=
+-align: center; padding-right:15px;">
+                    
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDczNTc0VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" target=3D"_blank"><img src=3D"https://www.apec.fr/files=
+/live/mounts/images/media_entreprise/808614/logo_Cadremploi_808614_1215296.=
+png" style=3D"width:auto;height:auto;max-width:82;max-height:82" alt=3D"cad=
+remploi" />
+                      </a>
+                      
+        
+                          
+                    </td>
+                    <td width=3D"80%">
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDczNTc0VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 18px=
+; color: #0e6c8a; text-decoration: none" title=3D"Software engineer full st=
+ack - totalenergies digital factory F/H" target=3D"_blank">Software enginee=
+r full stack - totalenergies digital factory F/H</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDczNTc0VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 16px=
+; color: #f38237; text-decoration: none; text-transform: uppercase" title=
+=3D"cadremploi" target=3D"_blank">cadremploi</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDczNTc0VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"CDI" target=3D"_blank">CD=
+I&nbsp;=95</a>                                                             =
+                                                                         
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDczNTc0VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"Paris 01 - 75" target=3D"=
+_blank">Paris 01 - 75</a>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+               <!--  A METTRE A JOUR <div class=3D"clear">
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0200000000000000000000000=
+.gif" />
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/spacer_poc=
+.gif" />
+               </div> -->
+              <!-- / JGE AJOUT DU TIRET DE SEPARATION VOIR SI UN DOUBLON --=
+>  
+               <div class=3D"clear">
+                  <!--img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0100000000000000000000000=
+.gif" /-->
+              <img src=3D"https://neomarket.apec.fr/res/APECprod/separator_=
+poc.gif" />
+              </div> 
+          
+              <!-- content -->
+              <div class=3D"content">
+                <table cellspacing=3D"5" cellpading=3D"0">
+                  <tr>
+                    <td width=3D"20%" style=3D"vertical-align: middle; text=
+-align: center; padding-right:15px;">
+                    
+                     <img src=3D"https://neomarket.apec.fr/res/APECprod/no-=
+logo@2x.gif" width=3D"50" height=3D"50" alt=3D"Logo"/>
+                      
+        
+                          
+                    </td>
+                    <td width=3D"80%">
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDcyNzc1VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 18px=
+; color: #0e6c8a; text-decoration: none" title=3D"Lead D=E9veloppeur Full-S=
+tack F/H" target=3D"_blank">Lead D=E9veloppeur Full-Stack F/H</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDcyNzc1VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 16px=
+; color: #f38237; text-decoration: none; text-transform: uppercase" title=
+=3D"SKAELIA" target=3D"_blank">SKAELIA</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDcyNzc1VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"CDI" target=3D"_blank">CD=
+I&nbsp;=95</a>                                                             =
+                                                                         
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDcyNzc1VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"Paris 10 - 75" target=3D"=
+_blank">Paris 10 - 75</a>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+               <!--  A METTRE A JOUR <div class=3D"clear">
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0200000000000000000000000=
+.gif" />
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/spacer_poc=
+.gif" />
+               </div> -->
+              <!-- / JGE AJOUT DU TIRET DE SEPARATION VOIR SI UN DOUBLON --=
+>  
+               <div class=3D"clear">
+                  <!--img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0100000000000000000000000=
+.gif" /-->
+              <img src=3D"https://neomarket.apec.fr/res/APECprod/separator_=
+poc.gif" />
+              </div> 
+          
+              <!-- content -->
+              <div class=3D"content">
+                <table cellspacing=3D"5" cellpading=3D"0">
+                  <tr>
+                    <td width=3D"20%" style=3D"vertical-align: middle; text=
+-align: center; padding-right:15px;">
+                    
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY2MDk2VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" target=3D"_blank"><img src=3D"https://www.apec.fr/files=
+/live/mounts/images/media_entreprise/838703/logo_Handicap_Job_838703_144650=
+0.jpg" style=3D"width:auto;height:auto;max-width:82;max-height:82" alt=3D"H=
+andicap Job" />
+                      </a>
+                      
+        
+                          
+                    </td>
+                    <td width=3D"80%">
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY2MDk2VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 18px=
+; color: #0e6c8a; text-decoration: none" title=3D"DEVELOPPEUR D'APPLICATION=
+S FULL STACK F/H" target=3D"_blank">DEVELOPPEUR D'APPLICATIONS FULL STACK F=
+/H</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY2MDk2VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 16px=
+; color: #f38237; text-decoration: none; text-transform: uppercase" title=
+=3D"Handicap Job" target=3D"_blank">Handicap Job</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY2MDk2VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"CDI" target=3D"_blank">CD=
+I&nbsp;=95</a>                                                             =
+                                                                         
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY2MDk2VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"Levallois-Perret - 92" ta=
+rget=3D"_blank">Levallois-Perret - 92</a>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+               <!--  A METTRE A JOUR <div class=3D"clear">
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0200000000000000000000000=
+.gif" />
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/spacer_poc=
+.gif" />
+               </div> -->
+              <!-- / JGE AJOUT DU TIRET DE SEPARATION VOIR SI UN DOUBLON --=
+>  
+               <div class=3D"clear">
+                  <!--img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0100000000000000000000000=
+.gif" /-->
+              <img src=3D"https://neomarket.apec.fr/res/APECprod/separator_=
+poc.gif" />
+              </div> 
+          
+              <!-- content -->
+              <div class=3D"content">
+                <table cellspacing=3D"5" cellpading=3D"0">
+                  <tr>
+                    <td width=3D"20%" style=3D"vertical-align: middle; text=
+-align: center; padding-right:15px;">
+                    
+                     <img src=3D"https://neomarket.apec.fr/res/APECprod/no-=
+logo@2x.gif" width=3D"50" height=3D"50" alt=3D"Logo"/>
+                      
+        
+                          
+                    </td>
+                    <td width=3D"80%">
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY1NDEyVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 18px=
+; color: #0e6c8a; text-decoration: none" title=3D"D=E9veloppeur Full Stack =
+- TypeScript / NestJS / NextJS - Secteur Logist - F/H" target=3D"_blank">D=
+=E9veloppeur Full Stack - TypeScript / NestJS / NextJS - Secteur Logist - F=
+/H</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY1NDEyVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 16px=
+; color: #f38237; text-decoration: none; text-transform: uppercase" title=
+=3D"CO-MARTIN" target=3D"_blank">CO-MARTIN</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY1NDEyVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"CDI" target=3D"_blank">CD=
+I&nbsp;=95</a>                                                             =
+                                                                         
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY1NDEyVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"Saint-Ouen - 93" target=
+=3D"_blank">Saint-Ouen - 93</a>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+               <!--  A METTRE A JOUR <div class=3D"clear">
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0200000000000000000000000=
+.gif" />
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/spacer_poc=
+.gif" />
+               </div> -->
+              <!-- / JGE AJOUT DU TIRET DE SEPARATION VOIR SI UN DOUBLON --=
+>  
+               <div class=3D"clear">
+                  <!--img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0100000000000000000000000=
+.gif" /-->
+              <img src=3D"https://neomarket.apec.fr/res/APECprod/separator_=
+poc.gif" />
+              </div> 
+          
+              <!-- content -->
+              <div class=3D"content">
+                <table cellspacing=3D"5" cellpading=3D"0">
+                  <tr>
+                    <td width=3D"20%" style=3D"vertical-align: middle; text=
+-align: center; padding-right:15px;">
+                    
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5Mjc2NjYzVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" target=3D"_blank"><img src=3D"https://www.apec.fr/files=
+/live/mounts/images/media_entreprise/818489/logo_Talent_Brut_Recrutement_81=
+8489_1280449.jpg" style=3D"width:auto;height:auto;max-width:82;max-height:8=
+2" alt=3D"Talent Brut Recrutement" />
+                      </a>
+                      
+        
+                          
+                    </td>
+                    <td width=3D"80%">
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5Mjc2NjYzVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 18px=
+; color: #0e6c8a; text-decoration: none" title=3D"D=E9veloppeur Front-end V=
+ue.js / Full Stack IA F/H" target=3D"_blank">D=E9veloppeur Front-end Vue.js=
+ / Full Stack IA F/H</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5Mjc2NjYzVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 16px=
+; color: #f38237; text-decoration: none; text-transform: uppercase" title=
+=3D"Talent Brut Recrutement" target=3D"_blank">Talent Brut Recrutement</a><=
+br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5Mjc2NjYzVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"CDI" target=3D"_blank">CD=
+I&nbsp;=95</a>                                                             =
+                                                                         
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5Mjc2NjYzVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"Paris 13 - 75" target=3D"=
+_blank">Paris 13 - 75</a>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+               <!--  A METTRE A JOUR <div class=3D"clear">
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0200000000000000000000000=
+.gif" />
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/spacer_poc=
+.gif" />
+               </div> -->
+              <!-- / JGE AJOUT DU TIRET DE SEPARATION VOIR SI UN DOUBLON --=
+>  
+               <div class=3D"clear">
+                  <!--img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0100000000000000000000000=
+.gif" /-->
+              <img src=3D"https://neomarket.apec.fr/res/APECprod/separator_=
+poc.gif" />
+              </div> 
+          
+              <!-- content -->
+              <div class=3D"content">
+                <table cellspacing=3D"5" cellpading=3D"0">
+                  <tr>
+                    <td width=3D"20%" style=3D"vertical-align: middle; text=
+-align: center; padding-right:15px;">
+                    
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDU4ODQ4VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" target=3D"_blank"><img src=3D"https://www.apec.fr/files=
+/live/mounts/images/media_entreprise/814869/logo_JOBS_THAT_MAKESENSE_814869=
+_1299333.png" style=3D"width:auto;height:auto;max-width:82;max-height:82" a=
+lt=3D"jobs_that_makesense" />
+                      </a>
+                      
+        
+                          
+                    </td>
+                    <td width=3D"80%">
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDU4ODQ4VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 18px=
+; color: #0e6c8a; text-decoration: none" title=3D"D=E9veloppeur/D=E9veloppe=
+use S=E9nior Full Stack (TypeScript) F/H" target=3D"_blank">D=E9veloppeur/D=
+=E9veloppeuse S=E9nior Full Stack (TypeScript) F/H</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDU4ODQ4VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 16px=
+; color: #f38237; text-decoration: none; text-transform: uppercase" title=
+=3D"jobs_that_makesense" target=3D"_blank">jobs_that_makesense</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDU4ODQ4VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"CDI" target=3D"_blank">CD=
+I&nbsp;=95</a>                                                             =
+                                                                         
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDU4ODQ4VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"Levallois-Perret - 92" ta=
+rget=3D"_blank">Levallois-Perret - 92</a>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+               <!--  A METTRE A JOUR <div class=3D"clear">
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0200000000000000000000000=
+.gif" />
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/spacer_poc=
+.gif" />
+               </div> -->
+              <!-- / JGE AJOUT DU TIRET DE SEPARATION VOIR SI UN DOUBLON --=
+>  
+               <div class=3D"clear">
+                  <!--img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0100000000000000000000000=
+.gif" /-->
+              <img src=3D"https://neomarket.apec.fr/res/APECprod/separator_=
+poc.gif" />
+              </div> 
+          
+              <!-- content -->
+              <div class=3D"content">
+                <table cellspacing=3D"5" cellpading=3D"0">
+                  <tr>
+                    <td width=3D"20%" style=3D"vertical-align: middle; text=
+-align: center; padding-right:15px;">
+                    
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY4MjYzVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" target=3D"_blank"><img src=3D"https://www.apec.fr/files=
+/live/mounts/images/media_entreprise/770070/logo_LEIHIA_770070_1029988.png"=
+ style=3D"width:auto;height:auto;max-width:82;max-height:82" alt=3D"LEIHIA"=
+ />
+                      </a>
+                      
+        
+                          
+                    </td>
+                    <td width=3D"80%">
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY4MjYzVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 18px=
+; color: #0e6c8a; text-decoration: none" title=3D"D=E9veloppeur web fullsta=
+ck F/H" target=3D"_blank">D=E9veloppeur web fullstack F/H</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY4MjYzVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 16px=
+; color: #f38237; text-decoration: none; text-transform: uppercase" title=
+=3D"LEIHIA" target=3D"_blank">LEIHIA</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY4MjYzVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"CDI" target=3D"_blank">CD=
+I&nbsp;=95</a>                                                             =
+                                                                         
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY4MjYzVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"Roissy-en-Brie - 77" targ=
+et=3D"_blank">Roissy-en-Brie - 77</a>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+               <!--  A METTRE A JOUR <div class=3D"clear">
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0200000000000000000000000=
+.gif" />
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/spacer_poc=
+.gif" />
+               </div> -->
+              <!-- / JGE AJOUT DU TIRET DE SEPARATION VOIR SI UN DOUBLON --=
+>  
+               <div class=3D"clear">
+                  <!--img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0100000000000000000000000=
+.gif" /-->
+              <img src=3D"https://neomarket.apec.fr/res/APECprod/separator_=
+poc.gif" />
+              </div> 
+          
+              <!-- content -->
+              <div class=3D"content">
+                <table cellspacing=3D"5" cellpading=3D"0">
+                  <tr>
+                    <td width=3D"20%" style=3D"vertical-align: middle; text=
+-align: center; padding-right:15px;">
+                    
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY4MjYwVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" target=3D"_blank"><img src=3D"https://www.apec.fr/files=
+/live/mounts/images/media_entreprise/770070/logo_LEIHIA_770070_1029988.png"=
+ style=3D"width:auto;height:auto;max-width:82;max-height:82" alt=3D"LEIHIA"=
+ />
+                      </a>
+                      
+        
+                          
+                    </td>
+                    <td width=3D"80%">
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY4MjYwVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 18px=
+; color: #0e6c8a; text-decoration: none" title=3D"D=E9veloppeur web fullsta=
+ck F/H" target=3D"_blank">D=E9veloppeur web fullstack F/H</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY4MjYwVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 16px=
+; color: #f38237; text-decoration: none; text-transform: uppercase" title=
+=3D"LEIHIA" target=3D"_blank">LEIHIA</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY4MjYwVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"CDI" target=3D"_blank">CD=
+I&nbsp;=95</a>                                                             =
+                                                                         
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY4MjYwVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"Meudon - 92" target=3D"_b=
+lank">Meudon - 92</a>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+               <!--  A METTRE A JOUR <div class=3D"clear">
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0200000000000000000000000=
+.gif" />
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/spacer_poc=
+.gif" />
+               </div> -->
+              <!-- / JGE AJOUT DU TIRET DE SEPARATION VOIR SI UN DOUBLON --=
+>  
+               <div class=3D"clear">
+                  <!--img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0100000000000000000000000=
+.gif" /-->
+              <img src=3D"https://neomarket.apec.fr/res/APECprod/separator_=
+poc.gif" />
+              </div> 
+          
+              <!-- content -->
+              <div class=3D"content">
+                <table cellspacing=3D"5" cellpading=3D"0">
+                  <tr>
+                    <td width=3D"20%" style=3D"vertical-align: middle; text=
+-align: center; padding-right:15px;">
+                    
+                     <img src=3D"https://neomarket.apec.fr/res/APECprod/no-=
+logo@2x.gif" width=3D"50" height=3D"50" alt=3D"Logo"/>
+                      
+        
+                          
+                    </td>
+                    <td width=3D"80%">
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY1Mzk4VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 18px=
+; color: #0e6c8a; text-decoration: none" title=3D"Ing=E9nieur Full Stack / =
+Logiciel distribu=E9 / Devops - D=E9fense F/H" target=3D"_blank">Ing=E9nieu=
+r Full Stack / Logiciel distribu=E9 / Devops - D=E9fense F/H</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY1Mzk4VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 16px=
+; color: #f38237; text-decoration: none; text-transform: uppercase" title=
+=3D"CO-MARTIN" target=3D"_blank">CO-MARTIN</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY1Mzk4VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"CDI" target=3D"_blank">CD=
+I&nbsp;=95</a>                                                             =
+                                                                         
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY1Mzk4VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"Le Plessis-Robinson - 92"=
+ target=3D"_blank">Le Plessis-Robinson - 92</a>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+               <!--  A METTRE A JOUR <div class=3D"clear">
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0200000000000000000000000=
+.gif" />
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/spacer_poc=
+.gif" />
+               </div> -->
+              <!-- / JGE AJOUT DU TIRET DE SEPARATION VOIR SI UN DOUBLON --=
+>  
+               <div class=3D"clear">
+                  <!--img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0100000000000000000000000=
+.gif" /-->
+              <img src=3D"https://neomarket.apec.fr/res/APECprod/separator_=
+poc.gif" />
+              </div> 
+          
+              <!-- content -->
+              <div class=3D"content">
+                <table cellspacing=3D"5" cellpading=3D"0">
+                  <tr>
+                    <td width=3D"20%" style=3D"vertical-align: middle; text=
+-align: center; padding-right:15px;">
+                    
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDcxODI3VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" target=3D"_blank"><img src=3D"https://www.apec.fr/files=
+/live/mounts/images/media_entreprise/508431/logo_EFFEKTIV_508431_725099.png=
+" style=3D"width:auto;height:auto;max-width:82;max-height:82" alt=3D"EFFEKT=
+IV" />
+                      </a>
+                      
+        
+                          
+                    </td>
+                    <td width=3D"80%">
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDcxODI3VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 18px=
+; color: #0e6c8a; text-decoration: none" title=3D"D=E9veloppeur Fullstack c=
+onfirm=E9 - ReactJS NodeJS F/H" target=3D"_blank">D=E9veloppeur Fullstack c=
+onfirm=E9 - ReactJS NodeJS F/H</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDcxODI3VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 16px=
+; color: #f38237; text-decoration: none; text-transform: uppercase" title=
+=3D"EFFEKTIV" target=3D"_blank">EFFEKTIV</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDcxODI3VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"CDI" target=3D"_blank">CD=
+I&nbsp;=95</a>                                                             =
+                                                                         
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDcxODI3VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"Paris 03 - 75" target=3D"=
+_blank">Paris 03 - 75</a>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+               <!--  A METTRE A JOUR <div class=3D"clear">
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0200000000000000000000000=
+.gif" />
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/spacer_poc=
+.gif" />
+               </div> -->
+              <!-- / JGE AJOUT DU TIRET DE SEPARATION VOIR SI UN DOUBLON --=
+>  
+               <div class=3D"clear">
+                  <!--img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0100000000000000000000000=
+.gif" /-->
+              <img src=3D"https://neomarket.apec.fr/res/APECprod/separator_=
+poc.gif" />
+              </div> 
+          
+              <!-- content -->
+              <div class=3D"content">
+                <table cellspacing=3D"5" cellpading=3D"0">
+                  <tr>
+                    <td width=3D"20%" style=3D"vertical-align: middle; text=
+-align: center; padding-right:15px;">
+                    
+                     <img src=3D"https://neomarket.apec.fr/res/APECprod/no-=
+logo@2x.gif" width=3D"50" height=3D"50" alt=3D"Logo"/>
+                      
+        
+                          
+                    </td>
+                    <td width=3D"80%">
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5MzM2NjcxVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 18px=
+; color: #0e6c8a; text-decoration: none" title=3D"Ing=E9nieur(e) Drupal / P=
+HP Full Stack =96 France-Chine F/H" target=3D"_blank">Ing=E9nieur(e) Drupal=
+ / PHP Full Stack =96 France-Chine F/H</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5MzM2NjcxVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 16px=
+; color: #f38237; text-decoration: none; text-transform: uppercase" title=
+=3D"ZZ_Confidentiel" target=3D"_blank">ZZ_Confidentiel</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5MzM2NjcxVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"CDI" target=3D"_blank">CD=
+I&nbsp;=95</a>                                                             =
+                                                                         
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5MzM2NjcxVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"Essonne - 91" target=3D"_=
+blank">Essonne - 91</a>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+               <!--  A METTRE A JOUR <div class=3D"clear">
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0200000000000000000000000=
+.gif" />
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/spacer_poc=
+.gif" />
+               </div> -->
+              <!-- / JGE AJOUT DU TIRET DE SEPARATION VOIR SI UN DOUBLON --=
+>  
+               <div class=3D"clear">
+                  <!--img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0100000000000000000000000=
+.gif" /-->
+              <img src=3D"https://neomarket.apec.fr/res/APECprod/separator_=
+poc.gif" />
+              </div> 
+          
+              <!-- content -->
+              <div class=3D"content">
+                <table cellspacing=3D"5" cellpading=3D"0">
+                  <tr>
+                    <td width=3D"20%" style=3D"vertical-align: middle; text=
+-align: center; padding-right:15px;">
+                    
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5Mzk0MzIyVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" target=3D"_blank"><img src=3D"https://www.apec.fr/files=
+/live/mounts/images/media_entreprise/702055/logo_LEO_INTERNATIONAL_702055.j=
+pg" style=3D"width:auto;height:auto;max-width:82;max-height:82" alt=3D"LEO =
+INTERNATIONAL" />
+                      </a>
+                      
+        
+                          
+                    </td>
+                    <td width=3D"80%">
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5Mzk0MzIyVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 18px=
+; color: #0e6c8a; text-decoration: none" title=3D"DevOps FullStack F/H" tar=
+get=3D"_blank">DevOps FullStack F/H</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5Mzk0MzIyVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 16px=
+; color: #f38237; text-decoration: none; text-transform: uppercase" title=
+=3D"LEO INTERNATIONAL" target=3D"_blank">LEO INTERNATIONAL</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5Mzk0MzIyVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"CDI" target=3D"_blank">CD=
+I&nbsp;=95</a>                                                             =
+                                                                         
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5Mzk0MzIyVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"Paris 01 - 75" target=3D"=
+_blank">Paris 01 - 75</a>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+               <!--  A METTRE A JOUR <div class=3D"clear">
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0200000000000000000000000=
+.gif" />
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/spacer_poc=
+.gif" />
+               </div> -->
+              <!-- / JGE AJOUT DU TIRET DE SEPARATION VOIR SI UN DOUBLON --=
+>  
+               <div class=3D"clear">
+                  <!--img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0100000000000000000000000=
+.gif" /-->
+              <img src=3D"https://neomarket.apec.fr/res/APECprod/separator_=
+poc.gif" />
+              </div> 
+          
+          <!-- /content -->
+          
+          <!-- AJOUT JGE POUR LE BOUTON DES OFFRES -->
+            <!-- content -->
+            <div class=3D"content no-padding">
+              <table width=3D"100%" cellspacing=3D"5" cellpading=3D"0">
+                <tr>
+                  <td align=3D"center">
+                    <div>
+                      <!--[if mso]>
+                        <v:roundrect xmlns:v=3D"urn:schemas-microsoft-com:v=
+ml" xmlns:w=3D"urn:schemas-microsoft-com:office:word" href=3D"https://www.a=
+pec.fr/candidat/recherche-emploi.html/emploi=3FidCritere=3D14184464&xtor=3D=
+EPR-41-[push_avec_compte]" style=3D"height:40px;v-text-anchor:middle;width:=
+260px;" arcsize=3D"13%" stroke=3D"f" fillcolor=3D"#f38237">
+                          <w:anchorlock/>
+                          <center>
+                            <![endif]-->
+                              <a href=3D"https://neomarket.diffusion.apec.f=
+r/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTQxODQ0NjQmcDM9Jnh=
+0b3I9RVBSLTQxLVtwdXNoX2F2ZWNfY29tcHRlXQ&s=3DFIXTURE" style=3D"background-color:#f38237;border-radius:5=
+px;color:#ffffff;display:inline-block;font-family:Arial,Helvetica,sans-seri=
+f;font-size:15px;font-weight:normal;line-height:40px;text-align:center;text=
+-decoration:none;width:260px;-webkit-text-size-adjust:none;">Voir toutes le=
+s offres correspondantes</a>
+                            <!--[if mso]>
+                          </center>
+                        </v:roundrect>
+                      <![endif]-->
+                    </div>
+                  </td>
+                </tr>
+              </table>
+            </div>
+            <!-- content -->          
+          <!-- FIN AJOUT JGE POUR LE BOUTON DES OFFRES -->
+      
+            <!-- RAJOUT D'ESPACES ENTRE LE BOUTON VOIR TOUS LES PROFILS COR=
+RESPONDANTS ET LE PROFIL SUIVANT -->
+      <div class=3D"clear">&nbsp;</div>
+      <div class=3D"clear">&nbsp;</div>
+      <div class=3D"clear">
+        <img src=3D"https://neomarket.apec.fr/res/APECprod/separator_strong=
+_poc.png" />
+      </div>
+          
+      
+      
+      <!-- Fin liste des offres du profil n=B01 -->
+      <!-- / JGE [FIN BOUCLE LISTE DES OFFRES] -->
+
+
+      
+      <!-- content -->
+      
+      <div class=3D"content">
+        <table cellspacing=3D"5" cellpading=3D"0">
+          <tr>
+            <td align=3D"center" valign=3D"middle">
+                
+                <h2 style=3D"font-family: Arial, Helvetica"><span class=3D"=
+orange">
+                  200 offres</span> correspondent =E0 votre recherche : <sp=
+an class=3D"orange">scout - Architecture IDF</span>
+                </h2>
+                <br/>
+                
+                <span style=3D"font-family: Arial, Helvetica; font-size:18p=
+x; font-style: italic; color: #f38237; font-weight: normal">Voici les 
+                 
+                 12 premi=E8res :</span>
+                
+            </td>
+          </tr>
+        </table>
+      </div>
+      <!-- /content -->
+
+      <!-- / JGE [BOUCLE LISTE DES OFFRES] -->
+      
+          <div class=3D"clear">
+            <!--img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0100000000000000000000000=
+.gif" /-->
+            <img src=3D"https://neomarket.apec.fr/res/APECprod/separator_po=
+c.gif" />
+          </div>
+    
+          
+              <!-- content -->
+              <div class=3D"content">
+                <table cellspacing=3D"5" cellpading=3D"0">
+                  <tr>
+                    <td width=3D"20%" style=3D"vertical-align: middle; text=
+-align: center; padding-right:15px;">
+                    
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDcyMzg0VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" target=3D"_blank"><img src=3D"https://www.apec.fr/files=
+/live/mounts/images/media_entreprise/554318/logo_PROFILA_554318_799329.png"=
+ style=3D"width:auto;height:auto;max-width:82;max-height:82" alt=3D"Profila=
+" />
+                      </a>
+                      
+        
+                          
+                    </td>
+                    <td width=3D"80%">
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDcyMzg0VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 18px=
+; color: #0e6c8a; text-decoration: none" title=3D"Architecte Revit F/H" tar=
+get=3D"_blank">Architecte Revit F/H</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDcyMzg0VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 16px=
+; color: #f38237; text-decoration: none; text-transform: uppercase" title=
+=3D"Profila" target=3D"_blank">Profila</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDcyMzg0VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"CDI" target=3D"_blank">CD=
+I&nbsp;=95</a>                                                             =
+                                                                         
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDcyMzg0VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"Paris 02 - 75" target=3D"=
+_blank">Paris 02 - 75</a>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+               <!--  A METTRE A JOUR <div class=3D"clear">
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0200000000000000000000000=
+.gif" />
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/spacer_poc=
+.gif" />
+               </div> -->
+              <!-- / JGE AJOUT DU TIRET DE SEPARATION VOIR SI UN DOUBLON --=
+>  
+               <div class=3D"clear">
+                  <!--img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0100000000000000000000000=
+.gif" /-->
+              <img src=3D"https://neomarket.apec.fr/res/APECprod/separator_=
+poc.gif" />
+              </div> 
+          
+              <!-- content -->
+              <div class=3D"content">
+                <table cellspacing=3D"5" cellpading=3D"0">
+                  <tr>
+                    <td width=3D"20%" style=3D"vertical-align: middle; text=
+-align: center; padding-right:15px;">
+                    
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5MjUxNTEyVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" target=3D"_blank"><img src=3D"https://www.apec.fr/files=
+/live/mounts/images/media_entreprise/739759/logo_PHOEBE_INFORMATIQUE_739759=
+_1223033.png" style=3D"width:auto;height:auto;max-width:82;max-height:82" a=
+lt=3D"PHOEBE INFORMATIQUE" />
+                      </a>
+                      
+        
+                          
+                    </td>
+                    <td width=3D"80%">
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5MjUxNTEyVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 18px=
+; color: #0e6c8a; text-decoration: none" title=3D"Architecte Donn=E9es F/H"=
+ target=3D"_blank">Architecte Donn=E9es F/H</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5MjUxNTEyVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 16px=
+; color: #f38237; text-decoration: none; text-transform: uppercase" title=
+=3D"PHOEBE INFORMATIQUE" target=3D"_blank">PHOEBE INFORMATIQUE</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5MjUxNTEyVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"CDI" target=3D"_blank">CD=
+I&nbsp;=95</a>                                                             =
+                                                                         
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5MjUxNTEyVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"Lisses - 91" target=3D"_b=
+lank">Lisses - 91</a>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+               <!--  A METTRE A JOUR <div class=3D"clear">
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0200000000000000000000000=
+.gif" />
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/spacer_poc=
+.gif" />
+               </div> -->
+              <!-- / JGE AJOUT DU TIRET DE SEPARATION VOIR SI UN DOUBLON --=
+>  
+               <div class=3D"clear">
+                  <!--img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0100000000000000000000000=
+.gif" /-->
+              <img src=3D"https://neomarket.apec.fr/res/APECprod/separator_=
+poc.gif" />
+              </div> 
+          
+              <!-- content -->
+              <div class=3D"content">
+                <table cellspacing=3D"5" cellpading=3D"0">
+                  <tr>
+                    <td width=3D"20%" style=3D"vertical-align: middle; text=
+-align: center; padding-right:15px;">
+                    
+                     <img src=3D"https://neomarket.apec.fr/res/APECprod/no-=
+logo@2x.gif" width=3D"50" height=3D"50" alt=3D"Logo"/>
+                      
+        
+                          
+                    </td>
+                    <td width=3D"80%">
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5Mzk5OTYyVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 18px=
+; color: #0e6c8a; text-decoration: none" title=3D"Architecte DATA F/H" targ=
+et=3D"_blank">Architecte DATA F/H</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5Mzk5OTYyVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 16px=
+; color: #f38237; text-decoration: none; text-transform: uppercase" title=
+=3D"GENERALE EUROPE CONSULTANTS" target=3D"_blank">GENERALE EUROPE CONSULTA=
+NTS</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5Mzk5OTYyVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"CDI" target=3D"_blank">CD=
+I&nbsp;=95</a>                                                             =
+                                                                         
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5Mzk5OTYyVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"Paris 16 - 75" target=3D"=
+_blank">Paris 16 - 75</a>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+               <!--  A METTRE A JOUR <div class=3D"clear">
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0200000000000000000000000=
+.gif" />
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/spacer_poc=
+.gif" />
+               </div> -->
+              <!-- / JGE AJOUT DU TIRET DE SEPARATION VOIR SI UN DOUBLON --=
+>  
+               <div class=3D"clear">
+                  <!--img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0100000000000000000000000=
+.gif" /-->
+              <img src=3D"https://neomarket.apec.fr/res/APECprod/separator_=
+poc.gif" />
+              </div> 
+          
+              <!-- content -->
+              <div class=3D"content">
+                <table cellspacing=3D"5" cellpading=3D"0">
+                  <tr>
+                    <td width=3D"20%" style=3D"vertical-align: middle; text=
+-align: center; padding-right:15px;">
+                    
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDczMzA1VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" target=3D"_blank"><img src=3D"https://www.apec.fr/files=
+/live/mounts/images/media_entreprise/808614/logo_Cadremploi_808614_1215296.=
+png" style=3D"width:auto;height:auto;max-width:82;max-height:82" alt=3D"cad=
+remploi" />
+                      </a>
+                      
+        
+                          
+                    </td>
+                    <td width=3D"80%">
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDczMzA1VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 18px=
+; color: #0e6c8a; text-decoration: none" title=3D"Architecte si F/H" target=
+=3D"_blank">Architecte si F/H</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDczMzA1VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 16px=
+; color: #f38237; text-decoration: none; text-transform: uppercase" title=
+=3D"cadremploi" target=3D"_blank">cadremploi</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDczMzA1VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"CDI" target=3D"_blank">CD=
+I&nbsp;=95</a>                                                             =
+                                                                         
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDczMzA1VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"Courbevoie - 92" target=
+=3D"_blank">Courbevoie - 92</a>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+               <!--  A METTRE A JOUR <div class=3D"clear">
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0200000000000000000000000=
+.gif" />
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/spacer_poc=
+.gif" />
+               </div> -->
+              <!-- / JGE AJOUT DU TIRET DE SEPARATION VOIR SI UN DOUBLON --=
+>  
+               <div class=3D"clear">
+                  <!--img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0100000000000000000000000=
+.gif" /-->
+              <img src=3D"https://neomarket.apec.fr/res/APECprod/separator_=
+poc.gif" />
+              </div> 
+          
+              <!-- content -->
+              <div class=3D"content">
+                <table cellspacing=3D"5" cellpading=3D"0">
+                  <tr>
+                    <td width=3D"20%" style=3D"vertical-align: middle; text=
+-align: center; padding-right:15px;">
+                    
+                     <img src=3D"https://neomarket.apec.fr/res/APECprod/no-=
+logo@2x.gif" width=3D"50" height=3D"50" alt=3D"Logo"/>
+                      
+        
+                          
+                    </td>
+                    <td width=3D"80%">
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDU3OTQyVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 18px=
+; color: #0e6c8a; text-decoration: none" title=3D"Architecte filaire F/H" t=
+arget=3D"_blank">Architecte filaire F/H</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDU3OTQyVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 16px=
+; color: #f38237; text-decoration: none; text-transform: uppercase" title=
+=3D"BATIMENT CHAMPIONNET" target=3D"_blank">BATIMENT CHAMPIONNET</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDU3OTQyVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"CDI" target=3D"_blank">CD=
+I&nbsp;=95</a>                                                             =
+                                                                         
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDU3OTQyVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"Noisy-le-Grand - 93" targ=
+et=3D"_blank">Noisy-le-Grand - 93</a>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+               <!--  A METTRE A JOUR <div class=3D"clear">
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0200000000000000000000000=
+.gif" />
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/spacer_poc=
+.gif" />
+               </div> -->
+              <!-- / JGE AJOUT DU TIRET DE SEPARATION VOIR SI UN DOUBLON --=
+>  
+               <div class=3D"clear">
+                  <!--img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0100000000000000000000000=
+.gif" /-->
+              <img src=3D"https://neomarket.apec.fr/res/APECprod/separator_=
+poc.gif" />
+              </div> 
+          
+              <!-- content -->
+              <div class=3D"content">
+                <table cellspacing=3D"5" cellpading=3D"0">
+                  <tr>
+                    <td width=3D"20%" style=3D"vertical-align: middle; text=
+-align: center; padding-right:15px;">
+                    
+                     <img src=3D"https://neomarket.apec.fr/res/APECprod/no-=
+logo@2x.gif" width=3D"50" height=3D"50" alt=3D"Logo"/>
+                      
+        
+                          
+                    </td>
+                    <td width=3D"80%">
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5Mzk5OTY0VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 18px=
+; color: #0e6c8a; text-decoration: none" title=3D"Architecte applicatif JAV=
+A F/H" target=3D"_blank">Architecte applicatif JAVA F/H</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5Mzk5OTY0VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 16px=
+; color: #f38237; text-decoration: none; text-transform: uppercase" title=
+=3D"GENERALE EUROPE CONSULTANTS" target=3D"_blank">GENERALE EUROPE CONSULTA=
+NTS</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5Mzk5OTY0VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"CDI" target=3D"_blank">CD=
+I&nbsp;=95</a>                                                             =
+                                                                         
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5Mzk5OTY0VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"Paris 16 - 75" target=3D"=
+_blank">Paris 16 - 75</a>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+               <!--  A METTRE A JOUR <div class=3D"clear">
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0200000000000000000000000=
+.gif" />
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/spacer_poc=
+.gif" />
+               </div> -->
+              <!-- / JGE AJOUT DU TIRET DE SEPARATION VOIR SI UN DOUBLON --=
+>  
+               <div class=3D"clear">
+                  <!--img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0100000000000000000000000=
+.gif" /-->
+              <img src=3D"https://neomarket.apec.fr/res/APECprod/separator_=
+poc.gif" />
+              </div> 
+          
+              <!-- content -->
+              <div class=3D"content">
+                <table cellspacing=3D"5" cellpading=3D"0">
+                  <tr>
+                    <td width=3D"20%" style=3D"vertical-align: middle; text=
+-align: center; padding-right:15px;">
+                    
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5MTkyODUxVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" target=3D"_blank"><img src=3D"https://www.apec.fr/files=
+/live/mounts/images/media_entreprise/847270/logo_SP_SEARCH_847270_1500434.j=
+peg" style=3D"width:auto;height:auto;max-width:82;max-height:82" alt=3D"SP =
+SEARCH" />
+                      </a>
+                      
+        
+                          
+                    </td>
+                    <td width=3D"80%">
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5MTkyODUxVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 18px=
+; color: #0e6c8a; text-decoration: none" title=3D"Architecte Software & Man=
+ager F/H" target=3D"_blank">Architecte Software & Manager F/H</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5MTkyODUxVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 16px=
+; color: #f38237; text-decoration: none; text-transform: uppercase" title=
+=3D"SP SEARCH" target=3D"_blank">SP SEARCH</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5MTkyODUxVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"CDI" target=3D"_blank">CD=
+I&nbsp;=95</a>                                                             =
+                                                                         
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5MTkyODUxVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"Guyancourt - 78" target=
+=3D"_blank">Guyancourt - 78</a>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+               <!--  A METTRE A JOUR <div class=3D"clear">
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0200000000000000000000000=
+.gif" />
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/spacer_poc=
+.gif" />
+               </div> -->
+              <!-- / JGE AJOUT DU TIRET DE SEPARATION VOIR SI UN DOUBLON --=
+>  
+               <div class=3D"clear">
+                  <!--img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0100000000000000000000000=
+.gif" /-->
+              <img src=3D"https://neomarket.apec.fr/res/APECprod/separator_=
+poc.gif" />
+              </div> 
+          
+              <!-- content -->
+              <div class=3D"content">
+                <table cellspacing=3D"5" cellpading=3D"0">
+                  <tr>
+                    <td width=3D"20%" style=3D"vertical-align: middle; text=
+-align: center; padding-right:15px;">
+                    
+                     <img src=3D"https://neomarket.apec.fr/res/APECprod/no-=
+logo@2x.gif" width=3D"50" height=3D"50" alt=3D"Logo"/>
+                      
+        
+                          
+                    </td>
+                    <td width=3D"80%">
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY4ODY3VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 18px=
+; color: #0e6c8a; text-decoration: none" title=3D"Architecte Data F/H" targ=
+et=3D"_blank">Architecte Data F/H</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY4ODY3VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 16px=
+; color: #f38237; text-decoration: none; text-transform: uppercase" title=
+=3D"KAN CONSULTING SERVICES" target=3D"_blank">KAN CONSULTING SERVICES</a><=
+br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY4ODY3VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"CDI" target=3D"_blank">CD=
+I&nbsp;=95</a>                                                             =
+                                                                         
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY4ODY3VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"Saint-Cloud - 92" target=
+=3D"_blank">Saint-Cloud - 92</a>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+               <!--  A METTRE A JOUR <div class=3D"clear">
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0200000000000000000000000=
+.gif" />
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/spacer_poc=
+.gif" />
+               </div> -->
+              <!-- / JGE AJOUT DU TIRET DE SEPARATION VOIR SI UN DOUBLON --=
+>  
+               <div class=3D"clear">
+                  <!--img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0100000000000000000000000=
+.gif" /-->
+              <img src=3D"https://neomarket.apec.fr/res/APECprod/separator_=
+poc.gif" />
+              </div> 
+          
+              <!-- content -->
+              <div class=3D"content">
+                <table cellspacing=3D"5" cellpading=3D"0">
+                  <tr>
+                    <td width=3D"20%" style=3D"vertical-align: middle; text=
+-align: center; padding-right:15px;">
+                    
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDczMTc3VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" target=3D"_blank"><img src=3D"https://www.apec.fr/files=
+/live/mounts/images/media_entreprise/164586/logo_MICHAEL_PAGE_INTERNATIONAL=
+_FRANCE_164586_791231.jpg" style=3D"width:auto;height:auto;max-width:82;max=
+-height:82" alt=3D"MICHAEL PAGE INTERNATIONAL FRANCE" />
+                      </a>
+                      
+        
+                          
+                    </td>
+                    <td width=3D"80%">
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDczMTc3VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 18px=
+; color: #0e6c8a; text-decoration: none" title=3D"Architecte Solution Data =
+F/H" target=3D"_blank">Architecte Solution Data F/H</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDczMTc3VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 16px=
+; color: #f38237; text-decoration: none; text-transform: uppercase" title=
+=3D"MICHAEL PAGE INTERNATIONAL FRANCE" target=3D"_blank">MICHAEL PAGE INTER=
+NATIONAL FRANCE</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDczMTc3VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"CDI" target=3D"_blank">CD=
+I&nbsp;=95</a>                                                             =
+                                                                         
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDczMTc3VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"Nanterre - 92" target=3D"=
+_blank">Nanterre - 92</a>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+               <!--  A METTRE A JOUR <div class=3D"clear">
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0200000000000000000000000=
+.gif" />
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/spacer_poc=
+.gif" />
+               </div> -->
+              <!-- / JGE AJOUT DU TIRET DE SEPARATION VOIR SI UN DOUBLON --=
+>  
+               <div class=3D"clear">
+                  <!--img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0100000000000000000000000=
+.gif" /-->
+              <img src=3D"https://neomarket.apec.fr/res/APECprod/separator_=
+poc.gif" />
+              </div> 
+          
+              <!-- content -->
+              <div class=3D"content">
+                <table cellspacing=3D"5" cellpading=3D"0">
+                  <tr>
+                    <td width=3D"20%" style=3D"vertical-align: middle; text=
+-align: center; padding-right:15px;">
+                    
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY2ODc3VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" target=3D"_blank"><img src=3D"https://www.apec.fr/files=
+/live/mounts/images/media_entreprise/804755/logo_B-HIVE_804755_1282656.png"=
+ style=3D"width:auto;height:auto;max-width:82;max-height:82" alt=3D"B-HIVE"=
+ />
+                      </a>
+                      
+        
+                          
+                    </td>
+                    <td width=3D"80%">
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY2ODc3VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 18px=
+; color: #0e6c8a; text-decoration: none" title=3D"Architecte BIM Modeleur F=
+/H" target=3D"_blank">Architecte BIM Modeleur F/H</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY2ODc3VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 16px=
+; color: #f38237; text-decoration: none; text-transform: uppercase" title=
+=3D"B-HIVE" target=3D"_blank">B-HIVE</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY2ODc3VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"CDI" target=3D"_blank">CD=
+I&nbsp;=95</a>                                                             =
+                                                                         
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY2ODc3VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"Paris 15 - 75" target=3D"=
+_blank">Paris 15 - 75</a>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+               <!--  A METTRE A JOUR <div class=3D"clear">
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0200000000000000000000000=
+.gif" />
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/spacer_poc=
+.gif" />
+               </div> -->
+              <!-- / JGE AJOUT DU TIRET DE SEPARATION VOIR SI UN DOUBLON --=
+>  
+               <div class=3D"clear">
+                  <!--img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0100000000000000000000000=
+.gif" /-->
+              <img src=3D"https://neomarket.apec.fr/res/APECprod/separator_=
+poc.gif" />
+              </div> 
+          
+              <!-- content -->
+              <div class=3D"content">
+                <table cellspacing=3D"5" cellpading=3D"0">
+                  <tr>
+                    <td width=3D"20%" style=3D"vertical-align: middle; text=
+-align: center; padding-right:15px;">
+                    
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY2Mjg5VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" target=3D"_blank"><img src=3D"https://www.apec.fr/files=
+/live/mounts/images/media_entreprise/808614/logo_Cadremploi_808614_1215296.=
+png" style=3D"width:auto;height:auto;max-width:82;max-height:82" alt=3D"cad=
+remploi" />
+                      </a>
+                      
+        
+                          
+                    </td>
+                    <td width=3D"80%">
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY2Mjg5VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 18px=
+; color: #0e6c8a; text-decoration: none" title=3D"Architecte produit F/H" t=
+arget=3D"_blank">Architecte produit F/H</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY2Mjg5VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 16px=
+; color: #f38237; text-decoration: none; text-transform: uppercase" title=
+=3D"cadremploi" target=3D"_blank">cadremploi</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY2Mjg5VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"CDI" target=3D"_blank">CD=
+I&nbsp;=95</a>                                                             =
+                                                                         
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY2Mjg5VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"Argenteuil - 95" target=
+=3D"_blank">Argenteuil - 95</a>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+               <!--  A METTRE A JOUR <div class=3D"clear">
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0200000000000000000000000=
+.gif" />
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/spacer_poc=
+.gif" />
+               </div> -->
+              <!-- / JGE AJOUT DU TIRET DE SEPARATION VOIR SI UN DOUBLON --=
+>  
+               <div class=3D"clear">
+                  <!--img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0100000000000000000000000=
+.gif" /-->
+              <img src=3D"https://neomarket.apec.fr/res/APECprod/separator_=
+poc.gif" />
+              </div> 
+          
+              <!-- content -->
+              <div class=3D"content">
+                <table cellspacing=3D"5" cellpading=3D"0">
+                  <tr>
+                    <td width=3D"20%" style=3D"vertical-align: middle; text=
+-align: center; padding-right:15px;">
+                    
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDczNDM2VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" target=3D"_blank"><img src=3D"https://www.apec.fr/files=
+/live/mounts/images/media_entreprise/808614/logo_Cadremploi_808614_1215296.=
+png" style=3D"width:auto;height:auto;max-width:82;max-height:82" alt=3D"cad=
+remploi" />
+                      </a>
+                      
+        
+                          
+                    </td>
+                    <td width=3D"80%">
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDczNDM2VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 18px=
+; color: #0e6c8a; text-decoration: none" title=3D"Architecte Data F/H" targ=
+et=3D"_blank">Architecte Data F/H</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDczNDM2VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 16px=
+; color: #f38237; text-decoration: none; text-transform: uppercase" title=
+=3D"cadremploi" target=3D"_blank">cadremploi</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDczNDM2VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"CDD" target=3D"_blank">CD=
+D&nbsp;=95</a>                                                             =
+                                                                         
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDczNDM2VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"Saint-Cloud - 92" target=
+=3D"_blank">Saint-Cloud - 92</a>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+               <!--  A METTRE A JOUR <div class=3D"clear">
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0200000000000000000000000=
+.gif" />
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/spacer_poc=
+.gif" />
+               </div> -->
+              <!-- / JGE AJOUT DU TIRET DE SEPARATION VOIR SI UN DOUBLON --=
+>  
+               <div class=3D"clear">
+                  <!--img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0100000000000000000000000=
+.gif" /-->
+              <img src=3D"https://neomarket.apec.fr/res/APECprod/separator_=
+poc.gif" />
+              </div> 
+          
+          <!-- /content -->
+          
+          <!-- AJOUT JGE POUR LE BOUTON DES OFFRES -->
+            <!-- content -->
+            <div class=3D"content no-padding">
+              <table width=3D"100%" cellspacing=3D"5" cellpading=3D"0">
+                <tr>
+                  <td align=3D"center">
+                    <div>
+                      <!--[if mso]>
+                        <v:roundrect xmlns:v=3D"urn:schemas-microsoft-com:v=
+ml" xmlns:w=3D"urn:schemas-microsoft-com:office:word" href=3D"https://www.a=
+pec.fr/candidat/recherche-emploi.html/emploi=3FidCritere=3D14184466&xtor=3D=
+EPR-41-[push_avec_compte]" style=3D"height:40px;v-text-anchor:middle;width:=
+260px;" arcsize=3D"13%" stroke=3D"f" fillcolor=3D"#f38237">
+                          <w:anchorlock/>
+                          <center>
+                            <![endif]-->
+                              <a href=3D"https://neomarket.diffusion.apec.f=
+r/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTQxODQ0NjYmcDM9Jnh=
+0b3I9RVBSLTQxLVtwdXNoX2F2ZWNfY29tcHRlXQ&s=3DFIXTURE" style=3D"background-color:#f38237;border-radius:5=
+px;color:#ffffff;display:inline-block;font-family:Arial,Helvetica,sans-seri=
+f;font-size:15px;font-weight:normal;line-height:40px;text-align:center;text=
+-decoration:none;width:260px;-webkit-text-size-adjust:none;">Voir toutes le=
+s offres correspondantes</a>
+                            <!--[if mso]>
+                          </center>
+                        </v:roundrect>
+                      <![endif]-->
+                    </div>
+                  </td>
+                </tr>
+              </table>
+            </div>
+            <!-- content -->          
+          <!-- FIN AJOUT JGE POUR LE BOUTON DES OFFRES -->
+      
+            <!-- RAJOUT D'ESPACES ENTRE LE BOUTON VOIR TOUS LES PROFILS COR=
+RESPONDANTS ET LE PROFIL SUIVANT -->
+      <div class=3D"clear">&nbsp;</div>
+      <div class=3D"clear">&nbsp;</div>
+      <div class=3D"clear">
+        <img src=3D"https://neomarket.apec.fr/res/APECprod/separator_strong=
+_poc.png" />
+      </div>
+          
+      
+      
+      <!-- Fin liste des offres du profil n=B01 -->
+      <!-- / JGE [FIN BOUCLE LISTE DES OFFRES] -->
+
+
+      
+      <!-- content -->
+      
+      <div class=3D"content">
+        <table cellspacing=3D"5" cellpading=3D"0">
+          <tr>
+            <td align=3D"center" valign=3D"middle">
+                
+                <h2 style=3D"font-family: Arial, Helvetica"><span class=3D"=
+orange">
+                  98 offres</span> correspondent =E0 votre recherche : <spa=
+n class=3D"orange">scout - DevOps/SRE IDF</span>
+                </h2>
+                <br/>
+                
+                <span style=3D"font-family: Arial, Helvetica; font-size:18p=
+x; font-style: italic; color: #f38237; font-weight: normal">Voici les 
+                 
+                 12 premi=E8res :</span>
+                
+            </td>
+          </tr>
+        </table>
+      </div>
+      <!-- /content -->
+
+      <!-- / JGE [BOUCLE LISTE DES OFFRES] -->
+      
+          <div class=3D"clear">
+            <!--img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0100000000000000000000000=
+.gif" /-->
+            <img src=3D"https://neomarket.apec.fr/res/APECprod/separator_po=
+c.gif" />
+          </div>
+    
+          
+              <!-- content -->
+              <div class=3D"content">
+                <table cellspacing=3D"5" cellpading=3D"0">
+                  <tr>
+                    <td width=3D"20%" style=3D"vertical-align: middle; text=
+-align: center; padding-right:15px;">
+                    
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY2Mzk2VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" target=3D"_blank"><img src=3D"https://www.apec.fr/files=
+/live/mounts/images/media_entreprise/808614/logo_Cadremploi_808614_1215296.=
+png" style=3D"width:auto;height:auto;max-width:82;max-height:82" alt=3D"cad=
+remploi" />
+                      </a>
+                      
+        
+                          
+                    </td>
+                    <td width=3D"80%">
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY2Mzk2VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 18px=
+; color: #0e6c8a; text-decoration: none" title=3D"Ing=E9nieur Cloud & Devop=
+s F/H" target=3D"_blank">Ing=E9nieur Cloud & Devops F/H</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY2Mzk2VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 16px=
+; color: #f38237; text-decoration: none; text-transform: uppercase" title=
+=3D"cadremploi" target=3D"_blank">cadremploi</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY2Mzk2VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"CDI" target=3D"_blank">CD=
+I&nbsp;=95</a>                                                             =
+                                                                         
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY2Mzk2VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"Paris 01 - 75" target=3D"=
+_blank">Paris 01 - 75</a>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+               <!--  A METTRE A JOUR <div class=3D"clear">
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0200000000000000000000000=
+.gif" />
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/spacer_poc=
+.gif" />
+               </div> -->
+              <!-- / JGE AJOUT DU TIRET DE SEPARATION VOIR SI UN DOUBLON --=
+>  
+               <div class=3D"clear">
+                  <!--img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0100000000000000000000000=
+.gif" /-->
+              <img src=3D"https://neomarket.apec.fr/res/APECprod/separator_=
+poc.gif" />
+              </div> 
+          
+              <!-- content -->
+              <div class=3D"content">
+                <table cellspacing=3D"5" cellpading=3D"0">
+                  <tr>
+                    <td width=3D"20%" style=3D"vertical-align: middle; text=
+-align: center; padding-right:15px;">
+                    
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDcyODg4VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" target=3D"_blank"><img src=3D"https://www.apec.fr/files=
+/live/mounts/images/media_entreprise/872928/logo_NEW_NET_3D_872928_1606156.=
+png" style=3D"width:auto;height:auto;max-width:82;max-height:82" alt=3D"Gro=
+upe Talents Handicap" />
+                      </a>
+                      
+        
+                          
+                    </td>
+                    <td width=3D"80%">
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDcyODg4VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 18px=
+; color: #0e6c8a; text-decoration: none" title=3D"Ing=E9nieur Cloud / Infra=
+ / DevOps F/H" target=3D"_blank">Ing=E9nieur Cloud / Infra / DevOps F/H</a>=
+<br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDcyODg4VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 16px=
+; color: #f38237; text-decoration: none; text-transform: uppercase" title=
+=3D"Groupe Talents Handicap" target=3D"_blank">Groupe Talents Handicap</a><=
+br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDcyODg4VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"CDI" target=3D"_blank">CD=
+I&nbsp;=95</a>                                                             =
+                                                                         
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDcyODg4VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"Paris 01 - 75" target=3D"=
+_blank">Paris 01 - 75</a>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+               <!--  A METTRE A JOUR <div class=3D"clear">
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0200000000000000000000000=
+.gif" />
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/spacer_poc=
+.gif" />
+               </div> -->
+              <!-- / JGE AJOUT DU TIRET DE SEPARATION VOIR SI UN DOUBLON --=
+>  
+               <div class=3D"clear">
+                  <!--img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0100000000000000000000000=
+.gif" /-->
+              <img src=3D"https://neomarket.apec.fr/res/APECprod/separator_=
+poc.gif" />
+              </div> 
+          
+              <!-- content -->
+              <div class=3D"content">
+                <table cellspacing=3D"5" cellpading=3D"0">
+                  <tr>
+                    <td width=3D"20%" style=3D"vertical-align: middle; text=
+-align: center; padding-right:15px;">
+                    
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY5MDk5VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" target=3D"_blank"><img src=3D"https://www.apec.fr/files=
+/live/mounts/images/media_entreprise/806375/logo_Hellowork_806375_1205852.j=
+pg" style=3D"width:auto;height:auto;max-width:82;max-height:82" alt=3D"Hell=
+owork" />
+                      </a>
+                      
+        
+                          
+                    </td>
+                    <td width=3D"80%">
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY5MDk5VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 18px=
+; color: #0e6c8a; text-decoration: none" title=3D"Ing=E9nieur DevOps Cloud =
+Sre - Secteur de la Sant=E9 F/H" target=3D"_blank">Ing=E9nieur DevOps Cloud=
+ Sre - Secteur de la Sant=E9 F/H</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY5MDk5VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 16px=
+; color: #f38237; text-decoration: none; text-transform: uppercase" title=
+=3D"Hellowork" target=3D"_blank">Hellowork</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY5MDk5VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"CDI" target=3D"_blank">CD=
+I&nbsp;=95</a>                                                             =
+                                                                         
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY5MDk5VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"Paris 14 - 75" target=3D"=
+_blank">Paris 14 - 75</a>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+               <!--  A METTRE A JOUR <div class=3D"clear">
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0200000000000000000000000=
+.gif" />
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/spacer_poc=
+.gif" />
+               </div> -->
+              <!-- / JGE AJOUT DU TIRET DE SEPARATION VOIR SI UN DOUBLON --=
+>  
+               <div class=3D"clear">
+                  <!--img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0100000000000000000000000=
+.gif" /-->
+              <img src=3D"https://neomarket.apec.fr/res/APECprod/separator_=
+poc.gif" />
+              </div> 
+          
+              <!-- content -->
+              <div class=3D"content">
+                <table cellspacing=3D"5" cellpading=3D"0">
+                  <tr>
+                    <td width=3D"20%" style=3D"vertical-align: middle; text=
+-align: center; padding-right:15px;">
+                    
+                     <img src=3D"https://neomarket.apec.fr/res/APECprod/no-=
+logo@2x.gif" width=3D"50" height=3D"50" alt=3D"Logo"/>
+                      
+        
+                          
+                    </td>
+                    <td width=3D"80%">
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY5OTc3VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 18px=
+; color: #0e6c8a; text-decoration: none" title=3D"Ing=E9nieur Cloud GCP - C=
+DI F/H" target=3D"_blank">Ing=E9nieur Cloud GCP - CDI F/H</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY5OTc3VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 16px=
+; color: #f38237; text-decoration: none; text-transform: uppercase" title=
+=3D"Collective" target=3D"_blank">Collective</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY5OTc3VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"CDI" target=3D"_blank">CD=
+I&nbsp;=95</a>                                                             =
+                                                                         
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY5OTc3VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"Paris 04 - 75" target=3D"=
+_blank">Paris 04 - 75</a>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+               <!--  A METTRE A JOUR <div class=3D"clear">
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0200000000000000000000000=
+.gif" />
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/spacer_poc=
+.gif" />
+               </div> -->
+              <!-- / JGE AJOUT DU TIRET DE SEPARATION VOIR SI UN DOUBLON --=
+>  
+               <div class=3D"clear">
+                  <!--img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0100000000000000000000000=
+.gif" /-->
+              <img src=3D"https://neomarket.apec.fr/res/APECprod/separator_=
+poc.gif" />
+              </div> 
+          
+              <!-- content -->
+              <div class=3D"content">
+                <table cellspacing=3D"5" cellpading=3D"0">
+                  <tr>
+                    <td width=3D"20%" style=3D"vertical-align: middle; text=
+-align: center; padding-right:15px;">
+                    
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5Mzk0MzIyVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" target=3D"_blank"><img src=3D"https://www.apec.fr/files=
+/live/mounts/images/media_entreprise/702055/logo_LEO_INTERNATIONAL_702055.j=
+pg" style=3D"width:auto;height:auto;max-width:82;max-height:82" alt=3D"LEO =
+INTERNATIONAL" />
+                      </a>
+                      
+        
+                          
+                    </td>
+                    <td width=3D"80%">
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5Mzk0MzIyVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 18px=
+; color: #0e6c8a; text-decoration: none" title=3D"DevOps FullStack F/H" tar=
+get=3D"_blank">DevOps FullStack F/H</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5Mzk0MzIyVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 16px=
+; color: #f38237; text-decoration: none; text-transform: uppercase" title=
+=3D"LEO INTERNATIONAL" target=3D"_blank">LEO INTERNATIONAL</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5Mzk0MzIyVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"CDI" target=3D"_blank">CD=
+I&nbsp;=95</a>                                                             =
+                                                                         
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5Mzk0MzIyVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"Paris 01 - 75" target=3D"=
+_blank">Paris 01 - 75</a>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+               <!--  A METTRE A JOUR <div class=3D"clear">
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0200000000000000000000000=
+.gif" />
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/spacer_poc=
+.gif" />
+               </div> -->
+              <!-- / JGE AJOUT DU TIRET DE SEPARATION VOIR SI UN DOUBLON --=
+>  
+               <div class=3D"clear">
+                  <!--img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0100000000000000000000000=
+.gif" /-->
+              <img src=3D"https://neomarket.apec.fr/res/APECprod/separator_=
+poc.gif" />
+              </div> 
+          
+              <!-- content -->
+              <div class=3D"content">
+                <table cellspacing=3D"5" cellpading=3D"0">
+                  <tr>
+                    <td width=3D"20%" style=3D"vertical-align: middle; text=
+-align: center; padding-right:15px;">
+                    
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDcwNDUwVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" target=3D"_blank"><img src=3D"https://www.apec.fr/files=
+/live/mounts/images/media_entreprise/243532/logo_243532_INFORMATIS_TECHNOLO=
+GY_SYSTEM1193823011717.jpg" style=3D"width:auto;height:auto;max-width:82;ma=
+x-height:82" alt=3D"INFORMATIS T.S." />
+                      </a>
+                      
+        
+                          
+                    </td>
+                    <td width=3D"80%">
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDcwNDUwVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 18px=
+; color: #0e6c8a; text-decoration: none" title=3D"DevOps / DevSecOps =96 In=
+dustrialisation & Cybers=E9curit=E9 F/H" target=3D"_blank">DevOps / DevSecO=
+ps =96 Industrialisation & Cybers=E9curit=E9 F/H</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDcwNDUwVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 16px=
+; color: #f38237; text-decoration: none; text-transform: uppercase" title=
+=3D"INFORMATIS T.S." target=3D"_blank">INFORMATIS T.S.</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDcwNDUwVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"CDI" target=3D"_blank">CD=
+I&nbsp;=95</a>                                                             =
+                                                                         
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDcwNDUwVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"Nanterre - 92" target=3D"=
+_blank">Nanterre - 92</a>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+               <!--  A METTRE A JOUR <div class=3D"clear">
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0200000000000000000000000=
+.gif" />
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/spacer_poc=
+.gif" />
+               </div> -->
+              <!-- / JGE AJOUT DU TIRET DE SEPARATION VOIR SI UN DOUBLON --=
+>  
+               <div class=3D"clear">
+                  <!--img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0100000000000000000000000=
+.gif" /-->
+              <img src=3D"https://neomarket.apec.fr/res/APECprod/separator_=
+poc.gif" />
+              </div> 
+          
+              <!-- content -->
+              <div class=3D"content">
+                <table cellspacing=3D"5" cellpading=3D"0">
+                  <tr>
+                    <td width=3D"20%" style=3D"vertical-align: middle; text=
+-align: center; padding-right:15px;">
+                    
+                     <img src=3D"https://neomarket.apec.fr/res/APECprod/no-=
+logo@2x.gif" width=3D"50" height=3D"50" alt=3D"Logo"/>
+                      
+        
+                          
+                    </td>
+                    <td width=3D"80%">
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDcwNDgzVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 18px=
+; color: #0e6c8a; text-decoration: none" title=3D"DEVOPS / Expert SPLUNK F/=
+H" target=3D"_blank">DEVOPS / Expert SPLUNK F/H</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDcwNDgzVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 16px=
+; color: #f38237; text-decoration: none; text-transform: uppercase" title=
+=3D"AGH CONSULTING" target=3D"_blank">AGH CONSULTING</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDcwNDgzVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"CDI" target=3D"_blank">CD=
+I&nbsp;=95</a>                                                             =
+                                                                         
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDcwNDgzVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"Paris 01 - 75" target=3D"=
+_blank">Paris 01 - 75</a>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+               <!--  A METTRE A JOUR <div class=3D"clear">
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0200000000000000000000000=
+.gif" />
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/spacer_poc=
+.gif" />
+               </div> -->
+              <!-- / JGE AJOUT DU TIRET DE SEPARATION VOIR SI UN DOUBLON --=
+>  
+               <div class=3D"clear">
+                  <!--img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0100000000000000000000000=
+.gif" /-->
+              <img src=3D"https://neomarket.apec.fr/res/APECprod/separator_=
+poc.gif" />
+              </div> 
+          
+              <!-- content -->
+              <div class=3D"content">
+                <table cellspacing=3D"5" cellpading=3D"0">
+                  <tr>
+                    <td width=3D"20%" style=3D"vertical-align: middle; text=
+-align: center; padding-right:15px;">
+                    
+                     <img src=3D"https://neomarket.apec.fr/res/APECprod/no-=
+logo@2x.gif" width=3D"50" height=3D"50" alt=3D"Logo"/>
+                      
+        
+                          
+                    </td>
+                    <td width=3D"80%">
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDcxODkyVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 18px=
+; color: #0e6c8a; text-decoration: none" title=3D"ing=E9nieur devOps Cloud =
+Infra - CDI F/H" target=3D"_blank">ing=E9nieur devOps Cloud Infra - CDI F/H=
+</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDcxODkyVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 16px=
+; color: #f38237; text-decoration: none; text-transform: uppercase" title=
+=3D"Collective" target=3D"_blank">Collective</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDcxODkyVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"CDI" target=3D"_blank">CD=
+I&nbsp;=95</a>                                                             =
+                                                                         
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDcxODkyVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"Paris 04 - 75" target=3D"=
+_blank">Paris 04 - 75</a>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+               <!--  A METTRE A JOUR <div class=3D"clear">
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0200000000000000000000000=
+.gif" />
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/spacer_poc=
+.gif" />
+               </div> -->
+              <!-- / JGE AJOUT DU TIRET DE SEPARATION VOIR SI UN DOUBLON --=
+>  
+               <div class=3D"clear">
+                  <!--img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0100000000000000000000000=
+.gif" /-->
+              <img src=3D"https://neomarket.apec.fr/res/APECprod/separator_=
+poc.gif" />
+              </div> 
+          
+              <!-- content -->
+              <div class=3D"content">
+                <table cellspacing=3D"5" cellpading=3D"0">
+                  <tr>
+                    <td width=3D"20%" style=3D"vertical-align: middle; text=
+-align: center; padding-right:15px;">
+                    
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDcxODM3VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" target=3D"_blank"><img src=3D"https://www.apec.fr/files=
+/live/mounts/images/media_entreprise/571128/logo_ALTER_DEFENCE_SECURITY_571=
+128.jpg" style=3D"width:auto;height:auto;max-width:82;max-height:82" alt=3D=
+"Act Digital France" />
+                      </a>
+                      
+        
+                          
+                    </td>
+                    <td width=3D"80%">
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDcxODM3VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 18px=
+; color: #0e6c8a; text-decoration: none" title=3D"Ing=E9nieur Splunk / DevO=
+ps =96 SIEM & Automatisation F/H" target=3D"_blank">Ing=E9nieur Splunk / De=
+vOps =96 SIEM & Automatisation F/H</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDcxODM3VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 16px=
+; color: #f38237; text-decoration: none; text-transform: uppercase" title=
+=3D"Act Digital France" target=3D"_blank">Act Digital France</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDcxODM3VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"CDI" target=3D"_blank">CD=
+I&nbsp;=95</a>                                                             =
+                                                                         
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDcxODM3VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"Versailles - 78" target=
+=3D"_blank">Versailles - 78</a>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+               <!--  A METTRE A JOUR <div class=3D"clear">
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0200000000000000000000000=
+.gif" />
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/spacer_poc=
+.gif" />
+               </div> -->
+              <!-- / JGE AJOUT DU TIRET DE SEPARATION VOIR SI UN DOUBLON --=
+>  
+               <div class=3D"clear">
+                  <!--img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0100000000000000000000000=
+.gif" /-->
+              <img src=3D"https://neomarket.apec.fr/res/APECprod/separator_=
+poc.gif" />
+              </div> 
+          
+              <!-- content -->
+              <div class=3D"content">
+                <table cellspacing=3D"5" cellpading=3D"0">
+                  <tr>
+                    <td width=3D"20%" style=3D"vertical-align: middle; text=
+-align: center; padding-right:15px;">
+                    
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDcxODM1VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" target=3D"_blank"><img src=3D"https://www.apec.fr/files=
+/live/mounts/images/media_entreprise/773009/logo_SOORS_773009_1083614.png" =
+style=3D"width:auto;height:auto;max-width:82;max-height:82" alt=3D"SOORS" /=
+>
+                      </a>
+                      
+        
+                          
+                    </td>
+                    <td width=3D"80%">
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDcxODM1VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 18px=
+; color: #0e6c8a; text-decoration: none" title=3D"Tech Lead Informatica / D=
+evops F/H" target=3D"_blank">Tech Lead Informatica / Devops F/H</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDcxODM1VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 16px=
+; color: #f38237; text-decoration: none; text-transform: uppercase" title=
+=3D"SOORS" target=3D"_blank">SOORS</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDcxODM1VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"CDI" target=3D"_blank">CD=
+I&nbsp;=95</a>                                                             =
+                                                                         
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDcxODM1VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"Fontenay-sous-Bois - 94" =
+target=3D"_blank">Fontenay-sous-Bois - 94</a>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+               <!--  A METTRE A JOUR <div class=3D"clear">
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0200000000000000000000000=
+.gif" />
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/spacer_poc=
+.gif" />
+               </div> -->
+              <!-- / JGE AJOUT DU TIRET DE SEPARATION VOIR SI UN DOUBLON --=
+>  
+               <div class=3D"clear">
+                  <!--img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0100000000000000000000000=
+.gif" /-->
+              <img src=3D"https://neomarket.apec.fr/res/APECprod/separator_=
+poc.gif" />
+              </div> 
+          
+              <!-- content -->
+              <div class=3D"content">
+                <table cellspacing=3D"5" cellpading=3D"0">
+                  <tr>
+                    <td width=3D"20%" style=3D"vertical-align: middle; text=
+-align: center; padding-right:15px;">
+                    
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5Mzk0Mjg5VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" target=3D"_blank"><img src=3D"https://www.apec.fr/files=
+/live/mounts/images/media_entreprise/702055/logo_LEO_INTERNATIONAL_702055.j=
+pg" style=3D"width:auto;height:auto;max-width:82;max-height:82" alt=3D"LEO =
+INTERNATIONAL" />
+                      </a>
+                      
+        
+                          
+                    </td>
+                    <td width=3D"80%">
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5Mzk0Mjg5VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 18px=
+; color: #0e6c8a; text-decoration: none" title=3D"Consultant ou Architecte =
+DevOps ou Cloud GCP F/H" target=3D"_blank">Consultant ou Architecte DevOps =
+ou Cloud GCP F/H</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5Mzk0Mjg5VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 16px=
+; color: #f38237; text-decoration: none; text-transform: uppercase" title=
+=3D"LEO INTERNATIONAL" target=3D"_blank">LEO INTERNATIONAL</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5Mzk0Mjg5VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"CDI" target=3D"_blank">CD=
+I&nbsp;=95</a>                                                             =
+                                                                         
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5Mzk0Mjg5VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"Paris 01 - 75" target=3D"=
+_blank">Paris 01 - 75</a>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+               <!--  A METTRE A JOUR <div class=3D"clear">
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0200000000000000000000000=
+.gif" />
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/spacer_poc=
+.gif" />
+               </div> -->
+              <!-- / JGE AJOUT DU TIRET DE SEPARATION VOIR SI UN DOUBLON --=
+>  
+               <div class=3D"clear">
+                  <!--img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0100000000000000000000000=
+.gif" /-->
+              <img src=3D"https://neomarket.apec.fr/res/APECprod/separator_=
+poc.gif" />
+              </div> 
+          
+              <!-- content -->
+              <div class=3D"content">
+                <table cellspacing=3D"5" cellpading=3D"0">
+                  <tr>
+                    <td width=3D"20%" style=3D"vertical-align: middle; text=
+-align: center; padding-right:15px;">
+                    
+                     <img src=3D"https://neomarket.apec.fr/res/APECprod/no-=
+logo@2x.gif" width=3D"50" height=3D"50" alt=3D"Logo"/>
+                      
+        
+                          
+                    </td>
+                    <td width=3D"80%">
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY1Mzk4VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 18px=
+; color: #0e6c8a; text-decoration: none" title=3D"Ing=E9nieur Full Stack / =
+Logiciel distribu=E9 / Devops - D=E9fense F/H" target=3D"_blank">Ing=E9nieu=
+r Full Stack / Logiciel distribu=E9 / Devops - D=E9fense F/H</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY1Mzk4VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 16px=
+; color: #f38237; text-decoration: none; text-transform: uppercase" title=
+=3D"CO-MARTIN" target=3D"_blank">CO-MARTIN</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY1Mzk4VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"CDI" target=3D"_blank">CD=
+I&nbsp;=95</a>                                                             =
+                                                                         
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY1Mzk4VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"Le Plessis-Robinson - 92"=
+ target=3D"_blank">Le Plessis-Robinson - 92</a>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+               <!--  A METTRE A JOUR <div class=3D"clear">
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0200000000000000000000000=
+.gif" />
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/spacer_poc=
+.gif" />
+               </div> -->
+              <!-- / JGE AJOUT DU TIRET DE SEPARATION VOIR SI UN DOUBLON --=
+>  
+               <div class=3D"clear">
+                  <!--img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0100000000000000000000000=
+.gif" /-->
+              <img src=3D"https://neomarket.apec.fr/res/APECprod/separator_=
+poc.gif" />
+              </div> 
+          
+          <!-- /content -->
+          
+          <!-- AJOUT JGE POUR LE BOUTON DES OFFRES -->
+            <!-- content -->
+            <div class=3D"content no-padding">
+              <table width=3D"100%" cellspacing=3D"5" cellpading=3D"0">
+                <tr>
+                  <td align=3D"center">
+                    <div>
+                      <!--[if mso]>
+                        <v:roundrect xmlns:v=3D"urn:schemas-microsoft-com:v=
+ml" xmlns:w=3D"urn:schemas-microsoft-com:office:word" href=3D"https://www.a=
+pec.fr/candidat/recherche-emploi.html/emploi=3FidCritere=3D14184467&xtor=3D=
+EPR-41-[push_avec_compte]" style=3D"height:40px;v-text-anchor:middle;width:=
+260px;" arcsize=3D"13%" stroke=3D"f" fillcolor=3D"#f38237">
+                          <w:anchorlock/>
+                          <center>
+                            <![endif]-->
+                              <a href=3D"https://neomarket.diffusion.apec.f=
+r/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTQxODQ0NjcmcDM9Jnh=
+0b3I9RVBSLTQxLVtwdXNoX2F2ZWNfY29tcHRlXQ&s=3DFIXTURE" style=3D"background-color:#f38237;border-radius:5=
+px;color:#ffffff;display:inline-block;font-family:Arial,Helvetica,sans-seri=
+f;font-size:15px;font-weight:normal;line-height:40px;text-align:center;text=
+-decoration:none;width:260px;-webkit-text-size-adjust:none;">Voir toutes le=
+s offres correspondantes</a>
+                            <!--[if mso]>
+                          </center>
+                        </v:roundrect>
+                      <![endif]-->
+                    </div>
+                  </td>
+                </tr>
+              </table>
+            </div>
+            <!-- content -->          
+          <!-- FIN AJOUT JGE POUR LE BOUTON DES OFFRES -->
+      
+            <!-- RAJOUT D'ESPACES ENTRE LE BOUTON VOIR TOUS LES PROFILS COR=
+RESPONDANTS ET LE PROFIL SUIVANT -->
+      <div class=3D"clear">&nbsp;</div>
+      <div class=3D"clear">&nbsp;</div>
+      <div class=3D"clear">
+        <img src=3D"https://neomarket.apec.fr/res/APECprod/separator_strong=
+_poc.png" />
+      </div>
+          
+      
+      
+      <!-- Fin liste des offres du profil n=B01 -->
+      <!-- / JGE [FIN BOUCLE LISTE DES OFFRES] -->
+
+
+      
+      <!-- content -->
+      
+      <div class=3D"content">
+        <table cellspacing=3D"5" cellpading=3D"0">
+          <tr>
+            <td align=3D"center" valign=3D"middle">
+                
+                <h2 style=3D"font-family: Arial, Helvetica"><span class=3D"=
+orange">
+                  91 offres</span> correspondent =E0 votre recherche : <spa=
+n class=3D"orange">scout - Lead/Management IDF</span>
+                </h2>
+                <br/>
+                
+                <span style=3D"font-family: Arial, Helvetica; font-size:18p=
+x; font-style: italic; color: #f38237; font-weight: normal">Voici les 
+                 
+                 12 premi=E8res :</span>
+                
+            </td>
+          </tr>
+        </table>
+      </div>
+      <!-- /content -->
+
+      <!-- / JGE [BOUCLE LISTE DES OFFRES] -->
+      
+          <div class=3D"clear">
+            <!--img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0100000000000000000000000=
+.gif" /-->
+            <img src=3D"https://neomarket.apec.fr/res/APECprod/separator_po=
+c.gif" />
+          </div>
+    
+          
+              <!-- content -->
+              <div class=3D"content">
+                <table cellspacing=3D"5" cellpading=3D"0">
+                  <tr>
+                    <td width=3D"20%" style=3D"vertical-align: middle; text=
+-align: center; padding-right:15px;">
+                    
+                     <img src=3D"https://neomarket.apec.fr/res/APECprod/no-=
+logo@2x.gif" width=3D"50" height=3D"50" alt=3D"Logo"/>
+                      
+        
+                          
+                    </td>
+                    <td width=3D"80%">
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDYyNzc5VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 18px=
+; color: #0e6c8a; text-decoration: none" title=3D"Engineering Manager Media=
+ - F/H" target=3D"_blank">Engineering Manager Media - F/H</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDYyNzc5VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 16px=
+; color: #f38237; text-decoration: none; text-transform: uppercase" title=
+=3D"TEAMIS" target=3D"_blank">TEAMIS</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDYyNzc5VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"CDI" target=3D"_blank">CD=
+I&nbsp;=95</a>                                                             =
+                                                                         
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDYyNzc5VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"Paris 17 - 75" target=3D"=
+_blank">Paris 17 - 75</a>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+               <!--  A METTRE A JOUR <div class=3D"clear">
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0200000000000000000000000=
+.gif" />
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/spacer_poc=
+.gif" />
+               </div> -->
+              <!-- / JGE AJOUT DU TIRET DE SEPARATION VOIR SI UN DOUBLON --=
+>  
+               <div class=3D"clear">
+                  <!--img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0100000000000000000000000=
+.gif" /-->
+              <img src=3D"https://neomarket.apec.fr/res/APECprod/separator_=
+poc.gif" />
+              </div> 
+          
+              <!-- content -->
+              <div class=3D"content">
+                <table cellspacing=3D"5" cellpading=3D"0">
+                  <tr>
+                    <td width=3D"20%" style=3D"vertical-align: middle; text=
+-align: center; padding-right:15px;">
+                    
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5MzY2NzA0VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" target=3D"_blank"><img src=3D"https://www.apec.fr/files=
+/live/mounts/images/media_entreprise/511641/logo_FBD_INTERNATIONAL_511641_8=
+64135.PNG" style=3D"width:auto;height:auto;max-width:82;max-height:82" alt=
+=3D"FBD Group" />
+                      </a>
+                      
+        
+                          
+                    </td>
+                    <td width=3D"80%">
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5MzY2NzA0VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 18px=
+; color: #0e6c8a; text-decoration: none" title=3D"Tech Lead F/H" target=3D"=
+_blank">Tech Lead F/H</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5MzY2NzA0VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 16px=
+; color: #f38237; text-decoration: none; text-transform: uppercase" title=
+=3D"FBD Group" target=3D"_blank">FBD Group</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5MzY2NzA0VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"CDI" target=3D"_blank">CD=
+I&nbsp;=95</a>                                                             =
+                                                                         
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5MzY2NzA0VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"Tremblay-en-France - 93" =
+target=3D"_blank">Tremblay-en-France - 93</a>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+               <!--  A METTRE A JOUR <div class=3D"clear">
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0200000000000000000000000=
+.gif" />
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/spacer_poc=
+.gif" />
+               </div> -->
+              <!-- / JGE AJOUT DU TIRET DE SEPARATION VOIR SI UN DOUBLON --=
+>  
+               <div class=3D"clear">
+                  <!--img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0100000000000000000000000=
+.gif" /-->
+              <img src=3D"https://neomarket.apec.fr/res/APECprod/separator_=
+poc.gif" />
+              </div> 
+          
+              <!-- content -->
+              <div class=3D"content">
+                <table cellspacing=3D"5" cellpading=3D"0">
+                  <tr>
+                    <td width=3D"20%" style=3D"vertical-align: middle; text=
+-align: center; padding-right:15px;">
+                    
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDcxNzIxVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" target=3D"_blank"><img src=3D"https://www.apec.fr/files=
+/live/mounts/images/media_entreprise/465019/logo_BLUE_SOFT_465019_1395043.j=
+pg" style=3D"width:auto;height:auto;max-width:82;max-height:82" alt=3D"BLUE=
+ SOFT" />
+                      </a>
+                      
+        
+                          
+                    </td>
+                    <td width=3D"80%">
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDcxNzIxVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 18px=
+; color: #0e6c8a; text-decoration: none" title=3D"Tech Lead MongoDB F/H" ta=
+rget=3D"_blank">Tech Lead MongoDB F/H</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDcxNzIxVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 16px=
+; color: #f38237; text-decoration: none; text-transform: uppercase" title=
+=3D"BLUE SOFT" target=3D"_blank">BLUE SOFT</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDcxNzIxVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"CDI" target=3D"_blank">CD=
+I&nbsp;=95</a>                                                             =
+                                                                         
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDcxNzIxVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"Montreuil - 93" target=3D=
+"_blank">Montreuil - 93</a>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+               <!--  A METTRE A JOUR <div class=3D"clear">
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0200000000000000000000000=
+.gif" />
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/spacer_poc=
+.gif" />
+               </div> -->
+              <!-- / JGE AJOUT DU TIRET DE SEPARATION VOIR SI UN DOUBLON --=
+>  
+               <div class=3D"clear">
+                  <!--img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0100000000000000000000000=
+.gif" /-->
+              <img src=3D"https://neomarket.apec.fr/res/APECprod/separator_=
+poc.gif" />
+              </div> 
+          
+              <!-- content -->
+              <div class=3D"content">
+                <table cellspacing=3D"5" cellpading=3D"0">
+                  <tr>
+                    <td width=3D"20%" style=3D"vertical-align: middle; text=
+-align: center; padding-right:15px;">
+                    
+                     <img src=3D"https://neomarket.apec.fr/res/APECprod/no-=
+logo@2x.gif" width=3D"50" height=3D"50" alt=3D"Logo"/>
+                      
+        
+                          
+                    </td>
+                    <td width=3D"80%">
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDcxODY0VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 18px=
+; color: #0e6c8a; text-decoration: none" title=3D"AI Tech Lead GenAI F/H" t=
+arget=3D"_blank">AI Tech Lead GenAI F/H</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDcxODY0VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 16px=
+; color: #f38237; text-decoration: none; text-transform: uppercase" title=
+=3D"DGTL Performance" target=3D"_blank">DGTL Performance</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDcxODY0VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"CDI" target=3D"_blank">CD=
+I&nbsp;=95</a>                                                             =
+                                                                         
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDcxODY0VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"Paris 01 - 75" target=3D"=
+_blank">Paris 01 - 75</a>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+               <!--  A METTRE A JOUR <div class=3D"clear">
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0200000000000000000000000=
+.gif" />
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/spacer_poc=
+.gif" />
+               </div> -->
+              <!-- / JGE AJOUT DU TIRET DE SEPARATION VOIR SI UN DOUBLON --=
+>  
+               <div class=3D"clear">
+                  <!--img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0100000000000000000000000=
+.gif" /-->
+              <img src=3D"https://neomarket.apec.fr/res/APECprod/separator_=
+poc.gif" />
+              </div> 
+          
+              <!-- content -->
+              <div class=3D"content">
+                <table cellspacing=3D"5" cellpading=3D"0">
+                  <tr>
+                    <td width=3D"20%" style=3D"vertical-align: middle; text=
+-align: center; padding-right:15px;">
+                    
+                     <img src=3D"https://neomarket.apec.fr/res/APECprod/no-=
+logo@2x.gif" width=3D"50" height=3D"50" alt=3D"Logo"/>
+                      
+        
+                          
+                    </td>
+                    <td width=3D"80%">
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDcyNTA1VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 18px=
+; color: #0e6c8a; text-decoration: none" title=3D"Tech Lead MongoDB F/H" ta=
+rget=3D"_blank">Tech Lead MongoDB F/H</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDcyNTA1VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 16px=
+; color: #f38237; text-decoration: none; text-transform: uppercase" title=
+=3D"CO-MARTIN" target=3D"_blank">CO-MARTIN</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDcyNTA1VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"CDI" target=3D"_blank">CD=
+I&nbsp;=95</a>                                                             =
+                                                                         
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDcyNTA1VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"Montreuil - 93" target=3D=
+"_blank">Montreuil - 93</a>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+               <!--  A METTRE A JOUR <div class=3D"clear">
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0200000000000000000000000=
+.gif" />
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/spacer_poc=
+.gif" />
+               </div> -->
+              <!-- / JGE AJOUT DU TIRET DE SEPARATION VOIR SI UN DOUBLON --=
+>  
+               <div class=3D"clear">
+                  <!--img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0100000000000000000000000=
+.gif" /-->
+              <img src=3D"https://neomarket.apec.fr/res/APECprod/separator_=
+poc.gif" />
+              </div> 
+          
+              <!-- content -->
+              <div class=3D"content">
+                <table cellspacing=3D"5" cellpading=3D"0">
+                  <tr>
+                    <td width=3D"20%" style=3D"vertical-align: middle; text=
+-align: center; padding-right:15px;">
+                    
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY2NjI0VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" target=3D"_blank"><img src=3D"https://www.apec.fr/files=
+/live/mounts/images/media_entreprise/808614/logo_Cadremploi_808614_1215296.=
+png" style=3D"width:auto;height:auto;max-width:82;max-height:82" alt=3D"cad=
+remploi" />
+                      </a>
+                      
+        
+                          
+                    </td>
+                    <td width=3D"80%">
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY2NjI0VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 18px=
+; color: #0e6c8a; text-decoration: none" title=3D"Tech lead voip F/H" targe=
+t=3D"_blank">Tech lead voip F/H</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY2NjI0VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 16px=
+; color: #f38237; text-decoration: none; text-transform: uppercase" title=
+=3D"cadremploi" target=3D"_blank">cadremploi</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY2NjI0VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"CDI" target=3D"_blank">CD=
+I&nbsp;=95</a>                                                             =
+                                                                         
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY2NjI0VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"Paris 01 - 75" target=3D"=
+_blank">Paris 01 - 75</a>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+               <!--  A METTRE A JOUR <div class=3D"clear">
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0200000000000000000000000=
+.gif" />
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/spacer_poc=
+.gif" />
+               </div> -->
+              <!-- / JGE AJOUT DU TIRET DE SEPARATION VOIR SI UN DOUBLON --=
+>  
+               <div class=3D"clear">
+                  <!--img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0100000000000000000000000=
+.gif" /-->
+              <img src=3D"https://neomarket.apec.fr/res/APECprod/separator_=
+poc.gif" />
+              </div> 
+          
+              <!-- content -->
+              <div class=3D"content">
+                <table cellspacing=3D"5" cellpading=3D"0">
+                  <tr>
+                    <td width=3D"20%" style=3D"vertical-align: middle; text=
+-align: center; padding-right:15px;">
+                    
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDcxODM1VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" target=3D"_blank"><img src=3D"https://www.apec.fr/files=
+/live/mounts/images/media_entreprise/773009/logo_SOORS_773009_1083614.png" =
+style=3D"width:auto;height:auto;max-width:82;max-height:82" alt=3D"SOORS" /=
+>
+                      </a>
+                      
+        
+                          
+                    </td>
+                    <td width=3D"80%">
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDcxODM1VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 18px=
+; color: #0e6c8a; text-decoration: none" title=3D"Tech Lead Informatica / D=
+evops F/H" target=3D"_blank">Tech Lead Informatica / Devops F/H</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDcxODM1VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 16px=
+; color: #f38237; text-decoration: none; text-transform: uppercase" title=
+=3D"SOORS" target=3D"_blank">SOORS</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDcxODM1VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"CDI" target=3D"_blank">CD=
+I&nbsp;=95</a>                                                             =
+                                                                         
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDcxODM1VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"Fontenay-sous-Bois - 94" =
+target=3D"_blank">Fontenay-sous-Bois - 94</a>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+               <!--  A METTRE A JOUR <div class=3D"clear">
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0200000000000000000000000=
+.gif" />
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/spacer_poc=
+.gif" />
+               </div> -->
+              <!-- / JGE AJOUT DU TIRET DE SEPARATION VOIR SI UN DOUBLON --=
+>  
+               <div class=3D"clear">
+                  <!--img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0100000000000000000000000=
+.gif" /-->
+              <img src=3D"https://neomarket.apec.fr/res/APECprod/separator_=
+poc.gif" />
+              </div> 
+          
+              <!-- content -->
+              <div class=3D"content">
+                <table cellspacing=3D"5" cellpading=3D"0">
+                  <tr>
+                    <td width=3D"20%" style=3D"vertical-align: middle; text=
+-align: center; padding-right:15px;">
+                    
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY2Njc5VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" target=3D"_blank"><img src=3D"https://www.apec.fr/files=
+/live/mounts/images/media_entreprise/753950/logo_BLUECODERS_753950_1198194.=
+png" style=3D"width:auto;height:auto;max-width:82;max-height:82" alt=3D"Blu=
+ecoders" />
+                      </a>
+                      
+        
+                          
+                    </td>
+                    <td width=3D"80%">
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY2Njc5VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 18px=
+; color: #0e6c8a; text-decoration: none" title=3D"CTO Hands-on F/H" target=
+=3D"_blank">CTO Hands-on F/H</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY2Njc5VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 16px=
+; color: #f38237; text-decoration: none; text-transform: uppercase" title=
+=3D"Bluecoders" target=3D"_blank">Bluecoders</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY2Njc5VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"CDI" target=3D"_blank">CD=
+I&nbsp;=95</a>                                                             =
+                                                                         
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY2Njc5VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"Paris 04 - 75" target=3D"=
+_blank">Paris 04 - 75</a>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+               <!--  A METTRE A JOUR <div class=3D"clear">
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0200000000000000000000000=
+.gif" />
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/spacer_poc=
+.gif" />
+               </div> -->
+              <!-- / JGE AJOUT DU TIRET DE SEPARATION VOIR SI UN DOUBLON --=
+>  
+               <div class=3D"clear">
+                  <!--img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0100000000000000000000000=
+.gif" /-->
+              <img src=3D"https://neomarket.apec.fr/res/APECprod/separator_=
+poc.gif" />
+              </div> 
+          
+              <!-- content -->
+              <div class=3D"content">
+                <table cellspacing=3D"5" cellpading=3D"0">
+                  <tr>
+                    <td width=3D"20%" style=3D"vertical-align: middle; text=
+-align: center; padding-right:15px;">
+                    
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5Mzk0MzA2VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" target=3D"_blank"><img src=3D"https://www.apec.fr/files=
+/live/mounts/images/media_entreprise/702055/logo_LEO_INTERNATIONAL_702055.j=
+pg" style=3D"width:auto;height:auto;max-width:82;max-height:82" alt=3D"LEO =
+INTERNATIONAL" />
+                      </a>
+                      
+        
+                          
+                    </td>
+                    <td width=3D"80%">
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5Mzk0MzA2VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 18px=
+; color: #0e6c8a; text-decoration: none" title=3D"D=E9veloppeur/Expert/tech=
+ lead JAVA F/H" target=3D"_blank">D=E9veloppeur/Expert/tech lead JAVA F/H</=
+a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5Mzk0MzA2VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 16px=
+; color: #f38237; text-decoration: none; text-transform: uppercase" title=
+=3D"LEO INTERNATIONAL" target=3D"_blank">LEO INTERNATIONAL</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5Mzk0MzA2VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"CDI" target=3D"_blank">CD=
+I&nbsp;=95</a>                                                             =
+                                                                         
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5Mzk0MzA2VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"Paris 01 - 75" target=3D"=
+_blank">Paris 01 - 75</a>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+               <!--  A METTRE A JOUR <div class=3D"clear">
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0200000000000000000000000=
+.gif" />
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/spacer_poc=
+.gif" />
+               </div> -->
+              <!-- / JGE AJOUT DU TIRET DE SEPARATION VOIR SI UN DOUBLON --=
+>  
+               <div class=3D"clear">
+                  <!--img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0100000000000000000000000=
+.gif" /-->
+              <img src=3D"https://neomarket.apec.fr/res/APECprod/separator_=
+poc.gif" />
+              </div> 
+          
+              <!-- content -->
+              <div class=3D"content">
+                <table cellspacing=3D"5" cellpading=3D"0">
+                  <tr>
+                    <td width=3D"20%" style=3D"vertical-align: middle; text=
+-align: center; padding-right:15px;">
+                    
+                     <img src=3D"https://neomarket.apec.fr/res/APECprod/no-=
+logo@2x.gif" width=3D"50" height=3D"50" alt=3D"Logo"/>
+                      
+        
+                          
+                    </td>
+                    <td width=3D"80%">
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5Mzc2MTAxVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 18px=
+; color: #0e6c8a; text-decoration: none" title=3D"Tech Lead JAVA - Paris id=
+f. F/H" target=3D"_blank">Tech Lead JAVA - Paris idf. F/H</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5Mzc2MTAxVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 16px=
+; color: #f38237; text-decoration: none; text-transform: uppercase" title=
+=3D"GENERALE EUROPE CONSULTANTS" target=3D"_blank">GENERALE EUROPE CONSULTA=
+NTS</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5Mzc2MTAxVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"CDI" target=3D"_blank">CD=
+I&nbsp;=95</a>                                                             =
+                                                                         
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5Mzc2MTAxVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"Paris 16 - 75" target=3D"=
+_blank">Paris 16 - 75</a>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+               <!--  A METTRE A JOUR <div class=3D"clear">
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0200000000000000000000000=
+.gif" />
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/spacer_poc=
+.gif" />
+               </div> -->
+              <!-- / JGE AJOUT DU TIRET DE SEPARATION VOIR SI UN DOUBLON --=
+>  
+               <div class=3D"clear">
+                  <!--img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0100000000000000000000000=
+.gif" /-->
+              <img src=3D"https://neomarket.apec.fr/res/APECprod/separator_=
+poc.gif" />
+              </div> 
+          
+              <!-- content -->
+              <div class=3D"content">
+                <table cellspacing=3D"5" cellpading=3D"0">
+                  <tr>
+                    <td width=3D"20%" style=3D"vertical-align: middle; text=
+-align: center; padding-right:15px;">
+                    
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDczMDI0VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" target=3D"_blank"><img src=3D"https://www.apec.fr/files=
+/live/mounts/images/media_entreprise/838703/logo_Handicap_Job_838703_144650=
+0.jpg" style=3D"width:auto;height:auto;max-width:82;max-height:82" alt=3D"H=
+andicap Job" />
+                      </a>
+                      
+        
+                          
+                    </td>
+                    <td width=3D"80%">
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDczMDI0VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 18px=
+; color: #0e6c8a; text-decoration: none" title=3D"Tech Lead ServiceNow F/H"=
+ target=3D"_blank">Tech Lead ServiceNow F/H</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDczMDI0VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 16px=
+; color: #f38237; text-decoration: none; text-transform: uppercase" title=
+=3D"Handicap Job" target=3D"_blank">Handicap Job</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDczMDI0VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"CDI" target=3D"_blank">CD=
+I&nbsp;=95</a>                                                             =
+                                                                         
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDczMDI0VyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"Paris 01 - 75" target=3D"=
+_blank">Paris 01 - 75</a>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+               <!--  A METTRE A JOUR <div class=3D"clear">
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0200000000000000000000000=
+.gif" />
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/spacer_poc=
+.gif" />
+               </div> -->
+              <!-- / JGE AJOUT DU TIRET DE SEPARATION VOIR SI UN DOUBLON --=
+>  
+               <div class=3D"clear">
+                  <!--img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0100000000000000000000000=
+.gif" /-->
+              <img src=3D"https://neomarket.apec.fr/res/APECprod/separator_=
+poc.gif" />
+              </div> 
+          
+              <!-- content -->
+              <div class=3D"content">
+                <table cellspacing=3D"5" cellpading=3D"0">
+                  <tr>
+                    <td width=3D"20%" style=3D"vertical-align: middle; text=
+-align: center; padding-right:15px;">
+                    
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY1OTUxVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" target=3D"_blank"><img src=3D"https://www.apec.fr/files=
+/live/mounts/images/media_entreprise/872928/logo_NEW_NET_3D_872928_1606156.=
+png" style=3D"width:auto;height:auto;max-width:82;max-height:82" alt=3D"Gro=
+upe Talents Handicap" />
+                      </a>
+                      
+        
+                          
+                    </td>
+                    <td width=3D"80%">
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY1OTUxVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 18px=
+; color: #0e6c8a; text-decoration: none" title=3D"Tech Lead ServiceNow F/H"=
+ target=3D"_blank">Tech Lead ServiceNow F/H</a><br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY1OTUxVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 16px=
+; color: #f38237; text-decoration: none; text-transform: uppercase" title=
+=3D"Groupe Talents Handicap" target=3D"_blank">Groupe Talents Handicap</a><=
+br />
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY1OTUxVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"CDI" target=3D"_blank">CD=
+I&nbsp;=95</a>                                                             =
+                                                                         
+                      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTc5NDY1OTUxVyZwMz0=
+meHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTURE" style=3D"font-family: Arial, Helvetica; font-size: 14px=
+; color: #444444; text-decoration: none" title=3D"Paris 01 - 75" target=3D"=
+_blank">Paris 01 - 75</a>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+               <!--  A METTRE A JOUR <div class=3D"clear">
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0200000000000000000000000=
+.gif" />
+               <img src=3D"http://neomarket.apec.fr/res/APECprod/spacer_poc=
+.gif" />
+               </div> -->
+              <!-- / JGE AJOUT DU TIRET DE SEPARATION VOIR SI UN DOUBLON --=
+>  
+               <div class=3D"clear">
+                  <!--img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0100000000000000000000000=
+.gif" /-->
+              <img src=3D"https://neomarket.apec.fr/res/APECprod/separator_=
+poc.gif" />
+              </div> 
+          
+          <!-- /content -->
+          
+          <!-- AJOUT JGE POUR LE BOUTON DES OFFRES -->
+            <!-- content -->
+            <div class=3D"content no-padding">
+              <table width=3D"100%" cellspacing=3D"5" cellpading=3D"0">
+                <tr>
+                  <td align=3D"center">
+                    <div>
+                      <!--[if mso]>
+                        <v:roundrect xmlns:v=3D"urn:schemas-microsoft-com:v=
+ml" xmlns:w=3D"urn:schemas-microsoft-com:office:word" href=3D"https://www.a=
+pec.fr/candidat/recherche-emploi.html/emploi=3FidCritere=3D14184465&xtor=3D=
+EPR-41-[push_avec_compte]" style=3D"height:40px;v-text-anchor:middle;width:=
+260px;" arcsize=3D"13%" stroke=3D"f" fillcolor=3D"#f38237">
+                          <w:anchorlock/>
+                          <center>
+                            <![endif]-->
+                              <a href=3D"https://neomarket.diffusion.apec.f=
+r/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9MTQxODQ0NjUmcDM9Jnh=
+0b3I9RVBSLTQxLVtwdXNoX2F2ZWNfY29tcHRlXQ&s=3DFIXTURE" style=3D"background-color:#f38237;border-radius:5=
+px;color:#ffffff;display:inline-block;font-family:Arial,Helvetica,sans-seri=
+f;font-size:15px;font-weight:normal;line-height:40px;text-align:center;text=
+-decoration:none;width:260px;-webkit-text-size-adjust:none;">Voir toutes le=
+s offres correspondantes</a>
+                            <!--[if mso]>
+                          </center>
+                        </v:roundrect>
+                      <![endif]-->
+                    </div>
+                  </td>
+                </tr>
+              </table>
+            </div>
+            <!-- content -->          
+          <!-- FIN AJOUT JGE POUR LE BOUTON DES OFFRES -->
+      
+            <!-- RAJOUT D'ESPACES ENTRE LE BOUTON VOIR TOUS LES PROFILS COR=
+RESPONDANTS ET LE PROFIL SUIVANT -->
+      <div class=3D"clear">&nbsp;</div>
+      <div class=3D"clear">&nbsp;</div>
+      <div class=3D"clear">
+        <img src=3D"https://neomarket.apec.fr/res/APECprod/separator_strong=
+_poc.png" />
+      </div>
+          
+      
+      
+      <!-- Fin liste des offres du profil n=B01 -->
+      <!-- / JGE [FIN BOUCLE LISTE DES OFFRES] -->
+
+
+      
+      <!-- Fin profils et offres associ=E9es -->
+      <!-- / JGE [FIN BOUCLE GLOBALE] -->
+
+      <!-- content -->
+      <div class=3D"content no-padding">
+        <table width=3D"100%" cellspacing=3D"5" cellpading=3D"0">
+          <tr>
+            <td align=3D"center">
+              <div><!--[if mso]>
+  <v:roundrect xmlns:v=3D"urn:schemas-microsoft-com:vml" xmlns:w=3D"urn:sch=
+emas-microsoft-com:office:word" href=3D"https://www.apec.fr/candidat/mon-es=
+pace.html#/mes-recherches-avec-compte=3Fusername=3D950517308&xtor=3DEPR-41-=
+[push_avec_compte]" style=3D"height:40px;v-text-anchor:middle;width:180px;"=
+ arcsize=3D"13%" stroke=3D"f" fillcolor=3D"#f38237">
+    <w:anchorlock/>
+   <center>
+  <![endif]-->
+      <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9OTUwNTE3MzA4JnAzPSZ=
+4dG9yPUVQUi00MS1bcHVzaF9hdmVjX2NvbXB0ZV0&s=3DFIXTURE" style=3D"background-color:#f38237;border-radius:5px;color:#ffffff;displa=
+y:inline-block;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-w=
+eight:normal;line-height:40px;text-align:center;text-decoration:none;width:=
+180px;-webkit-text-size-adjust:none;">G=E9rer mes alertes</a>       
+  <!--[if mso]>
+    </center>
+  </v:roundrect>
+<![endif]--></div>
+            </td>
+          </tr>
+        </table>
+      </div><!-- content -->
+
+      <div class=3D"clear">
+          <!--img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0100000000000000000000000=
+.gif" /-->
+      <img src=3D"https://neomarket.apec.fr/res/APECprod/separator_poc.gif"=
+ />
+      </div>
+
+      <!-- D=E9but agenda -->
+      
+      
+      <!-- content -->
+      <div class=3D"content">
+        <table cellspacing=3D"5" cellpading=3D"0">
+          <tr>
+            <td colspan=3D"2" align=3D"center" valign=3D"top" height=3D"50"=
+>
+              <h3>Agenda</h3>
+            </td>
+          </tr>
+          <!-- / JGE [BOUCLE LISTE DES AGENDAS] -->
+          
+             
+          <!-- / JGE [FIN BOUCLE LISTE DES AGENDAS] -->          
+        </table>
+      </div><!-- /content -->
+
+      <div class=3D"clear">
+          <!--img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0200000000000000000000000=
+.gif" /-->
+      <img src=3D"https://neomarket.apec.fr/res/APECprod/spacer_poc.gif" />
+      </div>
+
+      <!-- content -->
+      <div class=3D"content">
+        <table width=3D"100%" cellspacing=3D"5" cellpading=3D"0">
+          <tr>
+            <td align=3D"center" style=3D"text-align: center !important;">
+                                  <div><!--[if mso]>
+        <v:roundrect xmlns:v=3D"urn:schemas-microsoft-com:vml" xmlns:w=3D"u=
+rn:schemas-microsoft-com:office:word" href=3D"https://www.apec.fr/nos-evene=
+ments.html=3Fxtor=3DEPR-41-[push_avec_compte]" style=3D"height:40px;v-text-=
+anchor:middle;width:240px;" arcsize=3D"13%" stroke=3D"f" fillcolor=3D"#f382=
+37">
+          <w:anchorlock/>
+          <center>
+        <![endif]-->
+            <a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DcDE9d3d3LmFwZWMuZnImcDI9L25vcy1ldmVuZW1lbnR=
+zLmh0bWw_eHRvcj1FUFItNDEtW3B1c2hfYXZlY19jb21wdGVd&s=3DFIXTUR=
+E" style=3D"background-color:#f38237;border-radius:5px;color=
+:#ffffff;display:inline-block;font-family:Arial,Helvetica,sans-serif;font-s=
+ize:15px;font-weight:normal;line-height:40px;text-align:center;text-decorat=
+ion:none;width:240px;-webkit-text-size-adjust:none;">Acc=E9der =E0 tout l'a=
+genda</a>
+        <!--[if mso]>
+          </center>
+        </v:roundrect>
+      <![endif]--></div>
+            </td>
+          </tr>
+        </table>
+      </div><!-- content -->
+
+      <div class=3D"clear">
+          <!--img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0100000000000000000000000=
+.gif" /-->
+      <img src=3D"https://neomarket.apec.fr/res/APECprod/separator_poc.gif"=
+ />
+      </div>
+
+      <!-- content -->
+      <div class=3D"content">
+        <table cellspacing=3D"5" cellpading=3D"0">
+          <tr>
+            <td style=3D"font-family: Arial, Helvetica; text-align: center"=
+>
+              Notre centre de relations clients
+            </td>
+          </tr>
+          <tr>
+            <td style=3D"text-align: center">
+              <!--img src=3D"http://neomarket.apec.fr/res/APECprod/=
+f0f0f0f0300000000000000000000000=
+.jpg" -->
+        <img src=3D"https://neomarket.apec.fr/res/APECprod/badge_relations-=
+clients.png" width=3D"268" height=3D"auto" />
+            </td>
+            </td>
+          </tr>
+        </table>
+      </div><!-- /content -->
+      
+      <!-- content A SUPPRIMER LORSQUE LE MESSAGE NE SERA PLUS UTILE -->
+      <div class=3D"content">
+              <table cellpadding=3D"0" cellspacing=3D"0" border=3D"0" width=
+=3D"600" align=3D"center" style=3D"border-top:1px solid #232558; border-rig=
+ht:1px solid #232558;border-bottom:1px solid #232558;border-left:1px solid =
+#232558;mso-border-alt:none;border-collapse:separate;mso-border-right-alt:1=
+px solid #232558;mso-border-bottom-alt:1px solid #232558;mso-border-left-al=
+t:1px solid #232558" role=3D"none">
+<tr>
+<td valign=3D"top" width=3D"100%" class=3D"t_w100p m_w100p">
+<table cellpadding=3D"0" cellspacing=3D"0" border=3D"0" width=3D"100%" alig=
+n=3D"center" style=3D"margin:auto" class=3D"d_center" role=3D"none">
+<tr>
+<td style=3D"font-family:Arial,Helvetica,sans-serif;font-weight:400;color:#=
+232558;text-align:left;font-size:12px;padding-top:20px;padding-right:20px;p=
+adding-bottom:20px;padding-left:30px;vertical-align:middle;mso-hyphenate:no=
+ne" class=3D"m_pr5p m_pl5p montserrat">
+<a href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE" style=3D"color:#232558;display:block;text-decoration:none;outlin=
+e:0">Afin d'&#xE9;viter de vous solliciter inutilement et de vous proposer =
+des communications toujours plus pertinentes, nous utilisons des indicateur=
+s de suivi de l'efficacit&#xE9; de nos communications.<br role=3D"none"/><b=
+r role=3D"none"/>
+Vous pouvez g&#xE9;rer vos pr&#xE9;f&#xE9;rences en cliquant sur le lien su=
+ivant : <br role=3D"none"/><br role=3D"none"/>
+<span style=3D"text-decoration:underline">Modifier compte Apec</span>
+</a>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+      </div><!-- /content -->    
+
+      <!-- content -->
+      <div class=3D"content">
+        <table cellspacing=3D"5" cellpading=3D"0">
+          <tr>
+            <td align=3D"center">
+              <p style=3D"font-family: Arial, Helvetica;">
+                Si vous souhaitez ne plus recevoir cette alerte e-mail, <a =
+href=3D"https://neomarket.diffusion.apec.fr/r/=3F=
+id=3DFIXTURE&e=3DFIXTURE&s=3DFIXTURE">cliquez ici</a>.             
+              </p>
+            </td>
+          </tr>
+        </table>
+      </div><!-- /content -->
+    </td><!-- Container -->
+    <td></td>
+  </tr>
+</table>
+
+<img height=3D'0' width=3D'0' alt=3D'' src=3D'https://neomarket.diffusion.a=
+pec.fr/r/=3Fid=3DFIXTURE'/></body>
+</html>
+

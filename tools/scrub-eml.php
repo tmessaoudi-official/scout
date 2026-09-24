@@ -316,6 +316,109 @@ $message = preg_replace_callback(
     $message,
 ) ?? $message;
 
+// A QUERY REWRITTEN UNFOLDED IS REFOLDED BY HAND: the shared refold chunks blindly and may split an
+// `=3D` escape across a soft break, which no longer decodes. Lines stay at 60, never inside an `=XX`.
+// A value that was not folded is returned unfolded, as the other rules do.
+$qpFold = static function (string $flat, string $original) use ($eol): string {
+    if (preg_match('~=\r?\n~', $original) !== 1) {
+        return $flat;
+    }
+    $lines = [];
+    $line = '';
+    foreach (preg_split('~(=[0-9A-F]{2})~', $flat, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY) ?: [] as $piece) {
+        foreach (preg_match('~^=[0-9A-F]{2}$~', $piece) === 1 ? [$piece] : str_split($piece, 1) as $atom) {
+            if (strlen($line) + strlen($atom) > 60) {
+                $lines[] = $line;
+                $line = '';
+            }
+            $line .= $atom;
+        }
+    }
+    $lines[] = $line;
+
+    return '=' . $eol . implode('=' . $eol, $lines);
+};
+
+// A HELLOWORK TOKEN THAT CARRIES THE ADDRESS IS DECODED, SWAPPED AND RE-ENCODED (2026-09-24,
+// HelloWork job alerts). HelloWork writes the subscriber into three tokens: every click link's last path
+// segment (`<address>🪢<target url>`), the unsubscribe `data=` (`<sender>🪢<address>`) and the open
+// pixel's `d=` (JSON whose `e` is the address). The click token is also the ONLY place an offer id
+// lives, so replacing it (the Mailjet rule) would leave a fixture no reader can take an id from — and it
+// would pass. Keyed on CONTENT, not on the host, because the real capture folds straight through the
+// host name (`emails.hellowork.=` / `com/clic/…`), where every host-anchored pattern matched nothing.
+// A run is tried as written and without a leading `3D` (the tail of a QP `=3D`); only a run whose strict
+// decode contains the address is touched, and only the address changes, so the target half keeps its
+// bytes and the recoverability check below still judges the result.
+$message = preg_replace_callback(
+    '~(?:[A-Za-z0-9_\-]|=\r?\n){40,}~',
+    static function (array $m) use ($unfold, $qpFold, $address): string {
+        $flat = $unfold($m[0]);
+        foreach (['', '3D'] as $lead) {
+            if ($lead !== '' && !str_starts_with($flat, $lead)) {
+                continue;
+            }
+            $body = substr($flat, strlen($lead));
+            $decoded = base64_decode(strtr($body, '-_', '+/'), true);
+            if ($decoded === false || stripos($decoded, $address) === false) {
+                continue;
+            }
+            // HelloWork's own markers, read from the DECODED token rather than the host. Any other
+            // token carrying the address is an encoding nobody has reviewed yet, and it must still
+            // reach the refusal below; rewriting it here would hide the new portal from review.
+            if (!str_contains($decoded, "\u{1FAA2}") && !str_contains($decoded, '"key":"PushAlerts"')) {
+                continue;
+            }
+            $swapped = str_ireplace($address, 'alertes@example.invalid', $decoded);
+            $encoded = base64_encode($swapped);
+            $token = str_contains($body, '-') || str_contains($body, '_') || !str_contains($body, '+')
+                ? rtrim(strtr($encoded, '+/', '-_'), '=')
+                : rtrim($encoded, '=');
+
+            return $qpFold($lead . $token, $m[0]);
+        }
+
+        return $m[0];
+    },
+    $message,
+) ?? $message;
+
+// APEC NEOMARKET LINKS (2026-09-24, Apec job digests). `neomarket.diffusion.apec.fr/r/?id=<campaign>,
+// <recipient>,<slot>&e=<base64url>&s=<signature>`. Nothing here decodes to the address, so the
+// recoverability check below finds nothing — LinkedIn's `otpToken` shape: linkage, not disclosure.
+// `id` and `s` are replaced wholesale. `e` is replaced only when it is NOT an offer token: the offer id
+// lives in `p1=www.apec.fr&p2=<id>W…` and nowhere else in the message, while the view-online link's
+// `p1=<32-byte recipient hash>` is the linkage itself. Scoped to this host, because `id` and `s` are
+// names a generic rule would take from every other link. The query is rewritten unfolded and refolded
+// by `$qpFold` above.
+// The host is matched FOLD-TOLERANTLY: the real capture breaks it as `neomarket.diffusio=` / `n.apec.fr/r=`
+// / `/=3Fid=3D…`, and a literal host pattern matched nothing there while the tool reported `scrubbed`
+// with every linkage token still in place — nothing in them decodes to the address, so nothing refused.
+$apecHost = implode('(?:=\r?\n)?', array_map(
+    static fn (string $c): string => preg_quote($c, '~'),
+    str_split('neomarket.diffusion.apec.fr/r/'),
+)) . '(?:=\r?\n)?(?:\?|=3F)';   // and the `?` arrives quoted-printable as `=3F`
+$message = preg_replace_callback(
+    '~(' . $apecHost . ')((?:=\r?\n|[^"\s<>])+)~',
+    static function (array $m) use ($unfold, $qpFold): string {
+        $query = preg_replace_callback(
+            '~\b(id|s|e)(=3D|=(?![0-9A-F]{2}))([A-Za-z0-9_,\-]+)~',
+            static function (array $p): string {
+                if ($p[1] === 'e') {
+                    $decoded = base64_decode(strtr($p[3], '-_', '+/'), true);
+                    if ($decoded !== false && str_contains($decoded, 'p2=')) {
+                        return $p[0];
+                    }
+                }
+
+                return $p[1] . $p[2] . 'FIXTURE';
+            },
+            $unfold($m[2]),
+        ) ?? $unfold($m[2]);
+        return $m[1] . $qpFold($query, $m[2]);
+    },
+    $message,
+) ?? $message;
+
 $uuidSeq = 0;
 $message = preg_replace_callback(
     '~(?<![0-9a-fA-F-])(?:[0-9a-fA-F-]|=\r?\n){36,60}(?![0-9a-fA-F-])~',

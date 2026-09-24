@@ -315,6 +315,11 @@ final class FixtureSecretsTest extends TestCase
         // which match the address shape above. Listed so the guard stays quiet on asset names
         // rather than widened to skip anything ending in an image extension.
         '2x.png',
+        // HelloWork's alert sender `alerte@emails.…`, its `support-candidat@…` footer and its
+        // Message-ID's domain; Apec's sender `offres@diffusion.…`. Portal addresses, every one.
+        'hellowork.com', 'emails.hellowork.com', 'diffusion.apec.fr',
+        // NOT a domain either: Apec's asset `no-logo@2x.gif` — the La Centrale case above, as a GIF.
+        '2x.gif',
         // `mail.com` is NOT here on purpose: it is 1&1's CONSUMER provider, so allow-listing the
         // domain would be the same mistake as allow-listing `gmail.com`. Its one occurrence is the
         // French template placeholder `adresse@mail.com`, listed by full address above.

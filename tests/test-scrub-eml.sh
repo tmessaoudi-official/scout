@@ -993,5 +993,89 @@ else
   check "and the link keeps its Mailjet host, so it still reads as a tracking link" false
 fi
 
+
+# ── A HELLOWORK CLICK LINK CARRIES THE ADDRESS *AND* THE OFFER, IN ONE BASE64URL TOKEN (2026-09-24) ─
+# `emails.hellowork.com/clic/<uuid>/<n>/<hash>/<base64url("<address>🪢<target url>")>`. The offer id
+# lives ONLY in the decoded target, so replacing the whole token (the Mailjet rule) would leave a
+# fixture from which no offer can be read — a fixture that exercises nothing. The tool must decode,
+# swap the address for the placeholder, and re-encode: address gone, target intact. The QP soft break
+# sits inside the token on purpose, as it does on the real capture.
+hwtoken=$(printf '%s\xf0\x9f\xaa\xa2https://www.hellowork.com/fr-fr/emplois/82621905.html?utm_source=jobalert&utm_term=82621905' "$address" \
+  | base64 -w0 | tr '+/' '-_' | tr -d '=')
+hellowork="$work/hellowork.eml"
+{
+  printf 'From: Hellowork <alerte@emails.hellowork.com>\r\n'
+  printf 'To: <%s>\r\n' "$address"
+  printf 'Subject: 7 nouvelles offres\r\n'
+  printf 'MIME-Version: 1.0\r\n'
+  printf 'Content-Type: text/html; charset=utf-8\r\n'
+  printf 'Content-Transfer-Encoding: quoted-printable\r\n\r\n'
+  printf '<a href=3D"https://emails.hellowork.com/clic/dd661451-3ce3-40e6-9d87-531880b8edd9/3/9d5111c9bda607310f48152a9d6fe3fa/%s=\r\n%s">Chef de projet</a>\r\n' "${hwtoken:0:40}" "${hwtoken:40}"
+  # The unsubscribe link and the open pixel carry the address too, and nothing reads either.
+  printf '<a href=3D"https://emails.hellowork.com/unsub?id=3Ddd661451-3ce3-40e6-9d87-531880b8edd9&amp;data=3D%s">stop</a>\r\n' \
+    "$(printf 'alerte@emails.hellowork.com\xf0\x9f\xaa\xa2%s' "$address" | base64 -w0 | tr '+/' '-_' | tr -d '=')"
+  printf '<img src=3D"https://emails.hellowork.com/t/email/open?d=3D%s">\r\n' \
+    "$(printf '{"e":"%s","key":"PushAlerts"}' "$address" | base64 -w0 | tr '+/' '-_' | tr -d '=')"
+} > "$hellowork"
+hellowork_status=0
+php "$repo/tools/scrub-eml.php" "$hellowork" "$work/hellowork.out.eml" "$address" >"$work/hellowork.log" 2>&1 || hellowork_status=$?
+
+check "a HelloWork click link is scrubbed, not refused" test "$hellowork_status" -eq 0
+if [[ -f "$work/hellowork.out.eml" ]]; then
+  check "and its token still decodes to the offer URL, id intact" \
+    php -r '$t = quoted_printable_decode(file_get_contents($argv[1]));
+            if (preg_match("~/clic/[^/]+/\d+/[^/]+/([A-Za-z0-9_-]+)~", $t, $m) !== 1) { exit(1); }
+            $d = base64_decode(strtr($m[1], "-_", "+/"), true);
+            exit($d !== false && str_contains($d, "hellowork.com/fr-fr/emplois/82621905.html") && str_contains($d, "alertes@example.invalid") ? 0 : 1);' \
+    "$work/hellowork.out.eml"
+else
+  check "and its token still decodes to the offer URL, id intact" false
+fi
+
+
+# ── AN APEC NEOMARKET LINK TIES EVERY LINK TO ONE RECIPIENT, AND ONE `e=` KEEPS THE OFFER (2026-09-24) ─
+# `neomarket.diffusion.apec.fr/r/?id=<campaign>,<recipient>,<slot>&e=<base64url>&s=<signature>`. None
+# decodes to the address, so the recoverability check has nothing to find — the LinkedIn `otpToken`
+# shape: linkage, not disclosure. `id` and `s` go wholesale. `e` goes only when it is NOT an offer
+# token: `p1=www.apec.fr&p2=<id>W…` is the only place an Apec offer id lives, and a fixture without
+# it exercises nothing, while the header link's `p1=<32-byte recipient hash>` is the linkage itself.
+offer_e=$(printf 'p1=www.apec.fr&p2=179473574W&p3=&xtor=EPR-41-[push_avec_compte]' | base64 -w0 | tr '+/' '-_' | tr -d '=')
+recip_e=$(printf 'p1=%%408%%2BP%%2FTjHHwZjxk7ku1wjc5JBNIZLQ6fFHzK89cVO62xE%%3D' | base64 -w0 | tr '+/' '-_' | tr -d '=')
+apec="$work/apec.eml"
+{
+  printf 'From: Apec <offres@diffusion.apec.fr>\r\n'
+  printf 'To: <%s>\r\n' "$address"
+  printf 'Subject: 552 offres Apec du 24/09/2026\r\n'
+  printf 'MIME-Version: 1.0\r\n'
+  printf 'Content-Type: text/html; charset=utf-8\r\n'
+  printf 'Content-Transfer-Encoding: quoted-printable\r\n\r\n'
+  # The header link as the REAL capture writes it: the host folded mid-word, the `?` encoded `=3F`, and a
+  # soft break inside both `e` and `s`. A literal host pattern matched nothing on it, and a query reader
+  # that stopped at the first `=` left half of `e` and all of `s` behind — while the tool said `scrubbed`.
+  printf '<a href=3D"https://neomarket.diffusio=\r\nn.apec.fr/r/=3Fid=3Dh28919ca2,18aa4726,15cac233&amp;e=3D%s=\r\n%s&amp;s=3DMftwEfvRUgimT0S_bx=\r\nL1ZGmTXMtVj4F4ohtsLlEwoCE">ici</a>\r\n' "${recip_e:0:20}" "${recip_e:20}"
+  printf '<a href=3D"https://neomarket.diffusion.apec.fr/r/?id=3Dh28919ca2,18aa4726,15cac237&amp;e=3D%s&amp;s=3D4WykgpQ8GpS9cIK53Xa7R0tE7BlCyWjRQRgSWhHB_">Lead</a>\r\n' "$offer_e"
+} > "$apec"
+apec_status=0
+php "$repo/tools/scrub-eml.php" "$apec" "$work/apec.out.eml" "$address" >"$work/apec.log" 2>&1 || apec_status=$?
+
+check "an Apec digest is scrubbed, not refused" test "$apec_status" -eq 0
+if [[ -f "$work/apec.out.eml" ]]; then
+  check "and neither the recipient id, the signatures nor the recipient hash survive" \
+    php -r 'require $argv[2]; $t = quoted_printable_decode(file_get_contents($argv[1])); $all = $t;
+            foreach (Scout\Core\RecoverableForms::of($t) as $f) { $all .= "\n" . $f; }
+            preg_match_all("~[?&](?:amp;)?e=([A-Za-z0-9_-]+)~", $t, $m);
+            foreach ($m[1] as $e) { $all .= "\n" . base64_decode(strtr($e, "-_", "+/")); }
+            foreach (["18aa4726", "MftwEfvRUgimT0S", "4WykgpQ8Gp", "TjHHwZjxk7ku1wjc5"] as $needle) { if (str_contains($all, $needle)) { fwrite(STDERR, $needle . "\n"); exit(1); } }
+            exit(0);' "$work/apec.out.eml" "$repo/vendor/autoload.php" 2>/dev/null
+  check "and the offer token still decodes to its id" \
+    php -r '$t = quoted_printable_decode(file_get_contents($argv[1]));
+            preg_match_all("~[?&](?:amp;)?e=([A-Za-z0-9_-]+)~", $t, $m);
+            foreach ($m[1] as $e) { if (str_contains((string) base64_decode(strtr($e, "-_", "+/")), "p2=179473574W")) { exit(0); } }
+            exit(1);' "$work/apec.out.eml"
+else
+  check "and neither the recipient id, the signatures nor the recipient hash survive" false
+  check "and the offer token still decodes to its id" false
+fi
+
 printf '\n  %d passed, %d failed\n\n' "$pass" "$fail"
 [[ "$fail" -eq 0 ]]
