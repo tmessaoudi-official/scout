@@ -6125,6 +6125,12 @@ run_sabotage "job: a card pattern missing a read group loads (step 13 D8)" \
 run_sabotage "job: a digest id miss is not counted (step 13 D9)" \
   src/php/Job/JobDigestEmailSource.php \
   's%\$this->patternMisses->record('\''id_pattern'\'', \$hit);%$this->patternMisses->record('\''id_pattern'\'', true);%'
+run_sabotage "job: the role gate loses the one-p typo (2026-09-24 typo ruling)" \
+  config/job/criteria.json \
+  's%"\\\\bdevelopp?eu",%"\\\\bdeveloppeu",%'
+run_sabotage "job: the commercial reject loses the one-p typo (2026-09-24 typo ruling)" \
+  config/job/criteria.json \
+  's%(?:developp?eu|ingenieu)%(?:developpeu|ingenieu)%'
 
 # THE ABORT COMES BEFORE THE TALLY, and that ordering is the finding rather than a nicety (C2
 # round 7, resilience P3). The alert job harvests the `N sabotage(s) detected, M undetected` line;

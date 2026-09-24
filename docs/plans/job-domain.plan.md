@@ -65,7 +65,7 @@ plan below is approved.
 - [2026-09-24 10:40] NOTED: Free-Work's digest is read from its own text/plain part (Symfony-generated markdown), one `card_pattern` per card, NOT line-anchored — the first card of each of the four sections is glued to its section header, and a line-anchored reader found 36 of 40 cards; a bare `€` range is a day rate (the live offer page shows `400-550 €⁄j`), `NNk-NNk €` an annual salary, and the adapter only states that unit so `JobPay` stays the one reader of pay — a design choice (not a ruling).
 - [2026-09-24 11:05] NOTED: step 13 deployed; the first live pass read 2 sources, and Free-Work pushed exactly the 4 offers the offline judging predicted at the gate of 40 (scores 60, 50, 48, 40), queuing 19 for the rollup.
 - [2026-09-24 11:30] AGREED: next, in order — HelloWork and Apec readers, then the Alcopa car source, then a source research pass diffed against `var/claude/jobs/sources-research.md`.
-- [2026-09-24 11:30] AGREED: the role gate accepts `d[eé]velop+eur` (Free-Work's `Dévelopeur` typo), test-first.
+- [2026-09-24 11:20] AGREED: the role gate accepts `d[eé]velop+eur` (Free-Work's `Dévelopeur` typo), test-first.
 - [2026-09-24 11:20] AGREED: the developer has a Collective.work account; its mission alerts are set up in the developer's browser like the other job portals and routed into `job-watch/portails`.
 - [2026-09-24 11:26] NOTED: four Collective.work alerts created in the developer's session, all daily, all Île-de-France, no contract or pay filter: `scout - Dev IDF` (search `Développeur`), `scout - Lead IDF` (`Tech Lead`), `scout - Architecte IDF` (`Architecte`), `scout - DevOps IDF` (`DevOps`). Collective.work sends them to the account's own address, so the Gmail filter that routes them into `job-watch/portails` is still the developer's to add. The source can't be built until the first real email arrives (n=0).
 
@@ -482,9 +482,6 @@ after a rollback is harmless; reverting its commit removes it.
   company, so company + title + commune cannot be built. An offer on both LinkedIn and Free-Work is
   pushed twice. Measured overlap on the first capture: 0 of 36. Revisit when a third source that
   states a company arrives, or if duplicate pushes are observed.
-- **`Dévelopeur Java / Angular`** (Free-Work's own typo, one `p`) fails the role gate as `intitulé hors
-  métier` — a live over-rejection on the first capture. Not fixed in step 13: widening `role_words`
-  has been ruled each time (steps 10, 11), so this waits for a ruling.
 - Monthly pay shapes `JobPay` does not read, measured 2026-09-13 by probe: the unit BEFORE the figure
   (`Salaire mensuel : 4 500 €`, `Rémunération mensuelle brute de 4 500 €`), a leading currency sign
   (`€4,000 - €5,000 per month`), and a stated 13th month on a monthly figure (`… / mois sur 13 mois`,

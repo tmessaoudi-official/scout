@@ -72,6 +72,20 @@ final class JobCriteriaTest extends TestCase
         }
     }
 
+    /**
+     * Free-Work's own copy wrote `Dévelopeur Java / Angular` (one `p`) on 2026-09-24, and the gate
+     * rejected it as `intitulé hors périmètre`, so a real developer offer was dropped in silence.
+     * The ruled answer is `develop+eu`: tolerate the missing `p`, never a looser stem.
+     */
+    public function testTheRoleGateToleratesTheSinglePTypo(): void
+    {
+        $c = self::shipped();
+        foreach (['Dévelopeur Java / Angular', 'Dévelopeuse PHP', 'Developeur fullstack'] as $title) {
+            self::assertTrue($c->passesRoleGate($title), $title);
+        }
+        self::assertSame('commercial', $c->titleRejectedBy('Dévelopeur commercial'), 'the typo must not escape the business-developer reject either');
+    }
+
     public function testTheRoleGateAcceptsFeminineInclusiveAndPluralForms(): void
     {
         $c = self::shipped();
