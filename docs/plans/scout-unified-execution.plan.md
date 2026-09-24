@@ -1682,6 +1682,9 @@ read-only) and the merged prose as one review deep.
   the count, and one seeded `$this->lastRetries`, a property that does not exist — invalid code
   tests nothing, so it moved to the call site where the real defect lives.
 
+- [2026-09-24 09:57] AGREED: Alcopa Auction (`contact@alcopa-auction.fr`, alerts in `car-watch/portails`) is built now as a car source, after the job domain's Free-Work source, accepting the n=1 risk of shaping it from the captures on hand.
+- [2026-09-24 09:57] NOTED: Autohero also emails alerts into `car-watch/portails` (`info@n.autohero.com`); no source claims them because Autohero is read from its sitemap, so they stay unread by design.
+
 ---
 
 ## Fragile implementations register (the developer asked; keep this list honest)
