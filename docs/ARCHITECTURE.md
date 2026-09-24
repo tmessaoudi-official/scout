@@ -76,7 +76,7 @@ flowchart TB
 
     subgraph JOB["src/php/Job — the job domain"]
         JCore["JobClassifier · JobCriteria · JobScorer"]
-        JAdapt["JobEmailSource"]
+        JAdapt["JobEmailSource · JobDigestEmailSource"]
         JStore["JobStore"]
         JCli["JobPipeline · JobScout"]
     end

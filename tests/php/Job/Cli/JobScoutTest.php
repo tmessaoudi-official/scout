@@ -390,7 +390,7 @@ final class JobScoutTest extends TestCase
 
     public function testANamedSourceRunsEvenWhenDisabledAndSaysSo(): void
     {
-        $root = $this->rootWithLinkedinDisabled();
+        $root = $this->rootWithEverySourceDisabled();
         $this->seedWithOneThrowawayOffer();
         $channel = new DeliveringChannel();
 
@@ -404,7 +404,7 @@ final class JobScoutTest extends TestCase
     /** The counterweight: deleting the enabled check would satisfy the test above on its own. */
     public function testAnOrdinaryPassStillSkipsADisabledSource(): void
     {
-        $root = $this->rootWithLinkedinDisabled();
+        $root = $this->rootWithEverySourceDisabled();
         $this->seedWithOneThrowawayOffer();
         $channel = new DeliveringChannel();
 
@@ -595,12 +595,16 @@ final class JobScoutTest extends TestCase
         return $root;
     }
 
-    private function rootWithLinkedinDisabled(): string
+    private function rootWithEverySourceDisabled(): string
     {
         $root = $this->rootWithPushGate(0);
         unlink($root . '/config/job/criteria.local.json');
         $sources = json_decode((string) file_get_contents($root . '/config/job/sources.json'), true, flags: JSON_THROW_ON_ERROR);
-        $sources['sources']['linkedin']['enabled'] = false;
+        // EVERY source, not linkedin alone: with a second source enabled, "an ordinary pass runs
+        // nothing" stopped holding the day Free-Work shipped, and the counterweight went red.
+        foreach (array_keys($sources['sources']) as $name) {
+            $sources['sources'][$name]['enabled'] = false;
+        }
         file_put_contents($root . '/config/job/sources.json', json_encode($sources, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
 
         return $root;

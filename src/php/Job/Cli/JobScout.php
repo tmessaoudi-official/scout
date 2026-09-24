@@ -25,6 +25,7 @@ use Scout\Core\SourceStatus;
 use Scout\Job\JobClassifier;
 use Scout\Job\JobCriteria;
 use Scout\Job\JobCriteriaLoader;
+use Scout\Job\JobDigestEmailSource;
 use Scout\Job\JobEmailSource;
 use Scout\Job\JobFormatter;
 use Scout\Job\JobListing;
@@ -742,11 +743,18 @@ final readonly class JobScout
         return $out;
     }
 
-    /** The loader refuses any type but `email_alert`, so this match has exactly the arms that can arrive. */
+    /** The loader refuses any type but `email_alert` and `email_digest`, so this match has exactly the arms that can arrive. */
     private function buildSource(JobSourceDefinition $definition, JobStore $store): JobSource
     {
         return match ($definition->type) {
             'email_alert' => new JobEmailSource(
+                $definition,
+                $store,
+                $this->mailbox($definition),
+                fn (string $m) => $this->warn($m),
+                ImapMailbox::maxMessages(getenv('IMAP_MAX_MESSAGES') ?: null),
+            ),
+            'email_digest' => new JobDigestEmailSource(
                 $definition,
                 $store,
                 $this->mailbox($definition),

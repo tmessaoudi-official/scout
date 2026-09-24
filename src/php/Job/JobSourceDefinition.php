@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Scout\Job;
 
-/** One block of `config/job/sources.json`. Slice 1 has one adapter type, `email_alert`. */
+/** One block of `config/job/sources.json`: `email_alert` (LinkedIn) or `email_digest` (Free-Work). */
 final readonly class JobSourceDefinition
 {
     /** @param array<string, string> $params the adapter's string parameters (from, patterns, footer marker) */

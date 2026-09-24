@@ -61,6 +61,8 @@ plan below is approved.
 - [2026-09-23 22:39] NOTED: portal alerts set up in the developer's browser — LinkedIn 5 broad keyword alerts (4 Île-de-France families + 1 France remote; two older narrow ones kept), Free-Work 4 (Île-de-France, CDI + freelance), HelloWork 4 parked (`scout - Dev/Lead/Management/Architecture/DevOps/SRE IDF`, CDI + indépendant + freelance, 3 job titles each from HelloWork's own list — no boolean keywords there). WTTJ alerts are SUSPENDED site-wide ("your alerts are getting a makeover"), so WTTJ cannot be source #3 until they return; Apec 4 parked (`scout - Dev/Lead/Management/Architecture/DevOps/SRE IDF`, Île-de-France, no contract filter — Apec is mostly CDI, and its keyword field takes `OR`: `développeur OR devops` returned 1 963 against 1 259 and 1 020 alone), beside the developer's older `Ingénieur développement` search — Apec caps an account at FIVE searches, so all five slots are used. A first attempt at Apec failed with a per-domain permission error that turned out to be a transient extension glitch, not a restriction.
 - [2026-09-24 09:57] AGREED: HelloWork and Apec alerts stay in `job-watch/portails` rather than a separate parked label (reversing that half of the 2026-09-23 21:59 ruling); no source claims them, so they stay unread there and build up as captures until their readers exist.
 - [2026-09-24 09:57] NOTED: Free-Work's first alert arrived 2026-09-24 06:27 from `jobs@free-work.com` ("161 offres matchant avec vos critères"); `contact@free-work.com` sends a newsletter into the same label, and it is not an alert.
+- [2026-09-24 10:40] NOTED: the cross-source key ruled necessary on 2026-09-23 (company + normalised title + commune) cannot be built for Free-Work — its cards state no company — and the measured overlap today is 0 of 36 distinct Free-Work titles against the 197 stored LinkedIn offers; Free-Work ships without cross-source matching, under that entry's own stated cost (an offer on both sources is pushed twice), recorded as a Known issue.
+- [2026-09-24 10:40] NOTED: Free-Work's digest is read from its own text/plain part (Symfony-generated markdown), one `card_pattern` per card, NOT line-anchored — the first card of each of the four sections is glued to its section header, and a line-anchored reader found 36 of 40 cards; a bare `€` range is a day rate (the live offer page shows `400-550 €⁄j`), `NNk-NNk €` an annual salary, and the adapter only states that unit so `JobPay` stays the one reader of pay — a design choice (not a ruling).
 
 ## Evidence gathered (2026-09-13)
 - `Cli/Domains::all()` is the registry — a new domain is one entry plus `Scout\<Slug>\`, `config/<slug>/` and `<SLUG>_*` keys.
@@ -418,6 +420,7 @@ after a rollback is harmless; reverting its commit removes it.
 | 10 | Title gate: stack architect + member of technical staff (live over-rejection) | S | done | aeb40c2 | config/job/criteria.json tests/php/Job/JobCriteriaTest.php docs/plans/job-domain.plan.md |
 | 11 | Title gate: engineering management + DevOps/SRE (broad alerts, ruled 2026-09-23) | S | done | c102458 | config/job/criteria.json tests/php/Job/JobCriteriaTest.php docs/plans/job-domain.plan.md |
 | 12 | JobScoutTest runs on a shipped-config temp root, never the checkout's gitignored criteria.local.json | S | done | 2e3d632 | tests/php/Job/Cli/JobScoutTest.php |
+| 13 | Free-Work source: `email_digest` adapter over the text part, scrubbed fixtures, Mailjet scrub rule | L | doing | - | src/php/Job/** config/job/sources.json tests/fixtures/job/freework/** tests/php/Job/** tests/php/Repo/FixtureSecretsTest.php tools/scrub-eml.php tests/test-scrub-eml.sh tests/sabotage-check.sh CLAUDE.md README.md docs/** .claude/skills/add-source/SKILL.md |
 <!-- /progress-block -->
 ### Blocked
 - WTTJ as a source: its saved-search alerts are suspended site-wide (checked 2026-09-23); re-check `welcometothejungle.com/fr/me/alerts`.
@@ -425,6 +428,7 @@ after a rollback is harmless; reverting its commit removes it.
 - Gmail: add the Free-Work sender to the `job-watch/portails` filter once its first alert shows the address; a separate parked label + filter for HelloWork and Apec.
 - Slice 2: job-alert subscriptions on WTTJ, APEC, HelloWork, Free-Work and Indeed, into `job-watch/portails`.
 ### Needs research
+- **Collective.work** (developer, 2026-09-24): a French freelance-mission platform, absent from `var/claude/jobs/sources-research.md` and this plan. Unmeasured: whether it offers a saved-search email alert, what a card states (company, TJM, place), and its robots/ToS posture.
 - Keyword list widening (Java/Spring, Vue.js, …) — seeded in step 3 from `var/claude/jobs/criteria-research.md`.
 ### Fragile
 - `JobScout::watch()` runs the rollup floor TWICE per start: before the first pass, and in each pass's
@@ -450,6 +454,9 @@ after a rollback is harmless; reverting its commit removes it.
   pattern and cut the wrong thing — `tests/test-sabotage-applies.sh` sees only INERT, not a
   mis-landing. After reshaping a file under `src/php/Job/`, re-run `SABOTAGE_FILTER='^job:'` and read
   WHICH test goes red, not only that one does.
+- **Free-Work is n=1** (step 13): the card separator, the facts grammar (`[N mois - ][NNk-NNk € - ][NNN-NNN € - ]place`),
+  the glued first card and the two pay units are measured on ONE digest. The next digest is the first
+  regression test; freeze it as `02.eml` (append, never renumber) and re-run `FreeWorkFixtureTest`.
 ### Known issues
 - ~~Step 8 owed the drain cost below, the three-domain corrections, the LinkedIn register row and the
   `Core\Whitespace` and `php --ini` lines~~ — landed in `9eee7fa`. The drain cost itself STANDS; it is
@@ -463,9 +470,16 @@ after a rollback is harmless; reverting its commit removes it.
 - A LinkedIn message with no HTML part counts a miss on both `card_link_pattern` and `footer_marker`, and
   escalates only if every claimed message in the pass does — one such message among normal ones stays
   silent (the partial-miss gap). Documented in `docs/SOURCES-LIVE.md` by step 8; still untested.
-- `.claude/skills/add-source/SKILL.md` (lines 41–48) is scoped to the RENT domain with a car carve-out and
-  says nothing about the job domain or `config/job/sources.json`. Slice 2 must extend it before a second
-  job source is onboarded through it. Not edited in step 8: `.claude/**` is outside that step's Files cell.
+- ~~`.claude/skills/add-source/SKILL.md` is scoped to the RENT domain and says nothing about the job
+  domain~~ — extended in step 13 with the two job types, their params, and the two things Free-Work
+  taught (a repeat inside a digest may be the template; check whether the portal states a company).
+- **No cross-source matching, and Free-Work cannot have the ruled key** (step 13): its cards state no
+  company, so company + title + commune cannot be built. An offer on both LinkedIn and Free-Work is
+  pushed twice. Measured overlap on the first capture: 0 of 36. Revisit when a third source that
+  states a company arrives, or if duplicate pushes are observed.
+- **`Dévelopeur Java / Angular`** (Free-Work's own typo, one `p`) fails the role gate as `intitulé hors
+  métier` — a live over-rejection on the first capture. Not fixed in step 13: widening `role_words`
+  has been ruled each time (steps 10, 11), so this waits for a ruling.
 - Monthly pay shapes `JobPay` does not read, measured 2026-09-13 by probe: the unit BEFORE the figure
   (`Salaire mensuel : 4 500 €`, `Rémunération mensuelle brute de 4 500 €`), a leading currency sign
   (`€4,000 - €5,000 per month`), and a stated 13th month on a monthly figure (`… / mois sur 13 mois`,

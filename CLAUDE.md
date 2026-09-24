@@ -1452,11 +1452,14 @@ covering 60 % of the fleet discriminates MORE, not less.
 AND IT IS DEPLOYED AS `job-scout` SINCE 2026-09-14.** A third domain, slice 1 of `docs/plans/job-domain.plan.md`: `JobListing` +
 `JobSnapshot`, `JobClassifier` (what an offer states: contracts, work mode, level, pay lines,
 eligibility), `JobCriteria` + `JobScorer`, `JobStore` (its own `job_meta` v1 and `job_listings`,
-composing `Core/RunStore`), `JobEmailSource`, `JobPipeline`, `JobFormatter` and `Job/Cli/JobScout`.
-One source, `linkedin`, over IMAP. Prove a change offline with
+composing `Core/RunStore`), `JobEmailSource`, `JobDigestEmailSource`, `JobPipeline`, `JobFormatter`
+and `Job/Cli/JobScout`. Two sources over IMAP: `linkedin` (an `email_alert`, the HTML part) and,
+since 2026-09-24, `freework` (an `email_digest`, the text part — see the bullet below). Prove a
+change offline with
 `JOB_SCOUT_DB=$(mktemp -u) MAILBOX_DIR=tests/fixtures/job/linkedin bin/scout --domain=job doctor --source=linkedin`
-— **16 offres, `ok`** over three captures (2026-09-14); the ledger half is `SABOTAGE_FILTER='^job:'`.
-Four things before touching it:
+— **16 offres, `ok`** over three captures (2026-09-14) — or `MAILBOX_DIR=tests/fixtures/job/freework
+… --source=freework` — **36 offres, `ok`** over one capture (n=1, 2026-09-24); the ledger half is
+`SABOTAGE_FILTER='^job:'`. Five things before touching it:
 
 - **It has no §1.** H1–H8 reject and six components score (stack 25 · pay 20 · level 15 · green 15
   · remote 15 · freshness 10), but what it rejects is an offer the user does not want, not one they
@@ -1483,6 +1486,20 @@ Four things before touching it:
   a 09:00 rollup in the gitignored `config/job/criteria.local.json` (ruled 2026-09-14) — so a clone
   runs the shipped criteria, which push every match, and the shipped-criteria costs above describe
   a clone rather than the running watcher.
+- **Free-Work is a DIGEST read from its own text part, and it names no company** (2026-09-24).
+  One `card_pattern` per card (`title`, `contracts`, `facts`, `url`), deliberately NOT
+  line-anchored: the first card of each of the four alert sections is glued to its section header,
+  and a line-anchored reader found 36 cards of 40. The facts' LAST ` - ` segment is the place; a
+  segment matching `salary_pattern` (`60k-67k €`) or `tjm_pattern` (`400-550 €` — a day rate, per
+  the live offer page's `€⁄j`) is put into `payText` with that unit STATED, so `JobPay` stays the one
+  reader of pay (it reads nothing from a bare `400-550 €`, measured). The sections overlap by design
+  (40 cards, 36 distinct), so an identical repeat is kept once in silence and only a repeat with
+  DIFFERENT text is warned about. **Stated costs:** the card states no company and no work mode, so
+  the remote component is unscored and **the cross-source key the plan asked for (company + title +
+  commune) cannot be built** — an offer on both LinkedIn and Free-Work is pushed twice (measured
+  overlap on the first capture: 0 of 36); the digest shows 10 cards per section of up to 71, so the
+  source SAMPLES its feed; and the scrubber had to learn Mailjet's click links
+  (`tx.mjt.lu/lnk/…/<base64url of the target>`), whose targets were the live signed unsubscribe URLs.
 
 `src/phorj/` is **ON INDEFINITE HOLD** (developer ruling, 2026-08-19) — not blocked, deprioritised.
 Do not start it; `docs/PHORJ-REQUIREMENTS.md` remains the record of what it would need.
@@ -1828,7 +1845,7 @@ impossible by design rather than by omission (`docs/PHORJ-REQUIREMENTS.md`).
 | Core (generic) | `src/php/Core/` | What no domain owns: `Text`, `Whitespace` (a Unicode-aware `trim()`), `Redact` (masks secrets in adapter error text), `RecoverableForms` (the ONE decode cascade the fixture scrubber and its CI guard share), `Pacer`, `Heartbeat`, `health` (`SourceHealth` + `SourceStatus`), **`RunStore`** (the run log, health verdicts, feed silence and alert cooldowns — see below), `Offline`, `SameFilterWarning` (every card of a source failing one filter), `MalformedText`, `MutableByDesign`, and the Notify channels/transports |
 | Rent domain | `src/php/Rent/{Core,Config,Adapters,Store,Enrich,Notify,Cli}/` · later `src/phorj/core/` | Everything housing-bound: `models`, `tenure` (the classifier), `criteria` (score + hard disqualifiers), `dedup`, the SQLite store, the field maps and source contract, transit enrichment, the rent formatter and `Cli/RentScout` |
 | Car domain | `src/php/Car/` | The vehicle twin — `Vehicle*` listing, classifier, criteria, scorer, store, sources, pipeline, formatter — and `Cli/CarScout` |
-| Job domain | `src/php/Job/` | The job twin — `JobListing`/`JobSnapshot`, `JobClassifier`, `JobCriteria`(+`Loader`), `JobScorer`, `JobStore` (composes `Core/RunStore`), `JobEmailSource`, `JobPipeline`, `JobFormatter` — and `Cli/JobScout`. Deployed as `job-scout` since 2026-09-14 |
+| Job domain | `src/php/Job/` | The job twin — `JobListing`/`JobSnapshot`, `JobClassifier`, `JobCriteria`(+`Loader`), `JobScorer`, `JobStore` (composes `Core/RunStore`), `JobEmailSource`, `JobDigestEmailSource`, `JobPipeline`, `JobFormatter` — and `Cli/JobScout`. Deployed as `job-scout` since 2026-09-14 |
 | Store | `src/php/Rent/Store/` | SQLite seen-set, price history and the schema-v4 cross-portal `group_key`. The run log and health are DELEGATED to `Core/RunStore`, which it composes on its own PDO handle. **PHP-only** — it touches a database, so phorj will not transpile it. |
 | Notify | `src/php/Core/Notify/` | One module per channel. Every notification carries `score` + human-readable `reasons[]`. |
 | Adapters | `src/php/Adapters/` (generic: `Http/*`, `Mail/*`, `SourceError`, `FeedFreshness`) · `src/php/Rent/Adapters/` (the `Source` interface, `http_json`, `html`, `email_alert` (IMAP), `browser` (Playwright, opt-in), `sites/` for per-site overrides) | Site-specific code lives ONLY here |
@@ -2247,7 +2264,7 @@ docs/RUNBOOK.md             The operator's checklist: zero-to-running, every ver
                             § Deploying it for the reasoning rather than restating it — a second copy
                             of a rationale is the copy that drifts
 docs/SOURCES-LIVE.md        The live register for EVERY domain — adapter, identity scheme, rent
-                            basis (CC vs HC), and the STATED COST of each of the fifteen enabled
+                            basis (CC vs HC), and the STATED COST of each of the sixteen enabled
                             sources. docs/SOURCES.md is rent-only and is a candidate catalogue, so
                             the six car sources had no home anywhere until this file
 docs/HISTORY.md             Dated build record derived from git log, plus the five failure patterns
@@ -2310,6 +2327,9 @@ tests/fixtures/rent/pap/         The fourth portal's, and the first DIRECT-FROM-
                             refused for a month
 tests/fixtures/job/linkedin/     The job domain's LinkedIn alerts, scrubbed — the scrubber learned their
                             per-recipient link tokens first. Cards are read from the HTML part
+tests/fixtures/job/freework/     Free-Work's first digest (01, n=1 — 40 cards, 36 distinct) and a
+                            profile reminder from the same sender (00) that must stay unclaimed.
+                            Scrubbed after the tool learned Mailjet's click links
 tools/scrub-eml.php         Turns a captured .eml into a committable fixture; REFUSES to write
                             while the address is RECOVERABLE — decoding base64url runs and
                             quoted-printable before it looks, not merely grepping for it

@@ -61,6 +61,19 @@ stop and say why config was not enough — a contract every source bypasses is n
 > not configurable — but `tests/test-vehicle-guard.sh` is the tripwire that watches it, exactly as
 > `tests/test-tenure-guard.sh` watches the rent one.
 
+> **A JOB source is a third file, `config/job/sources.json`, read by `Job/JobSourceLoader`** — two
+> types, and the loader refuses a param the chosen type does not read (`READ_PARAMS`), so pick the
+> type first. `email_alert` (LinkedIn) starts a card at its link in the HTML part and reads
+> `card_link_pattern`, `place_pattern`, `footer_marker`, `pay_pattern`. `email_digest` (Free-Work,
+> 2026-09-24) reads the TEXT part with ONE `card_pattern` naming `title`, `facts` and `url` (plus
+> an optional `contracts`), an `id_pattern` over the URL, and `salary_pattern` / `tjm_pattern`,
+> which only STATE the unit so `JobPay` stays the one reader of pay. Keep steps 1, 3, 5 and 6 as for
+> a car source. Two things the job side adds, both from Free-Work: **a repeated id inside one
+> digest may be the template** (alert sections overlap), so decide whether a repeat is furniture or
+> a fault before the adapter warns on it; and **the job domain has no cross-source matching**, so
+> check whether the portal states a company — without one, an offer on two portals is pushed twice.
+> There is no §1 and no tenure step here.
+
 ---
 
 ## Step 0 — Which path?

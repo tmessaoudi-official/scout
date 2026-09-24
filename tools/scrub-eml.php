@@ -299,6 +299,23 @@ $message = preg_replace_callback(
     $message,
 ) ?? $message;
 
+// MAILJET CLICK LINKS (2026-09-24, Free-Work job alerts). `tx.mjt.lu/lnk/<recipient token>/<n>/<hash>/
+// <base64url of the target URL>` — the whole PATH is per recipient, and its last segment decodes to the
+// destination. Free-Work's destinations are the signed per-account unsubscribe links, so after the text
+// part's literal was replaced the account's alert ids and a WORKING signature were one decode away, and
+// the recoverability check below refused the capture. The host stays, so the link still reads as a
+// tracking redirect; the path goes. Nothing reads these links: the adapter keys on the text part's own
+// free-work.com URLs. QP-aware, because the HTML part folds straight through the path.
+$message = preg_replace_callback(
+    '~(tx\.mjt\.lu/lnk/)((?:[A-Za-z0-9_\-/]|=\r?\n)+)~',
+    static function (array $m) use (&$tokenSeq, $refold): string {
+        ++$tokenSeq;
+
+        return $m[1] . $refold('FIXTURE' . str_pad((string) $tokenSeq, 3, '0', STR_PAD_LEFT), $m[2]);
+    },
+    $message,
+) ?? $message;
+
 $uuidSeq = 0;
 $message = preg_replace_callback(
     '~(?<![0-9a-fA-F-])(?:[0-9a-fA-F-]|=\r?\n){36,60}(?![0-9a-fA-F-])~',

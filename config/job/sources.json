@@ -19,6 +19,27 @@
         "_pay_pattern": "A card line stating pay. Deliberately NOT a counted pattern: 7 of 115 cards carry one, so counting it would warn on every pass.",
         "pay_pattern": "~€~u"
       }
+    },
+    "freework": {
+      "_why": "Free-Work's daily digest alert, source #2 (developer ruling 2026-09-23: Free-Work, then WTTJ). Measured on ONE capture (2026-09-24, n=1): four alert sections of ten cards, 40 cards and 36 distinct offers — the sections overlap by design, so a repeated id with identical text is kept once in silence. Read from the portal's OWN text/plain part (Symfony-generated markdown). A card states title, contracts, duration, pay and place — NO company and NO work mode, so cross-source matching on company cannot be built (Known issue) and the remote component is unscored. The digest shows 10 cards per section of up to 71 new offers: the source SAMPLES its feed.",
+      "_verified_at": "2026-09-24",
+      "enabled": true,
+      "family": "portal",
+      "type": "email_digest",
+      "params": {
+        "_from": "The sender scopes the source. `contact@free-work.com` mails a newsletter into the same label and is not an alert.",
+        "from": "jobs@free-work.com",
+        "_subject_pattern": "The same sender mails profile reminders (`6 mois sans mise à jour…`) carrying real offer links in another shape; they must stay unclaimed, so they stay unread.",
+        "subject_pattern": "~\\boffres? matchant\\b~u",
+        "_card_pattern": "One card: `- [ **<title> -  <contracts>** ⏎ <facts> ](<url>)`. The separator before the contracts is ` -  ` (TWO spaces), because titles carry ` - ` themselves. NOT line-anchored: the first card of every section is glued to the section header line, and a line-anchored pattern found 36 of 40.",
+        "card_pattern": "~- \\[ \\*\\*(?<title>.+?) -  (?<contracts>[^*\\n]+?)\\*\\* *\\n\\s*(?<facts>[^\\n]*?) \\]\\((?<url>https://www\\.free-work\\.com/fr/tech-it/job-mission/[^)\\s]+)\\)~u",
+        "_id_pattern": "The identity is `<category>/<slug>` after `/job-mission/`; the query is a campaign tag and is dropped.",
+        "id_pattern": "~/job-mission/([^?#]+)~",
+        "_salary_pattern": "A facts segment `60k-67k €` is an annual salary. The LAST segment is always the place; any segment matching neither pay pattern (`12 mois`) is a label.",
+        "salary_pattern": "~^\\d+k(?:-\\d+k)? €$~u",
+        "_tjm_pattern": "A bare `400-550 €` is a DAY rate — checked on a live offer page, which renders it `400-550 €⁄j`.",
+        "tjm_pattern": "~^\\d+(?:-\\d+)? €$~u"
+      }
     }
   }
 }

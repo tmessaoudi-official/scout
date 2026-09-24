@@ -16,9 +16,9 @@ use Scout\Config\Reader;
  */
 final class JobSourceLoader
 {
-    private const array TYPES = ['email_alert'];
+    private const array TYPES = ['email_alert', 'email_digest'];
     private const array FAMILIES = ['portal'];
-    private const array PATTERN_PARAMS = ['card_link_pattern', 'place_pattern', 'pay_pattern'];
+    private const array PATTERN_PARAMS = ['card_link_pattern', 'place_pattern', 'pay_pattern', 'subject_pattern', 'card_pattern', 'id_pattern', 'salary_pattern', 'tjm_pattern'];
 
     /**
      * Every `params` key an adapter READS, per type — the allow-list. Read from the code
@@ -27,10 +27,17 @@ final class JobSourceLoader
      */
     private const array READ_PARAMS = [
         'email_alert' => ['from', 'card_link_pattern', 'footer_marker', 'place_pattern', 'pay_pattern'],
+        'email_digest' => ['from', 'subject_pattern', 'card_pattern', 'id_pattern', 'salary_pattern', 'tjm_pattern'],
     ];
 
-    /** Required on an ENABLED source: without one of these the source yields nothing, or nothing placed. */
-    private const array REQUIRED_WHEN_ENABLED = ['from', 'card_link_pattern', 'place_pattern'];
+    /** Required on an ENABLED source, per type: without one of these the source yields nothing, or nothing placed. */
+    private const array REQUIRED_WHEN_ENABLED = [
+        'email_alert' => ['from', 'card_link_pattern', 'place_pattern'],
+        'email_digest' => ['from', 'card_pattern', 'id_pattern'],
+    ];
+
+    /** The named groups `JobDigestEmailSource` reads out of `card_pattern`; `contracts` is optional. */
+    private const array CARD_GROUPS = ['title', 'facts', 'url'];
 
     /** @return array<string, JobSourceDefinition> */
     public static function load(string $path): array
@@ -113,8 +120,19 @@ final class JobSourceLoader
                 }
             }
 
+            // Same reason as the place groups: a card pattern matching without these fills nothing and
+            // counts every card as a hit.
+            $card = $params['card_pattern'] ?? '';
+            if ($card !== '') {
+                foreach (self::CARD_GROUPS as $group) {
+                    if (!str_contains($card, '(?<' . $group . '>') && !str_contains($card, '(?P<' . $group . '>')) {
+                        throw ConfigError::at($where . '.params.card_pattern', 'le motif doit nommer le groupe « ' . $group . ' »');
+                    }
+                }
+            }
+
             if ($enabled) {
-                foreach (self::REQUIRED_WHEN_ENABLED as $key) {
+                foreach (self::REQUIRED_WHEN_ENABLED[$type] as $key) {
                     if (($params[$key] ?? '') === '') {
                         throw ConfigError::at($where . '.params.' . $key, 'obligatoire pour une source ' . $type . ' activée');
                     }

@@ -112,7 +112,7 @@ state neither year nor mileage, and the reference already supplies the evidence 
 
 ---
 
-## Job — one enabled source
+## Job — two enabled sources
 
 **Live since 2026-09-14**, polled by the `job-scout` compose service
 ([`docs/plans/job-domain.plan.md`](plans/job-domain.plan.md) step 9). The first live `doctor` read
@@ -123,13 +123,17 @@ does not want it, not because they cannot take it.
 | # | Source | Kind | Adapter | Identity | Pay basis | Rows on record |
 |---|---|---|---|---|---|---|
 | 1 | **linkedin** | portal | `email_alert` (`JobEmailSource`), the HTML part | link — the job id in `/jobs/view/<id>/` | annual gross or a daily rate, when the card states one | 93 (2026-09-14) |
+| 2 | **freework** | portal | `email_digest` (`JobDigestEmailSource`), the text part | link — `<category>/<slug>` after `/job-mission/` | `NNk-NNk €` annual gross, `NNN-NNN €` a day rate | live 2026-09-24 |
 
 Offline, `bin/scout --domain=job doctor --source=linkedin` over `tests/fixtures/job/linkedin/`
-reads **16 offers, `ok`** (three captures).
+reads **16 offers, `ok`** (three captures); `--source=freework` over `tests/fixtures/job/freework/`
+reads **36 offers, `ok`** (one capture, n=1). A judging pass over those 36 with the shipped criteria
+gave **23 matches and 13 rejects**, 4 of the matches at or over the deployed gate of 40.
 
 | Source | Stated cost |
 |---|---|
 | **linkedin** | **No date on the card**, so freshness is unscored on every offer and the reachable score is 90 — **70** on a card stating no pay. **Pay is stated on 7 of 115 measured cards**, which is why `pay_pattern` is not counted as a miss. Nothing before the first card is read, because the preheader quotes the subscriber's own pay filter. A card ends at the next distinct job id, and the message at `Voir toutes les offres`; **if LinkedIn drops a card's logo link, `place_pattern` misses on every card** — counted, so it escalates. A message with **no HTML part** counts misses that escalate only when every claimed message in the pass does, so one such message among normal ones is silent (untested). Monthly pay shapes — the unit before the figure, a leading `€`, a 13th month — are unread and fail safe. |
+| **freework** | **No company and no work mode on the card**, so the remote component is unscored and **no cross-source key can be built** — an offer on both portals is pushed twice (0 of 36 overlapped LinkedIn on the first capture). **No date per offer** (a "last 24 hours" digest), so freshness is unscored as on LinkedIn. **The digest SAMPLES its feed**: 10 cards per alert section of up to 71 new offers. The first card of each section is glued to its header line, which is why `card_pattern` is not line-anchored. A title with a typo (`Dévelopeur`) fails the role gate — a live over-rejection, not yet ruled on. n=1: the separator, the facts grammar and the pay units are measured on one message. |
 
 ---
 

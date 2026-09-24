@@ -6097,6 +6097,35 @@ run_sabotage "job: a forced disabled source is not announced (step 7 F3)" \
   src/php/Job/Cli/JobScout.php \
   's%if (!\$definition->enabled) {%if (false) {%'
 
+# ── job step 13: the Free-Work digest adapter ──
+run_sabotage "job: an identical repeat across digest sections is warned daily (step 13 D1)" \
+  src/php/Job/JobDigestEmailSource.php \
+  's%if (\$seen\[\$offer->externalId\] !== \$card\[0\]) {%if (true) {%'
+run_sabotage "job: a repeat with different text is dropped in silence (step 13 D2)" \
+  src/php/Job/JobDigestEmailSource.php \
+  's%if (\$seen\[\$offer->externalId\] !== \$card\[0\]) {%if (false) {%'
+run_sabotage "job: the digest subject filter is ignored (step 13 D3)" \
+  src/php/Job/JobDigestEmailSource.php \
+  's%if (\$subjectPattern !== null && preg_match(\$subjectPattern, \$message->subject()) !== 1) {%if (false) {%'
+run_sabotage "job: a claimed digest with no card is not counted (step 13 D4)" \
+  src/php/Job/JobDigestEmailSource.php \
+  's%\$this->patternMisses->record('\''card_pattern'\'', \$found > 0);%$this->patternMisses->record('\''card_pattern'\'', true);%'
+run_sabotage "job: the place is read from the FIRST facts segment (step 13 D5)" \
+  src/php/Job/JobDigestEmailSource.php \
+  's%(string) array_pop(\$segments);%(string) array_shift($segments);%'
+run_sabotage "job: a day rate loses its stated unit (step 13 D6)" \
+  src/php/Job/JobDigestEmailSource.php \
+  's%\$pay\[\] = '\''TJM '\'' . \$segment . '\'' par jour'\'';%$pay[] = $segment;%'
+run_sabotage "job: a digest card keeps its campaign query (step 13 D7)" \
+  src/php/Job/JobDigestEmailSource.php \
+  's%\$url = preg_replace('\''~\[?#\]\.\*\$~'\'', '\'''\'', \$g\['\''url'\''\]) ?? \$g\['\''url'\''\];%$url = $g['\''url'\''];%'
+run_sabotage "job: a card pattern missing a read group loads (step 13 D8)" \
+  src/php/Job/JobSourceLoader.php \
+  's%foreach (self::CARD_GROUPS as \$group) {%foreach ([] as $group) {%'
+run_sabotage "job: a digest id miss is not counted (step 13 D9)" \
+  src/php/Job/JobDigestEmailSource.php \
+  's%\$this->patternMisses->record('\''id_pattern'\'', \$hit);%$this->patternMisses->record('\''id_pattern'\'', true);%'
+
 # THE ABORT COMES BEFORE THE TALLY, and that ordering is the finding rather than a nicety (C2
 # round 7, resilience P3). The alert job harvests the `N sabotage(s) detected, M undetected` line;
 # printed AFTER it, a shard that selected no case ended its log with a clean-looking `0 / 0` and the

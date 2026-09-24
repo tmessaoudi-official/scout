@@ -960,5 +960,38 @@ else
   check "and the parser still finds the listing link in the scrubbed message" false
 fi
 
+# ── A MAILJET CLICK LINK CARRIES ITS DESTINATION, BASE64URL, IN ITS PATH (2026-09-24, Free-Work) ───
+# `tx.mjt.lu/lnk/<recipient token>/<n>/<hash>/<base64url of the target URL>`. Free-Work's targets are
+# the signed per-account unsubscribe links, so the account's alert id and a WORKING signature are one
+# decode away from the output while the literal in the text part has been replaced. The recoverability
+# check refused the real capture; this case pins the tool learning the token rather than the check
+# relaxing. The QP soft break sits INSIDE the path on purpose, as it does on the real capture.
+target=$(printf 'https://api.free-work.com/availability/disable-one/742231?expires=1790317666&signature=f2bef6a388bfb3b4' \
+  | base64 -w0 | tr '+/' '-_' | tr -d '=')
+mailjet="$work/mailjet.eml"
+{
+  printf 'From: Free-Work <jobs@free-work.com>\r\n'
+  printf 'To: <%s>\r\n' "$address"
+  printf 'Subject: 161 offres matchant avec vos critères\r\n'
+  printf 'MIME-Version: 1.0\r\n'
+  printf 'Content-Type: text/html; charset=utf-8\r\n'
+  printf 'Content-Transfer-Encoding: quoted-printable\r\n\r\n'
+  printf '<a href=3D"https://tx.mjt.lu/lnk/AVQAAKZvfF0AAAAAcm4AAEMMKl8AAAAAX6sAAAAAAB=\r\nzVDwBqtMLjW3rZQ/13/Gilb7DX9ZGLtvejJBQpB_g/%s">ici</a>\r\n' "$target"
+} > "$mailjet"
+mailjet_status=0
+php "$repo/tools/scrub-eml.php" "$mailjet" "$work/mailjet.out.eml" "$address" 742231 >"$work/mailjet.log" 2>&1 || mailjet_status=$?
+
+check "a Mailjet click link is scrubbed, not refused" test "$mailjet_status" -eq 0
+if [[ -f "$work/mailjet.out.eml" ]]; then
+  check "and the alert id is NOT recoverable from the Mailjet path" \
+    php -r 'require $argv[3]; foreach (Scout\Core\RecoverableForms::of(file_get_contents($argv[1])) as $f) { if (str_contains($f, $argv[2]) || str_contains($f, "f2bef6a388")) { exit(1); } } exit(0);' \
+    "$work/mailjet.out.eml" 742231 "$repo/vendor/autoload.php"
+  check "and the link keeps its Mailjet host, so it still reads as a tracking link" \
+    grep -aq 'tx.mjt.lu/lnk/' "$work/mailjet.out.eml"
+else
+  check "and the alert id is NOT recoverable from the Mailjet path" false
+  check "and the link keeps its Mailjet host, so it still reads as a tracking link" false
+fi
+
 printf '\n  %d passed, %d failed\n\n' "$pass" "$fail"
 [[ "$fail" -eq 0 ]]
