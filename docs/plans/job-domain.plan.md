@@ -429,7 +429,7 @@ after a rollback is harmless; reverting its commit removes it.
 - Gmail: add the Free-Work sender to the `job-watch/portails` filter once its first alert shows the address; a separate parked label + filter for HelloWork and Apec.
 - Slice 2: job-alert subscriptions on WTTJ, APEC, HelloWork, Free-Work and Indeed, into `job-watch/portails`.
 ### Needs research
-- **Collective.work** (developer, 2026-09-24): a French freelance-mission platform, absent from `var/claude/jobs/sources-research.md` and this plan. Unmeasured: whether it offers a saved-search email alert, what a card states (company, TJM, place), and its robots/ToS posture.
+- **Collective.work** (developer, 2026-09-24): absent from `var/claude/jobs/sources-research.md` and this plan. Measured 2026-09-24: `robots.txt` disallows only `/style-guide`; the sitemap lists `blog`, `solution`, `etude-de-cas`, `produits`, `pricing`, `talents` and NO mission or offer URL, and its blog titles address recruiters (posting to many job boards, programmatic job ads) — so it reads as a recruiter-side product with no public board [Inferred]. The route, if any, is an account's mission-alert email (hard rule 4, the AL'in shape): whether the developer has an account there and whether it emails missions is the open question.
 - Keyword list widening (Java/Spring, Vue.js, …) — seeded in step 3 from `var/claude/jobs/criteria-research.md`.
 ### Fragile
 - `JobScout::watch()` runs the rollup floor TWICE per start: before the first pass, and in each pass's
