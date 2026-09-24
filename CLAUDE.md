@@ -1453,12 +1453,14 @@ AND IT IS DEPLOYED AS `job-scout` SINCE 2026-09-14.** A third domain, slice 1 of
 `JobSnapshot`, `JobClassifier` (what an offer states: contracts, work mode, level, pay lines,
 eligibility), `JobCriteria` + `JobScorer`, `JobStore` (its own `job_meta` v1 and `job_listings`,
 composing `Core/RunStore`), `JobEmailSource`, `JobDigestEmailSource`, `JobPipeline`, `JobFormatter`
-and `Job/Cli/JobScout`. Two sources over IMAP: `linkedin` (an `email_alert`, the HTML part) and,
-since 2026-09-24, `freework` (an `email_digest`, the text part — see the bullet below). Prove a
+and `Job/Cli/JobScout`. Four sources over IMAP: `linkedin` (an `email_alert`, the HTML part) and,
+since 2026-09-24, three `email_digest` sources — `freework` (the text part), `hellowork` and `apec`
+(both HTML only; see the bullets below). Prove a
 change offline with
 `JOB_SCOUT_DB=$(mktemp -u) MAILBOX_DIR=tests/fixtures/job/linkedin bin/scout --domain=job doctor --source=linkedin`
 — **16 offres, `ok`** over three captures (2026-09-14) — or `MAILBOX_DIR=tests/fixtures/job/freework
-… --source=freework` — **36 offres, `ok`** over one capture (n=1, 2026-09-24); the ledger half is
+… --source=freework` — **36 offres, `ok`** over one capture (n=1, 2026-09-24) — `hellowork`
+**39, `ok`** over four, `apec` **45, `ok`** over one (n=1); the ledger half is
 `SABOTAGE_FILTER='^job:'`. Five things before touching it:
 
 - **It has no §1.** H1–H8 reject and six components score (stack 25 · pay 20 · level 15 · green 15
@@ -1500,6 +1502,26 @@ change offline with
   overlap on the first capture: 0 of 36); the digest shows 10 cards per section of up to 71, so the
   source SAMPLES its feed; and the scrubber had to learn Mailjet's click links
   (`tx.mjt.lu/lnk/…/<base64url of the target>`), whose targets were the live signed unsubscribe URLs.
+- **HelloWork and Apec put the offer id ONLY inside a base64url token** (2026-09-24), so both use
+  `id_token_pattern`: its `token` group is decoded strictly and `id_pattern` runs on the DECODED text.
+  HelloWork's click token is `<subscriber>🪢<offer URL>`, and the push links that offer URL without its
+  utm query; Apec's `e` token is `p1=www.apec.fr&p2=<id>W…`, names no URL, so the tracking link is kept
+  WHOLE. Both cards put the place on a line of its own (`Suresnes - 92`), so `card_pattern` names a
+  `place` group, which is the location whole — through the ` - ` facts splitter it reads `92`. The
+  card patterns are line-by-line with POSSESSIVE separators: the first draft's `\s*` crossed newlines
+  and hit PCRE's backtrack limit on every HelloWork message, which `preg_match_all` returns as
+  `false` and the adapter reads as zero cards — a quiet market. Apec's card is anchored on its TITLE
+  and ties its four fields together by a backreference to the one offer link, because only some cards
+  carry a logo link before the title (the first draft, anchored on the link, lost 15 of 45).
+  **Stated costs:** neither card states a stack, a work mode or a date, and Apec states no pay, so
+  under the deployed gate of 40 **one offer of 84 pushed individually** on the captures (the other
+  59 matches go to the 09:00 rollup); Apec's company is sometimes the relaying board
+  (`cadremploi`, `Handicap Job`); `Corbeil-Essonnes - 91` classifies as an UNKNOWN place (fails open,
+  H8); and Apec is n=1. The scrubber learned two more encodings for them — a token rewritten in place
+  rather than replaced, keyed on HelloWork's own markers in the DECODED text (the host is folded
+  mid-word in the real capture), and Apec's per-recipient `id`/`s`/`e` behind a host folded
+  mid-word and a `?` written `=3F`. Its query reader also had the alternation `[^"\s<>]|=\r?\n` in
+  the wrong order, so it stopped at the first soft break; that was the only instance in the file.
 
 `src/phorj/` is **ON INDEFINITE HOLD** (developer ruling, 2026-08-19) — not blocked, deprioritised.
 Do not start it; `docs/PHORJ-REQUIREMENTS.md` remains the record of what it would need.
@@ -2330,6 +2352,11 @@ tests/fixtures/job/linkedin/     The job domain's LinkedIn alerts, scrubbed — 
 tests/fixtures/job/freework/     Free-Work's first digest (01, n=1 — 40 cards, 36 distinct) and a
                             profile reminder from the same sender (00) that must stay unclaimed.
                             Scrubbed after the tool learned Mailjet's click links
+tests/fixtures/job/hellowork/    Four HelloWork alerts (01-04, one per saved search, 39 offers). Their
+                            click tokens were rewritten in place, so each still decodes to its offer
+tests/fixtures/job/apec/         Apec's first saved-search digest (01, n=1 — 48 cards, 45 distinct) and a
+                            weekly "Nos recommandations" mail (00) that must stay unclaimed. Its 221
+                            links scrub to 53: the per-recipient tokens were all that told them apart
 tools/scrub-eml.php         Turns a captured .eml into a committable fixture; REFUSES to write
                             while the address is RECOVERABLE — decoding base64url runs and
                             quoted-printable before it looks, not merely grepping for it

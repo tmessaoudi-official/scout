@@ -21,13 +21,17 @@ final class JobSourceLoaderTest extends TestCase
 {
     private const string ROOT = __DIR__ . '/../../..';
 
-    public function testTheShippedConfigLoadsLinkedInAndFreeWork(): void
+    public function testTheShippedConfigLoadsItsFourSources(): void
     {
         $sources = JobSourceLoader::load(self::ROOT . '/config/job/sources.json');
 
-        self::assertSame(['linkedin', 'freework'], array_keys($sources));
-        self::assertTrue($sources['freework']->enabled);
-        self::assertSame('email_digest', $sources['freework']->type);
+        self::assertSame(['linkedin', 'freework', 'hellowork', 'apec'], array_keys($sources));
+        foreach (['freework', 'hellowork', 'apec'] as $digest) {
+            self::assertTrue($sources[$digest]->enabled, $digest);
+            self::assertSame('email_digest', $sources[$digest]->type, $digest);
+        }
+        self::assertSame('alerte@emails.hellowork.com', $sources['hellowork']->param('from'));
+        self::assertSame('offres@diffusion.apec.fr', $sources['apec']->param('from'));
         $d = $sources['linkedin'];
         self::assertTrue($d->enabled);
         self::assertSame('portal', $d->family);

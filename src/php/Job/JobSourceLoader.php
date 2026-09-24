@@ -18,7 +18,7 @@ final class JobSourceLoader
 {
     private const array TYPES = ['email_alert', 'email_digest'];
     private const array FAMILIES = ['portal'];
-    private const array PATTERN_PARAMS = ['card_link_pattern', 'place_pattern', 'pay_pattern', 'subject_pattern', 'card_pattern', 'id_pattern', 'salary_pattern', 'tjm_pattern'];
+    private const array PATTERN_PARAMS = ['card_link_pattern', 'place_pattern', 'pay_pattern', 'subject_pattern', 'card_pattern', 'id_pattern', 'id_token_pattern', 'salary_pattern', 'tjm_pattern'];
 
     /**
      * Every `params` key an adapter READS, per type — the allow-list. Read from the code
@@ -27,7 +27,7 @@ final class JobSourceLoader
      */
     private const array READ_PARAMS = [
         'email_alert' => ['from', 'card_link_pattern', 'footer_marker', 'place_pattern', 'pay_pattern'],
-        'email_digest' => ['from', 'subject_pattern', 'card_pattern', 'id_pattern', 'salary_pattern', 'tjm_pattern'],
+        'email_digest' => ['from', 'subject_pattern', 'card_pattern', 'id_pattern', 'id_token_pattern', 'salary_pattern', 'tjm_pattern'],
     ];
 
     /** Required on an ENABLED source, per type: without one of these the source yields nothing, or nothing placed. */
@@ -36,8 +36,19 @@ final class JobSourceLoader
         'email_digest' => ['from', 'card_pattern', 'id_pattern'],
     ];
 
-    /** The named groups `JobDigestEmailSource` reads out of `card_pattern`; `contracts` is optional. */
-    private const array CARD_GROUPS = ['title', 'facts', 'url'];
+    /**
+     * The named groups `JobDigestEmailSource` requires in `card_pattern`, plus ONE of
+     * {@see CARD_PLACE_GROUPS}: Free-Work states its place as the last `facts` segment, HelloWork and
+     * Apec on a line of its own. `contracts`, `company` and `pay` are optional.
+     */
+    private const array CARD_GROUPS = ['title', 'url'];
+
+    private const array CARD_PLACE_GROUPS = ['facts', 'place'];
+
+    private static function namesGroup(string $pattern, string $group): bool
+    {
+        return str_contains($pattern, '(?<' . $group . '>') || str_contains($pattern, '(?P<' . $group . '>');
+    }
 
     /** @return array<string, JobSourceDefinition> */
     public static function load(string $path): array
@@ -125,10 +136,20 @@ final class JobSourceLoader
             $card = $params['card_pattern'] ?? '';
             if ($card !== '') {
                 foreach (self::CARD_GROUPS as $group) {
-                    if (!str_contains($card, '(?<' . $group . '>') && !str_contains($card, '(?P<' . $group . '>')) {
+                    if (!self::namesGroup($card, $group)) {
                         throw ConfigError::at($where . '.params.card_pattern', 'le motif doit nommer le groupe « ' . $group . ' »');
                     }
                 }
+                if (!self::namesGroup($card, 'facts') && !self::namesGroup($card, 'place')) {
+                    throw ConfigError::at($where . '.params.card_pattern', 'le motif doit nommer le groupe « ' . implode(' » ou « ', self::CARD_PLACE_GROUPS) . ' » : sans lui aucune offre n\'a de lieu');
+                }
+            }
+
+            // The group the adapter decodes. Without it the rule matches, decodes nothing, and every
+            // card would still count as a hit.
+            $token = $params['id_token_pattern'] ?? '';
+            if ($token !== '' && !self::namesGroup($token, 'token')) {
+                throw ConfigError::at($where . '.params.id_token_pattern', 'le motif doit nommer le groupe « token » — la partie base64url décodée pour y lire l\'identifiant');
             }
 
             if ($enabled) {

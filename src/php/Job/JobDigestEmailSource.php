@@ -15,13 +15,20 @@ use Scout\Core\PatternMissLog;
 use Scout\Core\SourceHealth;
 
 /**
- * A job portal's DIGEST alert, read from its own text/plain part — Free-Work is source #2.
+ * A job portal's DIGEST alert — Free-Work (source #2, its text/plain part), HelloWork and Apec (both
+ * HTML-only, so the body is the stripped HTML with each anchor's URL written into it).
  *
- * **One configured `card_pattern` per card**, with the named groups `title`, `facts` and `url`
- * (`contracts` optional), because here the card's link FOLLOWS its text: the LinkedIn reader, which
+ * **One configured `card_pattern` per card**, with the named groups `title` and `url`, one of `facts`
+ * or `place`, and optionally `contracts`, `company` and `pay`, because here the card's link does not
+ * open the card: the LinkedIn reader, which
  * starts a card at its link, cannot read this shape. The pattern is deliberately NOT line-anchored in
  * the shipped config — Free-Work glues the first card of every section onto the section header line,
  * and a line-anchored reader found 36 cards of 40 on the first real capture.
+ *
+ * **A `place` group is the location WHOLE.** HelloWork and Apec write `Suresnes - 92`, which the
+ * ` - ` splitter below would read as the place `92`; so with a `place` group no facts segment is taken
+ * as the place. A `pay` group goes into `payText` as written — HelloWork states its unit
+ * (`55 000 - 65 000 € / an`), and {@see JobPay} reads it.
  *
  * **Facts are ` - `-separated segments, and the LAST one is the place.** A segment matching
  * `salary_pattern` is an annual salary and one matching `tjm_pattern` a day rate — the portal's own
@@ -30,19 +37,25 @@ use Scout\Core\SourceHealth;
  * its plausibility bands still apply. Any other segment (`12 mois`) is a label, never guessed at.
  *
  * **Identity is `id_pattern`'s group 1 over the card URL**; the URL is kept without its query, which
- * is a campaign tag. A repeated id WITHIN one message is the template when the card text is identical
+ * is a campaign tag. **With `id_token_pattern`, the id is read from a base64url TOKEN instead**: its
+ * `token` group is decoded (strictly — a token that does not decode is a miss) and `id_pattern` runs on
+ * the decoded text, because HelloWork and Apec put the offer id nowhere else. When the decoded text
+ * carries an http(s) URL (HelloWork: `<subscriber>🪢<offer URL>`), that URL without its query is the
+ * listing's link, so the push opens the offer rather than a tracking click. When it carries none (Apec:
+ * `p1=…&p2=<id>W…`), the card link is kept WHOLE: there the query is the link. A repeated id WITHIN one message is the template when the card text is identical
  * — four alert sections overlap by design — and is kept once in silence, since a warning every day is
  * furniture. The same id with DIFFERENT text is kept once (the first) and warned about.
  *
  * **Scope:** `from` and, when set, `subject_pattern`. The same sender mails profile reminders that
  * carry real offer links in another shape; an unclaimed message stays unread, which is the signal.
  *
- * **Counted, per pass:** `card_pattern` per claimed message and `id_pattern` per card. The two pay
+ * **Counted, per pass:** `card_pattern` per claimed message, `id_token_pattern` per card when set,
+ * and `id_pattern` per card whose token decoded — so a red names the half that failed. The two pay
  * patterns are not counted: many cards state no pay.
  *
  * Hard rule 9 throughout: `observedAt` is the message's send instant, `publishedAt` stays null (a
- * "last 24 hours" digest states no date per offer), and the company and work mode stay empty/null
- * because the card states neither.
+ * "last 24 hours" digest states no date per offer), the work mode stays null because no card states
+ * one, and the company stays empty where the card names none (Free-Work).
  */
 final readonly class JobDigestEmailSource implements AcknowledgesMessages, CountsPatternMisses, JobSource, FeedFreshness
 {
@@ -170,7 +183,7 @@ final readonly class JobDigestEmailSource implements AcknowledgesMessages, Count
         $cards = [];
         foreach ($found > 0 ? $matches : [] as $m) {
             $groups = [];
-            foreach (['title', 'contracts', 'facts', 'url'] as $group) {
+            foreach (['title', 'contracts', 'facts', 'url', 'company', 'place', 'pay'] as $group) {
                 $groups[$group] = trim(preg_replace('~\s+~u', ' ', (string) ($m[$group] ?? '')) ?? '');
             }
             $cards[] = [$m[0], $groups];
@@ -184,20 +197,37 @@ final readonly class JobDigestEmailSource implements AcknowledgesMessages, Count
     {
         $g = $card[1];
         $url = preg_replace('~[?#].*$~', '', $g['url']) ?? $g['url'];
+        $idSubject = $url;
+
+        $tokenPattern = $this->definition->param('id_token_pattern');
+        if ($tokenPattern !== null && $tokenPattern !== '') {
+            // Matched on the link AS WRITTEN: Apec's token is in the query the line above strips.
+            $decoded = preg_match($tokenPattern, $g['url'], $t) === 1
+                ? base64_decode(strtr((string) ($t['token'] ?? ''), '-_', '+/'), true)
+                : false;
+            $tokenHit = is_string($decoded) && $decoded !== '';
+            $this->patternMisses->record('id_token_pattern', $tokenHit);
+            if (!$tokenHit) {
+                return null;
+            }
+            $idSubject = $decoded;
+            $url = preg_match('~https?://[^\s?#]+~', $decoded, $direct) === 1 ? $direct[0] : $g['url'];
+        }
 
         $idPattern = (string) $this->definition->param('id_pattern');
-        $hit = preg_match($idPattern, $url, $idMatch) === 1 && trim($idMatch[1] ?? '') !== '';
+        $hit = preg_match($idPattern, $idSubject, $idMatch) === 1 && trim($idMatch[1] ?? '') !== '';
         $this->patternMisses->record('id_pattern', $hit);
         if (!$hit || $g['title'] === '') {
             return null;
         }
 
         $segments = array_values(array_filter(array_map('trim', explode(self::SEPARATOR, $g['facts'])), static fn (string $s): bool => $s !== ''));
-        $location = $segments === [] ? '' : (string) array_pop($segments);
+        // A `place` group is the whole location: `Suresnes - 92` through the splitter would be `92`.
+        $location = $g['place'] !== '' ? $g['place'] : ($segments === [] ? '' : (string) array_pop($segments));
 
         $salaryPattern = $this->definition->param('salary_pattern');
         $tjmPattern = $this->definition->param('tjm_pattern');
-        $pay = [];
+        $pay = $g['pay'] === '' ? [] : [$g['pay']];
         $labels = [];
         foreach ($segments as $segment) {
             if ($salaryPattern !== null && preg_match($salaryPattern, $segment) === 1) {
@@ -215,6 +245,7 @@ final readonly class JobDigestEmailSource implements AcknowledgesMessages, Count
             sourceName: $this->name(),
             externalId: trim($idMatch[1]),
             title: $g['title'],
+            company: $g['company'],
             location: $location,
             fields: $labels === [] ? [] : ['labels' => implode(' | ', $labels)],
             url: $url,

@@ -6112,7 +6112,7 @@ run_sabotage "job: a claimed digest with no card is not counted (step 13 D4)" \
   's%\$this->patternMisses->record('\''card_pattern'\'', \$found > 0);%$this->patternMisses->record('\''card_pattern'\'', true);%'
 run_sabotage "job: the place is read from the FIRST facts segment (step 13 D5)" \
   src/php/Job/JobDigestEmailSource.php \
-  's%(string) array_pop(\$segments);%(string) array_shift($segments);%'
+  's%(string) array_pop(\$segments));%(string) array_shift($segments));%'
 run_sabotage "job: a day rate loses its stated unit (step 13 D6)" \
   src/php/Job/JobDigestEmailSource.php \
   's%\$pay\[\] = '\''TJM '\'' . \$segment . '\'' par jour'\'';%$pay[] = $segment;%'
@@ -6131,6 +6131,27 @@ run_sabotage "job: the role gate loses the one-p typo (2026-09-24 typo ruling)" 
 run_sabotage "job: the commercial reject loses the one-p typo (2026-09-24 typo ruling)" \
   config/job/criteria.json \
   's%(?:developp?eu|ingenieu)%(?:developpeu|ingenieu)%'
+run_sabotage "job: the id token is read from the query-stripped link (HelloWork/Apec, 2026-09-24)" \
+  src/php/Job/JobDigestEmailSource.php \
+  's%\$decoded = preg_match(\$tokenPattern, \$g\['\''url'\''\], \$t) === 1%$decoded = preg_match($tokenPattern, $url, $t) === 1%'
+run_sabotage "job: the push links the tracking click, not the decoded offer URL (HelloWork, 2026-09-24)" \
+  src/php/Job/JobDigestEmailSource.php \
+  's%=== 1 ? \$direct\[0\] : \$g\['\''url'\''\];%=== 1 ? $g['\''url'\''] : $g['\''url'\''];%'
+run_sabotage "job: a place group is ignored and the last facts segment is the place (HelloWork/Apec, 2026-09-24)" \
+  src/php/Job/JobDigestEmailSource.php \
+  's%\$location = \$g\['\''place'\''\] !== '\'''\'' ? \$g\['\''place'\''\] : %$location = %'
+run_sabotage "job: a pay group is dropped (HelloWork, 2026-09-24)" \
+  src/php/Job/JobDigestEmailSource.php \
+  's%\$pay = \$g\['\''pay'\''\] === '\'''\'' ? \[\] : \[\$g\['\''pay'\''\]\];%$pay = [];%'
+run_sabotage "job: an undecodable id token is not counted (HelloWork/Apec, 2026-09-24)" \
+  src/php/Job/JobDigestEmailSource.php \
+  's%record('\''id_token_pattern'\'', \$tokenHit);%record('\''id_token_pattern'\'', true);%'
+run_sabotage "job: the loader accepts an id token rule without its token group (2026-09-24)" \
+  src/php/Job/JobSourceLoader.php \
+  's%if (\$token !== '\'''\'' \&\& !self::namesGroup(\$token, '\''token'\''))%if (false)%'
+run_sabotage "job: the loader accepts a card pattern with neither facts nor place (2026-09-24)" \
+  src/php/Job/JobSourceLoader.php \
+  's%if (!self::namesGroup(\$card, '\''facts'\'') \&\& !self::namesGroup(\$card, '\''place'\''))%if (false)%'
 
 # THE ABORT COMES BEFORE THE TALLY, and that ordering is the finding rather than a nicety (C2
 # round 7, resilience P3). The alert job harvests the `N sabotage(s) detected, M undetected` line;

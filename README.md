@@ -761,8 +761,9 @@ heartbeat marker and push topic (`JOB_NTFY_TOPIC`), over the same generic machin
 two. Two sources feed it: **LinkedIn's job alert email**, read from the message's HTML part (a card
 starts at a `/jobs/view/<id>/` link, and that id is the offer's identity), and since 2026-09-24
 **Free-Work's daily digest**, read from its text part (one card per `card_pattern` match, keyed on
-the `/job-mission/<category>/<slug>` path). A Free-Work card names no company, so an offer on both
-portals is pushed twice.
+the `/job-mission/<category>/<slug>` path), plus **HelloWork's and Apec's alerts** (HTML only; both
+keep the offer id inside a base64url token, which the reader decodes). A Free-Work card names no
+company, so an offer on both portals is pushed twice.
 
 - **Hard disqualifiers H1–H8, and six score components**: stack 25 · pay 20 · level 15 · green
   signals 15 · remote 15 · freshness 10. There is no §1 here — what the domain rejects is an offer
@@ -779,6 +780,8 @@ docker compose run --rm job-scout run --once --seed       # mandatory before --w
 docker compose up -d job-scout
 JOB_SCOUT_DB=$(mktemp -u) MAILBOX_DIR=tests/fixtures/job/linkedin php bin/scout --domain=job doctor --source=linkedin   # offline: 16 offres, ok
 JOB_SCOUT_DB=$(mktemp -u) MAILBOX_DIR=tests/fixtures/job/freework php bin/scout --domain=job doctor --source=freework   # offline: 36 offres, ok
+JOB_SCOUT_DB=$(mktemp -u) MAILBOX_DIR=tests/fixtures/job/hellowork php bin/scout --domain=job doctor --source=hellowork # offline: 39 offres, ok
+JOB_SCOUT_DB=$(mktemp -u) MAILBOX_DIR=tests/fixtures/job/apec php bin/scout --domain=job doctor --source=apec           # offline: 45 offres, ok
 php bin/scout --domain=job run --once --seed      # the host form, mandatory before --watch
 php bin/scout --domain=job rollup [--dry-run]     # the "vérifié, score bas" rollup, on demand
 php bin/scout --domain=job test-notify            # exits 2 while console is the only channel
