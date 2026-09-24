@@ -26,7 +26,7 @@ use Scout\Core\SourceHealth;
  * so it is retried next pass within the budget. Stated cost: a permanently-broken lot page costs
  * one budget slot per pass until it leaves the sitemap.
  */
-final readonly class SitemapVehicleSource implements CountsPatternMisses, VehicleSource
+final readonly class SitemapVehicleSource implements CountsPatternMisses, IndexedVehicleSource
 {
     /** @param ?\Closure(string): void $warn */
     public function __construct(

@@ -23,6 +23,7 @@ use Scout\Core\Notify\Priority;
 use Scout\Core\Pacer;
 use Scout\Core\Redact;
 use Scout\Core\SourceStatus;
+use Scout\Car\IndexedVehicleSource;
 use Scout\Car\SitemapVehicleSource;
 use Scout\Car\VehicleClassifier;
 use Scout\Car\VehicleCriteria;
@@ -181,7 +182,7 @@ final readonly class CarScout
             $started = microtime(true);
             try {
                 $items = count($source->fetch());
-                if ($source instanceof SitemapVehicleSource) {
+                if ($source instanceof IndexedVehicleSource) {
                     $items = $source->lastIndexSize() ?? $items; // the feed's size, as the pipeline records it
                 }
                 $ms = (int) ((microtime(true) - $started) * 1000);

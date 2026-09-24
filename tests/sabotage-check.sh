@@ -4797,7 +4797,7 @@ run_sabotage "the sitemap source ignores the seen-set (every pass re-fetches the
 # Health baselines on the FEED. Recording the novel slice made the first live pass a false warn_drop.
 run_sabotage "the car pipeline baselines a sitemap source's health on its novel lots, not its index" \
   src/php/Car/VehiclePipeline.php \
-  's%$itemCount = $source instanceof SitemapVehicleSource ? ($source->lastIndexSize() ?? count($listings)) : count($listings);%$itemCount = count($listings);%'
+  's%$itemCount = $source instanceof IndexedVehicleSource ? ($source->lastIndexSize() ?? count($listings)) : count($listings);%$itemCount = count($listings);%'
 
 run_sabotage "a furniture segment with no price and no facts is read as a card again" \
   src/php/Car/VehicleEmailSource.php \
