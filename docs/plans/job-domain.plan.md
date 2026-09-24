@@ -64,6 +64,9 @@ plan below is approved.
 - [2026-09-24 10:40] NOTED: the cross-source key ruled necessary on 2026-09-23 (company + normalised title + commune) cannot be built for Free-Work — its cards state no company — and the measured overlap today is 0 of 36 distinct Free-Work titles against the 197 stored LinkedIn offers; Free-Work ships without cross-source matching, under that entry's own stated cost (an offer on both sources is pushed twice), recorded as a Known issue.
 - [2026-09-24 10:40] NOTED: Free-Work's digest is read from its own text/plain part (Symfony-generated markdown), one `card_pattern` per card, NOT line-anchored — the first card of each of the four sections is glued to its section header, and a line-anchored reader found 36 of 40 cards; a bare `€` range is a day rate (the live offer page shows `400-550 €⁄j`), `NNk-NNk €` an annual salary, and the adapter only states that unit so `JobPay` stays the one reader of pay — a design choice (not a ruling).
 - [2026-09-24 11:05] NOTED: step 13 deployed; the first live pass read 2 sources, and Free-Work pushed exactly the 4 offers the offline judging predicted at the gate of 40 (scores 60, 50, 48, 40), queuing 19 for the rollup.
+- [2026-09-24 11:30] AGREED: next, in order — HelloWork and Apec readers, then the Alcopa car source, then a source research pass diffed against `var/claude/jobs/sources-research.md`.
+- [2026-09-24 11:30] AGREED: the role gate accepts `d[eé]velop+eur` (Free-Work's `Dévelopeur` typo), test-first.
+- [2026-09-24 11:30] AGREED: the developer has a Collective.work account; its mission alerts are set up in the developer's browser like the other job portals and routed into `job-watch/portails`.
 
 ## Evidence gathered (2026-09-13)
 - `Cli/Domains::all()` is the registry — a new domain is one entry plus `Scout\<Slug>\`, `config/<slug>/` and `<SLUG>_*` keys.
