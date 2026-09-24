@@ -66,7 +66,8 @@ plan below is approved.
 - [2026-09-24 11:05] NOTED: step 13 deployed; the first live pass read 2 sources, and Free-Work pushed exactly the 4 offers the offline judging predicted at the gate of 40 (scores 60, 50, 48, 40), queuing 19 for the rollup.
 - [2026-09-24 11:30] AGREED: next, in order — HelloWork and Apec readers, then the Alcopa car source, then a source research pass diffed against `var/claude/jobs/sources-research.md`.
 - [2026-09-24 11:30] AGREED: the role gate accepts `d[eé]velop+eur` (Free-Work's `Dévelopeur` typo), test-first.
-- [2026-09-24 11:30] AGREED: the developer has a Collective.work account; its mission alerts are set up in the developer's browser like the other job portals and routed into `job-watch/portails`.
+- [2026-09-24 11:20] AGREED: the developer has a Collective.work account; its mission alerts are set up in the developer's browser like the other job portals and routed into `job-watch/portails`.
+- [2026-09-24 11:26] NOTED: four Collective.work alerts created in the developer's session, all daily, all Île-de-France, no contract or pay filter: `scout - Dev IDF` (search `Développeur`), `scout - Lead IDF` (`Tech Lead`), `scout - Architecte IDF` (`Architecte`), `scout - DevOps IDF` (`DevOps`). Collective.work sends them to the account's own address, so the Gmail filter that routes them into `job-watch/portails` is still the developer's to add. The source can't be built until the first real email arrives (n=0).
 
 ## Evidence gathered (2026-09-13)
 - `Cli/Domains::all()` is the registry — a new domain is one entry plus `Scout\<Slug>\`, `config/<slug>/` and `<SLUG>_*` keys.
@@ -432,7 +433,7 @@ after a rollback is harmless; reverting its commit removes it.
 - Gmail: add the Free-Work sender to the `job-watch/portails` filter once its first alert shows the address; a separate parked label + filter for HelloWork and Apec.
 - Slice 2: job-alert subscriptions on WTTJ, APEC, HelloWork, Free-Work and Indeed, into `job-watch/portails`.
 ### Needs research
-- **Collective.work** (developer, 2026-09-24): absent from `var/claude/jobs/sources-research.md` and this plan. Measured 2026-09-24: `robots.txt` disallows only `/style-guide`; the sitemap lists `blog`, `solution`, `etude-de-cas`, `produits`, `pricing`, `talents` and NO mission or offer URL, and its blog titles address recruiters (posting to many job boards, programmatic job ads) — so it reads as a recruiter-side product with no public board [Inferred]. The route, if any, is an account's mission-alert email (hard rule 4, the AL'in shape): whether the developer has an account there and whether it emails missions is the open question.
+- **Collective.work** (developer, 2026-09-24): absent from `var/claude/jobs/sources-research.md` and this plan. Measured 2026-09-24: `robots.txt` disallows only `/style-guide`; the sitemap lists `blog`, `solution`, `etude-de-cas`, `produits`, `pricing`, `talents` and NO mission or offer URL, and its blog titles address recruiters (posting to many job boards, programmatic job ads) — so it reads as a recruiter-side product with no public board [Inferred]. The route, if any, is an account's mission-alert email (hard rule 4, the AL'in shape): the developer has an account, and four daily alerts were created 2026-09-24 (Decisions Log). What stays open is the email's shape; nothing has arrived yet.
 - Keyword list widening (Java/Spring, Vue.js, …) — seeded in step 3 from `var/claude/jobs/criteria-research.md`.
 ### Fragile
 - `JobScout::watch()` runs the rollup floor TWICE per start: before the first pass, and in each pass's
