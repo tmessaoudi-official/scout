@@ -1462,7 +1462,7 @@ change offline with
 — **16 offres, `ok`** over three captures (2026-09-14) — or `MAILBOX_DIR=tests/fixtures/job/freework
 … --source=freework` — **36 offres, `ok`** over one capture (n=1, 2026-09-24) — `hellowork`
 **39, `ok`** over four, `apec` **45, `ok`** over one (n=1), `collective` **5, `ok`** over five; the ledger half is
-`SABOTAGE_FILTER='^job:'`. Five things before touching it:
+`SABOTAGE_FILTER='^job:'`. Seven things before touching it:
 
 - **It has no §1.** H1–H8 reject and six components score (stack 25 · pay 20 · level 15 · green 15
   · remote 15 · freshness 10), but what it rejects is an offer the user does not want, not one they
