@@ -138,7 +138,7 @@ final class JobDigestEmailSourceTest extends TestCase
     {
         /** @var array<string, list<string>> $read */
         $read = (new \ReflectionClass(JobSourceLoader::class))->getConstant('READ_PARAMS');
-        $expected = array_values(array_diff($read['email_digest'], ['from', 'subject_pattern', 'salary_pattern', 'tjm_pattern']));
+        $expected = array_values(array_diff($read['email_digest'], ['from', 'subject_pattern', 'salary_pattern', 'tjm_pattern', 'place_absent']));
         sort($expected);
 
         // The UNION of both shapes: a key only one of them reaches is still a key that must be counted.
@@ -146,7 +146,9 @@ final class JobDigestEmailSourceTest extends TestCase
         $digest->fetch();
         $token = $this->helloWork(new RecordingMailbox([self::hwMessage(self::hwCard('1', 'Dev H/F', 'Acme', 'Paris - 75', 'CDI'))]));
         $token->fetch();
-        $counted = array_values(array_unique([...array_keys($digest->patternMisses()->counts()), ...array_keys($token->patternMisses()->counts())]));
+        $subject = $this->collective(new RecordingMailbox([self::coMessage('Acme', 'Dev', 'cabc')]));
+        $subject->fetch();
+        $counted = array_values(array_unique([...array_keys($digest->patternMisses()->counts()), ...array_keys($token->patternMisses()->counts()), ...array_keys($subject->patternMisses()->counts())]));
         sort($counted);
 
         self::assertSame($expected, $counted);
@@ -311,6 +313,142 @@ final class JobDigestEmailSourceTest extends TestCase
     {
         return "From: Free-Work <{$from}>\r\nTo: <alertes@example.invalid>\r\nSubject: {$subject}\r\nDate: Thu, 24 Sep 2026 08:27:46 +0200\r\n"
             . "MIME-Version: 1.0\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n" . $body;
+    }
+
+    /**
+     * COLLECTIVE.WORK'S SHAPE: ONE OFFER PER MESSAGE, AND THE COMPANY IS IN THE SUBJECT ONLY —
+     * `[<first name> x <company>] Nouvelle opportunité`. The body states a title and two links, and
+     * no place, pay, contract or work mode. So the company is read from the subject, and the card
+     * declares that it states no place rather than inventing one.
+     */
+    public function testTheCompanyIsReadFromTheSubject(): void
+    {
+        $offers = $this->collective(new RecordingMailbox([self::coMessage('Astrelya', 'Senior Développeur Java AWS', 'cmuf9f6ln6uuf4kfe8ko9d1ps')]))->fetch();
+
+        self::assertCount(1, $offers);
+        self::assertSame('cmuf9f6ln6uuf4kfe8ko9d1ps', $offers[0]->externalId);
+        self::assertSame('Senior Développeur Java AWS', $offers[0]->title);
+        self::assertSame('Astrelya', $offers[0]->company);
+        self::assertSame('', $offers[0]->location, 'the card states no place, and none is guessed');
+        self::assertSame('https://app.collective.work/talent/projects-activity/opportunities/cmuf9f6ln6uuf4kfe8ko9d1ps', $offers[0]->url);
+    }
+
+    /** A company containing ` x ` keeps it: only the FIRST ` x ` separates the subscriber's first name. */
+    public function testASubjectCompanyContainingTheSeparatorIsKeptWhole(): void
+    {
+        $offers = $this->collective(new RecordingMailbox([self::coMessage('Brand x Co', 'Dev', 'cabc')]))->fetch();
+
+        self::assertSame('Brand x Co', $offers[0]->company);
+    }
+
+    /** A subject the company rule cannot read is COUNTED — a template change must not drop the company in silence — and the offer is kept. */
+    public function testASubjectWithoutTheCompanyIsCountedAndTheOfferKept(): void
+    {
+        $raw = str_replace('Subject: [abonne x Acme] Nouvelle opportunité', 'Subject: Nouvelle opportunité', self::coMessage('Acme', 'Dev', 'cabc'));
+        $source = $this->collective(new RecordingMailbox([$raw]), '~Nouvelle opportunité~u');
+        $offers = $source->fetch();
+
+        self::assertCount(1, $offers);
+        self::assertSame('', $offers[0]->company);
+        self::assertSame(['subject_company_pattern' => ['calls' => 1, 'misses' => 1]], array_intersect_key($source->patternMisses()->counts(), ['subject_company_pattern' => true]));
+    }
+
+    public function testTheLoaderRefusesASubjectCompanyPatternWithoutItsGroup(): void
+    {
+        $this->expectException(ConfigError::class);
+        $this->expectExceptionMessage('subject_company_pattern');
+
+        JobSourceLoader::fromArray(['sources' => ['co' => [
+            'enabled' => false, 'family' => 'portal', 'type' => 'email_digest',
+            'params' => ['subject_company_pattern' => '~x (.+)~'],
+        ]]]);
+    }
+
+    /** Two providers of the company, one honoured and the other inert, is refused rather than resolved. */
+    public function testTheLoaderRefusesACompanyFromBothTheSubjectAndTheCard(): void
+    {
+        $this->expectException(ConfigError::class);
+        $this->expectExceptionMessage('company');
+
+        JobSourceLoader::fromArray(['sources' => ['co' => [
+            'enabled' => false, 'family' => 'portal', 'type' => 'email_digest',
+            'params' => ['subject_company_pattern' => '~x (?<company>.+)~', 'card_pattern' => '~(?<title>.+) (?<company>.+) (?<place>.+) (?<url>\S+)~'],
+        ]]]);
+    }
+
+    /** The refusal of a place-less card NAMES the declaration that would permit one. */
+    public function testTheLoaderRefusalOfAPlacelessCardNamesTheDeclaration(): void
+    {
+        $this->expectException(ConfigError::class);
+        $this->expectExceptionMessage('place_absent');
+
+        JobSourceLoader::fromArray(['sources' => ['co' => [
+            'enabled' => false, 'family' => 'portal', 'type' => 'email_digest',
+            'params' => ['card_pattern' => '~(?<title>.+) (?<url>\S+)~'],
+        ]]]);
+    }
+
+    public function testTheLoaderAcceptsAPlacelessCardThatDeclaresIt(): void
+    {
+        $defs = JobSourceLoader::fromArray(['sources' => ['co' => [
+            'enabled' => false, 'family' => 'portal', 'type' => 'email_digest',
+            'params' => ['card_pattern' => '~(?<title>.+) (?<url>\S+)~', 'place_absent' => 'true'],
+        ]]]);
+
+        self::assertSame('true', $defs['co']->param('place_absent'));
+    }
+
+    /** A caveat the pattern beside it contradicts is worse than none: it reads as considered. */
+    public function testTheLoaderRefusesAPlaceAbsentDeclarationOnACardThatStatesAPlace(): void
+    {
+        $this->expectException(ConfigError::class);
+        $this->expectExceptionMessage('place_absent');
+
+        JobSourceLoader::fromArray(['sources' => ['co' => [
+            'enabled' => false, 'family' => 'portal', 'type' => 'email_digest',
+            'params' => ['card_pattern' => '~(?<title>.+) (?<place>.+) (?<url>\S+)~', 'place_absent' => 'true'],
+        ]]]);
+    }
+
+    /**
+     * With NO card pattern beside it, so the value rule is the only one that can answer: next to a
+     * place-less pattern, `"false"` is also refused as an undeclared place, and a test built that way
+     * passed with the value rule deleted (the ledger found it).
+     */
+    public function testTheLoaderRefusesAPlaceAbsentValueOtherThanTrue(): void
+    {
+        $this->expectException(ConfigError::class);
+        $this->expectExceptionMessage('seule la valeur');
+
+        JobSourceLoader::fromArray(['sources' => ['co' => [
+            'enabled' => false, 'family' => 'portal', 'type' => 'email_digest',
+            'params' => ['place_absent' => 'false'],
+        ]]]);
+    }
+
+    private static function coMessage(string $company, string $title, string $id): string
+    {
+        return "From: Collective <ops@collective.work>\r\nTo: <alertes@example.invalid>\r\nSubject: [abonne x {$company}] Nouvelle opportunité\r\n"
+            . "Date: Thu, 24 Sep 2026 10:45:15 +0200\r\nMIME-Version: 1.0\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n"
+            . "Un brief projet vient d'arriver dans votre boîte mail\n      Une nouvelle offre est disponible\n      Offre :\n{$title}\n"
+            . "                Postuler\nhttps://app.collective.work/talent/projects-activity/opportunities/{$id}\n"
+            . "                Voir l'offre\nhttps://www.collective.work/jobs/fr/dev-xcjb\n";
+    }
+
+    private function collective(Mailbox $mailbox, string $subjectPattern = '~\]\h*Nouvelle opportunité~u'): JobDigestEmailSource
+    {
+        return new JobDigestEmailSource(
+            new JobSourceDefinition('collective', true, 'portal', 'email_digest', [
+                'from' => 'ops@collective.work',
+                'subject_pattern' => $subjectPattern,
+                'subject_company_pattern' => '~^\[\S+\h+x\h+(?<company>[^\]]+?)\h*\]~u',
+                'card_pattern' => '~Offre :\h*+\n\h*(?<title>\S[^\n]*?)\h*+\n(?:\h*+\n)*+\h*Postuler\h*+\n\h*(?<url>https://app\.collective\.work/\S*?/opportunities/[a-z0-9]+)~u',
+                'id_pattern' => '~/opportunities/([a-z0-9]+)~',
+                'place_absent' => 'true',
+            ]),
+            JobStore::open(':memory:'),
+            $mailbox,
+        );
     }
 
     /**

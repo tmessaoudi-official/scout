@@ -49,7 +49,10 @@ use Scout\Core\SourceHealth;
  * **Scope:** `from` and, when set, `subject_pattern`. The same sender mails profile reminders that
  * carry real offer links in another shape; an unclaimed message stays unread, which is the signal.
  *
- * **Counted, per pass:** `card_pattern` per claimed message, `id_token_pattern` per card when set,
+ * **Collective.work puts the company in the SUBJECT**, so `subject_company_pattern` reads it there,
+ * and its cards state no place, which the source declares (`place_absent`) rather than leaving blank.
+ *
+ * **Counted, per pass:** `card_pattern` and `subject_company_pattern` per claimed message, `id_token_pattern` per card when set,
  * and `id_pattern` per card whose token decoded — so a red names the half that failed. The two pay
  * patterns are not counted: many cards state no pay.
  *
@@ -120,10 +123,11 @@ final readonly class JobDigestEmailSource implements AcknowledgesMessages, Count
             $this->mailbox->claim($position);
 
             $observedAt = $message->sentAt();
+            $company = $this->subjectCompany($message->subject());
             /** @var array<string, string> $seen id => the card text first read under it */
             $seen = [];
             foreach ($this->cards($message->body) as $card) {
-                $offer = $this->offer($card, $observedAt);
+                $offer = $this->offer($card, $observedAt, $company);
                 if ($offer === null) {
                     continue;
                 }
@@ -192,8 +196,25 @@ final readonly class JobDigestEmailSource implements AcknowledgesMessages, Count
         return $cards;
     }
 
+    /**
+     * The company from the SUBJECT, for a portal that names it nowhere else (Collective.work:
+     * `[<first name> x <company>] Nouvelle opportunité`). Counted once per claimed message, so a
+     * template change drops the company loudly; a miss keeps the offer, whose company is optional.
+     */
+    private function subjectCompany(string $subject): string
+    {
+        $pattern = $this->definition->param('subject_company_pattern');
+        if ($pattern === null || $pattern === '') {
+            return '';
+        }
+        $company = preg_match($pattern, $subject, $m) === 1 ? trim((string) ($m['company'] ?? '')) : '';
+        $this->patternMisses->record('subject_company_pattern', $company !== '');
+
+        return $company;
+    }
+
     /** @param array{0: string, 1: array<string, string>} $card */
-    private function offer(array $card, ?string $observedAt): ?JobListing
+    private function offer(array $card, ?string $observedAt, string $subjectCompany = ''): ?JobListing
     {
         $g = $card[1];
         $url = preg_replace('~[?#].*$~', '', $g['url']) ?? $g['url'];
@@ -245,7 +266,7 @@ final readonly class JobDigestEmailSource implements AcknowledgesMessages, Count
             sourceName: $this->name(),
             externalId: trim($idMatch[1]),
             title: $g['title'],
-            company: $g['company'],
+            company: $g['company'] !== '' ? $g['company'] : $subjectCompany,
             location: $location,
             fields: $labels === [] ? [] : ['labels' => implode(' | ', $labels)],
             url: $url,

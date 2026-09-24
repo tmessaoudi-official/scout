@@ -318,6 +318,8 @@ final class FixtureSecretsTest extends TestCase
         // HelloWork's alert sender `alerte@emails.…`, its `support-candidat@…` footer and its
         // Message-ID's domain; Apec's sender `offres@diffusion.…`. Portal addresses, every one.
         'hellowork.com', 'emails.hellowork.com', 'diffusion.apec.fr',
+        // Collective.work's opportunity sender `ops@…`.
+        'collective.work',
         // NOT a domain either: Apec's asset `no-logo@2x.gif` — the La Centrale case above, as a GIF.
         '2x.gif',
         // `mail.com` is NOT here on purpose: it is 1&1's CONSUMER provider, so allow-listing the

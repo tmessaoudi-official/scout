@@ -1454,14 +1454,14 @@ AND IT IS DEPLOYED AS `job-scout` SINCE 2026-09-14.** A third domain, slice 1 of
 `JobSnapshot`, `JobClassifier` (what an offer states: contracts, work mode, level, pay lines,
 eligibility), `JobCriteria` + `JobScorer`, `JobStore` (its own `job_meta` v1 and `job_listings`,
 composing `Core/RunStore`), `JobEmailSource`, `JobDigestEmailSource`, `JobPipeline`, `JobFormatter`
-and `Job/Cli/JobScout`. Four sources over IMAP: `linkedin` (an `email_alert`, the HTML part) and,
-since 2026-09-24, three `email_digest` sources — `freework` (the text part), `hellowork` and `apec`
-(both HTML only; see the bullets below). Prove a
+and `Job/Cli/JobScout`. Five sources over IMAP: `linkedin` (an `email_alert`, the HTML part) and,
+since 2026-09-24, four `email_digest` sources — `freework` (the text part), `hellowork`, `apec` and
+`collective` (see the bullets below). Prove a
 change offline with
 `JOB_SCOUT_DB=$(mktemp -u) MAILBOX_DIR=tests/fixtures/job/linkedin bin/scout --domain=job doctor --source=linkedin`
 — **16 offres, `ok`** over three captures (2026-09-14) — or `MAILBOX_DIR=tests/fixtures/job/freework
 … --source=freework` — **36 offres, `ok`** over one capture (n=1, 2026-09-24) — `hellowork`
-**39, `ok`** over four, `apec` **45, `ok`** over one (n=1); the ledger half is
+**39, `ok`** over four, `apec` **45, `ok`** over one (n=1), `collective` **5, `ok`** over five; the ledger half is
 `SABOTAGE_FILTER='^job:'`. Five things before touching it:
 
 - **It has no §1.** H1–H8 reject and six components score (stack 25 · pay 20 · level 15 · green 15
@@ -1531,6 +1531,24 @@ change offline with
   mid-word in the real capture), and Apec's per-recipient `id`/`s`/`e` behind a host folded
   mid-word and a `?` written `=3F`. Its query reader also had the alternation `[^"\s<>]|=\r?\n` in
   the wrong order, so it stopped at the first soft break; that was the only instance in the file.
+- **Collective.work sends ONE offer per mail, and names its company only in the SUBJECT**
+  (2026-09-24). `[<first name> x <company>] Nouvelle opportunité`, then `Offre :` + the title and a
+  `Postuler` app link carrying the opportunity id — the identity. So `subject_company_pattern` (a
+  `company` group, counted per claimed message) reads the company, and the card states no place at
+  all, which the source DECLARES with `place_absent: "true"`: the loader still refuses a place-less
+  card pattern without it, refuses it beside a pattern naming a place, and refuses the company from
+  the subject AND the card (two providers, one inert). The plan recorded it as n=0 for a day while
+  **24 mails sat in the label** — 459 over a year, 41–77 a month — because nobody searched the label
+  by sender. Two template traps, both measured over the full history: the template before 2026-09
+  reads `Projet:` / `Découvrir le projet` with its `é` DECOMPOSED (e + U+0301), and the current one
+  writes its TITLES decomposed too — the role gate still fires because `Core/Text` folding strips
+  `\p{Mn}`, pinned end to end by `CollectiveFixtureTest`. A February 2026 week sent a public link
+  with no app id; it is not read, and would miss on every mail, which escalates. `tools/dump-eml.php`
+  takes the tail of the SEQUENCE and so returned only 2025–Feb 2026 mails; the live captures came
+  through `ImapMailbox`'s own `SEARCH SINCE`. **Stated costs:** no place, pay, contract, stack-by-card
+  or date, so the five fixtures score 14–36 and go to the rollup under the deployed gate of 40; a
+  re-posted offer gets a NEW id and is pushed again; the push opens the app page, which needs the
+  developer's login.
 
 `src/phorj/` is **ON INDEFINITE HOLD** (developer ruling, 2026-08-19) — not blocked, deprioritised.
 Do not start it; `docs/PHORJ-REQUIREMENTS.md` remains the record of what it would need.
@@ -2363,6 +2381,9 @@ tests/fixtures/job/freework/     Free-Work's first digest (01, n=1 — 40 cards,
                             Scrubbed after the tool learned Mailjet's click links
 tests/fixtures/job/hellowork/    Four HelloWork alerts (01-04, one per saved search, 39 offers). Their
                             click tokens were rewritten in place, so each still decodes to its offer
+tests/fixtures/job/collective/   Five Collective.work opportunity mails, one offer each: 01-04 the current
+                            template (02/03 one offer re-posted under two ids), 05 the pre-2026-09 one
+                            whose `é` is DECOMPOSED. Scrubbed with the subscriber's name as a needle
 tests/fixtures/job/apec/         Apec's first saved-search digest (01, n=1 — 48 cards, 45 distinct) and a
                             weekly "Nos recommandations" mail (00) that must stay unclaimed. All 221
                             links survive the scrub DISTINCT — see the Apec bullet for why that matters

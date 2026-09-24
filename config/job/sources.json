@@ -74,6 +74,25 @@
         "id_token_pattern": "~[?&]e=(?<token>[A-Za-z0-9_-]+)~",
         "id_pattern": "~\\bp2=(\\d+)W~"
       }
+    },
+    "collective": {
+      "_why": "Collective.work's opportunity mails, ONE offer per message, sent to the account (not a saved-search digest; they predate the four IDF alerts of 2026-09-24). Measured on 59 live messages over 30 days (2026-09-24): 59 offers, 59 distinct, no miss. The mail states a title, a company (in the SUBJECT only) and two links; NO place, NO pay, NO contract, NO work mode, NO date. Identity is the app opportunity id, which both body templates of the last year carry; the push links that app page (it needs the developer's login). The same offer re-posted gets a NEW id, so it is pushed again.",
+      "_verified_at": "2026-09-24",
+      "enabled": true,
+      "family": "portal",
+      "type": "email_digest",
+      "params": {
+        "from": "ops@collective.work",
+        "_subject_pattern": "Every one of 459 mails from the sender over a year reads `[<first name> x <company>] Nouvelle opportunité`.",
+        "subject_pattern": "~\\]\\h*Nouvelle opportunité\\b~u",
+        "_subject_company_pattern": "The company is named nowhere but the subject. Only the FIRST ` x ` separates the subscriber's first name, so a company containing ` x ` stays whole.",
+        "subject_company_pattern": "~^\\[\\S+\\h+x\\h+(?<company>[^\\]]+?)\\h*\\]~u",
+        "_card_pattern": "`Offre :` then the title, blank lines, the `Postuler` button and its app link. The template before 2026-09 read `Projet:` / `Découvrir le projet`, the é DECOMPOSED (e + U+0301), with the same link shape; both are read, so a revert does not blind the source. A February 2026 week sent only the public link and no app id — not read, and it would miss on every mail, which escalates.",
+        "card_pattern": "~(?:Offre|Projet)\\h*:\\h*+\\n\\h*(?<title>\\S[^\\n]*?)\\h*+\\n(?:\\h*+\\n)*+\\h*(?:Postuler|D(?:é|e\\x{0301})couvrir le projet)\\h*+\\n(?:\\h*+\\n)*+\\h*(?<url>https://app\\.collective\\.work/\\S*?/opportunities/[a-z0-9]+)~u",
+        "id_pattern": "~/opportunities/([a-z0-9]+)~",
+        "_place_absent": "The mail states no place at all; the location filter fails open on an unknown place (H8).",
+        "place_absent": "true"
+      }
     }
   }
 }

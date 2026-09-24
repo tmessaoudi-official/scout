@@ -18,7 +18,7 @@ final class JobSourceLoader
 {
     private const array TYPES = ['email_alert', 'email_digest'];
     private const array FAMILIES = ['portal'];
-    private const array PATTERN_PARAMS = ['card_link_pattern', 'place_pattern', 'pay_pattern', 'subject_pattern', 'card_pattern', 'id_pattern', 'id_token_pattern', 'salary_pattern', 'tjm_pattern'];
+    private const array PATTERN_PARAMS = ['card_link_pattern', 'place_pattern', 'pay_pattern', 'subject_pattern', 'card_pattern', 'id_pattern', 'id_token_pattern', 'subject_company_pattern', 'salary_pattern', 'tjm_pattern'];
 
     /**
      * Every `params` key an adapter READS, per type — the allow-list. Read from the code
@@ -27,7 +27,7 @@ final class JobSourceLoader
      */
     private const array READ_PARAMS = [
         'email_alert' => ['from', 'card_link_pattern', 'footer_marker', 'place_pattern', 'pay_pattern'],
-        'email_digest' => ['from', 'subject_pattern', 'card_pattern', 'id_pattern', 'id_token_pattern', 'salary_pattern', 'tjm_pattern'],
+        'email_digest' => ['from', 'subject_pattern', 'subject_company_pattern', 'card_pattern', 'id_pattern', 'id_token_pattern', 'salary_pattern', 'tjm_pattern', 'place_absent'],
     ];
 
     /** Required on an ENABLED source, per type: without one of these the source yields nothing, or nothing placed. */
@@ -39,7 +39,9 @@ final class JobSourceLoader
     /**
      * The named groups `JobDigestEmailSource` requires in `card_pattern`, plus ONE of
      * {@see CARD_PLACE_GROUPS}: Free-Work states its place as the last `facts` segment, HelloWork and
-     * Apec on a line of its own. `contracts`, `company` and `pay` are optional.
+     * Apec on a line of its own. `contracts`, `company` and `pay` are optional. A card that states no
+     * place at all (Collective.work) must DECLARE it with `place_absent: "true"`, so a place group
+     * forgotten in a pattern is still refused rather than read as a portal that names none.
      */
     private const array CARD_GROUPS = ['title', 'url'];
 
@@ -134,14 +136,34 @@ final class JobSourceLoader
             // Same reason as the place groups: a card pattern matching without these fills nothing and
             // counts every card as a hit.
             $card = $params['card_pattern'] ?? '';
+            $placeAbsent = $params['place_absent'] ?? null;
+            if ($placeAbsent !== null && $placeAbsent !== 'true') {
+                throw ConfigError::at($where . '.params.place_absent', 'seule la valeur "true" est admise — omettez la clé sinon');
+            }
             if ($card !== '') {
                 foreach (self::CARD_GROUPS as $group) {
                     if (!self::namesGroup($card, $group)) {
                         throw ConfigError::at($where . '.params.card_pattern', 'le motif doit nommer le groupe « ' . $group . ' »');
                     }
                 }
-                if (!self::namesGroup($card, 'facts') && !self::namesGroup($card, 'place')) {
-                    throw ConfigError::at($where . '.params.card_pattern', 'le motif doit nommer le groupe « ' . implode(' » ou « ', self::CARD_PLACE_GROUPS) . ' » : sans lui aucune offre n\'a de lieu');
+                $statesPlace = self::namesGroup($card, 'facts') || self::namesGroup($card, 'place');
+                if (!$statesPlace && $placeAbsent !== 'true') {
+                    throw ConfigError::at($where . '.params.card_pattern', 'le motif doit nommer le groupe « ' . implode(' » ou « ', self::CARD_PLACE_GROUPS) . ' » : sans lui aucune offre n\'a de lieu. Si le courrier n\'en indique aucun, déclarez-le avec place_absent: "true"');
+                }
+                // A declaration the pattern beside it contradicts reads as considered, and is not.
+                if ($statesPlace && $placeAbsent !== null) {
+                    throw ConfigError::at($where . '.params.place_absent', 'le motif de carte nomme un lieu : place_absent le contredirait');
+                }
+            }
+
+            // Two providers of the company, one honoured and the other inert, is refused, not resolved.
+            $subjectCompany = $params['subject_company_pattern'] ?? '';
+            if ($subjectCompany !== '') {
+                if (!self::namesGroup($subjectCompany, 'company')) {
+                    throw ConfigError::at($where . '.params.subject_company_pattern', 'le motif doit nommer le groupe « company »');
+                }
+                if ($card !== '' && self::namesGroup($card, 'company')) {
+                    throw ConfigError::at($where . '.params.subject_company_pattern', 'le motif de carte nomme déjà « company » : deux sources pour un même champ, dont une sans effet');
                 }
             }
 

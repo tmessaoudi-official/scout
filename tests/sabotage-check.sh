@@ -6149,9 +6149,30 @@ run_sabotage "job: an undecodable id token is not counted (HelloWork/Apec, 2026-
 run_sabotage "job: the loader accepts an id token rule without its token group (2026-09-24)" \
   src/php/Job/JobSourceLoader.php \
   's%if (\$token !== '\'''\'' \&\& !self::namesGroup(\$token, '\''token'\''))%if (false)%'
-run_sabotage "job: the loader accepts a card pattern with neither facts nor place (2026-09-24)" \
+run_sabotage "job: the loader accepts a card pattern with neither facts nor place, undeclared (2026-09-24)" \
   src/php/Job/JobSourceLoader.php \
-  's%if (!self::namesGroup(\$card, '\''facts'\'') \&\& !self::namesGroup(\$card, '\''place'\''))%if (false)%'
+  's%if (!\$statesPlace \&\& \$placeAbsent !== '\''true'\'')%if (false)%'
+run_sabotage "job: the loader accepts place_absent beside a card that states a place (Collective, 2026-09-24)" \
+  src/php/Job/JobSourceLoader.php \
+  's%if (\$statesPlace \&\& \$placeAbsent !== null)%if (false)%'
+run_sabotage "job: the loader accepts a place_absent value other than true (Collective, 2026-09-24)" \
+  src/php/Job/JobSourceLoader.php \
+  's%if (\$placeAbsent !== null \&\& \$placeAbsent !== '\''true'\'')%if (false)%'
+run_sabotage "job: the loader accepts a subject company rule without its company group (Collective, 2026-09-24)" \
+  src/php/Job/JobSourceLoader.php \
+  's%if (!self::namesGroup(\$subjectCompany, '\''company'\''))%if (false)%'
+run_sabotage "job: the loader accepts the company from both the subject and the card (Collective, 2026-09-24)" \
+  src/php/Job/JobSourceLoader.php \
+  's%if (\$card !== '\'''\'' \&\& self::namesGroup(\$card, '\''company'\''))%if (false)%'
+run_sabotage "job: the company is not read from the subject (Collective, 2026-09-24)" \
+  src/php/Job/JobDigestEmailSource.php \
+  's%\$company = \$this->subjectCompany(\$message->subject());%$company = '\'''\'';%'
+run_sabotage "job: a subject the company rule cannot read is not counted (Collective, 2026-09-24)" \
+  src/php/Job/JobDigestEmailSource.php \
+  's%record('\''subject_company_pattern'\'', \$company !== '\'''\'');%record('\''subject_company_pattern'\'', true);%'
+run_sabotage "job: the pre-2026-09 Collective template, its é decomposed, is no longer read (2026-09-24)" \
+  config/job/sources.json \
+  's%D(?:é|e\\\\x{0301})couvrir%Découvrir%'
 
 # THE ABORT COMES BEFORE THE TALLY, and that ordering is the finding rather than a nicety (C2
 # round 7, resilience P3). The alert job harvests the `N sabotage(s) detected, M undetected` line;

@@ -782,6 +782,7 @@ JOB_SCOUT_DB=$(mktemp -u) MAILBOX_DIR=tests/fixtures/job/linkedin php bin/scout 
 JOB_SCOUT_DB=$(mktemp -u) MAILBOX_DIR=tests/fixtures/job/freework php bin/scout --domain=job doctor --source=freework   # offline: 36 offres, ok
 JOB_SCOUT_DB=$(mktemp -u) MAILBOX_DIR=tests/fixtures/job/hellowork php bin/scout --domain=job doctor --source=hellowork # offline: 39 offres, ok
 JOB_SCOUT_DB=$(mktemp -u) MAILBOX_DIR=tests/fixtures/job/apec php bin/scout --domain=job doctor --source=apec           # offline: 45 offres, ok
+JOB_SCOUT_DB=$(mktemp -u) MAILBOX_DIR=tests/fixtures/job/collective php bin/scout --domain=job doctor --source=collective # offline: 5 offres, ok
 php bin/scout --domain=job run --once --seed      # the host form, mandatory before --watch
 php bin/scout --domain=job rollup [--dry-run]     # the "vérifié, score bas" rollup, on demand
 php bin/scout --domain=job test-notify            # exits 2 while console is the only channel
