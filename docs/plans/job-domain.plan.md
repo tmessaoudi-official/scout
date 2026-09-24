@@ -67,6 +67,7 @@ plan below is approved.
 - [2026-09-24 11:30] AGREED: next, in order — HelloWork and Apec readers, then the Alcopa car source, then a source research pass diffed against `var/claude/jobs/sources-research.md`.
 - [2026-09-24 11:20] AGREED: the role gate accepts `d[eé]velop+eur` (Free-Work's `Dévelopeur` typo), test-first.
 - [2026-09-24 11:20] AGREED: the developer has a Collective.work account; its mission alerts are set up in the developer's browser like the other job portals and routed into `job-watch/portails`.
+- [2026-09-24 11:58] NOTED: the one-`p` typo fix landed as `2f38e48` (`developp?eu` in the role gate and in the commercial reject). CI is green, and `job-scout` was restarted so it reads the new criteria; no `criteria.local.json` override exists.
 - [2026-09-24 11:26] NOTED: four Collective.work alerts created in the developer's session, all daily, all Île-de-France, no contract or pay filter: `scout - Dev IDF` (search `Développeur`), `scout - Lead IDF` (`Tech Lead`), `scout - Architecte IDF` (`Architecte`), `scout - DevOps IDF` (`DevOps`). Collective.work sends them to the account's own address, so the Gmail filter that routes them into `job-watch/portails` is still the developer's to add. The source can't be built until the first real email arrives (n=0).
 
 ## Evidence gathered (2026-09-13)
