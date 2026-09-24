@@ -303,6 +303,22 @@ final class VehicleSourceLoaderRefusalsTest extends TestCase
             'map.price',
         ];
 
+        yield 'an alcopa source with no search url' => [
+            ['sources' => ['p' => ['enabled' => false, 'family' => 'auction', 'type' => 'alcopa']]],
+            'recherche enregistrée',
+        ];
+
+        yield 'an alcopa source pointing at another site' => [
+            ['sources' => ['p' => ['enabled' => false, 'family' => 'auction', 'type' => 'alcopa', 'url' => 'https://e.test/recherche?x=1']]],
+            'recherche enregistrée',
+        ];
+
+        yield 'an alcopa source carrying a map it would never read' => [
+            ['sources' => ['p' => ['enabled' => false, 'family' => 'auction', 'type' => 'alcopa',
+                'url' => 'https://www.alcopa-auction.fr/recherche?categories%5B%5D=VP', 'map' => ['ref' => 'sku']]]],
+            'ni item_url_pattern ni map',
+        ];
+
         yield 'a fixture source naming no file' => [
             ['sources' => ['p' => ['enabled' => false, 'family' => 'portal', 'type' => 'fixture']]],
             'fixture',

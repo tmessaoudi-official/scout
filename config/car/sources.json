@@ -102,6 +102,15 @@
         "facts_pattern": "~^\\h*(?<title>[^\\n\\[]+?)\\h*\\n\\h*\\[https?://\\S+\\]\\h*\\n\\h*\\[https?://\\S+\\]\\h*\\n\\h*(?<ref>\\d{6}-[A-Z0-9-]+)\\h+[^\\n]+~mu"
       }
     },
+    "alcopa": {
+      "_why": "Source #7 of the car domain (2026-09-24), the second AUCTION source and the first that is POLLED because its alert fails auction rule 2: ten daily mails carry no closing time, no price and no per-lot link, and show the same three cars for six days. The site is server-rendered; robots disallow only /*.pdf$ and /calendrier/. The URL is the developer's own saved search (Tourisme, 2020+, <= 30 000 EUR, <= 100 000 km, three salerooms) — 249 lots on 13 pages when measured. A lot page is fetched once per NOVEL lot, because its Informations/Commentaires blocks are the only place a hail, a missing carte grise or a warning light is stated; a LIVE sale's page is fetched once per pass for its window. The closing (rule 2): an online lot closes at its card's own countdown, a LIVE lot at its saleroom window's end; a lot this cannot place is warned and not returned. STATED COSTS: price is null (a starting price is not a price), so the ceiling never fires; the storage site is a saleroom name, so the location filter never fires; about 13 search pages per pass, the heaviest poller in the tree; a lot already seen is never re-read, so a lot relisted in a later sale keeps the closing it was announced with.",
+      "enabled": false,
+      "family": "auction",
+      "type": "alcopa",
+      "url": "https://www.alcopa-auction.fr/recherche?categories%5B%5D=VP&years%5B%5D=2020-2100&price_max=30000&km_max=100000&sites%5B%5D=1&sites%5B%5D=45&sites%5B%5D=21",
+      "lot_budget_per_pass": 20,
+      "rate_limit_ms": 3000
+    },
     "autohero": {
       "_why": "Source #2, the one that proves the HTTP path. Measured 2026-08-27 and 2026-08-29: robots open, /fr/sitemap_search.xml lists ~3 400 lots as /fr/<make>-<model>/id/<uuid>/, and a lot page carries ONE application/ld+json block of @type Vehicle with price, brand, model, body, first registration (YYYY-MM), fuel, transmission, mileage ('136 278 KMT') and sku. A reseller: fixed price, delivered nationally, no location field at all — decision 6 is inert here by measurement.",
       "enabled": true,

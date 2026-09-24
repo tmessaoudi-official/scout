@@ -24,6 +24,7 @@ use Scout\Core\Pacer;
 use Scout\Core\Redact;
 use Scout\Core\SourceStatus;
 use Scout\Car\IndexedVehicleSource;
+use Scout\Car\AlcopaVehicleSource;
 use Scout\Car\SitemapVehicleSource;
 use Scout\Car\VehicleClassifier;
 use Scout\Car\VehicleCriteria;
@@ -589,6 +590,7 @@ final readonly class CarScout
         return match ($definition->type) {
             'email_alert' => new VehicleEmailSource($definition, $store, $this->mailbox($definition), $warn, (int) (getenv('IMAP_MAX_MESSAGES') ?: 50)),
             'sitemap_jsonld' => new SitemapVehicleSource($definition, $store, $this->http, $this->robotsResolver->forUrl((string) $definition->url), $warn),
+            'alcopa' => new AlcopaVehicleSource($definition, $store, $this->http, $this->robotsResolver->forUrl((string) $definition->url), $warn, null, fn (): int => (int) strtotime($this->now())),
             default => null,
         };
     }

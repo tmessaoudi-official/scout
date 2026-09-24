@@ -14,7 +14,7 @@ use Scout\Config\Reader;
  */
 final class VehicleSourceLoader
 {
-    private const array TYPES = ['email_alert', 'sitemap_jsonld', 'fixture'];
+    private const array TYPES = ['email_alert', 'sitemap_jsonld', 'alcopa', 'fixture'];
     private const array FAMILIES = ['portal', 'dealer', 'auction'];
     private const array PATTERN_PARAMS = ['subject_pattern', 'card_separator_pattern', 'price_pattern', 'facts_pattern', 'title_pattern', 'make_model_pattern', 'make_model_unknown_pattern', 'seller_pattern', 'postcode_pattern'];
 
@@ -81,6 +81,8 @@ final class VehicleSourceLoader
             'make_model_unknown_pattern',
         ],
         'sitemap_jsonld' => [],
+        // `alcopa` is a site-specific adapter: every selector is code, so no param is read.
+        'alcopa' => [],
         'fixture' => [],
     ];
 
@@ -322,6 +324,17 @@ final class VehicleSourceLoader
                     if (($map[$required] ?? '') === '') {
                         throw ConfigError::at($where . '.map.' . $required, 'obligatoire pour une source sitemap_jsonld');
                     }
+                }
+            }
+            if ($type === 'alcopa') {
+                // The saved search IS the index, and a lot page is only ever reached from it, so the
+                // URL must be that site's search — a different host would put robots, pacing and
+                // every selector on a site nobody measured.
+                if ($url === null || preg_match('~^https://www\.alcopa-auction\.fr/recherche\?~', $url) !== 1) {
+                    throw ConfigError::at($where . '.url', 'une source alcopa nomme sa recherche enregistrée, https://www.alcopa-auction.fr/recherche?…');
+                }
+                if ($itemUrlPattern !== null || $map !== []) {
+                    throw ConfigError::at($where, 'une source alcopa ne lit ni item_url_pattern ni map : ses sélecteurs sont du code, et ces clés ne feraient rien');
                 }
             }
             if ($type === 'fixture' && $fixture === null) {

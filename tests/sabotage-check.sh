@@ -4813,6 +4813,51 @@ run_sabotage "an unreadable closing instant is hidden rather than shown as writt
   src/php/Car/VehicleFormatter.php \
   "s%            return 'clôture ' . \$car->closingAt;%            return null;%"
 
+# ALCOPA (car source #7, polled): each case breaks one guarantee of the adapter; AlcopaFixtureTest must notice.
+run_sabotage "alcopa is loaded against any host, not its own search" \
+  src/php/Car/VehicleSourceLoader.php \
+  's%if ($url === null || preg_match('\''~^https://www\\.alcopa-auction\\.fr/recherche\\?~'\'', $url) !== 1) {%if ($url === null) {%'
+
+run_sabotage "alcopa re-opens every lot page on every pass (the novelty gate is gone)" \
+  src/php/Car/AlcopaVehicleSource.php \
+  's%            if (isset(\$known\[\$id\])) {%            if (false) {%'
+
+run_sabotage "alcopa opens the lot page of a card whose countdown is already over" \
+  src/php/Car/AlcopaVehicleSource.php \
+  's%            if (\$card\['\''countdown'\''\] !== null \&\& \$card\['\''countdown'\''\] <= \$now) {%            if (false) {%'
+
+run_sabotage "alcopa accepts a walk that lost a page against the stated count" \
+  src/php/Car/AlcopaVehicleSource.php \
+  's%        if (count(\$cards) + \$tolerance < \$stated) {%        if (false) {%'
+
+run_sabotage "alcopa takes the first of two sales a lot page names" \
+  src/php/Car/AlcopaVehicleSource.php \
+  's%        if (count(\$salesSeen) !== 1) {%        if (\$salesSeen === \[\]) {%'
+
+run_sabotage "alcopa hands the whole lot page to the classifier, furniture included" \
+  src/php/Car/AlcopaVehicleSource.php \
+  's%'\''description'\'' => implode("\\n", \$description)\]%'\''description'\'' => self::text(\$document->body)]%'
+
+run_sabotage "alcopa accepts a sale page whose day is not the lot page's" \
+  src/php/Car/AlcopaVehicleSource.php \
+  's%            if (\$window\['\''day'\''\] !== self::parisDay(\$opens)) {%            if (false) {%'
+
+run_sabotage "alcopa accepts a window that closes before it opens" \
+  src/php/Car/AlcopaVehicleSource.php \
+  's%        if (\$closes <= \$opens) {%        if (false) {%'
+
+run_sabotage "alcopa announces a lot whose closing is already past" \
+  src/php/Car/AlcopaVehicleSource.php \
+  's%        if (strtotime(\$closes) <= \$now) {%        if (false) {%'
+
+run_sabotage "alcopa reads an unseen fuel code as autre instead of unknown" \
+  src/php/Car/AlcopaVehicleSource.php \
+  's%\$fuel = self::FUEL\[\$line\] ?? null;%\$fuel = self::FUEL[\$line] ?? '\''autre'\'';%'
+
+run_sabotage "alcopa stops asking robots.txt before a request" \
+  src/php/Car/AlcopaVehicleSource.php \
+  's%        if (!\$this->robots->allows(Robots::pathOf(\$url))) {%        if (false) {%'
+
 run_sabotage "the car pipeline baselines a sitemap source's health on its novel lots, not its index" \
   src/php/Car/VehiclePipeline.php \
   's%$itemCount = $source instanceof IndexedVehicleSource ? ($source->lastIndexSize() ?? count($listings)) : count($listings);%$itemCount = count($listings);%'

@@ -320,6 +320,8 @@ final class FixtureSecretsTest extends TestCase
         'hellowork.com', 'emails.hellowork.com', 'diffusion.apec.fr',
         // Collective.work's opportunity sender `ops@…`.
         'collective.work',
+        // Alcopa Auction's own `contact@…`, printed in every page's footer — the site's address.
+        'alcopa-auction.fr',
         // NOT a domain either: Apec's asset `no-logo@2x.gif` — the La Centrale case above, as a GIF.
         '2x.gif',
         // `mail.com` is NOT here on purpose: it is 1&1's CONSUMER provider, so allow-listing the
