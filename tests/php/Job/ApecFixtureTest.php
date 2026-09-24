@@ -18,9 +18,12 @@ use Scout\Job\JobStore;
  *
  * `01.eml` is one daily digest for four searches, twelve cards each: 48 cards and 45 distinct offers —
  * the searches overlap, and an identical repeat is kept once in silence. HTML only. Each field is
- * followed by the SAME tracking link, and some cards carry a logo link before the title, which the
- * card pattern's title anchor skips. The offer id lives only in that link's `e` token
- * (`p1=www.apec.fr&p2=<id>W…`); the scrubber replaced the per-recipient `id`, `s` and header `e`.
+ * followed by a link to its offer, and the four links DIFFER — each has its own slot in `id` and its
+ * own `s`; only the `e` token (`p1=www.apec.fr&p2=<id>W…`, the one place the offer id lives) is shared.
+ * Some cards also carry a logo link before the title, which the card pattern's title anchor skips.
+ * The scrubber gave each distinct `id`, `s` and header `e` its own placeholder, so all 221 links stay
+ * distinct: an earlier scrub used one constant, made the links identical, and the reader written
+ * against that fixture read 45 offers here and 0 on the live message.
  *
  * `00.eml` is Apec's weekly "Nos recommandations d'offres d'emploi" from the SAME sender, kept as the
  * counterweight: its subject is not an alert's, so it must never be claimed.

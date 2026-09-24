@@ -1378,7 +1378,8 @@ covering 60 % of the fleet discriminates MORE, not less.
 > fold on purpose: with it inside line 1 a fragment decoded to it alone and the case passed before
 > the fix. Verified red by removing the unfolded form from each guard. **This is the fourth
 > encoding the scrubber learned from a real capture** (JWT, outer base64, percent-encoding,
-> folding), and the rule the file already carries: *a check that only understands the encodings
+> folding — and on 2026-09-24 HelloWork's token rewritten in place and Apec's host folded mid-word
+> with a `=3F` for its `?`, so the count is history, not a tally), and the rule the file already carries: *a check that only understands the encodings
 > already seen is the same defect with a later date.* Scrub, then run the guard, then commit —
 > never the first two alone.
 >
@@ -1510,7 +1511,8 @@ change offline with
   `place` group, which is the location whole — through the ` - ` facts splitter it reads `92`. The
   card patterns are line-by-line with POSSESSIVE separators: the first draft's `\s*` crossed newlines
   and hit PCRE's backtrack limit on every HelloWork message, which `preg_match_all` returns as
-  `false` and the adapter reads as zero cards — a quiet market. Apec's card is anchored on its TITLE,
+  `false`; the adapter records that as a `card_pattern` miss, so every message missing escalates as
+  an outage of the whole source rather than reading as a quiet market — but not one offer is read. Apec's card is anchored on its TITLE,
   because only some cards carry a logo link before the title (anchored on the link it lost 15 of 45),
   and ties its four fields together by a backreference to the shared `e` token ALONE: each of a
   card's four links has its own slot in `id` and its own `s`. **The first deploy read 0 Apec offers
