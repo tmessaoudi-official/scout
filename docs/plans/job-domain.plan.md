@@ -63,6 +63,7 @@ plan below is approved.
 - [2026-09-24 09:57] NOTED: Free-Work's first alert arrived 2026-09-24 06:27 from `jobs@free-work.com` ("161 offres matchant avec vos critères"); `contact@free-work.com` sends a newsletter into the same label, and it is not an alert.
 - [2026-09-24 10:40] NOTED: the cross-source key ruled necessary on 2026-09-23 (company + normalised title + commune) cannot be built for Free-Work — its cards state no company — and the measured overlap today is 0 of 36 distinct Free-Work titles against the 197 stored LinkedIn offers; Free-Work ships without cross-source matching, under that entry's own stated cost (an offer on both sources is pushed twice), recorded as a Known issue.
 - [2026-09-24 10:40] NOTED: Free-Work's digest is read from its own text/plain part (Symfony-generated markdown), one `card_pattern` per card, NOT line-anchored — the first card of each of the four sections is glued to its section header, and a line-anchored reader found 36 of 40 cards; a bare `€` range is a day rate (the live offer page shows `400-550 €⁄j`), `NNk-NNk €` an annual salary, and the adapter only states that unit so `JobPay` stays the one reader of pay — a design choice (not a ruling).
+- [2026-09-24 11:05] NOTED: step 13 deployed; the first live pass read 2 sources, and Free-Work pushed exactly the 4 offers the offline judging predicted at the gate of 40 (scores 60, 50, 48, 40), queuing 19 for the rollup.
 
 ## Evidence gathered (2026-09-13)
 - `Cli/Domains::all()` is the registry — a new domain is one entry plus `Scout\<Slug>\`, `config/<slug>/` and `<SLUG>_*` keys.
@@ -420,7 +421,7 @@ after a rollback is harmless; reverting its commit removes it.
 | 10 | Title gate: stack architect + member of technical staff (live over-rejection) | S | done | aeb40c2 | config/job/criteria.json tests/php/Job/JobCriteriaTest.php docs/plans/job-domain.plan.md |
 | 11 | Title gate: engineering management + DevOps/SRE (broad alerts, ruled 2026-09-23) | S | done | c102458 | config/job/criteria.json tests/php/Job/JobCriteriaTest.php docs/plans/job-domain.plan.md |
 | 12 | JobScoutTest runs on a shipped-config temp root, never the checkout's gitignored criteria.local.json | S | done | 2e3d632 | tests/php/Job/Cli/JobScoutTest.php |
-| 13 | Free-Work source: `email_digest` adapter over the text part, scrubbed fixtures, Mailjet scrub rule | L | doing | - | src/php/Job/** config/job/sources.json tests/fixtures/job/freework/** tests/php/Job/** tests/php/Repo/FixtureSecretsTest.php tools/scrub-eml.php tests/test-scrub-eml.sh tests/sabotage-check.sh CLAUDE.md README.md docs/** .claude/skills/add-source/SKILL.md |
+| 13 | Free-Work source: `email_digest` adapter over the text part, scrubbed fixtures, Mailjet scrub rule | L | done | 85c899f | src/php/Job/** config/job/sources.json tests/fixtures/job/freework/** tests/php/Job/** tests/php/Repo/FixtureSecretsTest.php tools/scrub-eml.php tests/test-scrub-eml.sh tests/sabotage-check.sh CLAUDE.md README.md docs/** .claude/skills/add-source/SKILL.md |
 <!-- /progress-block -->
 ### Blocked
 - WTTJ as a source: its saved-search alerts are suspended site-wide (checked 2026-09-23); re-check `welcometothejungle.com/fr/me/alerts`.
