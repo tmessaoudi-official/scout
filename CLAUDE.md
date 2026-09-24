@@ -1510,9 +1510,16 @@ change offline with
   `place` group, which is the location whole — through the ` - ` facts splitter it reads `92`. The
   card patterns are line-by-line with POSSESSIVE separators: the first draft's `\s*` crossed newlines
   and hit PCRE's backtrack limit on every HelloWork message, which `preg_match_all` returns as
-  `false` and the adapter reads as zero cards — a quiet market. Apec's card is anchored on its TITLE
-  and ties its four fields together by a backreference to the one offer link, because only some cards
-  carry a logo link before the title (the first draft, anchored on the link, lost 15 of 45).
+  `false` and the adapter reads as zero cards — a quiet market. Apec's card is anchored on its TITLE,
+  because only some cards carry a logo link before the title (anchored on the link it lost 15 of 45),
+  and ties its four fields together by a backreference to the shared `e` token ALONE: each of a
+  card's four links has its own slot in `id` and its own `s`. **The first deploy read 0 Apec offers
+  live while the fixture read 45**, because the scrubber had replaced every `id`/`s` with ONE constant,
+  making a card's links identical — a shape Apec never sends — and the reader was written against it.
+  The tell was on screen and was explained away: 221 links became 53 after the scrub. Now each
+  distinct value gets its own placeholder (the Agorastore rule, which this rule had not applied), the
+  fixture keeps all 221, and a scrubbed capture is always checked against its RAW twin through the
+  adapter, not only for its link count.
   **Stated costs:** neither card states a stack, a work mode or a date, and Apec states no pay, so
   under the deployed gate of 40 **one offer of 84 pushed individually** on the captures (the other
   59 matches go to the 09:00 rollup); Apec's company is sometimes the relaying board
@@ -2355,8 +2362,8 @@ tests/fixtures/job/freework/     Free-Work's first digest (01, n=1 — 40 cards,
 tests/fixtures/job/hellowork/    Four HelloWork alerts (01-04, one per saved search, 39 offers). Their
                             click tokens were rewritten in place, so each still decodes to its offer
 tests/fixtures/job/apec/         Apec's first saved-search digest (01, n=1 — 48 cards, 45 distinct) and a
-                            weekly "Nos recommandations" mail (00) that must stay unclaimed. Its 221
-                            links scrub to 53: the per-recipient tokens were all that told them apart
+                            weekly "Nos recommandations" mail (00) that must stay unclaimed. All 221
+                            links survive the scrub DISTINCT — see the Apec bullet for why that matters
 tools/scrub-eml.php         Turns a captured .eml into a committable fixture; REFUSES to write
                             while the address is RECOVERABLE — decoding base64url runs and
                             quoted-printable before it looks, not merely grepping for it

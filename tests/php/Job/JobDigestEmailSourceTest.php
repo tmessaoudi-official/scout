@@ -30,7 +30,7 @@ final class JobDigestEmailSourceTest extends TestCase
     private const string HW_CARD = '~^\\h(?<title>\\S[^\\n]*?)\\h*\\n(?<url>https://emails\\.hellowork\\.com/clic/\\S+)\\h*+\\n(?:\\h*+\\n)*+(?<company>\\S[^\\n]*?)\\h*+\\n(?:\\h*+\\n)*+(?:(?!Voir\\b)\\S[^\\n]*?\\h*+\\n(?:\\h*+\\n)*+){0,3}?(?<place>\\S[^\\n]*?)\\h*+\\n(?:\\h*+\\n)*+(?<contracts>\\S[^\\n]*?)\\h*+\\n(?:\\h*+\\n)*+(?:\\h(?<pay>\\S[^\\n]*?)\\h*+\\n(?:\\h*+\\n)*+)?\\h*Voir l[’\']offre~mu';
     private const string HW_TOKEN = '~/clic/[^/\\s]+/\\d+/[0-9a-f]+/(?<token>[A-Za-z0-9_-]+)~';
     private const string HW_ID = '~/fr-fr/emplois/(\\d+)\\.html~';
-    private const string AP_CARD = '~^\\h*(?<title>\\S[^\\n]*?)\\h*+\\n(?:\\h*+\\n)*+\\h*(?<url>https://neomarket\\.diffusion\\.apec\\.fr/r/\\?\\S+)\\h*+\\n(?:\\h*+\\n)*+\\h*(?<company>\\S[^\\n]*?)\\h*+\\n(?:\\h*+\\n)*+\\h*\\k<url>\\h*+\\n(?:\\h*+\\n)*+\\h*(?<contracts>[^\\n•]+?)\\h*•\\h*+\\n(?:\\h*+\\n)*+\\h*\\k<url>\\h*+\\n(?:\\h*+\\n)*+\\h*(?<place>\\S[^\\n]*?)\\h*+\\n(?:\\h*+\\n)*+\\h*\\k<url>~mu';
+    private const string AP_CARD = '~^\\h*(?<title>\\S[^\\n]*?)\\h*+\\n(?:\\h*+\\n)*+\\h*(?<url>https://neomarket\\.diffusion\\.apec\\.fr/r/\\?\\S*?\\be=(?<e>[A-Za-z0-9_-]+)\\S*)\\h*+\\n(?:\\h*+\\n)*+\\h*(?<company>\\S[^\\n]*?)\\h*+\\n(?:\\h*+\\n)*+\\h*https://neomarket\\.diffusion\\.apec\\.fr/r/\\?\\S*?\\be=\\k<e>(?![A-Za-z0-9_-])\\S*\\h*+\\n(?:\\h*+\\n)*+\\h*(?<contracts>[^\\n•]+?)\\h*•\\h*+\\n(?:\\h*+\\n)*+\\h*https://neomarket\\.diffusion\\.apec\\.fr/r/\\?\\S*?\\be=\\k<e>(?![A-Za-z0-9_-])\\S*\\h*+\\n(?:\\h*+\\n)*+\\h*(?<place>\\S[^\\n]*?)\\h*+\\n(?:\\h*+\\n)*+\\h*https://neomarket\\.diffusion\\.apec\\.fr/r/\\?\\S*?\\be=\\k<e>(?![A-Za-z0-9_-])\\S*~mu';
     private const string AP_TOKEN = '~[?&]e=(?<token>[A-Za-z0-9_-]+)~';
     private const string AP_ID = '~\\bp2=(\\d+)W~';
 
@@ -241,12 +241,14 @@ final class JobDigestEmailSourceTest extends TestCase
         self::assertSame($link, $offers[0]->url);
     }
 
-    /** A card link carrying no token is not a card, and the TOKEN rule's miss is the one counted. */
+    /** A card link carrying no token is not an offer, and the TOKEN rule's miss is the one counted. */
     public function testALinkWithoutATokenIsCountedAndTheCardDropped(): void
     {
-        $source = $this->apec(new RecordingMailbox([self::apMessage(self::apCard('https://neomarket.diffusion.apec.fr/r/?id=FIXTURE&s=FIXTURE', 'Dev F/H', 'Acme', 'Paris - 75'))]));
+        $card = (string) preg_replace('~(/clic/[^/\s]+/\d+/[0-9a-f]+)/[A-Za-z0-9_-]+~', '$1', self::hwCard('1', 'Dev H/F', 'Acme', 'Paris - 75', 'CDI'));
+        $source = $this->helloWork(new RecordingMailbox([self::hwMessage($card)]));
 
         self::assertSame([], $source->fetch());
+        self::assertSame(0, $source->patternMisses()->counts()['card_pattern']['misses'] ?? null, 'the card itself was read');
         self::assertSame(1, $source->patternMisses()->counts()['id_token_pattern']['misses'] ?? null);
     }
 
@@ -339,15 +341,18 @@ final class JobDigestEmailSourceTest extends TestCase
             . "Date: Thu, 24 Sep 2026 08:27:46 +0200\r\nMIME-Version: 1.0\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n\r\n" . $body;
     }
 
-    private static function apLink(string $id): string
+    /** One field's link: every link of an Apec card has its OWN slot in `id` and its own `s`, and only `e` is shared. */
+    private static function apLink(string $id, int $slot = 1): string
     {
-        return 'https://neomarket.diffusion.apec.fr/r/?id=FIXTURE&e=' . rtrim(strtr(base64_encode("p1=www.apec.fr&p2={$id}W&p3=&xtor=EPR-41-[push_avec_compte]"), '+/', '-_'), '=') . '&s=FIXTURE';
+        return 'https://neomarket.diffusion.apec.fr/r/?id=FIXTURE' . sprintf('%04d', $slot) . '&e=' . rtrim(strtr(base64_encode("p1=www.apec.fr&p2={$id}W&p3=&xtor=EPR-41-[push_avec_compte]"), '+/', '-_'), '=') . '&s=FIXTURE' . sprintf('%04d', 100 + $slot);
     }
 
-    /** The logo-less card: every field is followed by the same offer link. */
+    /** The logo-less card: every field is followed by a link to the same offer — four DIFFERENT links. */
     private static function apCard(string $link, string $title, string $company, string $place): string
     {
-        return "\n                      {$title}\n{$link}\n\n                      {$company}\n{$link}\n\n                      CDI\u{a0}•\n{$link}\n\n                      {$place}\n{$link}\n";
+        $next = static fn (int $n): string => (string) preg_replace_callback('~FIXTURE(\d+)~', static fn (array $m): string => sprintf('FIXTURE%04d', (int) $m[1] + 10 * $n), $link);
+
+        return "\n                      {$title}\n{$link}\n\n                      {$company}\n{$next(1)}\n\n                      CDI\u{a0}•\n{$next(2)}\n\n                      {$place}\n{$next(3)}\n";
     }
 
     private static function apMessage(string $body): string

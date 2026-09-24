@@ -393,16 +393,21 @@ $message = preg_replace_callback(
 // The host is matched FOLD-TOLERANTLY: the real capture breaks it as `neomarket.diffusio=` / `n.apec.fr/r=`
 // / `/=3Fid=3D…`, and a literal host pattern matched nothing there while the tool reported `scrubbed`
 // with every linkage token still in place — nothing in them decodes to the address, so nothing refused.
+// ONE PLACEHOLDER PER DISTINCT VALUE, the Agorastore rule: every link carries its own slot in `id` and
+// its own `s`, so one offer's four links DIFFER. A single constant made them identical — 221 links
+// became 53 — and the reader was then written against a shape Apec never sends: it matched all 45
+// offers in the fixture and none in the live message.
+$apecSeen = [];
 $apecHost = implode('(?:=\r?\n)?', array_map(
     static fn (string $c): string => preg_quote($c, '~'),
     str_split('neomarket.diffusion.apec.fr/r/'),
 )) . '(?:=\r?\n)?(?:\?|=3F)';   // and the `?` arrives quoted-printable as `=3F`
 $message = preg_replace_callback(
     '~(' . $apecHost . ')((?:=\r?\n|[^"\s<>])+)~',
-    static function (array $m) use ($unfold, $qpFold): string {
+    static function (array $m) use ($unfold, $qpFold, &$apecSeen): string {
         $query = preg_replace_callback(
             '~\b(id|s|e)(=3D|=(?![0-9A-F]{2}))([A-Za-z0-9_,\-]+)~',
-            static function (array $p): string {
+            static function (array $p) use (&$apecSeen): string {
                 if ($p[1] === 'e') {
                     $decoded = base64_decode(strtr($p[3], '-_', '+/'), true);
                     if ($decoded !== false && str_contains($decoded, 'p2=')) {
@@ -410,7 +415,9 @@ $message = preg_replace_callback(
                     }
                 }
 
-                return $p[1] . $p[2] . 'FIXTURE';
+                $apecSeen[$p[1] . '=' . $p[3]] ??= sprintf('FIXTURE%04d', count($apecSeen) + 1);
+
+                return $p[1] . $p[2] . $apecSeen[$p[1] . '=' . $p[3]];
             },
             $unfold($m[2]),
         ) ?? $unfold($m[2]);

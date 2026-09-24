@@ -1054,6 +1054,10 @@ apec="$work/apec.eml"
   # that stopped at the first `=` left half of `e` and all of `s` behind — while the tool said `scrubbed`.
   printf '<a href=3D"https://neomarket.diffusio=\r\nn.apec.fr/r/=3Fid=3Dh28919ca2,18aa4726,15cac233&amp;e=3D%s=\r\n%s&amp;s=3DMftwEfvRUgimT0S_bx=\r\nL1ZGmTXMtVj4F4ohtsLlEwoCE">ici</a>\r\n' "${recip_e:0:20}" "${recip_e:20}"
   printf '<a href=3D"https://neomarket.diffusion.apec.fr/r/?id=3Dh28919ca2,18aa4726,15cac237&amp;e=3D%s&amp;s=3D4WykgpQ8GpS9cIK53Xa7R0tE7BlCyWjRQRgSWhHB_">Lead</a>\r\n' "$offer_e"
+  # The SAME offer's next field: Apec gives every link its own slot in `id` and its own `s`, so a
+  # card's four links differ. One constant placeholder made them identical — a shape the portal never
+  # sends, which the reader then matched in the fixture and missed on every live message.
+  printf '<a href=3D"https://neomarket.diffusion.apec.fr/r/?id=3Dh28919ca2,18aa4726,15cac238&amp;e=3D%s&amp;s=3DQx9TbNm2VvLp0cRe7WyKs4HdUfJgAo1iZ8XqE3tBnC5">SKAELIA</a>\r\n' "$offer_e"
 } > "$apec"
 apec_status=0
 php "$repo/tools/scrub-eml.php" "$apec" "$work/apec.out.eml" "$address" >"$work/apec.log" 2>&1 || apec_status=$?
@@ -1072,9 +1076,14 @@ if [[ -f "$work/apec.out.eml" ]]; then
             preg_match_all("~[?&](?:amp;)?e=([A-Za-z0-9_-]+)~", $t, $m);
             foreach ($m[1] as $e) { if (str_contains((string) base64_decode(strtr($e, "-_", "+/")), "p2=179473574W")) { exit(0); } }
             exit(1);' "$work/apec.out.eml"
+  check "and two links of one offer stay DISTINCT — one placeholder per distinct value" \
+    php -r '$t = quoted_printable_decode(file_get_contents($argv[1]));
+            preg_match_all("~https://neomarket\.diffusion\.apec\.fr/r/\?[^\"]+~", $t, $m);
+            exit(count($m[0]) === 3 && count(array_unique($m[0])) === 3 ? 0 : 1);' "$work/apec.out.eml"
 else
   check "and neither the recipient id, the signatures nor the recipient hash survive" false
   check "and the offer token still decodes to its id" false
+  check "and two links of one offer stay DISTINCT — one placeholder per distinct value" false
 fi
 
 printf '\n  %d passed, %d failed\n\n' "$pass" "$fail"

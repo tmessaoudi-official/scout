@@ -68,8 +68,8 @@
         "from": "offres@diffusion.apec.fr",
         "_subject_pattern": "The same sender mails a weekly `Nos recommandations d'offres d'emploi` in another shape; it must stay unclaimed.",
         "subject_pattern": "~\\boffres Apec du\\b~u",
-        "_card_pattern": "Anchored on the TITLE line, then the offer link after each of title, company, `CDI •` and place — matched by backreference, so the four fields belong to one offer. Some cards also carry a logo link before the title, which the anchor skips.",
-        "card_pattern": "~^\\h*(?<title>\\S[^\\n]*?)\\h*+\\n(?:\\h*+\\n)*+\\h*(?<url>https://neomarket\\.diffusion\\.apec\\.fr/r/\\?\\S+)\\h*+\\n(?:\\h*+\\n)*+\\h*(?<company>\\S[^\\n]*?)\\h*+\\n(?:\\h*+\\n)*+\\h*\\k<url>\\h*+\\n(?:\\h*+\\n)*+\\h*(?<contracts>[^\\n•]+?)\\h*•\\h*+\\n(?:\\h*+\\n)*+\\h*\\k<url>\\h*+\\n(?:\\h*+\\n)*+\\h*(?<place>\\S[^\\n]*?)\\h*+\\n(?:\\h*+\\n)*+\\h*\\k<url>~mu",
+        "_card_pattern": "Anchored on the TITLE line, then a link after each of title, company, `CDI •` and place. The four links DIFFER — each has its own slot in `id` and its own `s` — so they are tied to one offer by a backreference to the shared `e` token alone. Some cards also carry a logo link before the title, which the anchor skips.",
+        "card_pattern": "~^\\h*(?<title>\\S[^\\n]*?)\\h*+\\n(?:\\h*+\\n)*+\\h*(?<url>https://neomarket\\.diffusion\\.apec\\.fr/r/\\?\\S*?\\be=(?<e>[A-Za-z0-9_-]+)\\S*)\\h*+\\n(?:\\h*+\\n)*+\\h*(?<company>\\S[^\\n]*?)\\h*+\\n(?:\\h*+\\n)*+\\h*https://neomarket\\.diffusion\\.apec\\.fr/r/\\?\\S*?\\be=\\k<e>(?![A-Za-z0-9_-])\\S*\\h*+\\n(?:\\h*+\\n)*+\\h*(?<contracts>[^\\n•]+?)\\h*•\\h*+\\n(?:\\h*+\\n)*+\\h*https://neomarket\\.diffusion\\.apec\\.fr/r/\\?\\S*?\\be=\\k<e>(?![A-Za-z0-9_-])\\S*\\h*+\\n(?:\\h*+\\n)*+\\h*(?<place>\\S[^\\n]*?)\\h*+\\n(?:\\h*+\\n)*+\\h*https://neomarket\\.diffusion\\.apec\\.fr/r/\\?\\S*?\\be=\\k<e>(?![A-Za-z0-9_-])\\S*~mu",
         "_id_token_pattern": "The link's `e` query value is base64url of `p1=www.apec.fr&p2=<id>W…`.",
         "id_token_pattern": "~[?&]e=(?<token>[A-Za-z0-9_-]+)~",
         "id_pattern": "~\\bp2=(\\d+)W~"
