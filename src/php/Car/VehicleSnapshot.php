@@ -34,6 +34,8 @@ final class VehicleSnapshot
             'sellerType' => $listing->sellerType,
             'postcode' => $listing->postcode,
             'observedAt' => $listing->observedAt,
+            'saleOpensAt' => $listing->saleOpensAt,
+            'closingAt' => $listing->closingAt,
         ], JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }
 
@@ -71,6 +73,8 @@ final class VehicleSnapshot
             sellerType: $str($data['sellerType'] ?? null),
             postcode: $str($data['postcode'] ?? null),
             observedAt: $str($data['observedAt'] ?? null),
+            saleOpensAt: $str($data['saleOpensAt'] ?? null),
+            closingAt: $str($data['closingAt'] ?? null),
         );
     }
 }

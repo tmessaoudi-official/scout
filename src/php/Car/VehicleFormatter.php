@@ -121,9 +121,48 @@ final readonly class VehicleFormatter
         if ($car->priceEur !== null) {
             $parts[] = self::eur($car->priceEur);
         }
+        $closing = self::closing($car);
+        if ($closing !== null) {
+            $parts[] = $closing;
+        }
         $headline = implode(' · ', $parts);
 
         return $car->sourceName . ' · ' . ($score === null ? $headline : $score . '/100 — ' . $headline);
+    }
+
+    /**
+     * WHEN AN AUCTION LOT STOPS BEING WORTH OPENING — auction rule 2, on the headline because the
+     * push and every rollup line share it. Rendered in Europe/Paris, the sale's own zone, never the
+     * host's. A sale whose opening and closing fall on one Paris day is a LIVE saleroom window
+     * (`vente le 12/10 09:30–18:00`); otherwise the closing is what matters (`clôture 25/09 15:00`).
+     * An instant that will not parse is shown as written: leaving it out would read as no closing.
+     */
+    private static function closing(VehicleListing $car): ?string
+    {
+        if ($car->closingAt === null) {
+            return null;
+        }
+        $close = self::paris($car->closingAt);
+        if ($close === null) {
+            return 'clôture ' . $car->closingAt;
+        }
+        $open = $car->saleOpensAt === null ? null : self::paris($car->saleOpensAt);
+        if ($open !== null && $open->format('Y-m-d') === $close->format('Y-m-d') && $open < $close) {
+            return 'vente le ' . $close->format('d/m') . ' ' . $open->format('H:i') . '–' . $close->format('H:i');
+        }
+
+        return 'clôture ' . $close->format('d/m H:i');
+    }
+
+    /** Strict: `Y-m-d\TH:i:s\Z` and nothing else, checked by round-trip (a lax parse moves instants). */
+    private static function paris(string $iso): ?\DateTimeImmutable
+    {
+        $utc = \DateTimeImmutable::createFromFormat('!Y-m-d\TH:i:s\Z', $iso, new \DateTimeZone('UTC'));
+        if ($utc === false || $utc->format('Y-m-d\TH:i:s\Z') !== $iso) {
+            return null;
+        }
+
+        return $utc->setTimezone(new \DateTimeZone('Europe/Paris'));
     }
 
     private static function name(VehicleListing $car): string

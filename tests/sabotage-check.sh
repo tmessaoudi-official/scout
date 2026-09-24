@@ -4795,6 +4795,24 @@ run_sabotage "the sitemap source ignores the seen-set (every pass re-fetches the
   's%            if (isset($known\[$id\])) {%            if (false) {%'
 
 # Health baselines on the FEED. Recording the novel slice made the first live pass a false warn_drop.
+# AUCTION RULE 2: the closing time rides on the headline, which the push and every rollup line
+# share. Each case breaks one property; VehicleFormatterClosingTest must notice.
+run_sabotage "an auction lot is announced without its closing time" \
+  src/php/Car/VehicleFormatter.php \
+  's%        if ($closing !== null) {%        if (false) {%'
+
+run_sabotage "an auction closing is rendered in the host's zone, not Europe/Paris" \
+  src/php/Car/VehicleFormatter.php \
+  "s%return \$utc->setTimezone(new \\\\DateTimeZone('Europe/Paris'));%return \$utc;%"
+
+run_sabotage "a LIVE saleroom lot is rendered as a bare closing, not its window" \
+  src/php/Car/VehicleFormatter.php \
+  "s%if (\$open !== null \&\& \$open->format('Y-m-d') === \$close->format('Y-m-d') \&\& \$open < \$close) {%if (false) {%"
+
+run_sabotage "an unreadable closing instant is hidden rather than shown as written" \
+  src/php/Car/VehicleFormatter.php \
+  "s%            return 'clôture ' . \$car->closingAt;%            return null;%"
+
 run_sabotage "the car pipeline baselines a sitemap source's health on its novel lots, not its index" \
   src/php/Car/VehiclePipeline.php \
   's%$itemCount = $source instanceof IndexedVehicleSource ? ($source->lastIndexSize() ?? count($listings)) : count($listings);%$itemCount = count($listings);%'

@@ -2735,7 +2735,9 @@ var/claude/                 Reports, review outputs — gitignored scratch (hand
   has no tenure, group or twin column — with ONE stated cost: when a car's snapshot will not decode,
   **`CarScout::collectRollup()`** leaves `$car` null, skips the re-judge block, rebuilds the listing
   from the stored columns and pushes it as an individual match if the stored score clears the gate,
-  so an excluded car can be announced. (This paragraph named `VehiclePipeline`, which contains no
+  so an excluded car can be announced — and, for an AUCTION lot, announced WITHOUT ITS CLOSING
+  TIME, because the columns carry none (auction rule 2's one uncovered path, ruled 2026-09-24:
+  written down rather than patched with a column). (This paragraph named `VehiclePipeline`, which contains no
   snapshot handling at all — *a true cost attached to an invented site*, this repo's own named
   failure, in the sentence written to close a gap. Found by the C2 round-5 panel.) Structural,
   not patchable: the rent drain has a stored `tenure` column to

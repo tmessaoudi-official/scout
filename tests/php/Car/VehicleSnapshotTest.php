@@ -20,6 +20,7 @@ final class VehicleSnapshotTest extends TestCase
             make: 'Renault', model: 'Austral', priceEur: 21000, year: 2023, month: 4, mileageKm: 26000,
             fuel: 'essence', gearbox: 'automatique', body: 'suv', sellerType: 'professional',
             postcode: '78500', observedAt: '2026-08-29T17:05:14Z',
+            saleOpensAt: '2026-09-22T17:00:00Z', closingAt: '2026-09-25T13:00:00Z',
         );
 
         $back = VehicleSnapshot::decode(VehicleSnapshot::encode($listing));

@@ -26,6 +26,10 @@ final readonly class VehicleListing
      * @param ?string $body     folded, as the source wrote it (suv, break, berline, monospace, …)
      * @param ?string $sellerType professional | private
      * @param ?string $observedAt UTC ISO-8601 instant the SOURCE says the observation was made
+     * @param ?string $saleOpensAt UTC ISO-8601 instant an AUCTION lot's sale opens; null for a sale
+     * @param ?string $closingAt   UTC ISO-8601 instant an AUCTION lot's bidding closes — auction
+     *                             rule 2 (2026-08-27) makes it mandatory in the notification, so a
+     *                             source that cannot state it refuses the lot rather than leaving it null
      */
     public function __construct(
         public string $sourceName,
@@ -46,6 +50,8 @@ final readonly class VehicleListing
         public ?string $sellerType = null,
         public ?string $postcode = null,
         public ?string $observedAt = null,
+        public ?string $saleOpensAt = null,
+        public ?string $closingAt = null,
     ) {}
 
     /** Every human-readable surface the classifier reads: title, description, then each scalar field. */
