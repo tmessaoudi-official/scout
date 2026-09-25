@@ -26,6 +26,8 @@
     "audi", "mazda", "skoda", "volvo"
   ],
   "_exclude_patterns": "Extra exclusions over the folded text, beside the non-configurable §1 vehicle set in VehicleClassifier. Empty on purpose: the ParuVendu alert is already 'Voiture d'occasion'.",
+  "_hail_penalty": "Developer ruling 2026-09-25: hail is a score PENALTY, never a reject. A car whose own text says grêlé / grêle (negation read first: non grêlé, sans grêle) loses this many points, clamped at 0. 30 is measured, not chosen: the smallest penalty that keeps a perfect-scoring hail car (100) under push_min_score 73, so it mostly waits for the rollup. The live car store held 0 hail mentions in 2 570 snapshots before Alcopa; on Alcopa itself no card can score above 65, so there it only lowers the score shown.",
+  "hail_penalty": 30,
   "exclude_patterns": [],
   "notify": {
     "_channels": "Same channel names as the rent side; built by the same factory, with the [car-watch] prefix.",

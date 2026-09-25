@@ -124,6 +124,8 @@ final class VehicleCriteriaLoader
             }
         }
 
+        $hailPenalty = $r->optInt('hail_penalty', 0, 0, 100) ?? 0;
+
         $n = $r->requireObject('notify');
         $notify = new VehicleNotifyPolicy(
             channels: $n->requireStringList('channels'),
@@ -137,7 +139,7 @@ final class VehicleCriteriaLoader
         $n->done();
         $r->done();
 
-        return new VehicleCriteria($maxPrice, $prefixes, $bodyFavour, $peakAge, $peakKm, $weights, $patterns, $notify, $brandAvoid, $brandFavour);
+        return new VehicleCriteria($maxPrice, $prefixes, $bodyFavour, $peakAge, $peakKm, $weights, $patterns, $notify, $brandAvoid, $brandFavour, $hailPenalty);
     }
 
     /** @return array<string,mixed> */

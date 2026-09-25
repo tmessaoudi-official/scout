@@ -32,6 +32,7 @@ final readonly class VehiclePipeline
         private readonly VehicleClassifier $classifier = new VehicleClassifier(),
         private readonly VehicleScorer $scorer = new VehicleScorer(),
         private readonly VehicleFormatter $formatter = new VehicleFormatter(),
+        private readonly \DateTimeZone $zone = new \DateTimeZone('Europe/Paris'),
     ) {}
 
     /** @param list<VehicleSource> $sources */
@@ -100,8 +101,13 @@ final readonly class VehiclePipeline
                     // it to the daily rollup. `null` (every fixture) keeps the pre-A5 behaviour.
                     $pushMin = $this->criteria->notify->pushMinScore;
                     if ($pushMin !== null && ($verdict->score ?? 0) < $pushMin) {
-                        ++$queuedLowScore;
-                        continue;
+                        // UNLESS IT IS AN AUCTION LOT THE ROLLUP WOULD REACH TOO LATE (ruling
+                        // 2026-09-25): queued, it would be announced only after it had closed.
+                        if (!AuctionUrgency::closesBeforeNextRollup($car->closingAt, $now, $this->criteria->notify->rollupHour, $this->zone)) {
+                            ++$queuedLowScore;
+                            continue;
+                        }
+                        $verdict = VehicleVerdict::matched((int) $verdict->score, [...$verdict->reasons, 'clôture avant le prochain récapitulatif — envoyée sans attendre'], $verdict->highPriority);
                     }
 
                     $failures = $this->notifier->send($this->formatter->match($car, $verdict));

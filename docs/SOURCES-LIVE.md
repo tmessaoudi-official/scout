@@ -75,7 +75,7 @@ no tenure at all — that is not §1 satisfied, it is the tool switched off.
 
 ---
 
-## Car — six enabled sources
+## Car — seven enabled sources
 
 No tenure, no clustering across tracks, no detail hydration. The excluded-vehicle set
 (`accidenté`, `gagé`, `opposition`, `épave`, VEI, VGE, *pour pièces*…) is in code and not
@@ -90,6 +90,7 @@ copy.
 | 4 | **lacentrale** | portal | `email_alert`, labelled cards | **content hash** | 39 |
 | 5 | **agorastore** | auction | `email_alert`, labelled cards | **stated lot reference** | 32 |
 | 6 | **capcar** | dealer | `email_alert`, labelled cards | **content hash** | 28 |
+| 7 | **alcopa** | auction | `alcopa` (site-specific, **polled**) | lot id in the lot URL | — |
 
 | Source | Stated cost |
 |---|---|
@@ -99,6 +100,7 @@ copy.
 | **agorastore** | An auction: **no price** until it closes, and no year or mileage except inside free-text titles — deliberately not read out of them. The price ceiling never fires; most lots score *année inconnue* / *kilométrage inconnu*. |
 | **capcar** | One alert a day at 18:00, four labelled cards each, `text/html` only. |
 | **leboncoin** | Its car alerts are unlabelled, which is why its stored row count is small. |
+| **alcopa** | **Polled, because its alert fails auction rule 2** — the mails carry no closing time and no per-lot link, and show the same three cars for days. The saved search is walked every pass (~13 pages, the heaviest poller in the tree) and checked against the count it states; a lot page is opened once per NOVEL lot, because its *Informations* / *Commentaires* blocks are the only place a hail, a missing carte grise or a warning light is stated. **No price** (a starting price is not one) and **no postcode** (a saleroom name), so neither the ceiling nor the location filter fires. A lot seen once is never re-read, so a lot relisted in a later sale keeps the closing it was announced with. **No card can score above 65** (no price, no body) against the gate of 73, so a lot is pushed individually only when it closes before the next daily rollup (ruling 2026-09-25); the rest arrive in the rollup. **Hail** (`Véhicule grêlé` in the lot's own comment) costs 30 points and never rejects. |
 
 **Why content-addressing here.** CapCar and La Centrale wrap every link in a per-recipient tracking
 redirect, so the path's basename is a fresh id per message *and* the same id for every card in one.
@@ -112,7 +114,7 @@ state neither year nor mileage, and the reference already supplies the evidence 
 
 ---
 
-## Job — two enabled sources
+## Job — five enabled sources
 
 **Live since 2026-09-14**, polled by the `job-scout` compose service
 ([`docs/plans/job-domain.plan.md`](plans/job-domain.plan.md) step 9). The first live `doctor` read

@@ -180,6 +180,14 @@ final class VehicleScorer
             $reasons[] = trim($car->make) . ' — marque hors des listes';
         }
 
+        // HAIL — a penalty, never a reject (developer ruling 2026-09-25), read out of the car's own
+        // text with negation first. Subtracted after the components, so it can pull a car under
+        // the push gate but can never turn a match into a rejection (hard rule 8).
+        if ($criteria->hailPenalty > 0 && Hail::stated($car->text())) {
+            $score -= $criteria->hailPenalty;
+            $reasons[] = 'grêle signalée — −' . $criteria->hailPenalty;
+        }
+
         if ($car->sellerType !== null) {
             $reasons[] = $car->sellerType === 'professional' ? 'vendeur professionnel' : 'vendeur particulier';
         }

@@ -69,7 +69,7 @@ flowchart TB
 
     subgraph CAR["src/php/Car — the vehicle domain"]
         VCore["VehicleClassifier · VehicleCriteria · VehicleScorer"]
-        VAdapt["VehicleEmailSource · SitemapVehicleSource"]
+        VAdapt["VehicleEmailSource · SitemapVehicleSource · AlcopaVehicleSource"]
         VStore["VehicleStore"]
         VCli["VehiclePipeline · CarScout"]
     end
@@ -298,6 +298,7 @@ health(?string $nowIso = null): SourceHealth   // the clock is what makes STALE 
 | `json` | `Rent\Adapters\HttpJsonSource` | `items_path` + a field map of JSON paths. `embedded_json_selector` pulls the JSON out of a `<script>` tag first, then the ordinary path runs. |
 | `email_alert` | `Rent\Adapters\EmailAlertSource` | IMAP (`Adapters\Mail\ImapMailbox`) or a directory of `.eml` (`FileMailbox`). Positional regex readers, per-source. |
 | `sitemap_jsonld` | `Car\SitemapVehicleSource` | sitemap walk + JSON-LD on each detail page. |
+| `alcopa` | `Car\AlcopaVehicleSource` | site-specific: the saved search walked and count-checked, the lot page of each novel lot, a LIVE sale's page for its window. Carries the closing time auction rule 2 requires. |
 | `fixture` | `Rent\Adapters\FixtureSource` | a frozen payload on disk. Ships `enabled: false`. |
 | `browser` | (declared, refused) | Playwright, opt-in, `legal_risk: true`. Never enabled. |
 

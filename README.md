@@ -710,6 +710,18 @@ Six sources, each built against a real payload:
   age and mileage components are unscored on most lots. Three captures, twelve lots hand-read in
   `AgorastoreFixtureTest`; offline proof:
   `MAILBOX_DIR=tests/fixtures/car/agorastore CAR_SCOUT_DB=$(mktemp -u) php bin/scout --domain=car doctor --source=agorastore`.
+- **Alcopa** (`alcopa`, source #7, 2026-09-24) — the second **auction** source and the first car
+  source that is **polled**: its alert carries no closing time, which auction rule 2 requires, so
+  the saved search is walked instead (checked against the count it states), a lot page is opened
+  once per new lot (the only place its condition is stated), and a LIVE sale's page once per pass
+  for its window. Every push ends with when the lot stops being worth opening — `clôture 25/09
+  15:20` online, `vente le 28/09 10:00–18:00` in a saleroom — and a lot whose closing cannot be read
+  is not announced. No card can score above 65 (no price, no body) against the push gate of 73, so
+  a lot is pushed individually only when it **closes before the next daily rollup** — otherwise it
+  would be announced after the hammer; the rest arrive in the rollup. A lot whose own comment says
+  it is hail-damaged (`grêlé`, negation read first) loses `hail_penalty` points (30) and is never
+  rejected. Stated costs: no price, no postcode, ~13 pages a pass. `AlcopaFixtureTest` hand-reads
+  three lots from frozen pages.
 
 What never surfaces: `VEI`, `VGE` / procédure VE, gagé / opposition, pour pièces, épave, sans carte
 grise, CT non fourni / non roulant — and `accidenté`, réparé or not, a risk-appetite ruling and the

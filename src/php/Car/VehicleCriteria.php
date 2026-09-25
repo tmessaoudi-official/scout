@@ -70,6 +70,12 @@ final readonly class VehicleCriteria
          * @var list<string>
          */
         public array $brandFavour = [],
+        /**
+         * Points taken off a car whose own text says it is hail-damaged (developer ruling,
+         * 2026-09-25: a penalty, never a reject). 0 = none. Subtracted after the 100-point sum,
+         * like the rent side's heating penalties, and clamped so a score never goes below 0.
+         */
+        public int $hailPenalty = 0,
     ) {}
 
     /** Hard rule 9: an UNKNOWN location never rejects; a stated one outside the set does. */

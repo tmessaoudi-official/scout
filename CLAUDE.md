@@ -1401,6 +1401,48 @@ covering 60 % of the fleet discriminates MORE, not less.
 > a fixture can have. One placeholder per distinct value now. **Always parse a scrubbed capture
 > back and compare its link count with the raw one** before committing it.
 >
+> **ALCOPA IS SOURCE #7 (2026-09-24), THE SECOND AUCTION, AND THE FIRST CAR SOURCE THAT IS
+> POLLED — because its alert fails auction rule 2** (no closing time, no per-lot link, the same three
+> cars for days). `AlcopaVehicleSource` is a SITE-SPECIFIC adapter (`type: alcopa`, every selector in
+> code, the loader refusing any other host, a `map` or an `item_url_pattern`). Prove a change
+> offline with `AlcopaFixtureTest`, whose two frozen search pages hold 25 real lots. Five things
+> before touching it:
+>
+> - **Three pages, three jobs.** The saved search is the index, walked to the count page 1 states
+>   and checked against it (a page answering page 1 again is the lost-page shape, and it throws).
+>   The LOT page is opened once per NOVEL lot, because its `Informations` / `Commentaires` blocks are
+>   the only place a hail, a missing carte grise or a warning light is stated — the card never is,
+>   so skipping it would switch the excluded-vehicle set off on this source. A LIVE sale's page is
+>   read once per pass, for its window's end.
+> - **The closing comes from two places, by sale kind.** An ONLINE lot closes at its card's
+>   `data-ts` countdown: equal to the sale's Flash on 20/20 measured cards, and per LOT. A LIVE lot
+>   opens at its lot page's instant and closes at the saleroom window's end; its `data-ts` sits 30 min
+>   before the room opens, means something the site does not state, and is never rendered. A lot the
+>   adapter cannot place — no sale, two sales, a sale page whose day disagrees, a window ending before
+>   it opens, a closing already past — is warned and NOT returned; rule 2 refuses it.
+> - **A card whose countdown is over is dropped before its lot page is requested**, so an ended sale
+>   costs nothing. The post-fetch "already past" branch is reachable only on a card with no
+>   countdown, which is how its test reaches it.
+> - **`IndexedVehicleSource` is the contract that seeds it** without opening a lot page and
+>   baselines its health on the index size, not the novel slice. Test for the interface, never the
+>   class: `IndexedVehicleSourceCallSitesTest` fails when a concrete name comes back.
+> - **No Alcopa lot can clear the push gate, and the rule that makes that safe is not in the adapter.**
+>   Measured through the shipped scorer: no price (10 points) and no body (25) on any card, so 65 at
+>   best against 73. `Car/AuctionUrgency` (developer ruling 2026-09-25) pushes a lot whose closing
+>   falls BEFORE the next daily rollup whatever its score, with a reason line saying so — without it
+>   a lot first seen the morning it closes would be announced the next day, after the hammer. Every
+>   other lot waits for the rollup, which still arrives in time. With no `rollup_hour` nothing
+>   drains the queue on a schedule, so any future closing counts as urgent.
+> - **Hail is a score PENALTY, never a reject** (developer ruling 2026-09-25): `Car/Hail` reads
+>   `grêlé` / `grêle` out of the car's own text, NEGATION FIRST (*non grêlé*, *sans grêle*, *aucune
+>   trace de grêle*), and `hail_penalty: 30` comes off the score. 30 is measured: the smallest value
+>   keeping a perfect-scoring hail car under the gate of 73. The live car store held 0 mentions in
+>   2 570 snapshots before Alcopa. A whole sale titled *récents et grêlés* is NOT read — only the
+>   lot's own comment is.
+> - **Stated costs:** no price and no postcode, so neither the ceiling nor the location filter fires;
+>   ~13 search pages a pass; a lot seen once keeps the closing it was announced with, even if it is
+>   relisted.
+>
 > **A PORTAL WRITES ITS FACTS LINE IN MORE SHAPES THAN THE FIRST CAPTURE SHOWS (2026-09-05).**
 > ParuVendu's `facts_pattern` required `body - fuel - Année YYYY - N km`; the portal also sends
 > `Essence - Année 2019 - 59 500 km` and a bare `Année 2020 - 80 237 km`, and on those the WHOLE
@@ -2313,9 +2355,10 @@ docs/RUNBOOK.md             The operator's checklist: zero-to-running, every ver
                             § Deploying it for the reasoning rather than restating it — a second copy
                             of a rationale is the copy that drifts
 docs/SOURCES-LIVE.md        The live register for EVERY domain — adapter, identity scheme, rent
-                            basis (CC vs HC), and the STATED COST of each of the sixteen enabled
-                            sources. docs/SOURCES.md is rent-only and is a candidate catalogue, so
-                            the six car sources had no home anywhere until this file
+                            basis (CC vs HC), and the STATED COST of each enabled source (no
+                            total here: this line said "sixteen" while the tree held twenty).
+                            docs/SOURCES.md is rent-only and is a candidate catalogue, so the car
+                            sources had no home anywhere until this file
 docs/HISTORY.md             Dated build record derived from git log, plus the five failure patterns
                             this repo kept repeating (a true number on an invented cause; a fix
                             landing on one of two symmetric surfaces; n=1; a guarantee no fixture

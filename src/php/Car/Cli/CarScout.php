@@ -292,7 +292,7 @@ final readonly class CarScout
         if ($sources === []) {
             return $this->failRun('aucune source activée');
         }
-        $pipeline = new VehiclePipeline($criteria, $store, $notifier);
+        $pipeline = new VehiclePipeline($criteria, $store, $notifier, zone: DigestSchedule::zoneFromEnv(($tz = getenv('TZ')) === false ? null : $tz));
 
         if (!$watch) {
             $result = $pipeline->runOnce($sources, $this->now(), $seed);

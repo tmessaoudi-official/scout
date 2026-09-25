@@ -4814,6 +4814,35 @@ run_sabotage "an unreadable closing instant is hidden rather than shown as writt
   "s%            return 'clôture ' . \$car->closingAt;%            return null;%"
 
 # ALCOPA (car source #7, polled): each case breaks one guarantee of the adapter; AlcopaFixtureTest must notice.
+# AUCTION URGENCY + HAIL (2026-09-25 rulings): each case breaks one; AuctionUrgencyTest, VehiclePipelineTest and HailPenaltyTest must notice.
+run_sabotage "urgency: an auction lot closing before the next rollup still waits for it" \
+  src/php/Car/VehiclePipeline.php \
+  's%if (!AuctionUrgency::closesBeforeNextRollup(\$car->closingAt, \$now, \$this->criteria->notify->rollupHour, \$this->zone)) {%if (true) {%'
+
+run_sabotage "urgency: the rollup hour is read in UTC, not the deployment's zone" \
+  src/php/Car/AuctionUrgency.php \
+  's%        \$local = \$now->setTimezone(\$zone);%        \$local = \$now;%'
+
+run_sabotage "urgency: with no daily floor a closing lot is left queued" \
+  src/php/Car/AuctionUrgency.php \
+  '/if (\$rollupHour === null) {/{n;s%return true;%return false;%}'
+
+run_sabotage "urgency: a lot whose closing is past is pushed as urgent" \
+  src/php/Car/AuctionUrgency.php \
+  's%        if (\$closes <= \$now) {%        if (false) {%'
+
+run_sabotage "hail: a negated mention (non grêlé) is penalised" \
+  src/php/Car/Hail.php \
+  's%            if (preg_match(self::NEGATED, \$before) !== 1) {%            if (true) {%'
+
+run_sabotage "hail: a stated hail costs nothing" \
+  src/php/Car/VehicleScorer.php \
+  's%            \$score -= \$criteria->hailPenalty;%            \$score -= 0;%'
+
+run_sabotage "hail: a hail-damaged car is rejected instead of ranked low" \
+  src/php/Car/VehicleScorer.php \
+  's%            \$score -= \$criteria->hailPenalty;%            return VehicleVerdict::rejected(['\''grêle'\'']);%'
+
 run_sabotage "alcopa is loaded against any host, not its own search" \
   src/php/Car/VehicleSourceLoader.php \
   's%if ($url === null || preg_match('\''~^https://www\\.alcopa-auction\\.fr/recherche\\?~'\'', $url) !== 1) {%if ($url === null) {%'

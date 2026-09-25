@@ -205,6 +205,57 @@ final class VehiclePipelineTest extends TestCase
         self::assertSame(0, $store->pendingRollupCount());
     }
 
+    // ── 2026-09-25: an auction lot closing before the next rollup is pushed whatever its score ──
+
+    /** The weak car, as an auction lot closing at `$closingAt`. */
+    private function weakLot(string $id, ?string $closingAt): VehicleListing
+    {
+        return new VehicleListing(
+            sourceName: 'alcopa', externalId: $id, title: 'Peugeot 208 Active', url: 'https://www.alcopa-auction.fr/voiture-occasion/peugeot/208-' . $id,
+            make: 'peugeot', model: '208', year: 2014, mileageKm: 210000, fuel: 'essence', body: 'citadine',
+            saleOpensAt: $closingAt === null ? null : '2026-09-24T17:00:00Z', closingAt: $closingAt,
+        );
+    }
+
+    /** @return array{0: VehiclePipeline, 1: CarRecordingChannel, 2: VehicleStore} */
+    private function auctionPipeline(): array
+    {
+        $store = VehicleStore::open(':memory:');
+        $channel = new CarRecordingChannel();
+        $minimal = VehicleCriteriaTest::minimal();
+        $minimal['notify']['push_min_score'] = 60;
+        $minimal['notify']['rollup_hour'] = 8;
+        $pipeline = new VehiclePipeline(VehicleCriteriaLoader::fromArray($minimal), $store, new Notifier([$channel]), zone: new \DateTimeZone('Europe/Paris'));
+
+        return [$pipeline, $channel, $store];
+    }
+
+    public function testALotClosingBeforeTheNextRollupIsPushedUnderTheGate(): void
+    {
+        [$pipeline, $channel, $store] = $this->auctionPipeline();
+
+        // 10:00 Paris; the lot closes at 15:00 today, the next rollup is tomorrow 08:00.
+        $result = $pipeline->runOnce([new FakeCarSource('alcopa', [$this->weakLot('today', '2026-09-25T13:00:00Z')], null, $store)], '2026-09-25T08:00:00Z');
+
+        $pushed = $this->ofKind($channel, NotificationKind::MATCH);
+        self::assertCount(1, $pushed, 'it would otherwise be announced only after it had closed');
+        self::assertStringEndsWith('clôture 25/09 15:00', $pushed[0]->title);
+        self::assertContains('clôture avant le prochain récapitulatif — envoyée sans attendre', $pushed[0]->reasons);
+        self::assertSame(0, $result->queuedLowScore);
+        self::assertTrue($store->wasNotified($store->dedupKey($this->weakLot('today', '2026-09-25T13:00:00Z'))));
+    }
+
+    /** The counterweights: a lot the next rollup still reaches in time, and a car that is no auction. */
+    public function testALotTheNextRollupStillReachesWaitsForIt(): void
+    {
+        [$pipeline, $channel, $store] = $this->auctionPipeline();
+
+        $result = $pipeline->runOnce([new FakeCarSource('alcopa', [$this->weakLot('later', '2026-09-26T13:00:00Z'), $this->weakLot('none', null)], null, $store)], '2026-09-25T08:00:00Z');
+
+        self::assertSame([], $this->ofKind($channel, NotificationKind::MATCH));
+        self::assertSame(2, $result->queuedLowScore);
+    }
+
     // ── Row 41 (2026-09-05): every car of a source failing the SAME hard filter is a warning ──
 
     public function testASourceWhoseEveryCarFailsTheSameFilterIsWarnedAbout(): void
