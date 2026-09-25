@@ -261,7 +261,8 @@ says so on its own line and earns 0.
 
 ### Needs input from the developer (no code can supply these)
 - ~~A Gmail label `job-watch/portails` and its LinkedIn filter~~ — done 2026-09-13 (Decisions Log).
-- Alerts created on WTTJ, APEC, HelloWork, Free-Work and Indeed, into the same label (slice 2).
+- ~~Alerts on APEC, HelloWork and Free-Work~~ — live as sources since 2026-09-24 (Decisions Log); Collective.work added the same day. WTTJ and Indeed were not chosen on 2026-09-25.
+- Saved-search alerts on Mindquest, LeHibou and freelance-informatique.fr, into the same label (ruled 2026-09-25); each reader waits on its first real mails.
 - A francetravail.io application (client id + secret into `.env`) — slice 2, authenticated API.
 
 ### Open rulings, with the default applied until ruled
