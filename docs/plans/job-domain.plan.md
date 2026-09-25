@@ -82,6 +82,7 @@ plan below is approved.
 - [2026-09-25 17:25] AGREED: the green component stays as ruled (23 terms, 3 groups) and its near-silence is accepted — re-judging all 526 stored offers, no source carries a description and green fired on 7 of 409 matches (a count first committed as 8), all from the title; fetching offer pages to feed it is not pursued.
 - [2026-09-25 17:38] NOTED: the LinkedIn no-HTML-part cost is now tested rather than only stated — one text-only mail among normal ones is counted (1 of 3 on both `card_link_pattern` and `footer_marker`), claimed, and silent; every mail text-only escalates health naming both. A ledger case pins that such a mail is never skipped uncounted. No behaviour changed.
 - [2026-09-25 18:43] AGREED: a claimed LinkedIn alert with no HTML part is warned about, once per mail and pass, naming its date — the escalation cannot see one among normal mails, and it is marked \Seen with nothing read. The warning repeats while the mail stays in the IMAP window, as the duplicate-card warning does.
+- [2026-09-25 22:05] AGREED: the stack keyword groups stay as shipped. Trialled over the 424 stored matches at the deployed gate of 40: 331 match titles name no stack at all, and no missing language appears in any of them; cloud/infra terms in `adjacent` change 29 scores and push one more offer — a Salesforce architect, because `Cloud` outranks the `other` group; `JavaScript`/`js` in `front` pushes two, one of them only because `js` matched inside `Node.js`. 28 pushes become 29 or 30 at most — the cards are too thin for keywords to matter, the green finding again.
 
 ## Evidence gathered (2026-09-13)
 - `Cli/Domains::all()` is the registry — a new domain is one entry plus `Scout\<Slug>\`, `config/<slug>/` and `<SLUG>_*` keys.
@@ -450,7 +451,7 @@ after a rollback is harmless; reverting its commit removes it.
 - Slice 2: job-alert subscriptions on WTTJ, APEC, HelloWork, Free-Work and Indeed, into `job-watch/portails`.
 ### Needs research
 - **Collective.work** (developer, 2026-09-24): absent from `var/claude/jobs/sources-research.md` and this plan. Measured 2026-09-24: `robots.txt` disallows only `/style-guide`; the sitemap lists `blog`, `solution`, `etude-de-cas`, `produits`, `pricing`, `talents` and NO mission or offer URL, and its blog titles address recruiters (posting to many job boards, programmatic job ads) — so it reads as a recruiter-side product with no public board [Inferred]. The route, if any, is an account's mission-alert email (hard rule 4, the AL'in shape): the developer has an account, and four daily alerts were created 2026-09-24 (Decisions Log). The email's shape was open until 2026-09-24 18:28, when the label was searched by sender and held 24 recent mails (459 over a year): built as source #5, see the Decisions Log.
-- Keyword list widening (Java/Spring, Vue.js, …) — seeded in step 3 from `var/claude/jobs/criteria-research.md`.
+- ~~Keyword list widening (Java/Spring, Vue.js, …)~~ — Java, Spring and Vue.js were already seeded in step 3; the further widening was trialled and declined 2026-09-25 (Decisions Log).
 ### Fragile
 - `JobScout::watch()` runs the rollup floor TWICE per start: before the first pass, and in each pass's
   `finally`. The step-6 mutation run (2026-09-14) showed a test named for the startup floor passing
