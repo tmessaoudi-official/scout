@@ -1529,7 +1529,9 @@ change offline with
   matches** (2026-09-25, re-judged offline) — accepted by ruling, and the only lever is fetching
   the offer page, a per-site robots/ToS question nobody has asked; `pay_pattern` is not
   counted as a miss, and a message with NO HTML part counts misses that escalate only when every
-  claimed message does, so one among normal ones is silent — UNTESTED; if LinkedIn drops a card's
+  claimed message does, so one among normal ones is silent — and it is still claimed, so marked
+  `\Seen` with nothing read (pinned 2026-09-25 by `JobEmailSourceTest`'s two `…NoHtmlPart…` cases
+  and a ledger case); if LinkedIn drops a card's
   logo link `place_pattern` misses on every card (counted, so it escalates); monthly pay shapes are
   unread and fail safe; and **the deployed gate lives outside the repo** — `push_min_score` 40 and
   a 09:00 rollup in the gitignored `config/job/criteria.local.json` (ruled 2026-09-14) — so a clone

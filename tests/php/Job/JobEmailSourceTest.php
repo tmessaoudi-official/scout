@@ -229,6 +229,43 @@ final class JobEmailSourceTest extends TestCase
         self::assertStringContainsString('card_link_pattern', $health->detail);
     }
 
+    /**
+     * A MAIL WITH NO HTML PART IS COUNTED, AND ONE AMONG NORMAL MAILS IS SILENT — the stated cost,
+     * pinned. Cards are read from `htmlText`, so a text-only mail yields none; it is still CLAIMED
+     * (so marked \Seen) and both patterns count a miss, but at 1 of 3 calls nothing escalates.
+     */
+    public function testOneMailWithNoHtmlPartAmongNormalOnesIsCountedAndSilent(): void
+    {
+        $store = self::storeWithHealthyRuns();
+        $ok = self::message(self::card('1', 'A', 'Co · Paris (Hybride)'));
+        $mailbox = new StubJobMailbox([$ok, self::plainOnly(), $ok]);
+        $warnings = [];
+        $source = $this->source($mailbox, $warnings, $store);
+
+        self::assertCount(2, $source->fetch(), 'the two normal mails are still read');
+        self::assertSame([0, 1, 2], $mailbox->claimed, 'the text-only mail is claimed like any other');
+        $counts = $source->patternMisses()->counts();
+        self::assertSame(['calls' => 3, 'misses' => 1], $counts['card_link_pattern'] ?? null);
+        self::assertSame(['calls' => 3, 'misses' => 1], $counts['footer_marker'] ?? null);
+        self::assertSame([], $source->patternMisses()->total());
+        self::assertSame(SourceStatus::OK, $source->health(self::NOW)->status);
+    }
+
+    /** …and when EVERY claimed mail lacks one, both patterns are blind and the health says so. */
+    public function testEveryMailWithNoHtmlPartEscalatesHealth(): void
+    {
+        $plain = self::plainOnly();
+        $warnings = [];
+        $source = $this->source(new StubJobMailbox([$plain, $plain, $plain]), $warnings, self::storeWithHealthyRuns());
+
+        self::assertSame([], $source->fetch());
+        self::assertSame(['card_link_pattern', 'footer_marker'], $source->patternMisses()->total());
+        $health = $source->health(self::NOW);
+        self::assertSame(SourceStatus::WARN_DROP, $health->status);
+        self::assertStringContainsString('card_link_pattern', $health->detail);
+        self::assertStringContainsString('footer_marker', $health->detail);
+    }
+
     /** The counterweight: healthy alerts leave an OK verdict untouched. */
     public function testHealthyAlertsLeaveHealthUntouched(): void
     {
@@ -317,6 +354,25 @@ final class JobEmailSourceTest extends TestCase
         }
 
         return '<table>' . $rows . '</table>';
+    }
+
+    /** Three healthy runs, so the verdict is OK and escalate() has something to upgrade. */
+    private static function storeWithHealthyRuns(): JobStore
+    {
+        $store = JobStore::open(':memory:');
+        foreach (['2026-09-10T09:00:00+00:00', '2026-09-11T09:00:00+00:00', '2026-09-12T09:00:00+00:00'] as $at) {
+            $store->runs()->recordRun('linkedin', 5, true, null, $at, 20);
+        }
+
+        return $store;
+    }
+
+    /** A LinkedIn alert from the real sender with ONLY a text/plain part — the card URL is in it, unread. */
+    private static function plainOnly(): string
+    {
+        return "From: LinkedIn <" . self::SENDER . ">\r\nDate: Fri, 11 Sep 2026 12:49:28 +0200\r\nSubject: Offres\r\n"
+            . "MIME-Version: 1.0\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\n"
+            . "Dev PHP\r\nhttps://www.linkedin.com/comm/jobs/view/9/\r\nCo · Paris (Hybride)\r\nVoir toutes les offres\r\n";
     }
 
     private static function message(
