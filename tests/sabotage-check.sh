@@ -6217,6 +6217,9 @@ run_sabotage "job: a card pattern missing a read group loads (step 13 D8)" \
 run_sabotage "job: a LinkedIn mail with no HTML part is skipped uncounted (2026-09-25)" \
   src/php/Job/JobEmailSource.php \
   's%if (\$linkPattern === null) {%if ($linkPattern === null || $message->htmlText === '\'''\'') {%'
+run_sabotage "job: a LinkedIn mail with no HTML part is read in silence (2026-09-25 ruling)" \
+  src/php/Job/JobEmailSource.php \
+  's%if (\$message->htmlText === '\'''\'') {%if (false) {%'
 run_sabotage "job: a digest id miss is not counted (step 13 D9)" \
   src/php/Job/JobDigestEmailSource.php \
   's%\$this->patternMisses->record('\''id_pattern'\'', \$hit);%$this->patternMisses->record('\''id_pattern'\'', true);%'

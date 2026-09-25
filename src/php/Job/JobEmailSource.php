@@ -104,6 +104,12 @@ final readonly class JobEmailSource implements AcknowledgesMessages, CountsPatte
             $this->mailbox->claim($position);
 
             $observedAt = $message->sentAt();
+            // Cards live only in the HTML part. A claimed mail without one is marked \Seen with
+            // nothing read, and among normal mails its miss never reaches the escalation — so this
+            // line is the only thing that names it (developer ruling, 2026-09-25).
+            if ($message->htmlText === '') {
+                ($this->warn)?->__invoke(sprintf('%s : courrier du %s sans partie HTML — aucune offre lue', $this->name(), $observedAt ?? 'date inconnue'));
+            }
             $seen = [];
             foreach ($this->cards($message) as [$id, $url, $lines]) {
                 // No staging (`PatternMissLog::begin()`): `offer()` refuses a card only BEFORE any

@@ -230,11 +230,12 @@ final class JobEmailSourceTest extends TestCase
     }
 
     /**
-     * A MAIL WITH NO HTML PART IS COUNTED, AND ONE AMONG NORMAL MAILS IS SILENT — the stated cost,
-     * pinned. Cards are read from `htmlText`, so a text-only mail yields none; it is still CLAIMED
-     * (so marked \Seen) and both patterns count a miss, but at 1 of 3 calls nothing escalates.
+     * A MAIL WITH NO HTML PART IS COUNTED, AND ONE AMONG NORMAL MAILS IS WARNED ABOUT. Cards are read
+     * from `htmlText`, so a text-only mail yields none; it is still CLAIMED (so marked \Seen) and both
+     * patterns count a miss, but at 1 of 3 calls nothing escalates — so the warning is the only thing
+     * that names it (developer ruling, 2026-09-25).
      */
-    public function testOneMailWithNoHtmlPartAmongNormalOnesIsCountedAndSilent(): void
+    public function testOneMailWithNoHtmlPartAmongNormalOnesIsCountedAndWarned(): void
     {
         $store = self::storeWithHealthyRuns();
         $ok = self::message(self::card('1', 'A', 'Co · Paris (Hybride)'));
@@ -249,6 +250,7 @@ final class JobEmailSourceTest extends TestCase
         self::assertSame(['calls' => 3, 'misses' => 1], $counts['footer_marker'] ?? null);
         self::assertSame([], $source->patternMisses()->total());
         self::assertSame(SourceStatus::OK, $source->health(self::NOW)->status);
+        self::assertSame(['linkedin : courrier du 2026-09-11T10:49:28Z sans partie HTML — aucune offre lue'], $warnings, 'said once, for that mail only');
     }
 
     /** …and when EVERY claimed mail lacks one, both patterns are blind and the health says so. */
@@ -264,6 +266,7 @@ final class JobEmailSourceTest extends TestCase
         self::assertSame(SourceStatus::WARN_DROP, $health->status);
         self::assertStringContainsString('card_link_pattern', $health->detail);
         self::assertStringContainsString('footer_marker', $health->detail);
+        self::assertCount(3, $warnings, 'one warning per mail');
     }
 
     /** The counterweight: healthy alerts leave an OK verdict untouched. */
