@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Scout\Tests\Job;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Scout\Adapters\Mail\Mailbox;
 use Scout\Config\ConfigError;
@@ -165,14 +166,27 @@ final class JobDigestEmailSourceTest extends TestCase
         ]]]);
     }
 
-    public function testTheLoaderRefusesACardPatternMissingAGroupTheAdapterReads(): void
+    /** @return iterable<string, array{string, string}> */
+    public static function patternsMissingAReadGroup(): iterable
+    {
+        yield 'no title' => ['~(?<facts>.+) (?<url>\S+)~', 'title'];
+        yield 'no url' => ['~(?<title>.+) (?<facts>.+)~', 'url'];
+    }
+
+    /**
+     * Every pattern here names `facts`, so the place check passes and only the title/url loop can
+     * refuse it. The old single case named neither place group, so the place check refused it first
+     * and the loop could be deleted with the suite still green (issue #17).
+     */
+    #[DataProvider('patternsMissingAReadGroup')]
+    public function testTheLoaderRefusesACardPatternMissingAGroupTheAdapterReads(string $pattern, string $group): void
     {
         $this->expectException(ConfigError::class);
-        $this->expectExceptionMessage('facts');
+        $this->expectExceptionMessage('groupe « ' . $group . ' »');
 
         JobSourceLoader::fromArray(['sources' => ['fw' => [
             'enabled' => false, 'family' => 'portal', 'type' => 'email_digest',
-            'params' => ['card_pattern' => '~(?<title>.+) (?<url>\S+)~'],
+            'params' => ['card_pattern' => $pattern],
         ]]]);
     }
 
