@@ -444,7 +444,7 @@ after a rollback is harmless; reverting its commit removes it.
 | 14 | Collective.work source: one offer per mail, company from the subject, `place_absent` declared | M | done | ab457fd | src/php/Job/** config/job/sources.json tests/fixtures/job/collective/** tests/php/Job/** tests/sabotage-check.sh |
 <!-- /progress-block -->
 ### Blocked
-- WTTJ as a source: its saved-search alerts are suspended site-wide (checked 2026-09-23); re-check `welcometothejungle.com/fr/me/alerts`.
+- WTTJ as a source: its saved-search alerts are suspended site-wide (checked 2026-09-23, re-checked 2026-09-25: still *« Alerts unavailable at the moment — your alerts are getting a makeover »*); re-check `welcometothejungle.com/fr/me/alerts`. Following a company is the only alert left, per company rather than per search.
 ### Needs input
 - Gmail: add the Free-Work sender to the `job-watch/portails` filter once its first alert shows the address; a separate parked label + filter for HelloWork and Apec.
 - Slice 2: job-alert subscriptions on WTTJ, APEC, HelloWork, Free-Work and Indeed, into `job-watch/portails`.
