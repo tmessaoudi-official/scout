@@ -1525,7 +1525,7 @@ change offline with
   be pushed; an empty `green` map scores that component 0 for every offer (`JobScorer::green()`),
   lowering the ceiling by 15 where the car scorer awards the share — OPEN, though the SHIPPED map
   is not empty (23 terms, 3 groups); **what starves green is the TEXT, not the terms**: no job
-  source carries a description, so green reads the title alone and fired on **8 of 409 stored
+  source carries a description, so green reads the title alone and fired on **7 of 409 stored
   matches** (2026-09-25, re-judged offline) — accepted by ruling, and the only lever is fetching
   the offer page, a per-site robots/ToS question nobody has asked; `pay_pattern` is not
   counted as a miss, and a message with NO HTML part counts misses that escalate only when every
