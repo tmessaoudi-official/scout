@@ -77,6 +77,7 @@ plan below is approved.
 - [2026-09-25 06:43] NOTED: second source survey, 26 new candidates, report in `var/claude/jobs/sources-research-2.md` (gitignored). Dead or renamed: talent.io, Otta (now WTTJ UK), BeTalent.fr, Club Freelance (now Mindquest), AFUP (no board), Human Coders `/jobs` (404). No job-alert feed reaches the mailbox outside `job-watch/portails` today: Malt, Indeed, WTTJ, Glassdoor, Cadremploi and freelance-informatique send newsletters, recruiter shares or profile mail only.
 - [2026-09-25 06:43] AGREED: next job sources are the freelance set — Mindquest, LeHibou, freelance-informatique.fr — each through a saved-search alert the developer creates into `job-watch/portails`; each reader is built only once its first real mails are in the label (n≥1, the Collective rule).
 - [2026-09-25 06:57] AGREED: France Travail's offers API stays out — its API host's robots.txt disallows everything, and scout honours robots.txt as written, a keyed API included.
+- [2026-09-25 11:57] NOTED: the three alerts exist. Profiles filled from the Freelance FR CV (680 €/j, portage, available now, Île-de-France). LeHibou: saved search « Scout — Fullstack PHP/Symfony/Angular », daily. Mindquest: an alert on its own search. freelance-informatique has NO saved-search alert — the one feed is the dashboard toggle « Recevoir quotidiennement les nouvelles offres correspondant à mon profil », on and persisted after a reload, so its mail is PROFILE-matched rather than query-matched, and its email address is still unconfirmed. Not checked: that a Gmail filter routes these three senders into `job-watch/portails`.
 
 ## Evidence gathered (2026-09-13)
 - `Cli/Domains::all()` is the registry — a new domain is one entry plus `Scout\<Slug>\`, `config/<slug>/` and `<SLUG>_*` keys.
@@ -263,7 +264,7 @@ says so on its own line and earns 0.
 ### Needs input from the developer (no code can supply these)
 - ~~A Gmail label `job-watch/portails` and its LinkedIn filter~~ — done 2026-09-13 (Decisions Log).
 - ~~Alerts on APEC, HelloWork and Free-Work~~ — live as sources since 2026-09-24 (Decisions Log); Collective.work added the same day. WTTJ and Indeed were not chosen on 2026-09-25.
-- Saved-search alerts on Mindquest, LeHibou and freelance-informatique.fr, into the same label (ruled 2026-09-25); each reader waits on its first real mails.
+- ~~Saved-search alerts on Mindquest, LeHibou and freelance-informatique.fr~~ — created 2026-09-25 (Decisions Log). Still owed by the developer: confirm the freelance-informatique email, and route the three senders into `job-watch/portails`. Each reader waits on its first real mails.
 - ~~A francetravail.io application~~ — not needed: France Travail refused on robots.txt (ruled 2026-09-25, Decisions Log).
 
 ### Open rulings, with the default applied until ruled
