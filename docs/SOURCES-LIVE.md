@@ -90,7 +90,7 @@ copy.
 | 4 | **lacentrale** | portal | `email_alert`, labelled cards | **content hash** | 39 |
 | 5 | **agorastore** | auction | `email_alert`, labelled cards | **stated lot reference** | 32 |
 | 6 | **capcar** | dealer | `email_alert`, labelled cards | **content hash** | 28 |
-| 7 | **alcopa** | auction | `alcopa` (site-specific, **polled**) | lot id in the lot URL | — |
+| 7 | **alcopa** | auction | `alcopa` (site-specific, **polled**) | lot id in the lot URL | 249 |
 
 | Source | Stated cost |
 |---|---|
