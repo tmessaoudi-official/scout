@@ -72,6 +72,7 @@ shape a source against.
 php tools/dump-eml.php <from-address> [max] [out-dir] [folder]
 php tools/dump-eml.php no.reply@leboncoin.fr 5
 php tools/dump-eml.php support@agorastore.fr 2 var/claude/captures 'car-watch/portails'
+DUMP_SINCE_DAYS=all php tools/dump-eml.php ops@collective.work 50 var/claude/captures 'job-watch/portails'
 ```
 
 It reads `IMAP_HOST` / `IMAP_USER` / `IMAP_PASSWORD` / `IMAP_PORT` from `.env`, and it is **read-only
@@ -83,7 +84,7 @@ is the pipeline's doing, never this tool's, and `tests/php/Repo/AcknowledgeCallS
 the tool to `EXAMINE` + `BODY.PEEK[]` with no `STORE`. A capture therefore never changes what the
 label shows as processed.)
 
-Three things to know before using it:
+Four things to know before using it:
 
 - **Its output is RAW and therefore UNSCRUBBED.** It carries the subscriber's address and usually
   their name. Part B is not optional afterwards; this tool is a faster Part A, never a shortcut past
@@ -98,6 +99,12 @@ Three things to know before using it:
   archived out of the inbox, so a search there finds nothing and reports `aucun message` — which
   reads exactly like a portal that has sent nothing. `RENT_IMAP_MAILBOX` / `CAR_IMAP_MAILBOX` /
   `JOB_IMAP_MAILBOX` in `.env` name the folders the sources themselves read.
+- **"Recent" is a DATE window, `DUMP_SINCE_DAYS` (default 7, the watcher's own).** The tool prints
+  the query it sends (`recherche : SEARCH SINCE … FROM …`) — built by `ImapMailbox::searchCommand()`,
+  the watcher's own — then keeps the newest N by sequence inside that window. Until 2026-09-25 it
+  kept the last N sequence numbers of the whole folder, and in a re-labelled Gmail label sequence
+  order is not date order: `ops@collective.work` came back 2025-09 → 2026-02 with nothing from that
+  year. Set `DUMP_SINCE_DAYS=all` for a deliberate history pull, which brings that caveat back.
 
 ---
 

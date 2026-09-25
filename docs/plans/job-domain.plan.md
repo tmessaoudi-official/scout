@@ -479,7 +479,7 @@ after a rollback is harmless; reverting its commit removes it.
   the glued first card and the two pay units are measured on ONE digest. The next digest is the first
   regression test; freeze it as `02.eml` (append, never renumber) and re-run `FreeWorkFixtureTest`.
 ### Known issues
-- `tools/dump-eml.php` takes the TAIL of the `SEARCH FROM` sequence, and in a re-labelled Gmail folder sequence order is not date order: `ops@collective.work` × 400 returned only 2025-09 → 2026-02, nothing from this year. Pull recent captures through `ImapMailbox` (`SEARCH SINCE`) instead, until the tool gains a SINCE window.
+- ~~`tools/dump-eml.php` takes the TAIL of the `SEARCH FROM` sequence~~ — fixed 2026-09-25: it searches `SINCE` `DUMP_SINCE_DAYS` (default 7) through `ImapMailbox::searchCommand()`, and a live run returned that day's three Collective mails. `DUMP_SINCE_DAYS=all` keeps the old whole-folder search for history pulls, with the old caveat.
 - ~~Step 8 owed the drain cost below, the three-domain corrections, the LinkedIn register row and the
   `Core\Whitespace` and `php --ini` lines~~ — landed in `9eee7fa`. The drain cost itself STANDS; it is
   now stated in CLAUDE.md beside the car one. Kept below for the record:
@@ -491,7 +491,7 @@ after a rollback is harmless; reverting its commit removes it.
   so this pushes an offer the user does not want. It never pushes an offer the user cannot take.
 - A LinkedIn message with no HTML part counts a miss on both `card_link_pattern` and `footer_marker`, and
   escalates only if every claimed message in the pass does — one such message among normal ones stays
-  silent (the partial-miss gap). Documented in `docs/SOURCES-LIVE.md` by step 8; still untested.
+  silent (the partial-miss gap). Tested and warned about since 2026-09-25 (Decisions Log).
 - ~~`.claude/skills/add-source/SKILL.md` is scoped to the RENT domain and says nothing about the job
   domain~~ — extended in step 13 with the two job types, their params, and the two things Free-Work
   taught (a repeat inside a digest may be the template; check whether the portal states a company).

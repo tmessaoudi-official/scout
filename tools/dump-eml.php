@@ -24,6 +24,10 @@ declare(strict_types=1);
  *   php tools/dump-eml.php <from-address> [max] [out-dir] [folder]
  *   php tools/dump-eml.php no.reply@leboncoin.fr 5
  *   php tools/dump-eml.php support@agorastore.fr 2 var/claude/captures 'car-watch/portails'
+ *   DUMP_SINCE_DAYS=all php tools/dump-eml.php ops@collective.work 50   # a history pull
+ *
+ * WHAT COUNTS AS RECENT is `DUMP_SINCE_DAYS` (default 7, the watcher's own window): the server's
+ * `SEARCH SINCE`, never the tail of the folder — see the window block below for why.
  *
  * The FOLDER matters and defaults to INBOX: an alert routed to a Gmail label has been archived out
  * of the inbox, so a search there finds nothing and says `aucun message` — which reads exactly like
@@ -33,6 +37,7 @@ declare(strict_types=1);
 
 require __DIR__ . '/../vendor/autoload.php';
 
+use Scout\Adapters\Mail\ImapMailbox;
 use Scout\Config\DotEnv;
 
 $from = $argv[1] ?? '';
@@ -44,6 +49,32 @@ if ($from === '') {
     fwrite(STDERR, "usage: php tools/dump-eml.php <from-address> [max] [out-dir] [folder]\n");
     exit(2);
 }
+
+// THE WINDOW IS THE SERVER'S DATE, NEVER THE SEQUENCE TAIL. This tool used to `SEARCH FROM` and keep
+// the last N sequence numbers; in a re-labelled Gmail folder sequence order is not date order, and
+// `ops@collective.work` came back 2025-09 → 2026-02 with nothing from this year. The watcher learnt
+// the same lesson on 2026-08-25, so the query is ITS query: `ImapMailbox::searchCommand()`.
+// Seven days by default, the watcher's own window; `all` for a deliberate history pull. Anything else
+// is refused rather than clamped — an operator who typed `0` meant something, and guessing is worse.
+$sinceDays = getenv('DUMP_SINCE_DAYS');
+$sinceDays = $sinceDays === false || $sinceDays === '' ? '7' : $sinceDays;
+if ($sinceDays !== 'all' && preg_match('~^[1-9][0-9]*$~', $sinceDays) !== 1) {
+    fwrite(STDERR, "refus : DUMP_SINCE_DAYS doit être un nombre de jours ≥ 1, ou « all » (reçu : « $sinceDays »)\n");
+    exit(2);
+}
+
+// `UID SEARCH` → `SEARCH`: the watcher needs UIDs because it marks \Seen in a SECOND session; this
+// tool reads in ONE `EXAMINE` session and FETCHes by sequence number, so it must search by sequence
+// too — a UID fetched as a sequence number dumps a different, plausible-looking message.
+$search = (string) preg_replace('~^UID SEARCH ~', 'SEARCH ', ImapMailbox::searchCommand(
+    $from,
+    $sinceDays === 'all' ? 1 : (int) $sinceDays,
+    new DateTimeImmutable('now', new DateTimeZone('UTC')),
+));
+if ($sinceDays === 'all') {
+    $search = (string) preg_replace('~^SEARCH SINCE \S+ ~', 'SEARCH ', $search);
+}
+echo "recherche : $search\n";
 
 /**
  * The absolute, canonical path an out-dir NAMES, whether or not it exists yet.
@@ -206,9 +237,9 @@ fgets($sock, 65536); // greeting
 $login();
 $cmd('EXAMINE "' . addcslashes($folder, '"\\') . '"');
 
-$search = $cmd('SEARCH FROM "' . addcslashes($from, '"\\') . '"');
+$searched = $cmd($search);
 $ids = [];
-foreach ($search as $line) {
+foreach ($searched as $line) {
     if (preg_match('~^\*\s+SEARCH\s+(.*)$~i', $line, $m) === 1) {
         $ids = array_values(array_filter(array_map('intval', preg_split('~\s+~', trim($m[1])) ?: [])));
     }
@@ -221,6 +252,9 @@ if ($ids === []) {
     exit(1);
 }
 
+// Newest by SEQUENCE within the date window — not by date. Inside a window already narrowed by
+// SINCE and FROM that is the best ordering available without fetching every match's `Date`, the
+// same trade `ImapMailbox::sequencesIn()` documents.
 $ids = array_slice($ids, -$max);
 echo count($ids), " message(s) de $from dans \"$folder\"\n";
 

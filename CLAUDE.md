@@ -1593,8 +1593,8 @@ change offline with
   writes its TITLES decomposed too — the role gate still fires because `Core/Text` folding strips
   `\p{Mn}`, pinned end to end by `CollectiveFixtureTest`. A February 2026 week sent a public link
   with no app id; it is not read, and would miss on every mail, which escalates. `tools/dump-eml.php`
-  takes the tail of the SEQUENCE and so returned only 2025–Feb 2026 mails; the live captures came
-  through `ImapMailbox`'s own `SEARCH SINCE`. **Stated costs:** no place, pay, contract, stack-by-card
+  then took the tail of the SEQUENCE and so returned only 2025–Feb 2026 mails, so the live captures
+  came through `ImapMailbox`'s own `SEARCH SINCE` — which the tool uses itself since 2026-09-25. **Stated costs:** no place, pay, contract, stack-by-card
   or date, so the five fixtures score 14–36 and go to the rollup under the deployed gate of 40; a
   re-posted offer gets a NEW id and is pushed again; the push opens the app page, which needs the
   developer's login.
@@ -2441,8 +2441,9 @@ tools/scrub-eml.php         Turns a captured .eml into a committable fixture; RE
                             while the address is RECOVERABLE — decoding base64url runs and
                             quoted-printable before it looks, not merely grepping for it
 tools/dump-eml.php          Pulls several RAW .eml from the alert mailbox when Gmail's own
-                            export is too slow — read-only at the protocol level (EXAMINE,
-                            BODY.PEEK), and its output is UNSCRUBBED by definition, so
+                            export is too slow — the newest inside a DATE window
+                            (`DUMP_SINCE_DAYS`, default 7, `all` for history), read-only at
+                            the protocol level (EXAMINE, BODY.PEEK), and its output is UNSCRUBBED by definition, so
                             scrub-eml.php is still owed afterwards. It REFUSES to write
                             anywhere under tests/, which is what makes it usable at all: the
                             one-step path from a mailbox to a committed fixture is how both

@@ -38,6 +38,10 @@ cat > "$TMP/vendor/autoload.php" <<'STUB'
 namespace Scout\Config;
 class DotEnv { public static function load(string $path): void {} }
 STUB
+# …and every OTHER class is the REAL one from src/, because the tool builds its IMAP query with
+# `ImapMailbox::searchCommand()` — one implementation of the SINCE window, shared with the watcher.
+# DotEnv is defined above before this autoloader can ever be asked for it.
+printf '%s\n' "spl_autoload_register(static function (string \$c): void { if (str_starts_with(\$c, 'Scout\\\\')) { \$f = '$ROOT/src/php/' . str_replace('\\\\', '/', substr(\$c, 6)) . '.php'; if (is_file(\$f)) { require \$f; } } });" >> "$TMP/vendor/autoload.php"
 
 # THE PRINTING RUNTIME IS SET, NOT ASSUMED (CI, 2026-09-05). The runner's PHP ships the production
 # ini (`zend.exception_ignore_args = On`), where every "the password never reaches a trace" check
@@ -111,6 +115,61 @@ if [[ "$out" == *"manquants dans .env"* ]]; then
   ok "and reaches the credential check, so the guard ran and passed"
 else
   ko "and reaches the credential check, so the guard ran and passed" "out=$out"
+fi
+
+# ── 3b. THE SINCE WINDOW — what counts as recent is the SERVER's date, never the sequence tail ──
+#
+# The tool used to `SEARCH FROM` and keep the LAST N sequence numbers. In a re-labelled Gmail
+# folder sequence order is not date order: `ops@collective.work` returned only 2025-09 → 2026-02,
+# nothing from this year. The query is printed BEFORE the credential check, so every case here is
+# offline and still proves the query the tool would send.
+since_line() { printf '%s\n' "$1" | grep -E '^recherche : ' | head -1; }
+
+out="$(run alerts@portal.test 1 var/claude/captures)"
+line="$(since_line "$out")"
+if [[ "$line" == "recherche : SEARCH SINCE "*" FROM \"alerts@portal.test\""* && "$line" != *"UID SEARCH"* ]]; then
+  ok "the default search is SINCE seven days, FROM the sender, by sequence (not UID)"
+else
+  ko "the default search is SINCE seven days, FROM the sender, by sequence (not UID)" "line=$line"
+fi
+if [[ "$line" == *"SINCE $(LC_ALL=C date -u -d '7 days ago' '+%d-%b-%Y') "* || "$line" == *"SINCE $(LC_ALL=C date -u -d '8 days ago' '+%d-%b-%Y') "* ]]; then
+  ok "the default window is seven days back"
+else
+  ko "the default window is seven days back" "line=$line"
+fi
+
+out="$(cd "$TMP" && DUMP_SINCE_DAYS=30 php $PHP_PRINTING_ARGS tools/dump-eml.php alerts@portal.test 1 var/claude/captures 2>&1)"
+line="$(since_line "$out")"
+if [[ "$line" == *"SINCE $(LC_ALL=C date -u -d '30 days ago' '+%d-%b-%Y') "* || "$line" == *"SINCE $(LC_ALL=C date -u -d '31 days ago' '+%d-%b-%Y') "* ]]; then
+  ok "DUMP_SINCE_DAYS=30 widens the window to thirty days"
+else
+  ko "DUMP_SINCE_DAYS=30 widens the window to thirty days" "line=$line"
+fi
+
+out="$(cd "$TMP" && DUMP_SINCE_DAYS=all php $PHP_PRINTING_ARGS tools/dump-eml.php alerts@portal.test 1 var/claude/captures 2>&1)"
+line="$(since_line "$out")"
+if [[ "$line" == 'recherche : SEARCH FROM "alerts@portal.test"'* ]]; then
+  ok "DUMP_SINCE_DAYS=all searches the whole folder, for a history pull"
+else
+  ko "DUMP_SINCE_DAYS=all searches the whole folder, for a history pull" "line=$line"
+fi
+
+for bad in abc -3 0 '7 days'; do
+  out="$(cd "$TMP" && DUMP_SINCE_DAYS="$bad" php $PHP_PRINTING_ARGS tools/dump-eml.php alerts@portal.test 1 var/claude/captures 2>&1)"; code=$?
+  if [[ $code -eq 2 && "$out" == *"DUMP_SINCE_DAYS"* && "$out" != *"recherche : "* ]]; then
+    ok "refuses DUMP_SINCE_DAYS='$bad' before building any query"
+  else
+    ko "refuses DUMP_SINCE_DAYS='$bad' before building any query" "exit=$code out=$out"
+  fi
+done
+
+# The query PRINTED is the query SENT: a tool that prints the windowed search and sends another is
+# the defect above wearing an alibi. Code lines only, the LOGIN case's rule.
+code_only_q="$(grep -vE '^[[:space:]]*(\*|/\*|//|#)' "$ROOT/tools/dump-eml.php")"
+if [[ "$(printf '%s' "$code_only_q" | grep -cE '\$cmd\((.)?SEARCH|\$cmd\(\$search\)')" == 1 ]] && printf '%s' "$code_only_q" | grep -qE '\$cmd\(\$search\)'; then
+  ok "the search the tool sends is the one it printed, and it sends exactly one"
+else
+  ko "the search the tool sends is the one it printed, and it sends exactly one" "found: $(printf '%s' "$code_only_q" | grep -nE '\$cmd\(.*SEARCH|\$cmd\(\$search')"
 fi
 
 # ── 4. usage, so a bare invocation cannot connect to anything ────────────────────────────────────
