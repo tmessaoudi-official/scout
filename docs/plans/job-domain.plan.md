@@ -76,6 +76,7 @@ plan below is approved.
 - [2026-09-24 20:37] NOTED: `ab457fd` deployed; the first live pass read collective **20** offers, 14 MATCH (score 6–36) and 6 REJECT, 0 pushed individually, all queued for the 09:00 rollup, whose dry-run render ends each line at the company (no dangling separator). 20 is not 24 minus four lost cards: `IMAP_SINCE_DAYS=7` searches SINCE 17-Sep, and the mails from 17 Sep on are exactly 20. Every one is marked read. This source reads the ACCOUNT's recruiter-brief feed; the four saved-search alerts of 11:26 are still n=0, and if they arrive in another subject shape they stay unread, which is the signal.
 - [2026-09-25 06:43] NOTED: second source survey, 26 new candidates, report in `var/claude/jobs/sources-research-2.md` (gitignored). Dead or renamed: talent.io, Otta (now WTTJ UK), BeTalent.fr, Club Freelance (now Mindquest), AFUP (no board), Human Coders `/jobs` (404). No job-alert feed reaches the mailbox outside `job-watch/portails` today: Malt, Indeed, WTTJ, Glassdoor, Cadremploi and freelance-informatique send newsletters, recruiter shares or profile mail only.
 - [2026-09-25 06:43] AGREED: next job sources are the freelance set — Mindquest, LeHibou, freelance-informatique.fr — each through a saved-search alert the developer creates into `job-watch/portails`; each reader is built only once its first real mails are in the label (n≥1, the Collective rule).
+- [2026-09-25 06:57] AGREED: France Travail's offers API stays out — its API host's robots.txt disallows everything, and scout honours robots.txt as written, a keyed API included.
 
 ## Evidence gathered (2026-09-13)
 - `Cli/Domains::all()` is the registry — a new domain is one entry plus `Scout\<Slug>\`, `config/<slug>/` and `<SLUG>_*` keys.
@@ -263,7 +264,7 @@ says so on its own line and earns 0.
 - ~~A Gmail label `job-watch/portails` and its LinkedIn filter~~ — done 2026-09-13 (Decisions Log).
 - ~~Alerts on APEC, HelloWork and Free-Work~~ — live as sources since 2026-09-24 (Decisions Log); Collective.work added the same day. WTTJ and Indeed were not chosen on 2026-09-25.
 - Saved-search alerts on Mindquest, LeHibou and freelance-informatique.fr, into the same label (ruled 2026-09-25); each reader waits on its first real mails.
-- A francetravail.io application (client id + secret into `.env`) — slice 2, authenticated API.
+- ~~A francetravail.io application~~ — not needed: France Travail refused on robots.txt (ruled 2026-09-25, Decisions Log).
 
 ### Open rulings, with the default applied until ruled
 | # | Question | Default |
