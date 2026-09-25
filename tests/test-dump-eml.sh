@@ -16,6 +16,10 @@
 # ISOLATED BY CONSTRUCTION. The tool is copied into a throwaway tree beside a stub autoloader and a
 # `tests/` of its own, so no case can reach the network, read the real `.env`, or write into the
 # real repo. That is the documented bash-script isolation pattern: `__DIR__` resolves to the copy.
+# Since 2026-09-25 the autoloader loads the REAL `src/` classes for everything but `DotEnv`, because
+# the tool builds its query with `ImapMailbox::searchCommand()`. That keeps the isolation only while
+# what the tool calls before its credential check stays pure — a side-effecting static helper added
+# there would run inside this test.
 set -uo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
