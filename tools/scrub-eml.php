@@ -151,6 +151,9 @@ $drop = [
     // away. Measured on three Agorastore captures: the header is the ONLY place the address
     // survives (24 zlib-compressed `/c/eJ…` tracking blobs per message inflate to none of it).
     'x-mailgun-sid',
+    // MAILJET, added 2026-09-26 (Mindquest). `X-MJ-Mid` is the message id, and it is byte for byte the
+    // recipient token every click link carries — the linkage the Mailjet rule below removes from links.
+    'x-mj-mid',
 ];
 
 $eol = str_contains($raw, "\r\n") ? "\r\n" : "\n";
@@ -299,19 +302,72 @@ $message = preg_replace_callback(
     $message,
 ) ?? $message;
 
-// MAILJET CLICK LINKS (2026-09-24, Free-Work job alerts). `tx.mjt.lu/lnk/<recipient token>/<n>/<hash>/
-// <base64url of the target URL>` — the whole PATH is per recipient, and its last segment decodes to the
-// destination. Free-Work's destinations are the signed per-account unsubscribe links, so after the text
-// part's literal was replaced the account's alert ids and a WORKING signature were one decode away, and
-// the recoverability check below refused the capture. The host stays, so the link still reads as a
-// tracking redirect; the path goes. Nothing reads these links: the adapter keys on the text part's own
-// free-work.com URLs. QP-aware, because the HTML part folds straight through the path.
-$message = preg_replace_callback(
-    '~(tx\.mjt\.lu/lnk/)((?:[A-Za-z0-9_\-/]|=\r?\n)+)~',
-    static function (array $m) use (&$tokenSeq, $refold): string {
+// MAILJET CLICK LINKS (2026-09-24, Free-Work job alerts). `<account>.mjt.lu/lnk/<recipient token>/<n>/
+// <hash>/<base64url of the target URL>` — the recipient token and the per-link hash are per recipient,
+// and the last segment decodes to the destination. Free-Work's destinations are the signed per-account
+// unsubscribe links, so after the text part's literal was replaced the account's alert ids and a WORKING
+// signature were one decode away, and the recoverability check below refused the capture. A target
+// carrying a query or a fragment goes with the rest of the path: that is where a signature lives.
+//
+// A QUERY-FREE TARGET STAYS (2026-09-26, Mindquest job alerts). Mindquest's cards carry no other link to
+// their mission, so its target — `https://fr.mindquest.io/missions/94104` — is the offer's only id, and
+// replacing it would leave a fixture no reader can take an id from, and it would pass. A bare page URL
+// names the offer, not the reader; the recipient token and the hash still go, one placeholder per
+// DISTINCT value (the Agorastore rule), so two links to one card stay the same link and two cards differ.
+//
+// ANY `*.mjt.lu`, NOT `tx.mjt.lu` (2026-09-26). Mailjet serves each sending account from its own
+// subdomain; Free-Work's happens to be `tx`, Mindquest's is `z96x`, and the literal host matched nothing
+// on Mindquest while the tool reported `scrubbed`. The host is matched fold-tolerantly, because the real
+// capture breaks a link straight after `z96x.mjt.lu/`.
+$mjSeen = [];
+$mjPlaceholder = static function (string $value) use (&$tokenSeq, &$mjSeen): string {
+    if (!isset($mjSeen[$value])) {
         ++$tokenSeq;
+        $mjSeen[$value] = 'FIXTURE' . str_pad((string) $tokenSeq, 3, '0', STR_PAD_LEFT);
+    }
 
-        return $m[1] . $refold('FIXTURE' . str_pad((string) $tokenSeq, 3, '0', STR_PAD_LEFT), $m[2]);
+    return $mjSeen[$value];
+};
+$mjFold = static fn (string $literal): string => implode('(?:=\r?\n)?', array_map(
+    static fn (string $c): string => preg_quote($c, '~'),
+    str_split($literal),
+));
+// It ends on a fold allowance: the capture breaks the link between `mjt.lu/` and `lnk/`, and that one
+// link kept its recipient token while every other lost it.
+$mjHost = '(?:[a-z0-9]|=\r?\n)+' . $mjFold('.mjt.lu/') . '(?:=\r?\n)?';
+$message = preg_replace_callback(
+    '~(' . $mjHost . $mjFold('lnk/') . ')((?:[A-Za-z0-9_\-/]|=\r?\n)+)~',
+    static function (array $m) use ($unfold, $refold, $mjPlaceholder): string {
+        $segments = explode('/', $unfold($m[2]));
+        $target = count($segments) === 4 ? base64_decode(strtr($segments[3], '-_', '+/'), true) : false;
+        if ($target !== false && preg_match('~^https?://[^\s?#@]+$~', $target) === 1) {
+            $path = $mjPlaceholder($segments[0]) . '/' . $segments[1] . '/' . $mjPlaceholder($segments[2]) . '/' . $segments[3];
+
+            return $m[1] . $refold($path, $m[2]);
+        }
+
+        return $m[1] . $refold($mjPlaceholder($unfold($m[2])), $m[2]);
+    },
+    $message,
+) ?? $message;
+// Its open-tracking pixel: `<account>.mjt.lu/oo/<recipient token>/<per-message hash>/e.gif`. Both values
+// go, each to the placeholder its value already has, and the file name stays, so it still reads as a pixel.
+$message = preg_replace_callback(
+    '~(' . $mjHost . $mjFold('oo/') . ')((?:[A-Za-z0-9_\-]|=\r?\n)+)(/(?:=\r?\n)?)((?:[A-Za-z0-9_\-]|=\r?\n)+)~',
+    static fn (array $m): string => $m[1] . $refold($mjPlaceholder($unfold($m[2])), $m[2]) . $m[3] . $refold($mjPlaceholder($unfold($m[4])), $m[4]),
+    $message,
+) ?? $message;
+// Its unsubscribe link: `<account>.mjt.lu/unsub2?m=<recipient token>&b=…&e=…&x=<signature>`, in the
+// HTML part (`?` literal, `=3D`) and in the `List-Unsubscribe` header (plain `=`). Every value goes; the
+// names stay, so the link keeps its shape.
+$message = preg_replace_callback(
+    '~(' . $mjHost . $mjFold('unsub2') . '(?:=\r?\n)?(?:\?|=3F))((?:=\r?\n|[^"\s<>])+)~',
+    static function (array $m) use ($refold, $mjPlaceholder): string {
+        return $m[1] . (preg_replace_callback(
+            '~((?:^|&|;)(?:=\r?\n)?[mbex](?:=\r?\n)?(?:=3D|=(?![0-9A-F]{2})))((?:[A-Za-z0-9_\-]|=\r?\n)+)~',
+            static fn (array $p): string => $p[1] . $refold($mjPlaceholder((string) preg_replace('~=\r?\n~', '', $p[2])), $p[2]),
+            $m[2],
+        ) ?? $m[2]);
     },
     $message,
 ) ?? $message;
@@ -499,12 +555,54 @@ $message = preg_replace_callback(
 //
 // Replacing the address first leaves the needles nothing of it to damage: what remains for them is
 // the greeting and the display name, which is what they are for.
+/**
+ * Replace a literal case-insensitively AND THROUGH A QUOTED-PRINTABLE SOFT BREAK, putting each fold
+ * back at the same offset in the replacement — so the scrub cannot lengthen a line or erase the
+ * soft-break shape the parser has to keep meeting (the `$refold` discipline). Bytes, not characters:
+ * a QP body is ASCII, and a `u` pattern over an 8bit Latin-1 body fails to compile its subject.
+ *
+ * ONE implementation for the address and the needles (2026-09-26). The needles learnt the fold on
+ * 2026-09-13; the address rule stayed a plain `str_replace`, and on the first Mindquest alert a soft
+ * break fell INSIDE the address's local part. The address replace missed it, the fold-aware name
+ * needles then rewrote its first half, and `.official@gmail.com` survived — the round-6 leak shape,
+ * reached by a fold rather than by order, with the tool reporting success.
+ */
+$replaceThroughFolds = static function (string $message, string $literal, string $replacement): string {
+    $pattern = '~' . implode('(?:=\r?\n)?', array_map(
+        static fn (string $byte): string => preg_quote($byte, '~'),
+        str_split($literal),
+    )) . '~i';
+
+    return preg_replace_callback(
+        $pattern,
+        static function (array $m) use ($replacement): string {
+            $segments = preg_split('~(=\r?\n)~', $m[0], -1, PREG_SPLIT_DELIM_CAPTURE) ?: [$m[0]];
+            $out = '';
+            $taken = 0;
+            foreach ($segments as $i => $segment) {
+                if ($i % 2 === 1) {
+                    $out .= $segment;     // the fold itself, byte for byte (`=\n` or `=\r\n`)
+
+                    continue;
+                }
+                $last = $i === count($segments) - 1;
+                $length = $last ? strlen($replacement) - $taken : min(strlen($segment), strlen($replacement) - $taken);
+                $out .= substr($replacement, $taken, max(0, $length));
+                $taken += max(0, $length);
+            }
+
+            return $out;
+        },
+        $message,
+    ) ?? $message;
+};
+
 if ($address !== null && $address !== '') {
-    $message = str_replace($address, 'alertes@example.invalid', $message);
+    $message = $replaceThroughFolds($message, $address, 'alertes@example.invalid');
     // The local part alone appears in some ESP ids.
     $local = explode('@', $address)[0];
     if ($local !== '') {
-        $message = str_replace($local, 'alertes', $message);
+        $message = $replaceThroughFolds($message, $local, 'alertes');
     }
 }
 
@@ -539,33 +637,7 @@ foreach ($needles as $needle) {
     // or erase the soft-break shape the parser has to keep meeting (the `$refold` discipline).
     // Bytes, not characters: a QP body is ASCII, and a `u` pattern over an 8bit Latin-1 body fails
     // to compile its subject and returns null.
-    $pattern = '~' . implode('(?:=\r?\n)?', array_map(
-        static fn (string $byte): string => preg_quote($byte, '~'),
-        str_split($needle),
-    )) . '~i';
-    $message = preg_replace_callback(
-        $pattern,
-        static function (array $m): string {
-            $segments = preg_split('~(=\r?\n)~', $m[0], -1, PREG_SPLIT_DELIM_CAPTURE) ?: [$m[0]];
-            $replacement = 'abonne';
-            $out = '';
-            $taken = 0;
-            foreach ($segments as $i => $segment) {
-                if ($i % 2 === 1) {
-                    $out .= $segment;     // the fold itself, byte for byte (`=\n` or `=\r\n`)
-
-                    continue;
-                }
-                $last = $i === count($segments) - 1;
-                $length = $last ? strlen($replacement) - $taken : min(strlen($segment), strlen($replacement) - $taken);
-                $out .= substr($replacement, $taken, max(0, $length));
-                $taken += max(0, $length);
-            }
-
-            return $out;
-        },
-        $message,
-    ) ?? $message;
+    $message = $replaceThroughFolds($message, $needle, 'abonne');
 }
 
 // The ESP's list/subscriber ids, which survive in bounce addresses and campaign strings.

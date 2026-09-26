@@ -1086,5 +1086,82 @@ else
   check "and two links of one offer stay DISTINCT — one placeholder per distinct value" false
 fi
 
+
+# ── AN ADDRESS SPLIT BY A QP SOFT BREAK IS STRIPPED THROUGH THE FOLD (2026-09-26, Mindquest) ───────
+# The first Mindquest alert names the subscriber in its footer (`Cet email a été envoyé à <address>`),
+# and in the QP-encoded HTML part a soft break falls INSIDE the address's local part. The address
+# replacement was a plain `str_replace`, so it missed it; the fold-aware NAME needles then rewrote the
+# first half and left `.official@…` — the round-6 leak shape, arrived by a fold rather than by order.
+# The tool reported success; only FixtureSecretsTest saw it. The address here contains both needles,
+# as the real one does, and the fold sits mid-local-part, as it does on the real capture.
+folded_addr='jeanne.dubois.official@example.test'
+{
+  printf 'From: Portal <alerts@portal.test>\r\n'
+  printf 'To: <%s>\r\n' "$folded_addr"
+  printf 'Subject: Job Alert\r\n'
+  printf 'MIME-Version: 1.0\r\n'
+  printf 'Content-Type: text/html; charset=utf-8\r\n'
+  printf 'Content-Transfer-Encoding: quoted-printable\r\n\r\n'
+  printf '<p>Bonjour Jeanne DUBOIS,</p>\r\n'
+  printf '<p>Cet email a =C3=A9t=C3=A9 envoy=C3=A9 =C3=A0 jeanne.dubo=\r\nis.official@example.test</p>\r\n'
+} > "$work/foldaddr.eml"
+foldaddr_status=0
+php "$repo/tools/scrub-eml.php" "$work/foldaddr.eml" "$work/foldaddr.out.eml" "$folded_addr" Jeanne DUBOIS \
+  >"$work/foldaddr.log" 2>&1 || foldaddr_status=$?
+check "an address folded by a QP soft break is scrubbed rather than refused" test "$foldaddr_status" -eq 0
+if [[ -f "$work/foldaddr.out.eml" ]]; then
+  decoded_qp "$work/foldaddr.out.eml" >"$work/foldaddr.decoded"
+  refute "and no remainder of the folded address survives decoding (not even .official@…)" \
+    grep -qiE 'official@|dubo|@example\.test' "$work/foldaddr.decoded"
+  check "and the soft-break STRUCTURE survives" grep -qaE $'=\r?$' "$work/foldaddr.out.eml"
+else
+  check "and no remainder of the folded address survives decoding (not even .official@…)" false
+  check "and the soft-break STRUCTURE survives" false
+fi
+
+# ── A MAILJET LINK ON A SENDER'S OWN SUBDOMAIN, WHOSE TARGET IS THE PAYLOAD (2026-09-26, Mindquest) ─
+# Mindquest's alert uses `z96x.mjt.lu`, not Free-Work's `tx.mjt.lu`, so the Free-Work rule matched
+# nothing and every per-recipient token — and the SIGNED unsubscribe link — went straight through.
+# Unlike Free-Work's, its click targets are the offers (`https://fr.mindquest.io/missions/<id>`, no
+# query): the reader takes the id from there, so a plain page target must SURVIVE while the recipient
+# and hash segments go. A target WITH a query can carry a signature and is still replaced whole.
+page=$(printf 'https://fr.mindquest.io/missions/94104' | base64 -w0 | tr '+/' '-_' | tr -d '=')
+signed=$(printf 'https://portal.test/unsub?id=742231&sig=f2bef6a388bf' | base64 -w0 | tr '+/' '-_' | tr -d '=')
+{
+  printf 'From: Mindquest <account@mindquest.io>\r\n'
+  printf 'To: <%s>\r\n' "$address"
+  printf 'Subject: Job Alert !\r\n'
+  # Mailjet's message id IS the recipient token the links carry, so it links the file to one reader.
+  printf 'X-MJ-Mid:\r\n\tCAAACWTREooCAAAAAAAAAGdFZ7gAAYCrZP8AAAAAAAYsoQBqt3uTIsDDq6z\r\n'
+  printf 'MIME-Version: 1.0\r\n'
+  printf 'Content-Type: text/html; charset=utf-8\r\n'
+  printf 'Content-Transfer-Encoding: quoted-printable\r\n\r\n'
+  # The open-tracking pixel carries the same token and a per-message hash, folded like the real one.
+  printf '<img src=3D"http://z96x.mjt.lu/oo/CAAACWTREooDAAAAAAAAAGdFZ7gAAYCrZP8AAAAAA=\r\nAYsoQBqt3uTBAqJx3L6R7Sxt/c6461bf3/e.gif" height=3D"1">\r\n'
+  printf '<a href=3D"http://z96x.mjt.lu/lnk/CAAACWTREooAAAAAAAAAAGdFZ7gAAYCrZP8=\r\nAAAAAAYsoQ/2/jJVw1he65c7RtY8Fr9bdHA/%s">Consulter</a>\r\n' "$page"
+  printf '<a href=3D"http://z96x.mjt.lu/lnk/CAAACWTREooAAAAAAAAAAGdFZ7gAAYCrZP8AAAAAAAYsoQ/3/Imfqmt51UmVZTQ30C8ukfw/%s">x</a>\r\n' "$signed"
+  # The real capture folds between the host and the path (`z96x.mjt.lu/=` / `lnk/…`); that link kept its
+  # recipient token while every unfolded one lost it, and the tool reported `scrubbed`.
+  printf '<a href=3D"http://z96x.mjt.lu/=\r\nlnk/CAAACWTREooBAAAAAAAAAGdFZ7gAAYCrZP8AAAAAAAYsoQ/13/H6kFZkzCjyl1mXHegt/%s">fb</a>\r\n' "$page"
+  printf '<a href=3D"http://z96x.mjt.lu/unsub2?m=3DCAAACWTREooAAAAAAAAAAGdFZ7gAAYCrZP8AAAAAAAYsoQ&amp;b=3Da44d0f83&amp;e=3Da99ec06d&amp;x=3D0CwjKuUPI5bjKyep6pxZMbNzXaCEOapzXCSDidra15Ew">stop</a>\r\n'
+} > "$work/mjsub.eml"
+mjsub_status=0
+php "$repo/tools/scrub-eml.php" "$work/mjsub.eml" "$work/mjsub.out.eml" "$address" >"$work/mjsub.log" 2>&1 || mjsub_status=$?
+check "a Mailjet link on a sender's own subdomain is scrubbed" test "$mjsub_status" -eq 0
+if [[ -f "$work/mjsub.out.eml" ]]; then
+  refute "and its recipient token is gone" grep -aqE 'CAAACWTREoo|jJVw1he65c7|Imfqmt51Um|H6kFZkzCjy|c6461bf3|AYsoQBqt3uTBAqJx' "$work/mjsub.out.eml"
+  check "and the tracking pixel keeps its shape, so it still reads as a pixel" bash -c "perl -0pe 's/=\\r?\\n//g' \"\$1\" | grep -aqE 'mjt\\.lu/oo/FIXTURE[0-9]+/FIXTURE[0-9]+/e\\.gif'" _ "$work/mjsub.out.eml"
+  refute "and the signed unsubscribe values are gone" grep -aqE '0CwjKuUPI5bj|a44d0f83|a99ec06d' "$work/mjsub.out.eml"
+  check "and a plain page target SURVIVES, because it is the payload" \
+    php -r 'require $argv[2]; $m = Scout\Adapters\Mail\EmailMessage::parse(file_get_contents($argv[1]));
+            foreach ($m->links as $l) { if (preg_match("~/lnk/[^/]+/\d+/[^/]+/([A-Za-z0-9_-]+)~", $l, $t) === 1 && base64_decode(strtr($t[1], "-_", "+/"), true) === "https://fr.mindquest.io/missions/94104") { exit(0); } } exit(1);' \
+    "$work/mjsub.out.eml" "$repo/vendor/autoload.php"
+  check "and a target carrying a query is NOT recoverable (it can carry a signature)" \
+    php -r 'require $argv[2]; foreach (Scout\Core\RecoverableForms::of(file_get_contents($argv[1])) as $f) { if (str_contains($f, "f2bef6a388") || str_contains($f, "742231")) { exit(1); } } exit(0);' \
+    "$work/mjsub.out.eml" "$repo/vendor/autoload.php"
+else
+  for c in "and its recipient token is gone" "and the tracking pixel keeps its shape, so it still reads as a pixel" "and the signed unsubscribe values are gone" "and a plain page target SURVIVES, because it is the payload" "and a target carrying a query is NOT recoverable (it can carry a signature)"; do check "$c" false; done
+fi
+
 printf '\n  %d passed, %d failed\n\n' "$pass" "$fail"
 [[ "$fail" -eq 0 ]]
