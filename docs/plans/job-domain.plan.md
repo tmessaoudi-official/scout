@@ -83,6 +83,7 @@ plan below is approved.
 - [2026-09-25 17:38] NOTED: the LinkedIn no-HTML-part cost is now tested rather than only stated — one text-only mail among normal ones is counted (1 of 3 on both `card_link_pattern` and `footer_marker`), claimed, and silent; every mail text-only escalates health naming both. A ledger case pins that such a mail is never skipped uncounted. No behaviour changed.
 - [2026-09-25 18:43] AGREED: a claimed LinkedIn alert with no HTML part is warned about, once per mail and pass, naming its date — the escalation cannot see one among normal mails, and it is marked \Seen with nothing read. The warning repeats while the mail stays in the IMAP window, as the duplicate-card warning does.
 - [2026-09-25 22:05] AGREED: the stack keyword groups stay as shipped. Trialled over the 424 stored matches at the deployed gate of 40: 331 match titles name no stack at all, and no missing language appears in any of them; cloud/infra terms in `adjacent` change 29 scores and push one more offer — a Salesforce architect, because `Cloud` outranks the `other` group; `JavaScript`/`js` in `front` pushes two, one of them only because `js` matched inside `Node.js`. 28 pushes become 29 or 30 at most — the cards are too thin for keywords to matter, the green finding again.
+- [2026-09-26 11:30] NOTED: Mindquest is source #6 — its first alert arrived 2026-09-26 08:00Z, delivered twice under two mission URL shapes; the reader decodes the offer id from the Mailjet click link's last segment and reads 12 offers `ok` over the two copies (4 matches, 2 rejects each, scores 14–25). The scrubber had to learn Mailjet on an account subdomain, an address folded by a QP soft break, `X-MJ-Mid` and the `oo/` pixel before the capture could be committed.
 
 ## Evidence gathered (2026-09-13)
 - `Cli/Domains::all()` is the registry — a new domain is one entry plus `Scout\<Slug>\`, `config/<slug>/` and `<SLUG>_*` keys.
@@ -269,7 +270,7 @@ says so on its own line and earns 0.
 ### Needs input from the developer (no code can supply these)
 - ~~A Gmail label `job-watch/portails` and its LinkedIn filter~~ — done 2026-09-13 (Decisions Log).
 - ~~Alerts on APEC, HelloWork and Free-Work~~ — live as sources since 2026-09-24 (Decisions Log); Collective.work added the same day. WTTJ and Indeed were not chosen on 2026-09-25.
-- ~~Saved-search alerts on Mindquest, LeHibou and freelance-informatique.fr~~ — created 2026-09-25 (Decisions Log). Still owed by the developer: confirm the freelance-informatique email, and route the three senders into `job-watch/portails`. Each reader waits on its first real mails.
+- ~~Saved-search alerts on Mindquest, LeHibou and freelance-informatique.fr~~ — created 2026-09-25 (Decisions Log). Mindquest's first alert arrived 2026-09-26 and its reader is live; freelance-informatique's arrived the same morning (reader next); LeHibou's has not. Still owed by the developer: the Gmail filters routing the three senders into `job-watch/portails`.
 - ~~A francetravail.io application~~ — not needed: France Travail refused on robots.txt (ruled 2026-09-25, Decisions Log).
 
 ### Open rulings, with the default applied until ruled

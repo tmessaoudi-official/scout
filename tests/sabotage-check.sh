@@ -6271,6 +6271,12 @@ run_sabotage "job: a subject the company rule cannot read is not counted (Collec
 run_sabotage "job: the pre-2026-09 Collective template, its é decomposed, is no longer read (2026-09-24)" \
   config/job/sources.json \
   's%D(?:é|e\\\\x{0301})couvrir%Découvrir%'
+run_sabotage "job: a Mindquest title may end on the separator's hyphen (2026-09-26)" \
+  config/job/sources.json \
+  's%(?<title>\\\\S\[^\\\\n\]\*\[^\\\\s-\])%(?<title>\\\\S[^\\\\n]*)%'
+run_sabotage "job: Mindquest claims the sign-up confirmation from the same sender (2026-09-26)" \
+  config/job/sources.json \
+  's%~^Job Alert\\\\b~u%~^~u%'
 
 # THE ABORT COMES BEFORE THE TALLY, and that ordering is the finding rather than a nicety (C2
 # round 7, resilience P3). The alert job harvests the `N sabotage(s) detected, M undetected` line;

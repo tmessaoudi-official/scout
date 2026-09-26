@@ -93,6 +93,24 @@
         "_place_absent": "The mail states no place at all; the location filter fails open on an unknown place (H8).",
         "place_absent": "true"
       }
+    },
+    "mindquest": {
+      "_why": "Mindquest's saved-search 'Job Alert' (developer ruling 2026-09-25: Mindquest, LeHibou, freelance-informatique.fr). An HTML-only mail; the body path harvests each href into the text after its anchor, so a card reads `<title> [-] <dept> - <commune>` ⏎ `<duration or contract>` ⏎ `Consulter l'offre` ⏎ its Mailjet click link. Measured on ONE alert delivered twice (2026-09-26, n=1): six offers, the second copy linking `mindquest.io/fr/missions/<id>` where the first links `fr.mindquest.io/missions/<id>`. Stated costs: the card states no company, no pay, no work mode and no date; the location classifier reads names, so the department number is kept as a label and a commune the criteria do not name is UNKNOWN (fails open, H8); a single card the pattern misses among others is silent, because card_pattern is counted per message.",
+      "_verified_at": "2026-09-26",
+      "enabled": true,
+      "family": "portal",
+      "type": "email_digest",
+      "params": {
+        "_from": "The alert sender. The Mailjet envelope says `contact@club-freelance.com` (the parent company); the From header is this address, and it also mails the account's sign-up confirmation.",
+        "from": "account@mindquest.io",
+        "_subject_pattern": "Every alert's subject reads `Job Alert ! Ces missions devraient vous intéresser`; the sign-up confirmation (`Inscription confirmée…`) comes from the same sender and must stay unclaimed.",
+        "subject_pattern": "~^Job Alert\\b~u",
+        "_card_pattern": "One card, blank lines allowed between its lines. The title ends on a non-hyphen and is greedy, so `Dev Java 17 - Spring (H/F) - 75 - Paris` splits at the LAST `<dept> - `; facts is the department plus any middle segment (`78 - CDI`), and place is the last segment. The second line is `Mission de <n> jours|mois` or a contract word, kept as the stated contract: the classifier recognises `CDI` and keeps an unrecognised value as written, never rejecting on it.",
+        "card_pattern": "~^(?<title>\\S[^\\n]*[^\\s-])\\h(?:-\\h)?(?<facts>(?:\\d{2,3}|2[AB])(?:\\h-\\h(?:(?!\\h-\\h)[^\\n])+)*?)\\h-\\h(?<place>(?:(?!\\h-\\h)[^\\n])+?)\\h*+\\n(?:\\h*+\\n)*+(?<contracts>[^\\n]+?)\\h*+\\n(?:\\h*+\\n)*+Consulter l.offre\\h*+\\n(?:\\h*+\\n)*+(?<url>https?://\\S+)~mu",
+        "_id_token_pattern": "The Mailjet click link's last path segment is base64url of the mission URL; the id is read from the decoded URL, and the push links that URL rather than the tracker.",
+        "id_token_pattern": "~/lnk/[^/\\s]+/\\d+/[^/\\s]+/(?<token>[A-Za-z0-9_-]+)~",
+        "id_pattern": "~/missions/(\\d+)~"
+      }
     }
   }
 }

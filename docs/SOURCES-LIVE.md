@@ -114,7 +114,7 @@ state neither year nor mileage, and the reference already supplies the evidence 
 
 ---
 
-## Job — five enabled sources
+## Job — six enabled sources
 
 **Live since 2026-09-14**, polled by the `job-scout` compose service
 ([`docs/plans/job-domain.plan.md`](plans/job-domain.plan.md) step 9). The first live `doctor` read
@@ -129,6 +129,7 @@ does not want it, not because they cannot take it.
 | 3 | **hellowork** | portal | `email_digest`, HTML only | the id in the click token's decoded offer URL (`/fr-fr/emplois/<id>.html`) | `NN 000 - NN 000 € / an`, unit stated, when the card states one | live 2026-09-24 |
 | 4 | **apec** | portal | `email_digest`, HTML only | `p2=<id>W` in the link's decoded `e` token | none on the card | live 2026-09-24 |
 | 5 | **collective** | portal | `email_digest`, one offer per mail | the app opportunity id in `/opportunities/<id>` | none on the card | live 2026-09-24 |
+| 6 | **mindquest** | portal | `email_digest`, HTML only | the id in the Mailjet click link's decoded mission URL (`/missions/<id>`) | none on the card | live 2026-09-26 |
 
 Offline, `bin/scout --domain=job doctor --source=linkedin` over `tests/fixtures/job/linkedin/`
 reads **16 offers, `ok`** (three captures); `--source=freework` over `tests/fixtures/job/freework/`
@@ -137,7 +138,8 @@ gave **23 matches and 13 rejects**, 4 of the matches at or over the deployed gat
 `--source=hellowork` reads **39, `ok`** (four captures): **24 matches, 15 rejects**; `--source=apec`
 reads **45, `ok`** (one capture, n=1): **36 matches, 9 rejects** — and of those 60 matches **one**
 clears the deployed gate of 40. `--source=collective` reads **5, `ok`** (five captures, one offer
-each): **4 matches, 1 reject**, scores 14–36, none over the gate.
+each): **4 matches, 1 reject**, scores 14–36, none over the gate. `--source=mindquest` reads **12, `ok`** (one alert delivered
+twice, six offers each, n=1): **4 matches, 2 rejects** per delivery, scores 14–25, none over the gate.
 
 | Source | Stated cost |
 |---|---|
@@ -145,6 +147,7 @@ each): **4 matches, 1 reject**, scores 14–36, none over the gate.
 | **hellowork** | **The card states no stack, no work mode and no date**, so three components are unscored and nearly every match lands in the rollup (1 of 24 cleared the deployed gate on the captures). The offer id lives only in the click token, so a change to its `<subscriber>🪢<URL>` layout makes `id_token_pattern` or `id_pattern` miss on every card — counted, so it escalates. The push links the offer page directly, not the tracking click. Up to three badge lines (`Super recruteur`) between company and place are skipped; a fourth would shift the place. `Corbeil-Essonnes - 91` is an unknown place (fails open). |
 | **apec** | **No pay, no stack, no work mode and no date on the card**: 0 of 36 matches cleared the deployed gate on the capture. **The company is sometimes the relaying board** (`cadremploi`, `Handicap Job`), not the employer. The digest shows **12 cards per search** of up to hundreds, so it SAMPLES its feed. The push carries the per-recipient tracking link whole, because the token names no URL. The weekly `Nos recommandations` mail from the same sender is unclaimed by `subject_pattern` and stays unread. n=1. |
 | **collective** | **One offer per mail, and the mail states no place, pay, contract, work mode or date** — only a title, the company (in the SUBJECT) and two links — so nearly every match lands in the rollup. The place is declared absent (`place_absent`), so the location filter fails open. **A re-posted offer gets a new id** and is pushed again (fixtures 02/03). The push opens the app page, which needs the developer's login. The current template writes titles with a DECOMPOSED `é`; folding handles it. A template carrying no app id (seen one week in February 2026) would miss on every mail, which escalates. |
+| **mindquest** | **No company, no pay, no work mode and no date on the card.** With no mode stated, **H8 never fires**: a Marseille CDI matches (it scores low and lands in the rollup). The location classifier reads names, so the department number is a label and a commune the criteria do not list (`Le Pecq`, `Viroflay`) is UNKNOWN. The second line — `Mission de <n> jours|mois` or `CDI` — is kept as the stated contract; a mission is never read as `freelance`. The site's own typo `DeveloperTypescript` fails the role gate. A single card the pattern misses among others is silent (counted per message). n=1: one alert, delivered twice under two URL shapes (`fr.mindquest.io/missions/<id>` and `mindquest.io/fr/missions/<id>`), both read. |
 | **freework** | **No company and no work mode on the card**, so the remote component is unscored and **no cross-source key can be built** — an offer on both portals is pushed twice (0 of 36 overlapped LinkedIn on the first capture). **No date per offer** (a "last 24 hours" digest), so freshness is unscored as on LinkedIn. **The digest SAMPLES its feed**: 10 cards per alert section of up to 71 new offers. The first card of each section is glued to its header line, which is why `card_pattern` is not line-anchored. Its one-`p` typo `Dévelopeur` passes the role gate since 2026-09-24 (`developp?eu`, ruled); any other misspelling of a role word is still rejected as off-scope. n=1: the separator, the facts grammar and the pay units are measured on one message. |
 
 ---

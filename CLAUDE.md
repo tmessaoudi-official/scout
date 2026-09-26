@@ -1496,14 +1496,15 @@ AND IT IS DEPLOYED AS `job-scout` SINCE 2026-09-14.** A third domain, slice 1 of
 `JobSnapshot`, `JobClassifier` (what an offer states: contracts, work mode, level, pay lines,
 eligibility), `JobCriteria` + `JobScorer`, `JobStore` (its own `job_meta` v1 and `job_listings`,
 composing `Core/RunStore`), `JobEmailSource`, `JobDigestEmailSource`, `JobPipeline`, `JobFormatter`
-and `Job/Cli/JobScout`. Five sources over IMAP: `linkedin` (an `email_alert`, the HTML part) and,
-since 2026-09-24, four `email_digest` sources — `freework` (the text part), `hellowork`, `apec` and
-`collective` (see the bullets below). Prove a
+and `Job/Cli/JobScout`. Six sources over IMAP: `linkedin` (an `email_alert`, the HTML part) and,
+since 2026-09-24, five `email_digest` sources — `freework` (the text part), `hellowork`, `apec`,
+`collective` and, since 2026-09-26, `mindquest` (see the bullets below). Prove a
 change offline with
 `JOB_SCOUT_DB=$(mktemp -u) MAILBOX_DIR=tests/fixtures/job/linkedin bin/scout --domain=job doctor --source=linkedin`
 — **16 offres, `ok`** over three captures (2026-09-14) — or `MAILBOX_DIR=tests/fixtures/job/freework
 … --source=freework` — **36 offres, `ok`** over one capture (n=1, 2026-09-24) — `hellowork`
-**39, `ok`** over four, `apec` **45, `ok`** over one (n=1), `collective` **5, `ok`** over five; the ledger half is
+**39, `ok`** over four, `apec` **45, `ok`** over one (n=1), `collective` **5, `ok`** over five, `mindquest` **12, `ok`** over
+one alert delivered twice (n=1); the ledger half is
 `SABOTAGE_FILTER='^job:'`. Seven things before touching it:
 
 - **It has no §1.** H1–H8 reject and six components score (stack 25 · pay 20 · level 15 · green 15
@@ -1598,6 +1599,23 @@ change offline with
   or date, so the five fixtures score 14–36 and go to the rollup under the deployed gate of 40; a
   re-posted offer gets a NEW id and is pushed again; the push opens the app page, which needs the
   developer's login.
+- **Mindquest's click links are Mailjet's, and the offer id lives only in their last segment**
+  (2026-09-26). An HTML-only alert, so the body path harvests each href after its anchor and a card
+  reads `<title> [-] <dept> - <commune>` / `Mission de <n> jours|mois` or `CDI` / `Consulter l'offre`
+  / `<account>.mjt.lu/lnk/<recipient>/<n>/<hash>/<base64url of the mission URL>`. `id_token_pattern`
+  decodes that last segment and the push links the mission page, never the tracker. The title is
+  greedy and may not end on a hyphen, so it splits at the LAST `<dept> - `, and a middle segment
+  (`78 - CDI - Viroflay`) stays a label. The second line is the stated contract as written — a
+  mission is never read as `freelance` (sabotage M20 pins that). **The scrubber learned three things
+  from it, none of which its checks would have caught alone**: Mailjet serves each sender from its
+  own subdomain (`z96x`, not Free-Work's `tx`), so the literal host matched nothing; a
+  quoted-printable soft break fell INSIDE the subscriber address, which a plain `str_replace` missed
+  while the fold-aware name needles rewrote half of it; and the recipient token also sits in
+  `X-MJ-Mid` and in the `oo/` open pixel. A query-free click target now SURVIVES the scrub because it
+  is the payload. **Stated costs:** no company, pay, work mode or date; with no mode stated **H8
+  never fires**, so a Marseille CDI matches and scores low; `Le Pecq` and `Viroflay` are UNKNOWN
+  places; the site's typo `DeveloperTypescript` fails the role gate; one missed card among others is
+  silent. n=1 — one alert, delivered twice under two URL shapes, both read.
 
 `src/phorj/` is **ON INDEFINITE HOLD** (developer ruling, 2026-08-19) — not blocked, deprioritised.
 Do not start it; `docs/PHORJ-REQUIREMENTS.md` remains the record of what it would need.
@@ -2437,6 +2455,8 @@ tests/fixtures/job/collective/   Five Collective.work opportunity mails, one off
 tests/fixtures/job/apec/         Apec's first saved-search digest (01, n=1 — 48 cards, 45 distinct) and a
                             weekly "Nos recommandations" mail (00) that must stay unclaimed. All 221
                             links survive the scrub DISTINCT — see the Apec bullet for why that matters
+tests/fixtures/job/mindquest/    Mindquest's first alert, delivered twice (01, 02 — six offers each, two URL
+                            shapes) and the account's sign-up confirmation (00) that must stay unclaimed
 tools/scrub-eml.php         Turns a captured .eml into a committable fixture; REFUSES to write
                             while the address is RECOVERABLE — decoding base64url runs and
                             quoted-printable before it looks, not merely grepping for it
