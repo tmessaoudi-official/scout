@@ -4899,6 +4899,30 @@ run_sabotage "the sitemap source stops checking robots.txt for lot pages" \
   src/php/Car/SitemapVehicleSource.php \
   's%            $this->refuseUnlessAllowed($url);%            /* unchecked */%'
 
+# AUTOHERO'S RENAMED-SLUG 301 (2026-09-26). A lot whose model slug was renamed answers 301 to the SAME
+# uuid; it is followed ONE hop, only to the same lot on the same host, robots-checked and paced. Each
+# guard is its own case, because each is silent when gone: a lot skipped for ever, a hop to another
+# id or host, an unchecked path, an unpaced request.
+run_sabotage "car: Autohero skips a lot moved to a renamed slug again (2026-09-26)" \
+  src/php/Car/SitemapVehicleSource.php \
+  's%if (\$moved !== null) {%if (false) {%'
+
+run_sabotage "car: Autohero follows a redirect to another lot id (2026-09-26)" \
+  src/php/Car/SitemapVehicleSource.php \
+  "s%=== 1 \&\& (\$g\[1\] ?? '') === \$id%=== 1%"
+
+run_sabotage "car: Autohero follows a redirect to another host under a host-free pattern (2026-09-26)" \
+  src/php/Car/SitemapVehicleSource.php \
+  "s%if (\$target === null || parse_url(\$target, PHP_URL_HOST) !== (\$parts\['host'\] ?? null)) {%if (\$target === null) {%"
+
+run_sabotage "car: Autohero does not robots-check a redirect target (2026-09-26)" \
+  src/php/Car/SitemapVehicleSource.php \
+  's%                \$this->refuseUnlessAllowed(\$moved);%                /* unchecked */%'
+
+run_sabotage "car: Autohero does not pace a followed redirect (2026-09-26)" \
+  src/php/Car/SitemapVehicleSource.php \
+  '/refuseUnlessAllowed(\$moved)/,/\$url = \$moved;/ s%\$this->pace();%/* unpaced */%'
+
 # The replay runs the source UNTHROTTLED. With the throttle kept, In'li's 2 s × 20 simulated detail
 # fetches is 40+ s of sleeping to answer a file (43 s measured) — a repair tool nobody reaches for.
 run_sabotage "scout replay --file keeps the adapter's rate limit and sleeps through simulated fetches" \

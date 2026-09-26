@@ -94,7 +94,7 @@ copy.
 
 | Source | Stated cost |
 |---|---|
-| **autohero** | Seed before watching — a sitemap walk over a whole dealer inventory is the one cold start large enough to matter. |
+| **autohero** | Seed before watching — a sitemap walk over a whole dealer inventory is the one cold start large enough to matter. **A lot whose model slug was renamed answers 301 to the same uuid** (measured 2026-09-26, three lots, 213 skips in 72 h): it is followed ONE hop, only to the same id on the same host, robots-checked and paced. The moved page still names the OLD slug as its own `offers.url`, so the push links a URL that redirects; a browser follows it. |
 | **paruvendu** | Its facts line comes in more shapes than the first capture showed; 11 % of stored cards once lost year, mileage, fuel and body **together** because one pattern required all four. A miss of that size is below the 100 % threshold at which the miss counter speaks. |
 | **lacentrale** | **No year on the card**, so the age component is unscored on every La Centrale car (unknown, never 0). It truncates the title to ~28 characters, so mileage is often all that tells two otherwise identical cars apart. |
 | **agorastore** | An auction: **no price** until it closes, and no year or mileage except inside free-text titles — deliberately not read out of them. The price ceiling never fires; most lots score *année inconnue* / *kilométrage inconnu*. |

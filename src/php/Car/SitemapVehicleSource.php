@@ -6,6 +6,7 @@ namespace Scout\Car;
 
 use Scout\Adapters\Http\HttpClient;
 use Scout\Adapters\Http\HttpRequest;
+use Scout\Adapters\Http\HttpResponse;
 use Scout\Adapters\Http\Robots;
 use Scout\Adapters\SourceError;
 use Scout\Core\CountsPatternMisses;
@@ -23,7 +24,8 @@ use Scout\Core\SourceHealth;
  * `--seed` treats the market it starts watching. Steady state is the day's new lots.
  *
  * A lot page that fails (non-2xx, no `Vehicle` block) is warned and skipped; it is not recorded,
- * so it is retried next pass within the budget. Stated cost: a permanently-broken lot page costs
+ * so it is retried next pass within the budget. The one exception is a 3xx to the SAME lot under a
+ * renamed model slug, which is followed once (see `sameLotTarget()`). Stated cost: a permanently-broken lot page costs
  * one budget slot per pass until it leaves the sitemap.
  */
 final readonly class SitemapVehicleSource implements CountsPatternMisses, IndexedVehicleSource
@@ -158,6 +160,16 @@ final readonly class SitemapVehicleSource implements CountsPatternMisses, Indexe
             $this->refuseUnlessAllowed($url);
             $this->pace();
             $response = $this->client->send(new HttpRequest($url));
+            $moved = $this->sameLotTarget($id, $url, $response);
+            if ($moved !== null) {
+                // A renamed model slug answers 301 to the SAME uuid (measured 2026-09-26). One hop, the
+                // target robots-checked and paced like any lot page. The page's own `offers.url` still
+                // names the listing, as for every lot; the target is only its fallback.
+                $this->refuseUnlessAllowed($moved);
+                $this->pace();
+                $url = $moved;
+                $response = $this->client->send(new HttpRequest($url));
+            }
             if (!$response->isSuccess()) {
                 ($this->warn)?->__invoke(sprintf('%s : HTTP %d sur %s — lot ignoré cette passe', $this->name(), $response->status, $url));
                 continue;
@@ -171,6 +183,34 @@ final readonly class SitemapVehicleSource implements CountsPatternMisses, Indexe
         }
 
         return $out;
+    }
+
+    /**
+     * The redirect target when a lot page answers 3xx to the SAME lot — same host, and
+     * `item_url_pattern` reads the same id off the target — else null, and the caller warns and skips
+     * as for any non-2xx. Another id, another host, or a page that is not a lot is never followed:
+     * an id the sitemap does not list is not this lot, and the source must not learn a new host.
+     */
+    private function sameLotTarget(string $id, string $url, HttpResponse $response): ?string
+    {
+        if ($response->status < 300 || $response->status >= 400) {
+            return null;
+        }
+        $location = trim((string) $response->header('location'));
+        if ($location === '') {
+            return null;
+        }
+        $parts = parse_url($url);
+        $origin = ($parts['scheme'] ?? 'https') . '://' . ($parts['host'] ?? '');
+        $target = preg_match('~^https?://~i', $location) === 1 ? $location
+            : (str_starts_with($location, '/') ? $origin . $location : null);
+        if ($target === null || parse_url($target, PHP_URL_HOST) !== ($parts['host'] ?? null)) {
+            return null;
+        }
+
+        return preg_match((string) $this->definition->itemUrlPattern, $target, $g) === 1 && ($g[1] ?? '') === $id
+            ? $target
+            : null;
     }
 
     private function refuseUnlessAllowed(string $url): void

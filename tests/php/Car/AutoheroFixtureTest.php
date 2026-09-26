@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Scout\Tests\Car;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Scout\Adapters\Http\HttpClient;
 use Scout\Core\SourceStatus;
@@ -198,6 +199,112 @@ final class AutoheroFixtureTest extends TestCase
         self::assertStringContainsString('404', $warnings[0]);
     }
 
+    /**
+     * A LOT WHOSE MODEL SLUG WAS RENAMED ANSWERS 301 TO ITS OWN ID (2026-09-26). Measured live: three
+     * lots sat in the sitemap under an old slug (`citroen-c-4-grand-spacetourer`) and each answered 301
+     * to the same uuid under the new one (`citroen-c-4-grand-picasso`), relative Location, same host.
+     * Warned and skipped, they cost a budget slot every pass for ever — 213 warnings in 72 h. The one
+     * hop is followed only when the target is the SAME lot: same host, and `item_url_pattern` reads the
+     * same id off it.
+     */
+    public function testALotMovedToARenamedSlugUnderItsOwnIdIsFollowedOnce(): void
+    {
+        $moved = 'https://www.autohero.com/fr/nissan-note-e-power/id/61bd7f63-e508-43a3-8ba0-a2908629f24d/';
+        $table = $this->table();
+        $lot = $table[self::NISSAN];
+        $table[self::NISSAN] = new HttpResponse(301, '', ['location' => '/fr/nissan-note-e-power/id/61bd7f63-e508-43a3-8ba0-a2908629f24d/']);
+        $table[$moved] = $lot;
+        $client = new TableHttpClient($table);
+        $warnings = [];
+        $slept = [];
+        $source = $this->source($client, budget: 5, warn: static function (string $w) use (&$warnings): void { $warnings[] = $w; }, rateLimitMs: 1000, sleeper: static function (int $ms) use (&$slept): void { $slept[] = $ms; });
+
+        $lots = $source->fetch();
+
+        self::assertCount(5, $lots, 'the moved lot is read, not skipped');
+        self::assertSame([], $warnings);
+        $nissan = array_values(array_filter($lots, static fn ($l): bool => $l->externalId === '61bd7f63-e508-43a3-8ba0-a2908629f24d'));
+        self::assertCount(1, $nissan);
+        // The page's own `offers.url` still wins, as for every lot: measured on a live moved lot, the
+        // target states the OLD slug as its URL, which a browser follows back to the same page.
+        self::assertSame(self::NISSAN, $nissan[0]->url);
+        self::assertSame('Nissan Note 1.2 DIG-S Tekna CVT', $nissan[0]->title);
+        self::assertContains($moved, $client->urls);
+        self::assertCount(6, $slept, 'the followed hop is paced like any lot page');
+    }
+
+    /** @return iterable<string, array{string}> */
+    public static function redirectsThatAreNotTheSameLot(): iterable
+    {
+        yield 'another id' => ['/fr/nissan-note/id/00000000-0000-4000-8000-000000000000/'];
+        yield 'another host' => ['https://evil.example/fr/nissan-note/id/61bd7f63-e508-43a3-8ba0-a2908629f24d/'];
+        yield 'not a lot page' => ['/fr/voitures-occasion/'];
+        yield 'no location' => [''];
+    }
+
+    /** Anything but the same lot on the same host is warned and skipped, and its target never requested. */
+    #[DataProvider('redirectsThatAreNotTheSameLot')]
+    public function testARedirectThatIsNotTheSameLotIsWarnedAndNotFollowed(string $location): void
+    {
+        $table = $this->table();
+        $table[self::NISSAN] = new HttpResponse(301, '', $location === '' ? [] : ['location' => $location]);
+        $client = new TableHttpClient($table);
+        $warnings = [];
+        $source = $this->source($client, budget: 5, warn: static function (string $w) use (&$warnings): void { $warnings[] = $w; });
+
+        $lots = $source->fetch();
+
+        self::assertCount(4, $lots);
+        self::assertCount(1, $warnings);
+        self::assertStringContainsString('301', $warnings[0]);
+        self::assertCount(6, $client->urls, 'the sitemap and five lot pages, no redirect target');
+    }
+
+    /**
+     * The HOST is checked on its own, not left to the pattern: the shipped `item_url_pattern` anchors
+     * `www.autohero.com`, so with it this guard never decides. A pattern that names no host must still
+     * never lead the source to another host carrying the same id.
+     */
+    public function testAHostFreePatternStillNeverFollowsToAnotherHost(): void
+    {
+        $table = $this->table();
+        $table[self::NISSAN] = new HttpResponse(301, '', ['location' => 'https://evil.example/fr/nissan-note/id/61bd7f63-e508-43a3-8ba0-a2908629f24d/']);
+        $client = new TableHttpClient($table);
+        $warnings = [];
+        $source = $this->source($client, budget: 5, warn: static function (string $w) use (&$warnings): void { $warnings[] = $w; }, itemUrlPattern: '~/id/([0-9a-f-]{36})/?$~');
+
+        self::assertCount(4, $source->fetch());
+        self::assertCount(1, $warnings);
+        self::assertNotContains('https://evil.example/fr/nissan-note/id/61bd7f63-e508-43a3-8ba0-a2908629f24d/', $client->urls);
+    }
+
+    /** One hop only: a target that redirects again is warned, never walked. */
+    public function testASecondRedirectIsNotFollowed(): void
+    {
+        $moved = 'https://www.autohero.com/fr/nissan-note-e-power/id/61bd7f63-e508-43a3-8ba0-a2908629f24d/';
+        $table = $this->table();
+        $table[self::NISSAN] = new HttpResponse(301, '', ['location' => $moved]);
+        $table[$moved] = new HttpResponse(301, '', ['location' => self::NISSAN]);
+        $warnings = [];
+        $source = $this->source(new TableHttpClient($table), budget: 5, warn: static function (string $w) use (&$warnings): void { $warnings[] = $w; });
+
+        self::assertCount(4, $source->fetch());
+        self::assertCount(1, $warnings);
+        self::assertStringContainsString($moved, $warnings[0]);
+    }
+
+    /** The target is robots-checked like every lot page, and a refusal is as loud there. */
+    public function testARedirectTargetRefusedByRobotsIsLoud(): void
+    {
+        $table = $this->table();
+        $table[self::NISSAN] = new HttpResponse(301, '', ['location' => '/fr/interdit/id/61bd7f63-e508-43a3-8ba0-a2908629f24d/']);
+        $robots = Robots::parse("User-agent: *\nDisallow: /fr/interdit/\n");
+
+        $this->expectException(SourceError::class);
+        $this->expectExceptionMessage('robots.txt');
+        $this->source(new TableHttpClient($table), budget: 5, robots: $robots)->fetch();
+    }
+
     public function testTheRateLimitIsHonouredBetweenLotFetches(): void
     {
         $slept = [];
@@ -305,11 +412,12 @@ final class AutoheroFixtureTest extends TestCase
         int $rateLimitMs = 0,
         ?\Closure $sleeper = null,
         array $mapOverrides = [],
+        ?string $itemUrlPattern = null,
     ): SitemapVehicleSource {
         $shipped = VehicleSourceLoader::load(self::ROOT . '/config/car/sources.json')['autohero'];
         $definition = new VehicleSourceDefinition(
             name: $shipped->name, enabled: true, family: $shipped->family, type: $shipped->type,
-            url: $shipped->url, itemUrlPattern: $shipped->itemUrlPattern,
+            url: $shipped->url, itemUrlPattern: $itemUrlPattern ?? $shipped->itemUrlPattern,
             map: [...$shipped->map, ...$mapOverrides],
             lotBudgetPerPass: $budget, rateLimitMs: $rateLimitMs,
         );
