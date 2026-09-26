@@ -6278,6 +6278,13 @@ run_sabotage "job: Mindquest claims the sign-up confirmation from the same sende
   config/job/sources.json \
   's%~^Job Alert\\\\b~u%~^~u%'
 
+# A DIGEST CARD'S `description` GROUP IS THE OFFER'S TEXT (2026-09-26, freelance-informatique.fr): its
+# skills line is what the stack score and H4 read beside the title. Dropping the named argument leaves
+# every card with an empty description, silently — nothing misses, nothing warns.
+run_sabotage "job: a digest card's description group reaches the offer (2026-09-26)" \
+  src/php/Job/JobDigestEmailSource.php \
+  "/description: \\\$g\\['description'\\],/d"
+
 # THE ABORT COMES BEFORE THE TALLY, and that ordering is the finding rather than a nicety (C2
 # round 7, resilience P3). The alert job harvests the `N sabotage(s) detected, M undetected` line;
 # printed AFTER it, a shard that selected no case ended its log with a clean-looking `0 / 0` and the

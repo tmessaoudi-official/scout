@@ -39,7 +39,7 @@ final class JobSourceLoader
     /**
      * The named groups `JobDigestEmailSource` requires in `card_pattern`, plus ONE of
      * {@see CARD_PLACE_GROUPS}: Free-Work states its place as the last `facts` segment, HelloWork and
-     * Apec on a line of its own. `contracts`, `company` and `pay` are optional. A card that states no
+     * Apec on a line of its own. `contracts`, `company`, `pay` and `description` are optional. A card that states no
      * place at all (Collective.work) must DECLARE it with `place_absent: "true"`, so a place group
      * forgotten in a pattern is still refused rather than read as a portal that names none.
      */

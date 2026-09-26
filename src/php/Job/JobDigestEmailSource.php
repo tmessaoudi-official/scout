@@ -19,7 +19,7 @@ use Scout\Core\SourceHealth;
  * HTML-only, so the body is the stripped HTML with each anchor's URL written into it).
  *
  * **One configured `card_pattern` per card**, with the named groups `title` and `url`, one of `facts`
- * or `place`, and optionally `contracts`, `company` and `pay`, because here the card's link does not
+ * or `place`, and optionally `contracts`, `company`, `pay` and `description`, because here the card's link does not
  * open the card: the LinkedIn reader, which
  * starts a card at its link, cannot read this shape. The pattern is deliberately NOT line-anchored in
  * the shipped config — Free-Work glues the first card of every section onto the section header line,
@@ -187,7 +187,7 @@ final readonly class JobDigestEmailSource implements AcknowledgesMessages, Count
         $cards = [];
         foreach ($found > 0 ? $matches : [] as $m) {
             $groups = [];
-            foreach (['title', 'contracts', 'facts', 'url', 'company', 'place', 'pay'] as $group) {
+            foreach (['title', 'contracts', 'facts', 'url', 'company', 'place', 'pay', 'description'] as $group) {
                 $groups[$group] = trim(preg_replace('~\s+~u', ' ', (string) ($m[$group] ?? '')) ?? '');
             }
             $cards[] = [$m[0], $groups];
@@ -273,6 +273,9 @@ final readonly class JobDigestEmailSource implements AcknowledgesMessages, Count
             contracts: $contracts,
             payText: $pay === [] ? null : implode("\n", $pay),
             observedAt: $observedAt,
+            // The offer's own text when a card states one (freelance-informatique.fr's skills line):
+            // the stack score, H4 and the pay reader read it with the title.
+            description: $g['description'],
         );
     }
 }

@@ -21,12 +21,12 @@ final class JobSourceLoaderTest extends TestCase
 {
     private const string ROOT = __DIR__ . '/../../..';
 
-    public function testTheShippedConfigLoadsItsSixSources(): void
+    public function testTheShippedConfigLoadsItsSevenSources(): void
     {
         $sources = JobSourceLoader::load(self::ROOT . '/config/job/sources.json');
 
-        self::assertSame(['linkedin', 'freework', 'hellowork', 'apec', 'collective', 'mindquest'], array_keys($sources));
-        foreach (['freework', 'hellowork', 'apec', 'collective', 'mindquest'] as $digest) {
+        self::assertSame(['linkedin', 'freework', 'hellowork', 'apec', 'collective', 'mindquest', 'freelance_informatique'], array_keys($sources));
+        foreach (['freework', 'hellowork', 'apec', 'collective', 'mindquest', 'freelance_informatique'] as $digest) {
             self::assertTrue($sources[$digest]->enabled, $digest);
             self::assertSame('email_digest', $sources[$digest]->type, $digest);
         }
@@ -34,6 +34,7 @@ final class JobSourceLoaderTest extends TestCase
         self::assertSame('offres@diffusion.apec.fr', $sources['apec']->param('from'));
         self::assertSame('ops@collective.work', $sources['collective']->param('from'));
         self::assertSame('account@mindquest.io', $sources['mindquest']->param('from'));
+        self::assertSame('noreply@freelance-informatique.fr', $sources['freelance_informatique']->param('from'));
         self::assertSame('true', $sources['collective']->param('place_absent'));
         $d = $sources['linkedin'];
         self::assertTrue($d->enabled);

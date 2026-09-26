@@ -111,6 +111,23 @@
         "id_token_pattern": "~/lnk/[^/\\s]+/\\d+/[^/\\s]+/(?<token>[A-Za-z0-9_-]+)~",
         "id_pattern": "~/missions/(\\d+)~"
       }
+    },
+    "freelance_informatique": {
+      "_why": "freelance-informatique.fr's opportunity alert (developer ruling 2026-09-25: Mindquest, LeHibou, freelance-informatique.fr). ONE offer per mail, HTML only, links direct to the offer (no click tracker). The card reads `…votre profil :` ⏎ title ⏎ its link ⏎ `Date de début`, `Localisation`, `Durée`, `Compétences souhaitées`, each behind an emoji. Measured on ONE mail (2026-09-26, n=1). Stated costs: no company, no pay, no work mode, no contract and no publication date — the site is freelance only, but the card never says so, so the contract is unknown; the start date is not a publication date and is not read; the skills line is the whole description, so the stack score reads a few keywords rather than the offer; the location classifier reads names, so `94220 Charenton le Pont` is judged on its commune.",
+      "_verified_at": "2026-09-26",
+      "enabled": true,
+      "family": "portal",
+      "type": "email_digest",
+      "params": {
+        "_from": "The From header; the SendGrid envelope is on the same domain.",
+        "from": "noreply@freelance-informatique.fr",
+        "_subject_pattern": "The alert subject reads `Une nouvelle opportunité peut vous intéresser`.",
+        "subject_pattern": "~^Une nouvelle opportunité\\b~u",
+        "_card_pattern": "Anchored on `profil :`, the line above the title. Each fact line starts with an emoji, read as `\\S*`. `Date de début` is skipped, `Durée` becomes a label and `Compétences souhaitées` the description; both are optional, so a mail stating neither is still read.",
+        "card_pattern": "~profil\\h*:\\s*+(?<title>\\S[^\\n]*?)\\h*\\n\\s*+(?<url>https://www\\.freelance-informatique\\.fr/mission-\\S+)(?:\\s*+\\S*\\h*Date de début\\h*:[^\\n]*)?\\s*+\\S*\\h*Localisation\\h*:\\h*(?<place>[^\\n]+?)\\h*\\n(?:\\s*+\\S*\\h*Durée\\h*:\\h*(?<facts>[^\\n]+?)\\h*\\n)?(?:\\s*+\\S*\\h*Compétences souhaitées\\h*:\\h*(?<description>[^\\n]+?)\\h*\\n)?~u",
+        "_id_pattern": "The last slug segment, `260924B004`: six digits, a letter, then more. Read after the query (`?external_from=alerte`) is stripped.",
+        "id_pattern": "~/mission-[^/]*-([0-9]{6}[A-Z][0-9A-Z]*)$~"
+      }
     }
   }
 }

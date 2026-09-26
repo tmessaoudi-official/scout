@@ -440,6 +440,37 @@ final class JobDigestEmailSourceTest extends TestCase
         ]]]);
     }
 
+    /**
+     * A `description` group is the offer's own text (freelance-informatique.fr: its `Compétences
+     * souhaitées` line), so the stack score, H4 and the pay reader see it. Collapsed like every other
+     * group; an optional group that did not participate is the empty description, never a miss.
+     */
+    public function testADescriptionGroupBecomesTheOffersDescription(): void
+    {
+        $card = static fn (string $id, string $skills): string => "Profil : Dev {$id}\nhttps://jobs.example/mission-{$id}\nLieu : Paris\n"
+            . ($skills === '' ? '' : "Compétences : {$skills}\n");
+        $source = new JobDigestEmailSource(
+            new JobSourceDefinition('fi', true, 'portal', 'email_digest', [
+                'from' => self::SENDER,
+                'subject_pattern' => '~^Une nouvelle opportunité~u',
+                'card_pattern' => '~Profil : (?<title>[^\n]+)\n(?<url>https://jobs\.example/mission-\S+)\nLieu : (?<place>[^\n]+)\n(?:Compétences : (?<description>[^\n]+)\n)?~u',
+                'id_pattern' => '~/mission-([a-z0-9]+)$~',
+            ]),
+            JobStore::open(':memory:'),
+            new RecordingMailbox([
+                self::message($card('a1', 'Angular,   TypeScript'), subject: 'Une nouvelle opportunité'),
+                self::message($card('b2', ''), subject: 'Une nouvelle opportunité'),
+            ]),
+        );
+
+        $byId = [];
+        foreach ($source->fetch() as $o) {
+            $byId[$o->externalId] = $o->description;
+        }
+        self::assertSame(['a1' => 'Angular, TypeScript', 'b2' => ''], $byId);
+        self::assertSame([], $source->patternMisses()->total());
+    }
+
     private static function coMessage(string $company, string $title, string $id): string
     {
         return "From: Collective <ops@collective.work>\r\nTo: <alertes@example.invalid>\r\nSubject: [abonne x {$company}] Nouvelle opportunité\r\n"

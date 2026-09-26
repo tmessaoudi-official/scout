@@ -322,7 +322,7 @@ final class FixtureSecretsTest extends TestCase
         'collective.work',
         // Mindquest's alert sender `account@…`, its footer's `contact@…` and its Mailjet envelope
         // `SenderEmail: contact@club-freelance.com` — the parent company's address.
-        'mindquest.io', 'club-freelance.com',
+        'mindquest.io', 'club-freelance.com', 'freelance-informatique.fr',
         // Alcopa Auction's own `contact@…`, printed in every page's footer — the site's address.
         'alcopa-auction.fr',
         // NOT a domain either: Apec's asset `no-logo@2x.gif` — the La Centrale case above, as a GIF.

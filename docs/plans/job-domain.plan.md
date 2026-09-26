@@ -84,6 +84,7 @@ plan below is approved.
 - [2026-09-25 18:43] AGREED: a claimed LinkedIn alert with no HTML part is warned about, once per mail and pass, naming its date — the escalation cannot see one among normal mails, and it is marked \Seen with nothing read. The warning repeats while the mail stays in the IMAP window, as the duplicate-card warning does.
 - [2026-09-25 22:05] AGREED: the stack keyword groups stay as shipped. Trialled over the 424 stored matches at the deployed gate of 40: 331 match titles name no stack at all, and no missing language appears in any of them; cloud/infra terms in `adjacent` change 29 scores and push one more offer — a Salesforce architect, because `Cloud` outranks the `other` group; `JavaScript`/`js` in `front` pushes two, one of them only because `js` matched inside `Node.js`. 28 pushes become 29 or 30 at most — the cards are too thin for keywords to matter, the green finding again.
 - [2026-09-26 11:30] NOTED: Mindquest is source #6 — its first alert arrived 2026-09-26 08:00Z, delivered twice under two mission URL shapes; the reader decodes the offer id from the Mailjet click link's last segment and reads 12 offers `ok` over the two copies (4 matches, 2 rejects each, scores 14–25). The scrubber had to learn Mailjet on an account subdomain, an address folded by a QP soft break, `X-MJ-Mid` and the `oo/` pixel before the capture could be committed.
+- [2026-09-26 12:39] NOTED: freelance-informatique.fr is source #7 — one offer per mail with a direct link, the id the last slug segment (`260924B004`); `card_pattern` gained an optional `description` group so its `Compétences souhaitées` line reaches the stack score; reads 1 offer `ok` (a match at 31, under the gate of 40). The scrubber drops SendGrid's `X-SG-EID` and `X-Entity-ID`. n=1.
 
 ## Evidence gathered (2026-09-13)
 - `Cli/Domains::all()` is the registry — a new domain is one entry plus `Scout\<Slug>\`, `config/<slug>/` and `<SLUG>_*` keys.
@@ -270,7 +271,7 @@ says so on its own line and earns 0.
 ### Needs input from the developer (no code can supply these)
 - ~~A Gmail label `job-watch/portails` and its LinkedIn filter~~ — done 2026-09-13 (Decisions Log).
 - ~~Alerts on APEC, HelloWork and Free-Work~~ — live as sources since 2026-09-24 (Decisions Log); Collective.work added the same day. WTTJ and Indeed were not chosen on 2026-09-25.
-- ~~Saved-search alerts on Mindquest, LeHibou and freelance-informatique.fr~~ — created 2026-09-25 (Decisions Log). Mindquest's first alert arrived 2026-09-26 and its reader is live; freelance-informatique's arrived the same morning (reader next); LeHibou's has not. Still owed by the developer: the Gmail filters routing the three senders into `job-watch/portails`.
+- ~~Saved-search alerts on Mindquest, LeHibou and freelance-informatique.fr~~ — created 2026-09-25 (Decisions Log). Mindquest's first alert arrived 2026-09-26 and its reader is live; freelance-informatique's arrived the same morning and its reader is live too; LeHibou's has not. Still owed by the developer: the Gmail filters routing the three senders into `job-watch/portails`.
 - ~~A francetravail.io application~~ — not needed: France Travail refused on robots.txt (ruled 2026-09-25, Decisions Log).
 
 ### Open rulings, with the default applied until ruled
