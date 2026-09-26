@@ -454,8 +454,7 @@ after a rollback is harmless; reverting its commit removes it.
 ### Blocked
 - WTTJ as a source: its saved-search alerts are suspended site-wide (checked 2026-09-23, re-checked 2026-09-25: still *« Alerts unavailable at the moment — your alerts are getting a makeover »*); re-check `welcometothejungle.com/fr/me/alerts`. Following a company is the only alert left, per company rather than per search.
 ### Needs input
-- Gmail: add the Free-Work sender to the `job-watch/portails` filter once its first alert shows the address; a separate parked label + filter for HelloWork and Apec.
-- Slice 2: job-alert subscriptions on WTTJ, APEC, HelloWork, Free-Work and Indeed, into `job-watch/portails`.
+- Slice 2: job-alert subscriptions still owed on WTTJ (suspended site-wide, see Blocked) and Indeed. Free-Work, HelloWork and Apec are live and read `ok` (2026-09-26), so their filter and subscription asks are done.
 ### Needs research
 - **Collective.work** (developer, 2026-09-24): absent from `var/claude/jobs/sources-research.md` and this plan. Measured 2026-09-24: `robots.txt` disallows only `/style-guide`; the sitemap lists `blog`, `solution`, `etude-de-cas`, `produits`, `pricing`, `talents` and NO mission or offer URL, and its blog titles address recruiters (posting to many job boards, programmatic job ads) — so it reads as a recruiter-side product with no public board [Inferred]. The route, if any, is an account's mission-alert email (hard rule 4, the AL'in shape): the developer has an account, and four daily alerts were created 2026-09-24 (Decisions Log). The email's shape was open until 2026-09-24 18:28, when the label was searched by sender and held 24 recent mails (459 over a year): built as source #5, see the Decisions Log.
 - ~~Keyword list widening (Java/Spring, Vue.js, …)~~ — Java, Spring and Vue.js were already seeded in step 3; the further widening was trialled and declined 2026-09-25 (Decisions Log).
