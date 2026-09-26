@@ -154,6 +154,11 @@ $drop = [
     // MAILJET, added 2026-09-26 (Mindquest). `X-MJ-Mid` is the message id, and it is byte for byte the
     // recipient token every click link carries — the linkage the Mailjet rule below removes from links.
     'x-mj-mid',
+    // SENDGRID, added 2026-09-26 (freelance-informatique.fr). `X-SG-EID` is its encrypted per-message
+    // event id, folded over eight RFC 2047 lines, and `X-Entity-ID` names the sending account. Neither
+    // decodes to the address, so the recoverability check finds nothing in them; nothing reads them.
+    'x-sg-eid',
+    'x-entity-id',
 ];
 
 $eol = str_contains($raw, "\r\n") ? "\r\n" : "\n";

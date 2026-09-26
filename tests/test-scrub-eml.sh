@@ -1163,5 +1163,30 @@ else
   for c in "and its recipient token is gone" "and the tracking pixel keeps its shape, so it still reads as a pixel" "and the signed unsubscribe values are gone" "and a plain page target SURVIVES, because it is the payload" "and a target carrying a query is NOT recoverable (it can carry a signature)"; do check "$c" false; done
 fi
 
+# ── SENDGRID'S EVENT AND ENTITY HEADERS (2026-09-26, freelance-informatique.fr) ────────────────
+# `X-SG-EID` is SendGrid's encrypted per-message event id, RFC 2047-encoded across eight folded lines;
+# `X-Entity-ID` names the sending account. Neither decodes to the address, so the recoverability check
+# has nothing to find, and the tool reported `scrubbed` with both in place. Nothing reads them: dropped
+# by name, the Mailgun and Mailjet precedent.
+{
+  printf 'From: Freelance-Informatique <noreply@freelance-informatique.fr>\r\n'
+  printf 'To: <%s>\r\n' "$address"
+  printf 'Subject: Une nouvelle opportunite\r\n'
+  printf 'X-SG-EID: \r\n =?us-ascii?Q?u001=2ElAeXsCNWWhOXgdoAWXLMPtMDRucKaqWylxPReS4KRYtrI9vJev2=2FqLz5s?=\r\n =?us-ascii?Q?z6EWjfwb2iPiaWK66=2FtOqll5EasnzfQg19c5LWH?=\r\n'
+  printf 'X-Entity-ID: u001.lSdHexHP5MezpTjHFsERlQ==\r\n'
+  printf 'MIME-Version: 1.0\r\n'
+  printf 'Content-Type: text/plain; charset=utf-8\r\n\r\n'
+  printf 'Une offre.\r\n'
+} > "$work/sendgrid.eml"
+sendgrid_status=0
+php "$repo/tools/scrub-eml.php" "$work/sendgrid.eml" "$work/sendgrid.out.eml" "$address" >"$work/sendgrid.log" 2>&1 || sendgrid_status=$?
+check "a SendGrid capture is scrubbed" test "$sendgrid_status" -eq 0
+if [[ -f "$work/sendgrid.out.eml" ]]; then
+  refute "and X-SG-EID is gone, continuation lines included" grep -aqE 'X-SG-EID|lAeXsCNWWhOX|z6EWjfwb2iPi' "$work/sendgrid.out.eml"
+  refute "and X-Entity-ID is gone" grep -aqE 'X-Entity-ID|lSdHexHP5Mez' "$work/sendgrid.out.eml"
+else
+  for c in "and X-SG-EID is gone, continuation lines included" "and X-Entity-ID is gone"; do check "$c" false; done
+fi
+
 printf '\n  %d passed, %d failed\n\n' "$pass" "$fail"
 [[ "$fail" -eq 0 ]]
