@@ -14,17 +14,19 @@ use Scout\Core\Offline;
  *
  * - **Identify honestly.** One User-Agent, naming the tool and its purpose. No browser
  *   impersonation, no rotation — those are the fingerprint-spoofing the rule forbids outright.
- * - **No cookie jar, no proxy support, no redirect to a different host.** Each of those is a step
- *   toward the anti-bot arms race this project refuses to enter. When a site blocks us, the answer
- *   is the email-alert route, never a better disguise.
- * - **Redirects are followed at most three times**, and only within the same host. An open redirect
- *   would otherwise let a compromised source point the poller anywhere.
+ * - **No cookie jar, no proxy support.** Each of those is a step toward the anti-bot arms race this
+ *   project refuses to enter. When a site blocks us, the answer is the email-alert route, never a
+ *   better disguise.
+ * - **A redirect is never followed here.** A 3xx comes back to the caller like any other status: a
+ *   hop taken inside libcurl would pass below the offline switch, the header guards and every
+ *   `robots.txt` check a source makes per URL. The one hop this project takes is the caller's
+ *   (`SitemapVehicleSource::sameLotTarget()`), same host, same lot, robots-checked and paced.
+ *   `sendFollowing()`, which followed up to three same-host hops with no robots check, had no caller
+ *   and no test, and was deleted 2026-09-26.
  */
 final readonly class CurlHttpClient implements HttpClient
 {
     public const string USER_AGENT = 'scout/1.0 (+self-hosted personal listing watcher; contact via repository)';
-
-    private const int MAX_REDIRECTS = 3;
 
     /** 8 MB. A listing page that large is a misconfiguration, and reading it unbounded is a DoS on ourselves. */
     private const int MAX_BODY_BYTES = 8 * 1024 * 1024;
@@ -133,7 +135,7 @@ final readonly class CurlHttpClient implements HttpClient
             CURLOPT_CONNECTTIMEOUT => $request->timeoutSeconds,
             CURLOPT_USERAGENT => self::USER_AGENT,
             CURLOPT_HTTPHEADER => $headers,
-            // Followed by US, not by cURL, so the same-host rule below is actually applied.
+            // Never followed: a 3xx is the caller's to judge (see the class docblock).
             CURLOPT_FOLLOWLOCATION => false,
             CURLOPT_MAXREDIRS => 0,
             CURLOPT_SSL_VERIFYPEER => true,
@@ -181,67 +183,5 @@ final readonly class CurlHttpClient implements HttpClient
         }
 
         return new HttpResponse($status, $body, $responseHeaders);
-    }
-
-    /**
-     * Follow a redirect chain manually, refusing to leave the original host.
-     *
-     * cURL's own `FOLLOWLOCATION` would happily cross hosts, and a source that redirects elsewhere
-     * is either compromised or not the source we verified — either way, following it silently means
-     * polling something nobody approved, with our honest User-Agent attached.
-     */
-    /**
-     * Is this URL served by this machine?
-     *
-     * Deliberately a NAME check and not a resolution: resolving would let a hostname that happens
-     * to point at 127.0.0.1 today decide whether the offline rule applies, which makes the rule
-     * depend on DNS. The three spellings below are the ones a test server is ever reachable by.
-     */
-    public function sendFollowing(HttpRequest $request): HttpResponse
-    {
-        $current = $request;
-        $origin = parse_url($request->url, PHP_URL_HOST);
-
-        for ($hop = 0; $hop <= self::MAX_REDIRECTS; ++$hop) {
-            $response = $this->send($current);
-
-            if ($response->status < 300 || $response->status >= 400) {
-                return $response;
-            }
-
-            $location = $response->header('location');
-            if ($location === null || $location === '') {
-                return $response;
-            }
-
-            $target = self::resolve($current->url, $location);
-            if (parse_url($target, PHP_URL_HOST) !== $origin) {
-                throw new HttpError(sprintf(
-                    'refusing a cross-host redirect from %s to %s',
-                    (string) $origin,
-                    (string) parse_url($target, PHP_URL_HOST),
-                ));
-            }
-
-            $current = new HttpRequest($target, 'GET', $request->headers, null, $request->timeoutSeconds);
-        }
-
-        throw new HttpError('too many redirects from ' . $request->url);
-    }
-
-    private static function resolve(string $base, string $location): string
-    {
-        if (preg_match('~^https?://~i', $location) === 1) {
-            return $location;
-        }
-
-        $parts = parse_url($base);
-        $scheme = $parts['scheme'] ?? 'https';
-        $host = $parts['host'] ?? '';
-        $prefix = $scheme . '://' . $host . (isset($parts['port']) ? ':' . $parts['port'] : '');
-
-        return str_starts_with($location, '/')
-            ? $prefix . $location
-            : $prefix . '/' . ltrim($location, '/');
     }
 }

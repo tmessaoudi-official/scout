@@ -12,6 +12,7 @@ declare(strict_types=1);
  * honest constant sits unread, and a review demonstrated exactly that.
  *
  *   argv[1]  transcript path: every request-head line received, one per line, written before exit.
+ *   argv[2]  optional `redirect:<location>` — answer 301 with that Location instead of the 200.
  *
  * Prints `host:port` on stdout once listening (the OS picks the port). Responds to the single
  * request with a fixed 200 and a small JSON body, then exits. Every socket wait is bounded at
@@ -19,6 +20,7 @@ declare(strict_types=1);
  */
 
 $transcriptPath = $argv[1];
+$redirectTo = str_starts_with($argv[2] ?? '', 'redirect:') ? substr($argv[2], strlen('redirect:')) : null;
 
 $server = stream_socket_server('tcp://127.0.0.1:0', $errno, $errstr);
 if ($server === false) {
@@ -74,10 +76,10 @@ if ($received !== '') {
     $transcript[] = $received;
 }
 
-$body = '{"results":{"items":[]}}';
+$body = $redirectTo === null ? '{"results":{"items":[]}}' : '';
 @fwrite(
     $conn,
-    "HTTP/1.1 200 OK\r\n"
+    ($redirectTo === null ? "HTTP/1.1 200 OK\r\n" : "HTTP/1.1 301 Moved Permanently\r\nLocation: " . $redirectTo . "\r\n")
     . "Content-Type: application/json\r\n"
     . 'Content-Length: ' . strlen($body) . "\r\n"
     . "Connection: close\r\n"

@@ -4923,6 +4923,13 @@ run_sabotage "car: Autohero does not pace a followed redirect (2026-09-26)" \
   src/php/Car/SitemapVehicleSource.php \
   '/refuseUnlessAllowed(\$moved)/,/\$url = \$moved;/ s%\$this->pace();%/* unpaced */%'
 
+# THE TRANSPORT NEVER FOLLOWS A REDIRECT (2026-09-26). A hop inside libcurl passes below the offline
+# switch and every per-URL robots check. The wire test's target is a dead loopback port, so this
+# case can never reach a third-party host even when it lands.
+run_sabotage "the HTTP transport follows redirects inside libcurl, below every robots check (2026-09-26)" \
+  src/php/Adapters/Http/CurlHttpClient.php \
+  's%CURLOPT_FOLLOWLOCATION => false,%CURLOPT_FOLLOWLOCATION => true,%'
+
 # The replay runs the source UNTHROTTLED. With the throttle kept, In'li's 2 s × 20 simulated detail
 # fetches is 40+ s of sleeping to answer a file (43 s measured) — a repair tool nobody reaches for.
 run_sabotage "scout replay --file keeps the adapter's rate limit and sleeps through simulated fetches" \

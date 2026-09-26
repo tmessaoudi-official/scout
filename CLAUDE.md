@@ -1089,8 +1089,13 @@ applies and the figure lands in `rentHc`.
 > wildcard, and reported every source as affected; `instr(url, char(37)||'40')` has no
 > metacharacters. **Scope stated honestly: no production path fetches a PAP URL today** (hydration
 > is refused above), so this is defence-in-depth for the surface `Redact` guards, not a leak that
-> was happening. **A followed redirect is still never re-checked against robots**, and that one
-> remains open.
+> was happening. **The followed-redirect half is CLOSED (2026-09-26), and it was closed by
+> measurement rather than by a fix**: no production path follows a redirect except
+> `SitemapVehicleSource::sameLotTarget()`, which robots-checks and paces its one hop; libcurl's
+> `FOLLOWLOCATION` is `false`, pinned by a loopback wire test
+> (`testARedirectIsReturnedToTheCallerRatherThanFollowed`, target a dead port so a sabotaged client
+> never leaves the machine) and a ledger case. `CurlHttpClient::sendFollowing()` — the one method
+> that did follow, with no robots check — had no caller and no test, and was deleted.
 
 ### Transit enrichment — the last empty layer, and the curve that had to be measured (2026-08-26)
 

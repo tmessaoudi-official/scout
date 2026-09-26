@@ -336,6 +336,49 @@ final class NetworkAdaptersTest extends TestCase
     }
 
     /**
+     * THE TRANSPORT NEVER FOLLOWS A REDIRECT (2026-09-26). A hop libcurl takes on its own happens
+     * below every guard this client and its callers apply — the offline switch, the header refusals,
+     * and above all `robots.txt`, which a source checks per URL before it sends. So a 3xx must come
+     * back to the caller, who alone decides: every adapter refuses it as a non-2xx, and the one hop
+     * this project follows (`SitemapVehicleSource::sameLotTarget()`) is robots-checked and paced.
+     *
+     * The target is a dead loopback port on purpose: a followed hop fails on this machine, and a
+     * sabotaged client can never reach a third-party host from CI. The Location assertion is the
+     * other half — it proves on a real socket that curl's `Location:` reaches the lowercase lookup
+     * the Autohero hop reads, which a table client cannot show.
+     */
+    public function testARedirectIsReturnedToTheCallerRatherThanFollowed(): void
+    {
+        $transcriptPath = sys_get_temp_dir() . '/rentwatch-http-transcript-' . bin2hex(random_bytes(6)) . '.txt';
+        $target = 'http://127.0.0.1:1/moved';
+
+        $proc = proc_open(
+            [PHP_BINARY, __DIR__ . '/../../Adapters/scripted-http-server.php', $transcriptPath, 'redirect:' . $target],
+            [1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
+            $pipes,
+        );
+        self::assertIsResource($proc, 'the scripted HTTP server must start');
+
+        try {
+            $name = fgets($pipes[1], 256);
+            self::assertIsString($name, 'the server must report the port it chose');
+            $port = (int) substr(strrchr(trim($name), ':') ?: ':0', 1);
+            self::assertGreaterThan(0, $port);
+
+            $response = (new CurlHttpClient())
+                ->send(new HttpRequest('http://127.0.0.1:' . $port . '/lot', timeoutSeconds: 5));
+            self::assertSame(301, $response->status);
+            self::assertSame($target, $response->header('Location'));
+        } finally {
+            foreach ($pipes as $pipe) {
+                @fclose($pipe);
+            }
+            proc_close($proc);
+            @unlink($transcriptPath);
+        }
+    }
+
+    /**
      * `SCOUT_OFFLINE=1` refuses any request to a third-party host.
      *
      * Set by `tests/bootstrap.php` for the whole suite. Spec §11 says parser tests run offline, and
