@@ -20,5 +20,9 @@
   "exclude": [
     "tests/fixtures",
     "var"
-  ]
+  ],
+
+  "_probe_cmd": "Liveness probe for /progress and /next (bin/project-state.sh, tier >= 1): /progress once showed scout at 97 % while both watchers had been down for days. tools/verify-deploy.sh is read-only (docker inspect only) and took 8.5 s under load; only its exit code is recorded, never its output.",
+  "probe_cmd": "tools/verify-deploy.sh",
+  "probe_timeout_s": 30
 }
