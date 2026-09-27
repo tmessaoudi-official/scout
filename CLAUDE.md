@@ -3176,7 +3176,9 @@ var/claude/                 Reports, review outputs — gitignored scratch (hand
 - `ruff` **is** available in this container, and although the PHP side now has a `composer.json`
   there is still no Python manifest — so
   `.claude/hooks/lint-on-write.sh` is live and will report on `prototype/scout.py`. Those findings are
-  known and deliberately unfixed: the prototype is kept verbatim as received.
+  known and deliberately unfixed: the prototype is kept verbatim as received. Since 2026-09-28 they
+  reach Claude directly (the hook's `additionalContext`), so they arrive after any edit there — they
+  still stay unfixed.
 - **A LEDGER CASE THAT TIMES OUT READS AS "UNDETECTED", AND ON A LOADED BOX THAT IS THE COMMONEST
   FALSE RED.** Each case runs under `timeout` (`SABOTAGE_SUITE_TIMEOUT`, default 300 s) and a suite
   that never finished is counted as a loud FAILURE — correctly, since a hang is not a detection. But

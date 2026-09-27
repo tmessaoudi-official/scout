@@ -2,7 +2,8 @@
 # lint-on-write.sh — PostToolUse (Edit|Write)
 #
 # Lints only the file that was just written. Advisory: never blocks, exit code is
-# always 0, findings go to stderr so they land in the transcript.
+# always 0. Findings go to stderr (the transcript, for a human) AND to stdout as
+# hookSpecificOutput.additionalContext, the only exit-0 channel that reaches the model.
 #
 # Python  -> ruff check
 # YAML    -> yamllint (if installed)
@@ -54,9 +55,12 @@ esac
 [[ -z "${out// }" ]] && exit 0
 
 log_obs INFO lint-on-write "findings in ${file_path##*/}" || true
-{
-  echo "lint-on-write: findings in $file_path"
-  printf '%s\n' "$out" | head -40
-} >&2
+msg="lint-on-write: findings in $file_path"$'\n'"$(printf '%s\n' "$out" | head -40)"
+printf '%s\n' "$msg" >&2
+# stderr lands in the transcript for a human, but with exit 0 it never reaches the MODEL; the only
+# channel that does is hookSpecificOutput.additionalContext on stdout (measured 2026-09-28, ~/.claude
+# review-remediation row 33). Guard: test-lint-on-write.sh beside this file.
+printf '%s' "$msg" | python3 -c 'import json,sys
+print(json.dumps({"hookSpecificOutput": {"hookEventName": "PostToolUse", "additionalContext": sys.stdin.read()}}))'
 
 exit 0
