@@ -1900,10 +1900,13 @@ premise"* escape. Protocol details: `.claude/skills/scout-ask-human/SKILL.md` (r
 > machine it works, `askUserQuestionTimeout` is `"never"` globally, and the marker's rationale
 > (a prose question being indistinguishable from a pause) dies with the prose protocol.
 
-**Do not ask about routine work.** The standing directive for this repo is *no interrupts*: announce
-the task size and the plan, then build it. Asking is reserved for the cases in
-§ "When this protocol is mandatory" of that skill — chiefly a genuinely ambiguous request, a
-user-visible product decision, or anything that would weaken an invariant below. **Never ask whether
+**Mode — the global `~/.claude/CLAUDE.md` § Mode decides what stops** (developer rulings 2026-09-27).
+This tree is bypassed for the ask-human gate family, so sessions here run **autonomous**: announce the
+task size and the plan, then build it; on an ambiguity take the recommended option and log it as
+`ASSUMED (review)` in the plan's Decisions Log. Phase markers, evidence grades and the Rule 6 table
+still show (output parity). In every mode, still stop for the cases in § "When this protocol is
+mandatory" of that skill — a user-visible product decision, anything that would weaken an invariant
+below, a destructive step. **Never ask whether
 to weaken the social-housing exclusion** — ask *how* to satisfy it.
 
 Every unanswered question is also written to `docs/OPEN-QUESTIONS.md` with the default that applies if
@@ -2112,6 +2115,11 @@ Each reviewer **reads the actual diff, code and tests itself** — never certify
 narrative — and is chartered to REFUTE, not approve. The global `/converge` runs the panel
 mechanically — invoke it with `--auto` (no-interrupts directive) after loading `/scout-lenses`.
 
+> **Per task vs milestone (2026-09-27):** MAXIMAL is the milestone ceiling. Per task the global tier
+> applies: in autonomous mode (this tree) the project's certification schedule
+> (`~/.claude/projects/-stack-projects-scout/certification-schedule`, asked once), in spec mode the
+> per-gate tier question — `advisor()` recommended (economize ruling, 2026-08-21).
+
 **Tier: MAXIMAL by default** — all three lenses, **two consecutive fully-clean rounds**, any finding
 resets the counter, cap 5 rounds → then ask via `AskUserQuestion` (never silently proceed). Rationale: a
 social-housing false positive is an eligibility failure the user pays for in wasted applications, and a
@@ -2158,10 +2166,10 @@ on **`master`**. Asking permission for them violates the no-interrupts directive
 - **NOT authorised**: `--force` / `--force-with-lease` push, rewriting published history, pushing to any
   branch other than `master`, opening a pull request unless explicitly asked. **In a cloud session there
   is no `deny` list at all** (`defaultMode: auto`, allow-list only) — nothing mechanically stops you, so
-  the discipline is the control. **On the developer's local machine** `~/.claude/settings.json` does deny
-  `git push --force`, `-f` and `--mirror` globally, and `ask-bash-firewall.sh` carries the same force
-  patterns. Its blanket `Bash(git push *)` deny had made this section inert locally from the day it was
-  written (the deny dates to 2026-04-24); it was dropped 2026-08-23.
+  the discipline is the control. **On the developer's local machine** `~/.claude/hooks/ask-bash-firewall.sh`
+  denies `git push --force`, `-f`, `--mirror` and `+refspec` at every level (since 2026-09-27); it allows
+  `--force-with-lease`, which this repo still does not authorise. `~/.claude/settings.json` holds no
+  force-push rule (dropped 2026-08-29; an earlier blanket `Bash(git push *)` deny went 2026-08-23).
 - Commit only when the change is self-contained; never a broken build.
 - Commit style: `feat:` / `fix:` / `refactor:` / `docs:` / `chore:` / `test:`, imperative subject.
 - If the safety classifier blocks a `git commit`, present the exact command for manual execution — do
