@@ -1892,7 +1892,8 @@ in prose drifts, so none is written here.
 
 Questions to the developer use the **`AskUserQuestion` tool**, per the global framework: options with
 the recommended one FIRST (labelled, with its reason) and a visible *"none of these / challenge the
-premise"* escape. Protocol details: `.claude/skills/scout-ask-human/SKILL.md` (renamed from
+premise"* escape. Protocol: the global `/ask-human` skill, § "Question quality"; this repo's additions
+(mandatory cases, a worked example): `.claude/skills/scout-ask-human/SKILL.md` (renamed from
 `ask-human` 2026-08-18 — a repo skill may not share a global skill's name).
 
 > The container-era plain-text protocol and the `❓`/`⏹` end-of-reply markers are **RETIRED**
@@ -3294,8 +3295,8 @@ tests/test-ci-workflow.sh          Proves ci.yml still wires every step this fil
 
 The repo carries exactly FOUR skills, all repo-specific by name and content (global-is-reference
 ruling, 2026-08-18 — a repo may not duplicate anything that exists in `~/.claude/`): `/add-source`
-(onboard a landlord or portal, config-only), `/scout-ask-human` (the question protocol with this
-repo's extra rules), `/scout-lenses` (the mandatory review dimensions + sleuth lens K), and
+(onboard a landlord or portal, config-only), `/scout-ask-human` (this repo's additions to the
+global question protocol), `/scout-lenses` (the mandatory review dimensions + sleuth lens K), and
 `/scout-repair` (the drift gate). Every other skill — `/sweep`, `/sleuth`, `/inspect`, `/gaps`,
 `/forge`, `/cross-check`, `/converge`, `/pre-commit`, `/aggregate-findings`, `/handoff`,
 `/retrospective`, `/expanding-context` — comes from the developer's global install. **Before
