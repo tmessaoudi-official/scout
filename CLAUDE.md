@@ -1896,11 +1896,6 @@ premise"* escape. Protocol: the global `/ask-human` skill, § "Question quality"
 (mandatory cases, a worked example): `.claude/skills/scout-ask-human/SKILL.md` (renamed from
 `ask-human` 2026-08-18 — a repo skill may not share a global skill's name).
 
-> The container-era plain-text protocol and the `❓`/`⏹` end-of-reply markers are **RETIRED**
-> (2026-08-18). They existed because `AskUserQuestion` timed out in the dead cloud container; on this
-> machine it works, `askUserQuestionTimeout` is `"never"` globally, and the marker's rationale
-> (a prose question being indistinguishable from a pause) dies with the prose protocol.
-
 **Mode — the global `~/.claude/CLAUDE.md` § Mode decides what stops** (developer rulings 2026-09-27).
 This tree is bypassed for the ask-human gate family, so sessions here run **autonomous**: announce the
 task size and the plan, then build it; on an ambiguity take the recommended option and log it as
@@ -2102,7 +2097,7 @@ this way" is never authority, and extending it in place contradicts the brief.
 
 ## Certification ladder — governs every 3C/6C gate
 
-`advisor()` **is available on this machine** (verified 2026-08-18) and is the FIRST rung: call it
+`advisor()` **is available on this machine** and is the FIRST rung: call it
 per the global framework. The panel of record for gate rounds is the set of **fresh-context,
 read-only, adversarial reviewer subagents** in `.claude/agents/`. Three lenses, one agent each:
 
