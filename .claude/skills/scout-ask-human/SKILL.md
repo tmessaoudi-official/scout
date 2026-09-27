@@ -34,10 +34,6 @@ when it is not — is the global `/ask-human` skill, § "Question quality". Whet
 the turn or is shown and answered with the recommended option is CLAUDE.md § Mode. This file adds
 only what is specific to this repo.
 
-## Repo notes
-
-- **Part 2 (the minimal example) here:** A **minimal concrete example** of the problem — for a language question, a runnable current-syntax program and its actual current output/error. Not a description of the program: the program.
-
 ## When a question is mandatory here
 
 - Any **user-visible product decision** — which communes or filters are in scope, what a notification
