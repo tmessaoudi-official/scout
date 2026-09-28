@@ -531,6 +531,200 @@ does it this way"* is never authority.
 
 ---
 
+## File layout quick reference
+
+Moved verbatim from `CLAUDE.md` on 2026-09-28 (review-remediation 5.4). Paths are relative to the repository
+root.
+
+```
+.env.example                Committed template for every secret and path. `.env` itself is gitignored
+spec/PROJECT_BRIEF.md       Full specification — the source of truth, and a ruling set
+state/                      The SQLite seen-set, price history and run log. Gitignored, NOT scratch
+prototype/                  Pre-existing single-file prototype. Reference only; do not extend in place
+docs/OPEN-QUESTIONS.md      All 25 questions, each closed 2026-08-07 with the default applied
+docs/ARCHITECTURE.md        The shape of the program in one sitting: layers, the lifecycle of one
+                            pass read out of Pipeline::runOnce, the FOUR §1 routes x THREE announcing
+                            surfaces and the one gate over them, the three stores and their three
+                            independent version counters, the health model, the adapter types, and
+                            the five test layers. Written 2026-09-08 from the code, not from this
+                            file — CLAUDE.md carries sentences it marks stale itself
+docs/RUNBOOK.md             The operator's checklist: zero-to-running, every verb and flag verified
+                            against the three CLI parsers, the two contexts (host `bin/scout
+                            --domain=rent` vs compose `run --rm rent-scout`, whose domain is in the
+                            ENTRYPOINT), and a symptom->check->fix table. It LINKS README's
+                            § Deploying it for the reasoning rather than restating it — a second copy
+                            of a rationale is the copy that drifts
+docs/SOURCES-LIVE.md        The live register for EVERY domain — adapter, identity scheme, rent
+                            basis (CC vs HC), and the STATED COST of each enabled source (no
+                            total here: this line said "sixteen" while the tree held twenty).
+                            docs/SOURCES.md is rent-only and is a candidate catalogue, so the car
+                            sources had no home anywhere until this file
+docs/HISTORY.md             Dated build record derived from git log, plus the five failure patterns
+                            this repo kept repeating (a true number on an invented cause; a fix
+                            landing on one of two symmetric surfaces; n=1; a guarantee no fixture
+                            reaches; green != deployed)
+docs/plans/                 <topic>.plan.md, each with its own ## Decisions Log
+config/<domain>/            criteria.json + sources.json per domain (committed) — JSON, ruled 2026-08-07 (Q22)
+src/php/Cli/                Scout — the --domain dispatcher (never defaults) — Domains (the registry), WatchLoop, ChannelFactory
+src/php/Core/               the GENERIC core: Text, Redact, Pacer, Heartbeat, source health, RunStore,
+                            RecoverableForms (the ONE decode cascade — quoted-printable, header
+                            unfolding, base64 blocks, base64url runs, percent-encoding — that
+                            tools/scrub-eml.php and tests/php/Repo/FixtureSecretsTest.php BOTH call.
+                            They were two copies and the copy was one decode short, so
+                            base64(percent-encoded(address)) passed CI while the tool refused it),
+                            PatternMissLog + CountsPatternMisses (extraction-miss counting and its
+                            read side — moved out of Rent/Adapters 2026-09-01, because a portal
+                            changing its template is neither a housing fact nor a vehicle one)
+                            (run log + health, owned by no domain), SameFilterWarning (every card
+                            of a source failing ONE hard filter — a drifted selector reads as a
+                            quiet market), MalformedText, MutableByDesign, and the Notify channels
+src/php/Rent/               the rent domain — Core (models, tenure classifier, criteria, dedup —
+                            plus ExcludedDwellings, the §1 matcher for the SAME FLAT on record
+                            under another ad id: the fourth persisted route, and the ONE
+                            implementation its three announcing surfaces share — Pipeline, the
+                            digest drain and reclassify; plus Heating and Amenities, the two Track 7
+                            readers, which run over the mapped `description` and NOT over a
+                            field-map entry — one more mapped field changes
+                            `FieldMap::fingerprint()` and invalidates all 737 cached In'li detail
+                            rows), Config, Adapters,
+                            Store, Enrich, Notify (Formatter), Cli/RentScout
+src/php/Car/                the car domain — the Vehicle* classes and Cli/CarScout
+src/php/Job/                the job domain — the Job* classes and Cli/JobScout. Deployed as the
+                            `job-scout` compose service since 2026-09-14
+src/php/Core/Pacer.php      the Q37 cadence; clock, sleeper and RNG all injected so it is testable
+src/php/Cli/WatchLoop.php   the `--watch` loop; survives a failing pass, stops after the one in flight
+src/php/Rent/Adapters/PacedSource.php   decorator applying Pacer, so Pipeline never learns time exists
+src/php/Rent/Store/              SQLite seen-set, price history, cross-portal group (v4); run log
+                            delegated to Core/RunStore
+src/phorj/                  phorj port of the same pure core                  [waits on phorj]
+tests/php/                  PHPUnit suites — generic under Core/Adapters/Config/Cli, then Rent/… and Car/…
+tests/fixtures/rent/tenure/      corpus.json — the language-neutral classifier corpus
+tests/fixtures/<domain>/<source>/   Frozen payloads, one dir per source, under the domain that reads them
+tests/fixtures/rent/seloger/     The first REAL portal alerts, scrubbed. Their AWKWARD structure is
+                            the point — preamble, `=_?:` boundary, 2047 subject split mid-word.
+                            The 003 capture is the TITLE one: four cards, not one of which the
+                            old vocabulary pattern could read (`APARTMENT`, `T5`, `T3`)
+tests/fixtures/rent/bienici/     The second portal's alerts. A five-card alert, a one-card alert whose
+                            suggestion card makes it two, and a message with NO cards at all
+tests/fixtures/rent/leboncoin/   The third portal's, and the first HTML-ONLY alert: no text/plain
+                            part at all, so every URL lives in an href. n=1 — one message, three
+                            cards, the first this subscription ever produced
+tests/fixtures/rent/pap/         The fourth portal's, and the first DIRECT-FROM-OWNER one. ONE listing
+                            per message, so no card_separator at all. The first captures quote the
+                            alert's own SEARCH CRITERIA above the listing — the 45 m² floor the
+                            first-match-wins surface reader returned instead of the flat's 50 —
+                            which is what the positional anchors exist to defeat. The FIFTH is
+                            here for its HEADER, not its flat: `Date: Sat, 5 Sep 2026`, the
+                            single-digit day RFC 5322 allows and this repo's strict parser
+                            refused for a month
+tests/fixtures/job/linkedin/     The job domain's LinkedIn alerts, scrubbed — the scrubber learned their
+                            per-recipient link tokens first. Cards are read from the HTML part
+tests/fixtures/job/freework/     Free-Work's first digest (01, n=1 — 40 cards, 36 distinct) and a
+                            profile reminder from the same sender (00) that must stay unclaimed.
+                            Scrubbed after the tool learned Mailjet's click links
+tests/fixtures/job/hellowork/    Four HelloWork alerts (01-04, one per saved search, 39 offers). Their
+                            click tokens were rewritten in place, so each still decodes to its offer
+tests/fixtures/job/collective/   Five Collective.work opportunity mails, one offer each: 01-04 the current
+                            template (02/03 one offer re-posted under two ids), 05 the pre-2026-09 one
+                            whose `é` is DECOMPOSED. Scrubbed with the subscriber's name as a needle
+tests/fixtures/job/apec/         Apec's first saved-search digest (01, n=1 — 48 cards, 45 distinct) and a
+                            weekly "Nos recommandations" mail (00) that must stay unclaimed. All 221
+                            links survive the scrub DISTINCT — see the Apec bullet for why that matters
+tests/fixtures/job/mindquest/    Mindquest's first alert, delivered twice (01, 02 — six offers each, two URL
+                            shapes) and the account's sign-up confirmation (00) that must stay unclaimed
+tests/fixtures/job/freelance-informatique/   Its first opportunity mail (01, n=1 — one offer, a direct
+                            link, the skills line read as the description)
+tools/scrub-eml.php         Turns a captured .eml into a committable fixture; REFUSES to write
+                            while the address is RECOVERABLE — decoding base64url runs and
+                            quoted-printable before it looks, not merely grepping for it
+tools/dump-eml.php          Pulls several RAW .eml from the alert mailbox when Gmail's own
+                            export is too slow — the newest inside a DATE window
+                            (`DUMP_SINCE_DAYS`, default 7, `all` for history), read-only at
+                            the protocol level (EXAMINE, BODY.PEEK), and its output is UNSCRUBBED by definition, so
+                            scrub-eml.php is still owed afterwards. It REFUSES to write
+                            anywhere under tests/, which is what makes it usable at all: the
+                            one-step path from a mailbox to a committed fixture is how both
+                            of this repo's leaks would happen again. That guard used to fail
+                            OPEN on the bare `tests` and on an unresolvable parent — the
+                            latter being the default out-dir's own shape on a fresh tree, so
+                            it was vacuous by default. Docs: docs/ALERT-CAPTURE.md Part A′
+tests/sabotage-check.sh     Proves the classifier suite detects a regression
+tests/test-tenure-guard.sh  Proves the §1 tripwire fires, and stays quiet on ordinary PHP
+tests/test-vehicle-guard.sh Same, for the CAR excluded set. ONE hook covers both domains:
+                            the relaxation shapes are identical and only the vocabulary
+                            differs, so a second hook would be two log formats and two
+                            places to forget. Its own creation tripped the guard — the file
+                            is nothing but the payloads it exists to catch — so it is
+                            exempted by exact path beside its sibling
+tests/test-fetch-phpunit.sh Proves the runner fetch refuses a bad signature
+tests/test-drift-scan.sh    Proves drift-scan's S8 still fires — a gate nobody has seen red is untested
+tests/test-sabotage-applies.sh   Proves no sabotage expression has rotted into matching nothing
+tests/test-dotenv-cli.sh         Proves the .env loader behind every CLI verb
+tests/test-scrub-eml.sh          Proves the scrubber refuses a RECOVERABLE address — the
+                                 must-strip, must-refuse and must-stay-quiet halves
+tests/test-dump-eml.sh           Proves the capture tool never writes under tests/ and never
+                                 puts the IMAP password in a stack trace. Isolated: the tool
+                                 is copied beside a STUB autoloader, so no case reads the
+                                 real .env or reaches the network. It proves the trace
+                                 mechanism on this machine's own PHP first — an argument
+                                 leaks, a use-binding does not — then ties the tool to it
+tools/verify-deploy.sh           Did the redeploy land? `up -d` printing Started is not a
+                                 deployment: a wedged recreate leaves a watcher in `Created`,
+                                 and `docker compose ps` without -a OMITS it, so the failure
+                                 renders as a shorter list. Asserts every declared service
+                                 has a RUNNING container, on the CURRENT image, that the
+                                 IMAGE ITSELF postdates the newest src/ commit, and that no
+                                 hex-prefixed leftover holds a name for the next recreate to
+                                 die on. That last one is TWO verdicts since 2026-09-08: a
+                                 dead leftover takes `docker rm -f`, while a renamed
+                                 container the service still RESOLVES TO takes
+                                 `up -d --force-recreate` and must not be removed — the tool
+                                 certified one `running, image courante` and offered to
+                                 delete it four lines below. A hex name from another compose
+                                 project on this host is COUNTED, never named and never
+                                 given a remedy — `docker ps -a` is machine-wide, and a
+                                 silent drop reads exactly like a scan that found nothing.
+                                 Read-only. The image-age check is a DIFFERENT
+                                 question from the image-id one and the answer looks the
+                                 same: "running, image courante" is true of a watcher whose
+                                 image predates the fix by a day and a half, which is
+                                 exactly what happened on 2026-09-04
+tests/test-verify-deploy.sh      Its sabotage test — every failure state driven through a
+                                 stub `docker`, counterweight FIRST. A missing image exits 2
+                                 ("build it"), never 1 ("watcher down"): collapsing those
+                                 would make a forgotten build read as a broken watcher.
+                                 NO CASE COUNT IS WRITTEN HERE, deliberately: this line said
+                                 "7 cases" and the very commit that added the eighth and
+                                 ninth left it standing, because it sat in the same hunk as
+                                 an untouched context line. Run it — the tally is its last
+                                 line. Same rule as the skills list further down
+tests/test-sabotage-baseline.sh  Proves the sabotage ledger judges its cases in a GREEN scratch tree
+tests/test-ci-workflow.sh   Proves ci.yml still wires every step this file claims CI runs
+tests/php/Adapters/Mail/ImapMailboxWireTest.php
+                            The IMAP client ON THE WIRE, against scripted-imap-server.php
+                            beside it (forked, loopback, transcript as evidence): a fetch is
+                            EXAMINE + UID FETCH … BODY.PEEK[]; the one write is the \Seen
+                            STORE on claimed, still-unseen UIDs, refused across a UIDVALIDITY
+                            change. Row 36's guarantees, and this client's first wire test
+tools/backup-state.sh       Backs up the seen-set — the one file this project calls
+                            UNRECOVERABLE. SQLite's ONLINE backup API, never `cp`: the watcher
+                            holds the db open in WAL, and a torn byte copy opens without
+                            complaint and reports a plausible row count. Reads the copy back
+                            before reporting success; keeps 7, oldest-first
+tests/test-backup-state.sh  Sabotage test FOR that tool. Its own first draft collided every
+                            backup onto one second-granularity filename and a `<= 7` assertion
+                            hid it — the exact count is asserted now
+tools/fetch-phpunit.sh      Fetches the runner; pinned SHA-256, refuses to install on a mismatch
+tools/phpunit.phar          Test runner (gitignored — see README § Getting started)
+var/claude/                 Reports, review outputs — gitignored scratch (handoffs are the
+                            global PreCompact hook's job, not the repo's)
+.claude/                    Project skills, reviewer agents, hooks, settings, and
+                            progress.json — the adapter ~/.claude/bin/project-state.sh reads
+                            (test_cmd, requires, cursor files). Without it `--record-test`
+                            dies and no plan step can reach the `certified` state at all
+.github/workflows/ci.yml    CI — suite+guards every push/PR, sabotage ledger nightly+dispatch
+```
+
 ## Where to go next
 
 | You want | Read |
@@ -539,6 +733,7 @@ does it this way"* is never authority.
 | what each live source is and what it costs | [`docs/SOURCES-LIVE.md`](SOURCES-LIVE.md) |
 | why a source was or was not adopted | [`docs/SOURCES.md`](SOURCES.md) |
 | how it got here, dated | [`docs/HISTORY.md`](HISTORY.md) |
+| why the code is shaped the way it is — the dated engineering notes moved out of `CLAUDE.md` | [`docs/ENGINEERING-NOTES.md`](ENGINEERING-NOTES.md) |
 | every filter dimension considered | [`docs/FILTERS.md`](FILTERS.md) |
 | the product ruling set | [`spec/PROJECT_BRIEF.md`](../spec/PROJECT_BRIEF.md) |
 | the rules Claude works under here | [`CLAUDE.md`](../CLAUDE.md) |
