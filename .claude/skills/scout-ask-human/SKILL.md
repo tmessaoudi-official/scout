@@ -31,7 +31,7 @@ user-invocable: true
 
 The protocol — the five required parts, the non-negotiable rules, when a question is mandatory and
 when it is not — is the global `/ask-human` skill, § "Question quality". Whether a question stops
-the turn or is shown and answered with the recommended option is CLAUDE.md § Mode. This file adds
+the turn or is shown and answered with the recommended option is the GLOBAL `~/.claude/CLAUDE.md` § "Mode — spec or autonomous". This file adds
 only what is specific to this repo.
 
 ## When a question is mandatory here
