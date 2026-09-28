@@ -80,8 +80,9 @@ the fixture. Your job is to check whether they did.
    code **and** be documented. A new env var must appear in `.env.example`. Grep both directions: a
    key read but never documented is a silent startup failure; a key documented but never read is rot.
    Never read the real `.env` — audit `.env.example` only.
-8. **Docs that are load-bearing here.** `CLAUDE.md` (§ Gotchas, § Hard rules, the Claude Code
-   inventory), `README.md` (how to add a source, how to build a field map, how to run tests — the
+8. **Docs that are load-bearing here.** `CLAUDE.md` (§ Gotchas — its entries live in `.claude/rules/*.md`
+   since 2026-09-28 — § Hard rules, the Claude Code inventory), `docs/ENGINEERING-NOTES.md` (the dated
+   engineering notes moved out of CLAUDE.md), `README.md` (how to add a source, how to build a field map, how to run tests — the
    brief requires these stay current), `spec/PROJECT_BRIEF.md` if a ruled constraint genuinely
    changed, and **`docs/OPEN-QUESTIONS.md`**: a question that this change *answered* must be struck
    through with the decision and the date, and a new ambiguity introduced must be added. A decision
