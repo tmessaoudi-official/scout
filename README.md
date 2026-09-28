@@ -23,6 +23,7 @@ Start here, then follow the one that matches what you are doing.
 | **what is polling today**, per domain, and what each source cannot tell us | [`docs/SOURCES-LIVE.md`](docs/SOURCES-LIVE.md) |
 | **why a landlord was or was not adopted** — the measurement history | [`docs/SOURCES.md`](docs/SOURCES.md) |
 | **how it got here**, dated, and the five failure patterns it kept repeating | [`docs/HISTORY.md`](docs/HISTORY.md) |
+| **why the code is shaped the way it is** — the dated engineering notes, usually written after a defect | [`docs/ENGINEERING-NOTES.md`](docs/ENGINEERING-NOTES.md) |
 | every filter dimension considered, kept or refused | [`docs/FILTERS.md`](docs/FILTERS.md) |
 | capturing a portal alert as a committable fixture | [`docs/ALERT-CAPTURE.md`](docs/ALERT-CAPTURE.md) |
 | every decision, and the one line that reverses each | [`docs/OPEN-QUESTIONS.md`](docs/OPEN-QUESTIONS.md) |
