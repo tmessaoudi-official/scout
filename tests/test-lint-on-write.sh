@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Guard for lint-on-write.sh. Run it after any edit there: bash .claude/hooks/test-lint-on-write.sh
+# Guard for .claude/hooks/lint-on-write.sh. Run it after any edit there: bash tests/test-lint-on-write.sh
 #
 # The contract: advisory (exit 0 always), silent on a clean file, and a finding reaches the MODEL.
 # With exit 0 the only channel that does is stdout JSON `hookSpecificOutput.additionalContext`;
@@ -8,7 +8,7 @@
 # ruff and yamllint are optional here; the JSON leg (python3) and the shell leg (shellcheck, when
 # installed) carry the assertions.
 set -uo pipefail
-SCRIPT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lint-on-write.sh"
+SCRIPT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/.claude/hooks/lint-on-write.sh"
 TMP=$(mktemp -d); trap 'rm -rf "$TMP"' EXIT
 export OBS_LOG="$TMP/obs.log"
 PASS=0; FAIL=0
