@@ -2810,8 +2810,9 @@ var/claude/                 Reports, review outputs — gitignored scratch (hand
   match gate's write is terminal by query. `$digestRefusal` is a separate variable for that reason,
   so the two cannot share one sabotage expression either.
   **`tests/php/Repo/SectionOneGateCallSitesTest.php` is the half that prevents recurrence**: it
-  discovers every METHOD under `src/php/Rent` containing a `notifier->send(` and fails when one does
-  not consult the gate in that same method. Enumerating surfaces in prose failed twice —
+  discovers every METHOD under `src/php/Rent` that SENDS A NOTIFICATION (a `->send(` beside a formatter or
+  `Notification` — the literal `notifier->send(` it first keyed on hid a renamed receiver, `8055943` the same
+  evening) and fails when one does not consult the gate in that same method. Enumerating surfaces in prose failed twice —
   `ExcludedDwellings`'s docblock said "TWO callers", then "THREE", and each time the commit editing
   that line added the uncounted one.
   **ITS FIRST VERSION FAILED TOO, and how is the rule worth keeping.** It was FILE-granular and
@@ -3081,9 +3082,12 @@ var/claude/                 Reports, review outputs — gitignored scratch (hand
   it independently. The durable reading is now applied **in the recording loop, per member, before
   anything is written** — the same refuse-to-downgrade rule `recordTwin()` already used, so there is
   no window in which the excluded reading is off disk, and it holds for a member that is never
-  judged at all. **It is PERMANENT**: nothing re-opens it (`staleVerdicts()` skips an excluded
-  tenure, `pendingDigest()` skips a non-DIGEST outcome, `replay` writes no verdicts), and the
-  docblock's old *"until an explicit command"* named a route that does not exist.
+  judged at all. **It is PERMANENT to every automatic path**: nothing re-opens it (`staleVerdicts()` skips an excluded
+  tenure, `pendingDigest()` skips a non-DIGEST outcome, `replay` writes no verdicts). The docblock's old
+  *"until an explicit command"* named a route that did not exist when this was written (2026-08-31); since
+  2026-09-05 (`2553c94`) it does — see *"A DURABLY-EXCLUDED ROW HAS ONE WAY BACK"*: `reclassify --reopen`
+  clears the row's own and twin reading. The code comment in `Pipeline.php` beside `durableOwnReading()` still
+  says "There is no such command" [re-checked 2026-09-28].
 - **EXTRACTING A CLASS ORPHANS SABOTAGE EXPRESSIONS THAT NEVER NAMED IT, and the obvious
   measurement says otherwise.** The 2026-09-01 `Core/RunStore` split moved 625 lines out of the rent
   `Store`. Asking which ledger expressions mention one of the six moving METHOD NAMES answered
@@ -3116,12 +3120,14 @@ var/claude/                 Reports, review outputs — gitignored scratch (hand
   file. The high-floor penalty additionally requires the lift to be **explicitly absent**, never
   merely unmentioned: `null` is not `false` (hard rule 9), which is why it is its own score
   component rather than the negation of the bonus.
-- `prototype/sources.yaml` mixes criteria, notification config and sources in one file. The target
-  layout splits criteria and sources into two files under `config/`.
-- **`allow` rules in `.claude/settings.json` are inert in cloud sessions.** They need an accepted
+- `prototype/sources.yaml` mixes criteria, notification config and sources in one file. The PHP tree
+  splits them per domain: `config/{rent,car,job}/{criteria,sources}.json`.
+- **`allow` rules in `.claude/settings.json` are inert in cloud sessions.** [Unverified 2026-09-28: Claude Code
+  behaviour, not checkable from the repo.] They need an accepted
   workspace-trust dialog, which a cloud session never shows. `defaultMode` is what actually takes
   effect. Don't grow the allow list expecting cloud effect.
-- **New skills need a session restart to appear.** Claude Code watches an existing `.claude/skills/`
+- **New skills need a session restart to appear.** [Unverified 2026-09-28: Claude Code behaviour, not checkable
+  from the repo.] Claude Code watches an existing `.claude/skills/`
   directory live, but a newly-created one is not watched until the CLI restarts. The `CLAUDE.md`
   sections bind immediately; the slash commands appear next session.
 - **Commit messages: always `git commit -F -` with a QUOTED heredoc (`<<'EOF'`), never `-m "…"`.**
@@ -3184,7 +3190,10 @@ var/claude/                 Reports, review outputs — gitignored scratch (hand
   `uptime` and `ps -eo pid,etimes,args --sort=-etimes | grep phpunit` before believing a lone
   timeout; re-run that case alone on a quiet box, or raise `SABOTAGE_SUITE_TIMEOUT`. Same class as
   the JIT entry below — the harness broke, the guarantee did not.
-- **The local PHP's tracing JIT crashes the sabotage ledger nondeterministically.** `php` here is
+- **The local PHP's tracing JIT crashes the sabotage ledger nondeterministically.** [HOST CHANGED —
+  re-checked 2026-09-28: `php` is now the distro `/usr/bin/php8.5` and `~/.phpbrew` is gone, so the phpbrew
+  recipe below is historical; whether the distro build crashes the same way is untested. What still holds:
+  a crash exit is *harness broke*, not a detection.] `php` here was
   phpbrew's `8.5.9 (ZTS DEBUG)` with `opcache.jit=tracing` and `opcache.enable_cli=1`; under the
   ledger the suite dies mid-run with `zend_jit_trace.c … Assertion !p->op_array failed` (exit 134),
   which `tests/sabotage-check.sh` rightly counts as *harness broke*, not as a detection — observed on
