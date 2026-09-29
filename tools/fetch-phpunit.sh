@@ -35,14 +35,16 @@ set -euo pipefail
 # sabotage-check's `--do-not-cache-result`, 13.3.x turns it into a runner warning that
 # `failOnWarning="true"` makes fatal — and nobody reviewed the upgrade because there was nothing to
 # review. A versioned URL is immutable, so the SHA below can only change when this line does.
-VERSION="${PHPUNIT_VERSION:-13.3.1}"
+VERSION="${PHPUNIT_VERSION:-13.3.5}"
 URL="https://phar.phpunit.de/phpunit-${VERSION}.phar"
 DEST="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/phpunit.phar"
 
-# Pinned for phpunit-13.3.1.phar, verified 2026-08-19 (the versioned URL hashes identically to the
-# `phpunit-13.phar` this replaced, so the switch moved no bytes). Bump deliberately, in a commit that
-# names the release AND changes VERSION above — the two must move together.
-EXPECTED_SHA256="7385843527093db1fb2deeb439ad84c35b3249e73eb4632d1eb83be5b69acd58"
+# Pinned for phpunit-13.3.5.phar, verified 2026-09-29: its detached signature checked GOODSIG/VALIDSIG
+# against the pinned primary key below, and the suite was run with it before the pin moved. (The
+# 13.3.1 pin, 2026-08-19, was taken from a versioned URL that hashed identically to the moving
+# `phpunit-13.phar` it replaced.) Bump deliberately, in a commit that names the release AND changes
+# VERSION above — the two must move together.
+EXPECTED_SHA256="a61ec45cdd301c8d7bf26dce36b48066d34cff2aad83c34303e33f6bef803c57"
 EXPECTED_KEY="D8406D0D82947747293778314AA394086372C20A"
 
 tmp="$(mktemp -d)"
