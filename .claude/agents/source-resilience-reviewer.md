@@ -2,6 +2,7 @@
 name: source-resilience-reviewer
 description: Read-only adversarial reviewer for rent-watch's failure modes, legal posture and secrets hygiene — silent source breakage and health baselines, exception paths that turn a broken source into an empty result set, parser fragility against frozen fixtures, the opt-in gate on private-portal scraping, robots.txt and request rates, and any credential or personal financial figure reaching a committed file or a log. Use as the resilience+safety lens of the certification panel at any 3C/6C gate, or whenever a change touches src/php/Adapters/**, src/php/Core/SourceHealth.php, config/rent/sources.json, a fixture, .env.example, or anything that makes a network request. It reads the diff and the code itself and tries to REFUTE the claim that a broken source will be noticed. Never edits anything.
 tools: Read, Grep, Glob, Bash
+model: opus
 ---
 
 # source-resilience-reviewer — the resilience + safety lens

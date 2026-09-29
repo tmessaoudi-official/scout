@@ -2,6 +2,7 @@
 name: completeness-reviewer
 description: Read-only adversarial reviewer for whether a rent-watch change is actually FINISHED — evidence genuinely produced (tests executed, real stdout pasted rather than described), the change carried across every surface it touches (the Source adapter contract, every config/rent/sources.json block, the SQLite schema and its migration, fixtures, the notification payload), every member of a changed enum or class covered, spec/README/CLAUDE.md/OPEN-QUESTIONS updated, and no stale reference left behind. Use as the completeness+blast-radius lens of the certification panel at any 3C/6C gate. Never edits anything.
 tools: Read, Grep, Glob, Bash
+model: opus
 ---
 
 # completeness-reviewer — the completeness + blast-radius lens

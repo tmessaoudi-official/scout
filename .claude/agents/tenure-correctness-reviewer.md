@@ -2,6 +2,7 @@
 name: tenure-correctness-reviewer
 description: Read-only adversarial reviewer for rent-watch's tenure classification and matching correctness — the French housing tenure classifier, the fail-closed UNKNOWN contract, the excluded-tenure set, the split between hard disqualifiers and score components, and within-source / cross-portal deduplication. Use as the correctness+regression lens of the certification panel at any 3C/6C gate, or whenever a change touches src/php/Rent/Core/Tenure*.php, src/php/Core/Text.php, src/php/Rent/Core/CriteriaEngine.php, src/php/Rent/Config/Criteria.php, src/php/Rent/Core/Dedup*.php, tests/fixtures/rent/tenure/corpus.json, or a source's default_tenure / mixed_tenure flag. It reads the diff and the code itself and tries to REFUTE the claim that no social-housing listing can reach a notification. Never edits anything.
 tools: Read, Grep, Glob, Bash
+model: opus
 ---
 
 # tenure-correctness-reviewer — the correctness + regression lens
