@@ -884,7 +884,7 @@ The gotchas now live in path-scoped rules files (moved verbatim 2026-09-28). A s
 
 ## Credentials & stateful data
 
-**The environment is read by the CLI** (`bin/scout` loads `.env`; `tests/test-dotenv-cli.sh` proves the loader). `.env` is gitignored and permission-denied here on purpose.
+**The environment is read by the CLI** (`bin/scout` loads `.env` through `Scout\Config\DotEnv`; `tests/test-dotenv-cli.sh` proves the loader). `.env` is gitignored; `.env.example` is the committed template.
 `.env.example` is the committed template and lists every key: the dedicated alert mailbox's IMAP
 host/user/password, the notification channel token (ntfy / Telegram / SMTP), the IDFM/PRIM API key,
 `RFR_N2` if income-eligibility checking is enabled (Q6), and `RENT_SCOUT_DB`. Keep the two in sync —
