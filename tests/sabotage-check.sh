@@ -6343,6 +6343,25 @@ run_sabotage "digest: the tenure-doubt bin skips the section-one gate at send (a
   src/php/Rent/Cli/RentScout.php \
   '/private function refuseAtSend/,/^    }/ s|\$sectionOne->refuses(\$entry\[.listing.\], \$entry\[.key.\])|null|'
 
+# AUDIT 2026-10-02, P0-2: `detailRead` licenses a weak tenure signal on a mixed source, and reaching
+# mergedWith() used to set it. A page counts as read only if it yielded prose or the structured
+# tenure declaration; a later empty fetch never un-reads a listing. Each clause mutated alone.
+run_sabotage "tenure: any detail page that reaches the merge counts as read (audit 2026-10-02 P0-2)" \
+  src/php/Rent/Core/RawListing.php \
+  's@detailRead: \$this->detailRead || .*$@detailRead: true,@'
+
+run_sabotage "tenure: a detail page's prose stops counting as evidence it was read (audit 2026-10-02 P0-2)" \
+  src/php/Rent/Core/RawListing.php \
+  's@ || \$detail->description !== ..@@'
+
+run_sabotage "tenure: a detail page's structured tenure declaration stops counting as read (audit 2026-10-02 P0-2)" \
+  src/php/Rent/Core/RawListing.php \
+  's@ || (string) (\$detail->fields.*!== ..,$@,@'
+
+run_sabotage "tenure: an empty detail fetch un-reads an already hydrated listing (audit 2026-10-02 P0-2)" \
+  src/php/Rent/Core/RawListing.php \
+  's@detailRead: \$this->detailRead || @detailRead: @'
+
 # THE ABORT COMES BEFORE THE TALLY, and that ordering is the finding rather than a nicety (C2
 # round 7, resilience P3). The alert job harvests the `N sabotage(s) detected, M undetected` line;
 # printed AFTER it, a shard that selected no case ended its log with a clean-looking `0 / 0` and the

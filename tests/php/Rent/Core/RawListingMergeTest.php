@@ -60,6 +60,52 @@ final class RawListingMergeTest extends TestCase
      * see which one survives. A listing re-identified mid-pass is a listing the seen-set has never
      * seen, so it is announced again on every run forever.
      */
+    // ── Audit 2026-10-02, P0-2: a detail page that said nothing is NOT a page that was read ─────────
+    //
+    // `detailRead` licenses a weak tenure signal on a mixed source ("examined and found nothing
+    // excluding"), and it was set by reaching this method — so an HTTP-200 maintenance page, or a
+    // description selector that stopped matching, counted as an examination. Measured on the live
+    // store: 25 of 1036 In'li rows and 1 of 87 Cityloger rows were hydrated with an empty
+    // description (their stored fields: a title and a postcode); eight of them were judged LLI/50
+    // MATCH on the source default alone, one of them announced.
+
+    /** The case that fired in production: the detail map found a title and a postcode and no prose. */
+    public function testADetailThatYieldedNoProseIsNotAPageThatWasRead(): void
+    {
+        // `fields` is the whole flattened extract — `ref` is always in it — so it is modelled as it really arrives.
+        $merged = $this->card()->mergedWith($this->detail(
+            title: 'Appartement de 64.94 m² à GIF SUR YVETTE',
+            postcode: '91190',
+            fields: ['ref' => '229605', 'url' => 'https://www.cityloger.fr/logement-a-louer-229605'],
+        ));
+
+        self::assertFalse($merged->detailRead, 'a title and a postcode are not evidence about the tenure');
+    }
+
+    public function testADetailThatYieldedProseIsAPageThatWasRead(): void
+    {
+        $merged = $this->card()->mergedWith($this->detail(description: 'Logement intermédiaire'));
+
+        self::assertTrue($merged->detailRead);
+    }
+
+    /** Cityloger's `tenure_field` is the structured tenure declaration, with no prose around it: it counts. */
+    public function testADetailThatYieldedAStructuredFieldIsAPageThatWasRead(): void
+    {
+        $merged = $this->card()->mergedWith($this->detail(fields: ['tenureField' => 'LI15P']));
+
+        self::assertTrue($merged->detailRead);
+    }
+
+    /** A later empty fetch never un-reads a listing that was already examined. */
+    public function testAnEmptyDetailNeverUnreadsAnAlreadyHydratedCard(): void
+    {
+        $hydrated = $this->card()->mergedWith($this->detail(description: 'Logement intermédiaire'));
+        self::assertTrue($hydrated->detailRead, 'premise');
+
+        self::assertTrue($hydrated->mergedWith($this->detail())->detailRead);
+    }
+
     public function testIdentityAlwaysComesFromTheCardEvenWhenTheDetailCarriesAnother(): void
     {
         $merged = $this->card()->mergedWith(
@@ -106,16 +152,21 @@ final class RawListingMergeTest extends TestCase
         );
     }
 
+    /** @param array<string,string> $fields */
     private function detail(
         ?int $rentCc = null,
         string $description = '',
         string $title = '',
+        array $fields = [],
+        ?string $postcode = null,
     ): RawListing {
         return new RawListing(
             sourceName: 'cityloger',
             externalId: '229605',
             title: $title,
             description: $description,
+            fields: $fields,
+            postcode: $postcode,
             rentCc: $rentCc,
         );
     }

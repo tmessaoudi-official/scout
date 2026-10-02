@@ -350,8 +350,8 @@ final class ListingSnapshotTest extends TestCase
         self::assertSame(
             // `sourceName`/`externalId` are the card's identity; `observedAt` must not re-date an
             // old card to the pass that hydrated it; `advertiser` must never be armed from page
-            // furniture (a §1-relevant verdict change); `detailRead` is hardcoded true because
-            // reaching the method IS the detail page having been read.
+            // furniture (a §1-relevant verdict change); `detailRead` is COMPUTED from the detail
+            // (evidence-bearing prose or a structured field), never taken from the detail's own flag.
             // `proseAbsent` is a property of the SOURCE, so both sides always agree — written as
             // the card's to say which one is meant. It is here rather than merged for that reason,
             // not by omission.

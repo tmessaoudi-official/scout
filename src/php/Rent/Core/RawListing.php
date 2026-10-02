@@ -197,9 +197,17 @@ final readonly class RawListing
             bedrooms: $any($this->bedrooms, $detail->bedrooms),
             floor: $any($this->floor, $detail->floor),
             hasElevator: $any($this->hasElevator, $detail->hasElevator),
-            // Reaching this method IS the detail page having been read. A failed fetch never gets
-            // here — `HtmlSource` records the failure and returns the card untouched.
-            detailRead: true,
+            // A detail page counts as READ only if it yielded something the tenure rules can read:
+            // prose, or the structured tenure declaration (Cityloger's `tenure_field`, key `tenureField`) — NOT any
+            // field: `fields` is the whole flattened extract, `ref` and `url` included, so it is never empty. Reaching this method used to
+            // be enough, and an HTTP-200 maintenance page — or a description selector that stopped
+            // matching — then licensed a weak signal on a mixed source as "examined, nothing
+            // excluding" (audit 2026-10-02, P0-2). A title and a postcode are NOT evidence: the live
+            // store held 25 In'li rows hydrated with nothing else, eight judged LLI/50 MATCH on the
+            // source default alone. `||` with the card's own flag: a later empty fetch never un-reads
+            // a listing that was already examined. A failed fetch never gets here — `HtmlSource`
+            // records the failure and returns the card untouched.
+            detailRead: $this->detailRead || $detail->description !== '' || (string) ($detail->fields['tenureField'] ?? '') !== '',
             // Carried even though today's order (hydrate, THEN enrich) means the card never holds
             // one yet. A constructor parameter this method forgets is silently DROPPED, and the
             // reflection guard cannot catch it: that guard checks the snapshot ENCODER, not the

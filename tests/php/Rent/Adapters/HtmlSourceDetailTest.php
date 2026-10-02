@@ -161,6 +161,62 @@ final class HtmlSourceDetailTest extends TestCase
     }
 
     /**
+     * END TO END, audit 2026-10-02 P0-2: an HTTP-200 detail page that carries none of the mapped
+     * prose (maintenance page, anti-bot page, a description selector that stopped matching) must
+     * leave the listing UNREAD. Reached through the real fetch, cache and merge — the unit rule
+     * alone would pass while a second merge site kept setting the flag.
+     */
+    public function testABlankDetailPageLeavesTheListingUnread(): void
+    {
+        $blank = '<html><body><div class="page-furniture">Site en maintenance</div></body></html>';
+        $source = $this->source(new DetailHttpClient($blank), $this->definition(), static fn (RawListing $l): bool => $l->commune === 'HOUILLES');
+
+        $row = null;
+        foreach ($source->fetch() as $candidate) {
+            if ($candidate->commune === 'HOUILLES') {
+                $row = $candidate;
+            }
+        }
+
+        self::assertNotNull($row);
+        self::assertFalse($row->detailRead, 'a page that said nothing is not an examination');
+    }
+
+    /**
+     * THE LOUD HALF OF P0-2 (audit 2026-10-02): a description selector that matches on NONE of a
+     * pass's hydrated pages must reach source health, not only `doctor`. The per-listing fix above
+     * fails each such listing closed; this is what tells the operator the whole map is dead.
+     * `PatternMissLog::escalate()` speaks at 100 % of three or more calls, so the pass hydrates
+     * every card.
+     */
+    public function testADescriptionSelectorThatMissesEveryPageReachesSourceHealth(): void
+    {
+        $blank = '<html><body><div class="page-furniture">Site en maintenance</div></body></html>';
+        $source = $this->source(new DetailHttpClient($blank), $this->definition(), static fn (RawListing $l): bool => true);
+
+        iterator_to_array($source->fetch(), false);
+
+        self::assertContains('detail.description', $source->patternMisses()->total());
+        self::assertStringContainsString('detail.description', $source->health()->detail, 'and the health verdict names it');
+    }
+
+    /** The counterweight: the normal page IS an examination. */
+    public function testARealDetailPageMarksTheListingRead(): void
+    {
+        $source = $this->source(new DetailHttpClient(), $this->definition(), static fn (RawListing $l): bool => $l->commune === 'HOUILLES');
+
+        $row = null;
+        foreach ($source->fetch() as $candidate) {
+            if ($candidate->commune === 'HOUILLES') {
+                $row = $candidate;
+            }
+        }
+
+        self::assertNotNull($row);
+        self::assertTrue($row->detailRead);
+    }
+
+    /**
      * A DETAIL PAGE SUPPLIES A POSTCODE THE CARD NEVER HAD — end to end, through the real merge.
      *
      * Track 5b, F-B: In'li's postcode came ENTIRELY from the URL slug, and the source publishes a
