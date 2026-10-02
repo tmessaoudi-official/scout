@@ -22,7 +22,7 @@
   ],
   "version": 1,
   "declared_counts": {
-    "synthetic": 122,
+    "synthetic": 132,
     "captured": 8
   },
   "sources": {
@@ -1941,6 +1941,137 @@
         "outcome": "REJECT"
       },
       "why": "THE §1 HALF OF THE URL RULE, and the pair that proves the split is not arbitrary. RawListing::text() strips a URL's QUERY and FRAGMENT but keeps its PATH, and both halves are measured: `plai` as a path SEGMENT classifies PLAI/REJECT, while the same acronym inside `?c=plai_plus` classifies nothing at all. Blanking the whole URL would be simpler and would run the wrong way -- losing a social signal is the dangerous direction, where losing a campaign string costs nothing. Paired with url-001, which is the same rule read from the other side. (A hyphenated `logement-social` matches neither, because the label literal carries a space; that is a separate gap, not this rule's job.)"
+    },
+    {
+      "id": "vocab-001-pla-i-hyphenated",
+      "provenance": "synthetic",
+      "source": "seloger",
+      "title": "T3 Sartrouville",
+      "description": "Programme financé en PLA-I, résidence récente.",
+      "fields": {},
+      "expect": {
+        "tenure": "PLAI",
+        "outcome": "REJECT"
+      },
+      "why": "AUDIT 2026-10-02 P0-1. A social label spelled with a separator the vocabulary did not model (hyphen, dot, slash, underscore, letter-spaced acronym) classified LIBRE/50 and reached MATCH 81 on a `mixed_tenure: false` portal, where the fail-closed rule does not engage. `PLA-I` is how many ads write PLAI."
+    },
+    {
+      "id": "vocab-002-pla-i-spaced",
+      "provenance": "synthetic",
+      "source": "seloger",
+      "title": "T3 Sartrouville",
+      "description": "Beau T3, programme PLA I, proche gare.",
+      "fields": {},
+      "expect": {
+        "tenure": "PLAI",
+        "outcome": "REJECT"
+      },
+      "why": "AUDIT 2026-10-02 P0-1. A social label spelled with a separator the vocabulary did not model (hyphen, dot, slash, underscore, letter-spaced acronym) classified LIBRE/50 and reached MATCH 81 on a `mixed_tenure: false` portal, where the fail-closed rule does not engage. Letter-spaced with a space."
+    },
+    {
+      "id": "vocab-003-pla-i-dotted",
+      "provenance": "synthetic",
+      "source": "seloger",
+      "title": "T3 Sartrouville",
+      "description": "Logement P.L.A.I. disponible de suite.",
+      "fields": {},
+      "expect": {
+        "tenure": "PLAI",
+        "outcome": "REJECT"
+      },
+      "why": "AUDIT 2026-10-02 P0-1. A social label spelled with a separator the vocabulary did not model (hyphen, dot, slash, underscore, letter-spaced acronym) classified LIBRE/50 and reached MATCH 81 on a `mixed_tenure: false` portal, where the fail-closed rule does not engage. Dotted acronym."
+    },
+    {
+      "id": "vocab-004-pls-dotted",
+      "provenance": "synthetic",
+      "source": "seloger",
+      "title": "T3 Sartrouville",
+      "description": "Résidence neuve, financement P.L.S., 3 pièces.",
+      "fields": {},
+      "expect": {
+        "tenure": "PLS",
+        "outcome": "REJECT"
+      },
+      "why": "AUDIT 2026-10-02 P0-1. A social label spelled with a separator the vocabulary did not model (hyphen, dot, slash, underscore, letter-spaced acronym) classified LIBRE/50 and reached MATCH 81 on a `mixed_tenure: false` portal, where the fail-closed rule does not engage. Dotted PLS."
+    },
+    {
+      "id": "vocab-005-logement-social-hyphenated",
+      "provenance": "synthetic",
+      "source": "seloger",
+      "title": "T3 Sartrouville",
+      "description": "Logement-social T3 lumineux.",
+      "fields": {},
+      "expect": {
+        "tenure": "SOCIAL",
+        "outcome": "REJECT"
+      },
+      "why": "AUDIT 2026-10-02 P0-1. A social label spelled with a separator the vocabulary did not model (hyphen, dot, slash, underscore, letter-spaced acronym) classified LIBRE/50 and reached MATCH 81 on a `mixed_tenure: false` portal, where the fail-closed rule does not engage. Hyphen between the two words of `logement social`."
+    },
+    {
+      "id": "vocab-006-logements-sociaux-hyphenated",
+      "provenance": "synthetic",
+      "source": "seloger",
+      "title": "T3 Sartrouville",
+      "description": "Résidence de logements-sociaux, 3 pièces.",
+      "fields": {},
+      "expect": {
+        "tenure": "SOCIAL",
+        "outcome": "REJECT"
+      },
+      "why": "AUDIT 2026-10-02 P0-1. A social label spelled with a separator the vocabulary did not model (hyphen, dot, slash, underscore, letter-spaced acronym) classified LIBRE/50 and reached MATCH 81 on a `mixed_tenure: false` portal, where the fail-closed rule does not engage. Plural, hyphenated."
+    },
+    {
+      "id": "vocab-007-logement-social-dot-joined",
+      "provenance": "synthetic",
+      "source": "seloger",
+      "title": "T3 Sartrouville",
+      "description": "Annonce logement.social T3.",
+      "fields": {},
+      "expect": {
+        "tenure": "SOCIAL",
+        "outcome": "REJECT"
+      },
+      "why": "AUDIT 2026-10-02 P0-1. A social label spelled with a separator the vocabulary did not model (hyphen, dot, slash, underscore, letter-spaced acronym) classified LIBRE/50 and reached MATCH 81 on a `mixed_tenure: false` portal, where the fail-closed rule does not engage. A dot with a letter on each side (a pasted slug or typo), which cannot be a sentence break."
+    },
+    {
+      "id": "vocab-008-pla-i-slash",
+      "provenance": "synthetic",
+      "source": "seloger",
+      "title": "T3 Sartrouville",
+      "description": "Programme PLA/I, 3 pièces.",
+      "fields": {},
+      "expect": {
+        "tenure": "PLAI",
+        "outcome": "REJECT"
+      },
+      "why": "AUDIT 2026-10-02 P0-1. A social label spelled with a separator the vocabulary did not model (hyphen, dot, slash, underscore, letter-spaced acronym) classified LIBRE/50 and reached MATCH 81 on a `mixed_tenure: false` portal, where the fail-closed rule does not engage. Slash."
+    },
+    {
+      "id": "vocab-009-underscore-and-intermediate-label",
+      "provenance": "synthetic",
+      "source": "cdc_habitat",
+      "title": "T3 Sartrouville",
+      "description": "Ce logement_social a loyer intermediaire.",
+      "fields": {},
+      "expect": {
+        "tenure": "SOCIAL",
+        "outcome": "REJECT"
+      },
+      "why": "AUDIT 2026-10-02 P0-1. A social label spelled with a separator the vocabulary did not model (hyphen, dot, slash, underscore, letter-spaced acronym) classified LIBRE/50 and reached MATCH 81 on a `mixed_tenure: false` portal, where the fail-closed rule does not engage. The soft-hyphen twin (regress-016) with an underscore, beside an explicit intermediate label that would otherwise win at 0.90."
+    },
+    {
+      "id": "vocab-010-sentence-break-stays-eligible",
+      "provenance": "synthetic",
+      "source": "seloger",
+      "title": "T3 Sartrouville",
+      "description": "Appartement lumineux, proche du logement. Social club à 200 m, commerces.",
+      "fields": {},
+      "expect": {
+        "tenure": "LIBRE",
+        "outcome": "MATCH",
+        "max_confidence": 59
+      },
+      "why": "THE OTHER SIDE. A full stop followed by a space is a sentence break and must not join `logement` to `social`: only a dot with a letter on each side counts as a separator."
     }
   ]
 }

@@ -267,6 +267,24 @@ final class Text
     private const array INVARIANT_WORDS = ['lli', 'plai', 'plus', 'pls', 'anru', 'anah', 'hlm', 'sne', 'apl'];
 
     /**
+     * The INVARIANT acronyms that are also written with a separator between their letters. `plus`,
+     * `sne` and `apl` are deliberately absent: `plus` is an ordinary adverb and `sne`/`apl` are
+     * procedural, so letter-spacing them would only add false positives.
+     */
+    private const array SPELLED_OUT_ACRONYMS = ['lli', 'plai', 'pls', 'anru', 'anah', 'hlm'];
+
+    /**
+     * What may sit BETWEEN the words of a multi-word literal: whitespace (possibly none — see the
+     * comment where it is used), a hyphen of any width, an underscore, a slash, or a dot that has a
+     * letter on each side. A dot followed by a space is a sentence break and is NOT a separator, so
+     * `proche du logement. Social club` stays two sentences.
+     */
+    private const string WORD_GAP = '(?:[\\s\\-_\\/\\x{2010}-\\x{2015}]|(?<=[a-z])\\.(?=[a-z]))*';
+
+    /** The same, plus any dot: `P.L.A.I.` has a dot after every letter, and a space or a dot may follow it. */
+    private const string LETTER_GAP = '(?:[\\s\\-_\\/\\.\\x{2010}-\\x{2015}])*';
+
+    /**
      * Whole-token match that tolerates FRENCH AGREEMENT AND PLURALS.
      *
      * THE DEFECT THIS EXISTS FOR: every literal used to be matched exactly, with a trailing
@@ -301,7 +319,15 @@ final class Text
         $parts = [];
 
         foreach (explode(' ', $needle) as $word) {
-            if (in_array($word, self::INVARIANT_WORDS, true)) {
+            if (in_array($word, self::SPELLED_OUT_ACRONYMS, true)) {
+                // `PLA-I`, `PLA I`, `P.L.A.I.`, `P.L.S.` — the same acronym with a separator between
+                // its letters. Matching only the joined spelling let an explicit social label fall
+                // through to the source default and reach MATCH (audit 2026-10-02, P0-1).
+                $parts[] = implode(self::LETTER_GAP, array_map(
+                    static fn (string $letter): string => preg_quote($letter, '/'),
+                    str_split($word),
+                ));
+            } elseif (in_array($word, self::INVARIANT_WORDS, true)) {
                 $parts[] = preg_quote($word, '/');
             } elseif (str_ends_with($word, 'al')) {
                 $parts[] = '(?:' . preg_quote($word, '/') . '(?:es|e)?|'
@@ -317,7 +343,7 @@ final class Text
         // zero separation is safe in both directions: `logementsocial` is not a French word, so
         // nothing legitimate matches by accident, and the guards at each end still require the
         // whole thing to stand as a token.
-        $pattern = '/(?<![a-z0-9])' . implode('\s*', $parts) . '(?![a-z0-9])/u';
+        $pattern = '/(?<![a-z0-9])' . implode(self::WORD_GAP, $parts) . '(?![a-z0-9])/u';
         $result = preg_match($pattern, $foldedHaystack, $m, PREG_OFFSET_CAPTURE);
 
         if ($result === false) {

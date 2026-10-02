@@ -7,6 +7,7 @@ namespace Scout\Tests\Rent\Core;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use Scout\Core\Text;
 use Scout\Rent\Core\Outcome;
 use Scout\Rent\Core\RawListing;
 use Scout\Rent\Core\SourceProfile;
@@ -90,6 +91,14 @@ final class SurfaceMatrixTest extends TestCase
             foreach (self::surfaces() as $surface => $build) {
                 // See $multiWordOnly above for why each of these skips a single-word literal.
                 if (!str_contains($token, ' ') && in_array($surface, $multiWordOnly, true)) {
+                    continue;
+                }
+
+                // A letter-spaced ACRONYM (`p l a i`) is one word wearing spaces: this cell strips
+                // the spaces and so hands the classifier `champplai`, the single-word case skipped
+                // just above for the reason given there.
+                if ($surface === 'field name, lowercased identifier'
+                    && in_array(str_replace(' ', '', $token), ['lli', 'plai', 'pls', 'anru', 'anah', 'hlm'], true)) {
                     continue;
                 }
 
@@ -406,7 +415,53 @@ final class SurfaceMatrixTest extends TestCase
         self::assertContains('plus', array_map('strtolower', $tokens), 'the matrix lost `plus` — see this method');
         self::assertGreaterThan(15, count($tokens), 'the excluded vocabulary shrank unexpectedly');
 
-        return array_values(array_unique($tokens));
+        return array_values(array_unique([...$tokens, ...self::spellingVariants($tokens)]));
+    }
+
+    /**
+     * The same vocabulary SPELLED WITH A SEPARATOR (audit 2026-10-02, P0-1).
+     *
+     * Every other cell takes its tokens from the classifier's own tables, so it can prove every
+     * SURFACE for the vocabulary the classifier already has and never the VOCABULARY: `PLA-I`,
+     * `P.L.S.` and `Logement-social` classified LIBRE/50 and reached MATCH 81 on a pure portal while
+     * this matrix stayed green. Deriving the variants here keeps them in step with the tables — a
+     * label added tomorrow is tested hyphenated and dotted without anyone remembering to ask.
+     * The acronyms are the ones `Text::SPELLED_OUT_ACRONYMS` names; `plus` is excluded for the
+     * reason given there.
+     *
+     * @param list<string> $tokens
+     * @return list<string>
+     */
+    private static function spellingVariants(array $tokens): array
+    {
+        $acronyms = (new \ReflectionClass(Text::class))->getConstant('SPELLED_OUT_ACRONYMS');
+        self::assertIsArray($acronyms);
+        self::assertContains('plai', $acronyms, 'the spelled-out acronym list lost `plai`');
+
+        $variants = [];
+
+        foreach ($tokens as $token) {
+            if (in_array($token, $acronyms, true)) {
+                $letters = str_split($token);
+                $variants[] = implode('.', $letters) . '.';
+                $variants[] = implode(' ', $letters);
+                $variants[] = implode('', array_slice($letters, 0, -1)) . '-' . end($letters);
+                $variants[] = implode('', array_slice($letters, 0, -1)) . ' ' . end($letters);
+                $variants[] = implode('', array_slice($letters, 0, -1)) . '/' . end($letters);
+
+                continue;
+            }
+
+            if (str_contains($token, ' ')) {
+                foreach (['-', '_', '/'] as $separator) {
+                    $variants[] = str_replace(' ', $separator, $token);
+                }
+            }
+        }
+
+        self::assertGreaterThan(20, count($variants), 'the spelling variants shrank unexpectedly');
+
+        return $variants;
     }
 
     /**
