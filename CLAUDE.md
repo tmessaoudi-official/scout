@@ -15,16 +15,14 @@ The full specification is [`spec/PROJECT_BRIEF.md`](spec/PROJECT_BRIEF.md). It i
 for the product, and **every constraint in it is a ruling**, not a draft to be improved on. Read it
 before touching anything under `src/`.
 
-Status: **milestone 1 is functionally complete against a frozen payload.** The pure core, the store
-(schema v12 as of 2026-08-30), the config layer, the adapter contract, the criteria engine, dedup, the notification
-layer and the `scout` CLI all exist. What is missing is a NETWORK adapter, and that is blocked on an
-input rather than a decision. As of 2026-08-07 there is a PHP 8.5
-implementation of `models` + `tenure` under `src/php/Core/`, a 143-case language-neutral classifier
-corpus at `tests/fixtures/rent/tenure/corpus.json`, the seen-set / price-history / run-log store under
-`src/php/Rent/Store/` with `SourceHealth` + `SourceStatus` in `Core/`, a strict JSON config layer under
-`src/php/Config/` with both files committed, the `Source` contract plus `Payload` / `ListingMapper` /
-`FixtureSource` under `src/php/Adapters/`, the criteria engine (`CriteriaEngine` + `Verdict`), and a
-PHPUnit suite. `scout --domain=rent run --once` is demonstrable end to end today against a frozen payload.
+Status (rewritten 2026-10-02 — the earlier paragraph still said a network adapter was missing): the rent, car
+and job domains all run, deployed as three watchers (rent-scout, car-scout, job-scout). Eight rent sources are
+live (polled institutional landlords plus private-portal alert emails over IMAP); the store is schema v12; the
+corpus is 143 cases (`tests/fixtures/rent/tenure/corpus.json`); the rent code lives under `src/php/Rent/`
+(`Core`, `Config`, `Adapters`, `Store`, `Enrich`, `Notify`, `Cli`), generic pieces under `src/php/Core/`,
+`src/php/Adapters/` and `src/php/Config/`. CI runs the suite on every push and a six-shard sabotage ledger
+nightly. Open inputs, not code: AL'in (needs a DevTools cURL capture — hard rule 1) and AutoScout24 (no alert
+has ever arrived). History and per-feature records: `docs/ENGINEERING-NOTES.md`.
 
 `scout --domain=rent doctor`, `scout --domain=rent dump`, `scout --domain=rent run --once/--seed`, `scout --domain=rent test-notify`, `scout --domain=rent digest` and
 `scout --domain=rent reclassify` all work end to end today.
@@ -886,8 +884,7 @@ The gotchas now live in path-scoped rules files (moved verbatim 2026-09-28). A s
 
 ## Credentials & stateful data
 
-**Nothing reads the environment yet** — the adapters, the channels and the CLI do not exist, so
-`.env.example` is the agreed SHAPE of the configuration rather than live settings.
+**The environment is read by the CLI** (`bin/scout` loads `.env`; `tests/test-dotenv-cli.sh` proves the loader). `.env` is gitignored and permission-denied here on purpose.
 `.env.example` is the committed template and lists every key: the dedicated alert mailbox's IMAP
 host/user/password, the notification channel token (ntfy / Telegram / SMTP), the IDFM/PRIM API key,
 `RFR_N2` if income-eligibility checking is enabled (Q6), and `RENT_SCOUT_DB`. Keep the two in sync —
