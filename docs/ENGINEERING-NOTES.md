@@ -1568,3 +1568,258 @@ committed on 2026-08-26**, from two dated official publications, each carried in
 > below the floor anyway — so corpus case `plafond-005` uses an intermediate ad quoting its own
 > **rent** ceiling as a plausible annual figure, which defeats both other guards and leaves only the
 > anchor standing.
+
+## Status narrative moved out of CLAUDE.md (2026-10-02)
+
+The paragraphs below filled lines 30-279 of `CLAUDE.md` (the "status" narrative after the opening state paragraph) and were moved here VERBATIM on 2026-10-02 because they are dated records, not rules; `CLAUDE.md` keeps a one-line ruling for each. They were NOT duplicated anywhere in `docs/` before this move.
+
+**Q34 IS CLOSED IN ALL THREE PATHS as of 2026-08-26** — the daily floor was the last one, and it had
+been ruled, configured and unbuilt: `digest_hour` was parsed into `NotifyPolicy`, printed by
+`doctor`, and read by nothing at all. `Core/DigestSchedule` is the policy (pure, clock injected,
+mirroring `Core/Heartbeat`) and `state/rent-digest.txt` on the mounted volume is the marker, written only
+after the channel confirms. Three rules travel with it. **It is SILENT on a day with nothing
+pending, and records no window as served** — the heartbeat already carries daily liveness, so an
+unconditional rollup would be a second scheduled push saying nothing new, and leaving the window
+open is what makes *"an unsent digest is retried"* work. **It runs under `--watch` only**, so a
+cron-driven `--once` deployment has the two event-driven paths and no floor; `doctor` says so.
+And **the drain is SHARED with `scout --domain=rent digest`** (`Cli/DigestBatch` + one collector that never throws
+and never prints), because two implementations of §1's only landing zone is how one drifts into
+announcing what the other would withhold.
+
+> **Its zone justification was WRONG when first written, and the correction is the part worth
+> keeping.** It said PHP does not consult `TZ`, so computing the floor from the default zone would
+> fire it at 10:00 Paris in summer. The measurement is real — `php -r` in the deployed container
+> reports `UTC` with `TZ=Europe/Paris` set — and the conclusion does not follow, because
+> `bin/scout:44` already calls `date_default_timezone_set()` from `TZ` before `Scout` is
+> constructed. **A true number attached to an invented cause**, produced by measuring the runtime and
+> never reading the entrypoint; `compose.yaml`'s TZ comment was accused of the same error, is
+> likewise correct, and was left alone. What the explicit zone actually buys, both measured: an
+> unusable `TZ` becomes a loud startup refusal (`date_default_timezone_set('Europe/Pariss')` returns
+> `false`, emits a *Notice*, and leaves UTC standing), and the schedule stops depending on
+> process-wide mutable state.
+
+`digest` and `reclassify` closed 2026-08-23 and both carry a rule
+worth knowing before touching either, because they look symmetrical and are not: **`digest`
+announces an evidence-less row, `reclassify` skips one.** `digest` reads the store rather than the
+pass — the pipeline re-offers an undelivered entry only while the ad is still published, so an entry
+delisted in between is lost — and a snapshot-less row in that backlog is a listing whose own payload
+could not be encoded, which is a live source fault rather than an old row, so skipping it would skip
+exactly what the command exists to rescue. **This sentence used to say those rows "predate schema
+v7", and that is impossible**: `pendingDigest()` filters on `outcome`, itself a v7 column that is
+not backfilled, so a genuine pre-v7 row has `outcome = NULL` and is never returned at all. The
+inverted premise was corrected twice in code and left standing here until a fourth review round;
+believing it would lead a future session to widen `pendingDigest()` to reach pre-v7 rows, which is
+a §1 risk that was explicitly refused — nothing stored distinguishes a pre-v7 digest from a pre-v7
+rejection. `reclassify` FORMS a
+verdict instead of announcing one, and re-judging on less evidence than the original saw is a §1
+breach rather than a smaller improvement: a card whose field says `PLS` while its title says
+*logement intermédiaire* classifies `UNKNOWN` by CONFLICT, and on the title alone it becomes a
+MATCH. It also runs on the v7 snapshot ALONE — merging `listing_detail.fields_json` would buy no
+evidence (the pipeline already rewrites the snapshot post-merge every pass) while making a stored
+verdict depend on mapper code that has since changed. `--since` is refused, not implemented, because
+its ruled mechanism is a classifier-version column that does not exist. The network adapters exist too — `HttpJsonSource` + `Robots`, `EmailAlertSource` +
+`ImapMailbox`/`FileMailbox`, `SmtpTransport`/`FileTransport` — all tested offline against fakes,
+with `.env` swapping the real thing in — and the email half was written BLIND, which cost four
+defects the day a real alert first reached it (§ "The email-alert path" in [`docs/ENGINEERING-NOTES.md`](docs/ENGINEERING-NOTES.md)). **What is missing is not
+code but INPUTS**: a DevTools cURL capture for AL'in (hard rule 1 forbids writing an endpoint from
+memory) and IMAP credentials for the alert mailbox. The `plafonds` figures are no longer among them
+— fetched, committed and wired on 2026-08-26 (§ "Tier 4"). CI now exists
+(`.github/workflows/ci.yml`): the fast job runs the PHPUnit suite, the tenure tripwire,
+runner-fetch and ci-workflow self-tests, the drift scan and shell syntax on every push and
+PR; the sabotage ledger runs nightly and on demand. **A red nightly opens a GitHub issue, and a
+green one closes every open ledger issue again** — it previously notified nobody, and failed 7/7
+unnoticed from 2026-08-13 to 2026-08-19 (hard rule 2: an alert computed and never sent is worse than
+none). The retraction half landed 2026-08-22 and is the same rule read backwards: nothing ever
+closed one, so issues #1 and #2 stood open for days after the regression they reported was fixed and
+pushed, and an alert nobody retracts becomes furniture. Both halves are pinned by
+`tests/test-ci-workflow.sh` — by step NAME *and* by the API call that does the work, since a name
+alone survives the body being gutted. **THE LEDGER IS SHARDED SIX WAYS since 2026-09-05** (developer
+ruling), because one job could no longer finish it: 258 → 527 → 764 cases in the three weeks to 2026-09-05, four of
+the last eight nightlies CANCELLED at the 240-minute cap and four failed on row 45's CI cause —
+eight days with no completed detection proof and seven issues nobody could close. GitHub's hosted
+ceiling is 360, so a bigger budget had nowhere left to go. `SABOTAGE_SHARD=<i>/<n>` selects by case
+INDEX (stable whatever `SABOTAGE_FILTER` does), refuses a malformed spec and refuses a spec that
+selects no case at all — a silently-ignored shard is how six jobs report a clean ledger between them
+and run nothing, the `--section=` typo defect one layer up. `fail-fast: false` is load-bearing: one
+shard's finding must not cancel the five that were about to find their own. **The alert lives in its
+own `sabotage-alert` job** so six shards still open ONE issue and a green night still closes the
+whole backlog; it holds the `issues: write` token that the shards no longer do, and it names a shard
+whose log is MISSING rather than reading its silence as clean. **`scout --domain=rent run --watch` now runs** (2026-08-19):
+`Core/Pacer` holds the Q37 cadence (15 min ± 5, 5 s between distinct hosts, 60 s per host, order
+shuffled each pass), `Adapters/PacedSource` is the decorator that applies it — so `Pipeline` never
+learns that time exists and `--once` stays unpaced — and `Cli/WatchLoop` is the loop, which SURVIVES
+a pass that throws (reporting it) and stops on SIGINT/SIGTERM only after the pass in flight
+finishes. `Source::host(): ?string` was added to the contract to make host-level pacing possible;
+`null` means the source issues no outbound web request and is never delayed.
+
+**THE FIRST REAL SOURCE IS LIVE (2026-08-19).** In'li is `enabled: true` in `config/rent/sources.json`
+with a verified endpoint — `robots.txt` read first (`Disallow: /espace-membre/` only), the search
+page fetched, the payload frozen and scrubbed into `tests/fixtures/rent/inli/search.html`.
+`scout --domain=rent doctor --source=inli` returns **92 annonces, 4 pages, ~12 s, `ok`**. Its search page is
+server-rendered, so there is no JSON API to prefer and it uses the new `html` adapter:
+`Adapters/HtmlSource` + `Adapters/Html/Selector`, built on PHP 8.5's own `Dom\HTMLDocument` and
+`querySelectorAll` — **no hand-written selector engine was needed**, which is why this cost ~300
+lines rather than the ~1 000 estimated. Field maps for `type: html` are CSS selectors with an
+optional `@attr` and an optional `=> regex` capture; extraction still funnels through
+`ListingMapper`, so hard rule 9 has exactly one implementation. Pagination is real, not deferred:
+`page_param` walks pages and `total_selector` CHECKS the walk against the count the page states
+about itself, because walking until a page comes back empty is a termination rule and not a proof.
+
+**SOURCE #3 IS LIVE, AND IT IS THE FIRST THAT NEEDS A SECOND REQUEST (2026-08-21).** Cityloger —
+`www.cityloger.fr`, the Immobilière 3F group's own lettings platform — is `enabled: true`;
+`scout --domain=rent doctor --source=cityloger` returns **51 annonces, ~16 s, `ok`**, and the ref is stable across
+two runs. Four things about it change how a source is added here:
+
+- **Its search card carries NO tenure at all.** Not a badge, not a code, nothing — asserted by test,
+  so the day one appears the assertion fails rather than the second request continuing forever. On a
+  mixed source that meant every listing resolved `UNKNOWN` and went to the *à vérifier* digest:
+  correct under §1, and useless. So `type: html` gained **`detail_map`** — a second field map,
+  resolved against a listing's own detail page.
+- **A detail fetch is one request PER LISTING, so it runs behind a gate — and as of 2026-08-23 the
+  gate is the CACHE, not a predicate.** It was `Criteria::matchesCommune()`, injected by the CLI,
+  and that shape was wrong for a reason worth keeping: a per-pass predicate makes a listing's
+  verdict depend on which pass is looking at it, so a listing the title filter REJECTED while
+  hydrated returns as a bare card on the next pass and notifies. What replaced it is in
+  § "Detail hydration" in `docs/ENGINEERING-NOTES.md`. `matchesCommune()` survives as rank 1 of the ORDERING, for the
+  original reason — it is the only filter whose inputs the CARD carries in full, so using it cannot
+  act on a field the detail page would have filled (hard rule 8).
+- **A detail map's selectors must address the LISTING, never the page.** Measured on the frozen
+  Antony payload: its own `.description` classifies **LLI 0.90**, and the same listing fed its whole
+  detail page classifies **UNKNOWN 0.00** — because *"Commission d'attribution"* and *"demande de
+  logement social"* are page furniture present on social and intermediate listings alike, and three
+  such signals conflict a correct verdict away. This is the CDC `au plus près` failure class on a
+  new surface, and `Adapters/DetailHydrator` enforces it structurally: the detail path deliberately
+  does NOT add `_text`, so a detail map contributes only what it selects. (It lived in `HtmlSource`
+  until 2026-09-01 and was extracted so an email source can compose the same one — a hydrated
+  description is what the tenure classifier reads, so it is a §1-adjacent path and gets exactly one
+  implementation.)
+- **`{page}` may now appear in `url` itself**, for a site whose page number sits mid-path
+  (`resultats-location-{page}-defaut-`). Page one substitutes like every other page. The rejected
+  alternative — point `url` at the site root and let page one be the homepage widget, whose ten
+  cards are identical today — fails silently the day that widget becomes *featured* rather than
+  ranks 1–10.
+
+The corpus gained its **first captured SOCIAL case** here, and its third instance of one failure
+class: *"Logement intermédiaire géré par un **bailleur social**"* — an explicit intermediate label
+sharing a sentence with words that describe who manages the flat, not its tenure. `plus`,
+`au plus près`, `bailleur social`: the pattern is excluded vocabulary appearing as ordinary French on
+an eligible listing, and it has now cost three fixes.
+
+**Cityloger's live yield was 0 matches when it was onboarded, and that was not a defect — but the
+sentence stopped being true the same week and is kept here as an example of why a yield claim needs
+a date.** As written on 2026-08-20 it read: all 51 listings sit outside the 78/95 filter, the three
+Île-de-France ones being 92 and 77, so nothing is hydrated on a real pass. Both of those departments are INSIDE the region as of
+2026-08-22, so those three are now gated in and their detail pages ARE fetched — and the yield is
+**still 0, for a completely different reason**: all three quote 1221–1520 € CC and the ceiling is now
+1200. Measured on a live pass that day, Cityloger contributed 0 of the 92 notified rows while CDC,
+In'li and Logirep contributed 33, 54 and 5. So the claim survived a change that invalidated its
+every premise, which is the most dangerous thing a documented number can do. The machinery was
+always proven by fixtures rather than by yield, which is the part that has not changed. `docs/SOURCES.md` A6b records why the source is worth
+having anyway: 3F's *social* stock is allocated through AL'in and the SNE, so what surfaces on
+Cityloger skews to the intermediate and libre stock this project is looking for.
+
+> **THE PROJECT-WIDE "0 matches" CLAIM THAT USED TO STAND HERE WAS WRONG, and the way it was wrong
+> is the lesson.** It read *"live yield is 0 because everything is outside the commune filter"* —
+> true of Cityloger, and false of the tree. Measured 2026-08-22 by running all four sources against
+> live payloads: **474 listings, 457 rejected on location — and 13 got past it.** Twelve of those
+> were near-misses (9 In'li LLI at 1017–1353 € CC and a CDC 82 m² at 1669 €, all rejected by
+> `min_rooms: 4` alone; two CDC 5-pièces at 112 and 117 m² rejected by the rent ceiling). The
+> headline number was right and its explanation was invented, which is worse than being wrong twice:
+> a true number attached to a false cause stops anyone looking. **Never generalise one source's
+> measurement to the tree** — `scout --domain=rent run --seed -v --source=<name>` on a throwaway
+> `RENT_SCOUT_DB` prints every rejection with its reason and costs one poll.
+
+**The notification carries the postcode, the departement, the floor and the lift** (phase 1,
+2026-08-22). Headline: `82/100 — Sartrouville 78500 · T4 88 m² · 1450 € CC`; first reason line:
+`Yvelines (78) · 2e étage · avec ascenseur`. `Core/Department` is the lookup, Île-de-France only —
+those eight prefixes are what the criteria admit, and an unknown postcode returns `null` so the line
+is omitted rather than guessed. Every rule on it is **hard rule 9 at the display layer**, each with
+its own sabotage case: `floor === 0` is RDC and REAL (read as falsy it vanishes — the display twin
+of rejecting a listing for not stating a floor), and an UNMENTIONED lift is not an absent one, so
+`null` says nothing while `false` says *sans ascenseur*.
+
+> **THE SAME LINE CARRIES THE AMENITIES SINCE TRACK 7** (developer ruling, 2026-09-08: *show if it
+> has terrace, cave, parking spot*) — `Yvelines (78) · 2e étage · avec ascenseur · terrasse ·
+> parking inclus`. `Core/Amenities` reads terrasse, balcon, loggia, jardin, cave and the parking
+> family (`cellier` was DROPPED by ruling: a cellier is an indoor pantry, not a basement cave, so
+> merging them would state something the ad did not). **Display only — it rejects nothing and scores
+> nothing** (hard rule 8); a score bonus was offered with the distortion priced (only 15 % of
+> matched flats mention any amenity, so scoring it would rank prose-carrying sources above card-only
+> ones) and was declined. Three guards, each measured rather than reasoned: a MENTION is not an
+> INCLUSION, so `parking inclus` needs the word and the naive `parking … XX €` reader was built and
+> rejected at 36 CDC false positives of 38 hits; `terrasse` has a RESIDENCE-NAME false positive
+> (`12, les terrasses de la ravinière`, 2 of 38); and `cave` was measured inside a SeLoger tracking
+> token, so the reader strips a URL's query and fragment — the tenth instance of *URLs are
+> classified text*, and it calls `RawListing::withoutUrlParameters()` rather than becoming a third
+> copy of that expression. **ITS REACH WAS ONE MATCH IN TEN, AND SINCE 2026-09-09 IT IS THE DIGEST
+> AND THE ROLLUP TOO** (developer ruling). `factsLine()` had a single call site — `match()` — so at
+> `push_min_score: 55` the whole departement/floor/lift/amenity line travelled on an individual push
+> alone, and the two bins carrying most of the volume showed a headline and a reason and nothing
+> else. It splits into `contextBits()` (floor · lift · amenities), shared by the push and by BOTH
+> digest lists through one `digestLine()` helper — the two lists rendered byte-identical loops until
+> then, which is *a fix landing on one of two symmetric surfaces* waiting to be committed. **The
+> DEPARTEMENT deliberately did not travel**, and that is measured: the full line fires on 100 % of
+> digest rows, but on 61–74 % of them the departement is the ONLY thing it adds, restating the
+> postcode `headline()` already prints two fields to its left (rollup 40/62, tenure bin 58/94, all
+> 1 282 stored matches 958/1282); dropped, the line fires on 35–38 % of the two live bins and every
+> character of it is new. **That 35–38 % is dated 2026-09-09 morning, and the first DRY-RUN RENDER
+> of the queue that afternoon came in at 5 of 50** — four amenity rows and one `7e étage`. **The
+> cause is the drain's own ORDER, and THREE explanations for it were measured and refuted first**:
+> not *"those portals ship no prose"* (URLs removed, the head 50 carry a median 359 characters
+> against the tail's 376, and all 88 rows have a description), not the reason string
+> *aucun signal dans l'annonce*, which marks no TENURE signal and prints on the floor-carrying In'li
+> row too, and not *"`seen_epoch ASC` takes the oldest rows, and those are the portal cards"* — the
+> sources INTERLEAVE across the whole queue (seloger holds positions 1–63, bienici 2–71, In'li
+> 3–88), so there is no block of portal cards to take. **`seen_epoch` is the LAST sighting instant,
+> and the current-sighting branch of `Store::record()` rewrites it every pass**, so the order is
+> least-recently-sighted first: an email row freezes at its message `Date` and drifts forward, while
+> a still-published polled row is pushed to the back each time it is seen again. Measured: queue
+> positions **72–88 are exactly the 17 rows a POLLED source re-sighted in the last pass** (14 In'li,
+> 3 cdc_habitat, all stamped 11:26Z), while 70–71 are one pap and one bienici alert — email rows
+> frozen at 11:04Z and 11:08Z, which fall in the same half-hour without having been re-polled at
+> all. The head 50 is 47 of 50 bienici+seloger cards, whose prose says `étage`/`RDC`
+> once in 50 and `ascenseur` not at all; the 38 behind them are In'li-led and say them 17 and 8
+> times — **8/8 of the lifts are the same rows that carry one in their snapshot, and 16 of the 17
+> floors are** (one cdc_habitat floor comes from a mapped field rather than prose; the one In'li
+> prose mention is `Le bâtiment compte quatre étages`, a COUNT rather than a position, which
+> `Core\Prose` refuses correctly — a first draft called it under-extraction without reading the
+> row), so the two 17s coincide rather than corresponding.
+> **That ordering is a STARVATION shape, not merely a sequence**: In'li is the one source whose
+> prose routinely states a floor and a lift, and a still-published In'li flat loses its place to
+> every alert that arrives after it, for as long as it stays published. (A `--dry-run` sends
+> nothing and marks nothing, so that batch is a READING of the queue rather than a drain of it —
+> the 88 rows are all still waiting, which matters because the queue's own re-measurement is
+> compared against that count.) The feature is behaving; the BIN moved. A reach figure here is only
+> ever true of the bin and the day it was measured on, which this repo has already paid for twice.
+> Silence still carries nothing extra — an entry whose ad said nothing is
+> byte-identical to its pre-change line, asserted, because a dangling separator would announce an
+> absence of information as though it were information.
+
+**INDIVIDUAL HEATING IS PENALISED, AND THE SEVERITY IS A NUMBER RATHER THAN AN ADJECTIVE** (Track
+7-A, developer ruling 2026-09-08: *penalise severely, especially electric, gas not as much*).
+`Core/Heating` reads the mode and the energy out of the DESCRIPTION — never a new field-map entry,
+because `FieldMap::fingerprint()` hashes every mapped field list and one more entry invalidates all
+737 cached In'li `listing_detail` rows, which then re-hydrate at 20 per pass over about nine hours
+while every In'li flat is judged card-alone. Two negative weights that STACK, the `high_floor_no_lift`
+precedent exactly and likewise absent from `positiveTotal()`: electric −35, gas −20, mode-stated-
+without-energy −20. Measured through the shipped engine over every stored MATCH at production's
+`positiveTotal` of 105: individual pushes go **105 → 85**, and all 40 individually-heated matched
+flats move to the daily digest. −30 and −40 were measured and buy NOTHING at `push_min_score: 55` —
+they only reorder rows already under it.
+
+Three rules travel with it. **The negation is read FIRST** (`sans chauffage individuel`) — the
+lift-negation lesson on a new surface. **An unstated energy takes the BASE penalty only**, never the
+electric surcharge: that is the largest class in the store (101 rows, 24 matched) and reading it as
+electric would manufacture a fact from an absence. And **the vocabulary was read off the real copy**
+— `individuel` and the energy word sit 0–3 words apart in EITHER order, so an adjacency reader
+misses 9 of the 35 electric rows, while `convecteur`, `radiateur`, `CPCU` and `reseau de chaleur`
+are 0 hits each and are deliberately absent.
+
+> **STATED COST, and it is the whole asymmetry:** `chauffage` reaches the stored text of only THREE
+> of the eight sources (In'li 671, Cityloger 75, SeLoger 4), and all 40 individually-heated matched
+> flats are In'li. So the penalty ranks In'li flats below portal flats for a fact the portals never
+> state. That is hard rule 9 behaving correctly — unknown is not "no" — and not a defect to repair
+> later. The first implementation truncated its mode window at 24 characters and the STORE refuted
+> it: ` et eau chaude individuels` is 26, so the commonest gas shape came back null, and a reader
+> that reads nothing looks exactly like a flat that says nothing. Bounding the GAP is the fix, and
+> the case is in the ledger.
