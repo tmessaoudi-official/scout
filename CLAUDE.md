@@ -879,8 +879,9 @@ The gotchas now live in path-scoped rules files (moved verbatim 2026-09-28). A s
 - **tests** — CI, the nightly, the sabotage ledger and how its cases fail, test bootstrap (11) → `.claude/rules/tests.md` (loads when you read `tests/**`, `.github/**` …).
 - **prototype** — the Python prototype's known gaps — none of them to be ported (7) → `.claude/rules/prototype.md` (loads when you read `prototype/**`).
 - **tooling** — Claude Code, git, Composer and tenure-guard behaviour that bites from any directory (5) → `.claude/rules/tooling.md` (loads at session start).
+- **expertise-core** — what a generic engineer gets wrong here, the evidence surfaces, a trigger -> lesson table and routing to the `domain-*` skills (detail on demand in `.claude/EXPERTISE-REFERENCE.md`) → `.claude/rules/expertise-core.md` (loads at session start).
 
-**Intake rule:** a new lesson goes into the matching `.claude/rules/<area>.md`, not here; a rules file past ~300 lines is split again or pruned. Cite by section heading plus a quoted phrase, never a line number.
+**Intake rule:** a new lesson goes into the matching `.claude/rules/<area>.md`, not here; a rules file past ~300 lines is split again or pruned. Cite by section heading plus a quoted phrase, never a line number. Lessons still go to the matching area file; `expertise-core.md`, the `domain-*` skills and `EXPERTISE-REFERENCE.md` are curated from those sources and carry a review date: do not hand-append to them, flag a carry-worthy lesson for the next refresh.
 
 ## Credentials & stateful data
 
