@@ -19,7 +19,7 @@ Status: **milestone 1 is functionally complete against a frozen payload.** The p
 (schema v12 as of 2026-08-30), the config layer, the adapter contract, the criteria engine, dedup, the notification
 layer and the `scout` CLI all exist. What is missing is a NETWORK adapter, and that is blocked on an
 input rather than a decision. As of 2026-08-07 there is a PHP 8.5
-implementation of `models` + `tenure` under `src/php/Core/`, a 140-case language-neutral classifier
+implementation of `models` + `tenure` under `src/php/Core/`, a 143-case language-neutral classifier
 corpus at `tests/fixtures/rent/tenure/corpus.json`, the seen-set / price-history / run-log store under
 `src/php/Rent/Store/` with `SourceHealth` + `SourceStatus` in `Core/`, a strict JSON config layer under
 `src/php/Config/` with both files committed, the `Source` contract plus `Payload` / `ListingMapper` /
@@ -783,8 +783,8 @@ Required coverage, per spec §11 — non-negotiable once `src/` exists:
   Offline. No network in CI. A parser test that reaches the network is a monitoring check, not a test.
 - **Classifier tests.** ≥30 hand-labelled listing texts covering pure-LLI In'li, mixed CDC Habitat,
   an explicit PLAI, an explicit PLS, and an ambiguous case. The suite must go red if the classifier
-  regresses. **Done** — `tests/fixtures/rent/tenure/corpus.json`, 140 cases, and the suite asserts all five
-  shapes are present so "30 easy ones" cannot satisfy it. The corpus is **132 synthetic + 8 CAPTURED**
+  regresses. **Done** — `tests/fixtures/rent/tenure/corpus.json`, 143 cases, and the suite asserts all five
+  shapes are present so "30 easy ones" cannot satisfy it. The corpus is **135 synthetic + 8 CAPTURED**
   (2026-08-20 onward — CDC Habitat cards, Cityloger detail pages, Logirep card + filter facets, and a
   SeLoger alert CTA — the first captured from an EMAIL, and the first whose offending text belongs to
   a portal's template rather than to anyone's listing copy;

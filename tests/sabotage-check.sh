@@ -6316,6 +6316,33 @@ run_sabotage "job: a digest card's description group reaches the offer (2026-09-
   src/php/Job/JobDigestEmailSource.php \
   "/description: \\\$g\\['description'\\],/d"
 
+# AUDIT 2026-10-02, P0-1 and its review: a social label spelled with a separator (PLA-I, P.L.S.,
+# Logement-social) classified LIBRE/50 and reached MATCH 81 on a pure portal. Each guarantee of the
+# fix is mutated on its own, because one expression hiding another is how a compound case reports ok.
+run_sabotage "tenure: a separator between a social label's words stops being read (audit 2026-10-02 P0-1)" \
+  src/php/Core/Text.php \
+  's|\$tolerateSeparators ? self::WORD_GAP|false ? self::WORD_GAP|'
+
+run_sabotage "tenure: a letter-spaced social acronym stops being read (audit 2026-10-02 P0-1)" \
+  src/php/Core/Text.php \
+  's|if (\$tolerateSeparators \&\& in_array|if (false \&\& in_array|'
+
+# THE OTHER DIRECTION, found by the advisor review of that fix: widening an ELIGIBLE label's gap moved
+# a doubt toward MATCH, and beside a PLS label softened its rejection into a digest.
+run_sabotage "tenure: the separator tolerance widens ELIGIBLE labels too (audit 2026-10-02 P0-1 review)" \
+  src/php/Rent/Core/TenureClassifier.php \
+  's|\$literal, !\$tenure->isEligible());|$literal, true);|'
+
+# AUDIT 2026-10-02, P0-3: the tenure-doubt bin announced a row whose twin / cluster / dwelling is on record
+# PLS. Two reads, collect time and send time, each mutated alone.
+run_sabotage "digest: the tenure-doubt bin skips the section-one gate at collection (audit 2026-10-02 P0-3)" \
+  src/php/Rent/Cli/RentScout.php \
+  's|\$refusal = \$sectionOne->refuses(\$listing, \$row\[.dedup_key.\]);|$refusal = null;|'
+
+run_sabotage "digest: the tenure-doubt bin skips the section-one gate at send (audit 2026-10-02 P0-3)" \
+  src/php/Rent/Cli/RentScout.php \
+  '/private function refuseAtSend/,/^    }/ s|\$sectionOne->refuses(\$entry\[.listing.\], \$entry\[.key.\])|null|'
+
 # THE ABORT COMES BEFORE THE TALLY, and that ordering is the finding rather than a nicety (C2
 # round 7, resilience P3). The alert job harvests the `N sabotage(s) detected, M undetected` line;
 # printed AFTER it, a shard that selected no case ended its log with a clean-looking `0 / 0` and the

@@ -224,6 +224,13 @@ final class Text
      * *plaine*, *plaisant* and *plaisir*. Both mistakes are silent: the listings are simply dropped
      * and never arrive, so the developer concludes the market is quiet.
      *
+     * @param bool   $tolerateSeparators WIDEN the gap between words (hyphen, underscore, slash, a
+     *        dot between letters) and spell the acronyms in {@see SPELLED_OUT_ACRONYMS} letter by
+     *        letter. Required, never defaulted, so every caller decides: pass `true` for a literal
+     *        that is NOT eligible (a missed excluded label is a §1 breach) and `false` for an
+     *        ELIGIBLE one, because the tolerance only ever widens toward exclusion — reading
+     *        `logement-intermediaire` as the label moved a doubt toward MATCH and, beside a `PLS`
+     *        label, softened a rejection into a digest (review 2026-10-02).
      * @param string $foldedHaystack must already have been through {@see fold()}
      * @param string $needle         a folded literal, possibly multi-word
      */
@@ -269,9 +276,11 @@ final class Text
     /**
      * The INVARIANT acronyms that are also written with a separator between their letters. `plus`,
      * `sne` and `apl` are deliberately absent: `plus` is an ordinary adverb and `sne`/`apl` are
-     * procedural, so letter-spacing them would only add false positives.
+     * procedural, so letter-spacing them would only add false positives. `lli` is absent too, and
+     * for a different reason: it is ELIGIBLE, and the tolerance only ever widens toward exclusion
+     * (see `$tolerateSeparators` on {@see inflectedTokenPosition()}).
      */
-    private const array SPELLED_OUT_ACRONYMS = ['lli', 'plai', 'pls', 'anru', 'anah', 'hlm'];
+    private const array SPELLED_OUT_ACRONYMS = ['plai', 'pls', 'anru', 'anah', 'hlm'];
 
     /**
      * What may sit BETWEEN the words of a multi-word literal: whitespace (possibly none — see the
@@ -310,7 +319,7 @@ final class Text
      *
      * @return array{int, string}|null byte offset and the text that actually matched, or null
      */
-    public static function inflectedTokenPosition(string $foldedHaystack, string $needle): ?array
+    public static function inflectedTokenPosition(string $foldedHaystack, string $needle, bool $tolerateSeparators): ?array
     {
         if ($needle === '' || $foldedHaystack === '') {
             return null;
@@ -319,7 +328,7 @@ final class Text
         $parts = [];
 
         foreach (explode(' ', $needle) as $word) {
-            if (in_array($word, self::SPELLED_OUT_ACRONYMS, true)) {
+            if ($tolerateSeparators && in_array($word, self::SPELLED_OUT_ACRONYMS, true)) {
                 // `PLA-I`, `PLA I`, `P.L.A.I.`, `P.L.S.` — the same acronym with a separator between
                 // its letters. Matching only the joined spelling let an explicit social label fall
                 // through to the source default and reach MATCH (audit 2026-10-02, P0-1).
@@ -337,13 +346,16 @@ final class Text
             }
         }
 
+        // BETWEEN WORDS the gap is `\s*` for an eligible literal and WORD_GAP (which still contains
+        // `\s`, so newline-spanning behaves identically) for any other — see `$tolerateSeparators`.
+        //
         // `\s*`, not `\s+`, between words. Stripping an invisible \p{Cf} character that sat between
         // two words JOINS them — `logement<U+200B>social` becomes `logementsocial` — so a pattern
         // requiring whitespace would still miss the label the strip was meant to rescue. Allowing
         // zero separation is safe in both directions: `logementsocial` is not a French word, so
         // nothing legitimate matches by accident, and the guards at each end still require the
         // whole thing to stand as a token.
-        $pattern = '/(?<![a-z0-9])' . implode(self::WORD_GAP, $parts) . '(?![a-z0-9])/u';
+        $pattern = '/(?<![a-z0-9])' . implode($tolerateSeparators ? self::WORD_GAP : '\\s*', $parts) . '(?![a-z0-9])/u';
         $result = preg_match($pattern, $foldedHaystack, $m, PREG_OFFSET_CAPTURE);
 
         if ($result === false) {

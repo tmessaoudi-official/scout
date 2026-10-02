@@ -1267,6 +1267,7 @@ final readonly class RentScout
 
             return false;
         }));
+        $entries = $this->refuseAtSend($entries, $sectionOne);
         $notification = (new Formatter())->digest($entries, $lowScore);
 
         if ($entries === [] && $lowScore === []) {
@@ -1602,6 +1603,37 @@ final readonly class RentScout
             waitingLowScore: $waitingLowScore,
             retries: $retries,
         );
+    }
+
+    /**
+     * §1 AT THE LAST MOMENT, for the tenure-doubt entries (audit follow-up, 2026-10-02).
+     *
+     * `collectDigest()` already refused every route at COLLECT time; this reads them again
+     * immediately before the send, because `run --watch` is another process and the retries sent
+     * first are a window in which it can record a `PLS` twin. It is `SectionOneGate`'s own contract
+     * ("called at the last moment") applied to the second list it had not reached. One helper for
+     * both emission sites, so the two cannot drift apart.
+     *
+     * @param list<array{listing: RawListing, verdict: Verdict, key: string, keys: list<string>}> $entries
+     *
+     * @return list<array{listing: RawListing, verdict: Verdict, key: string, keys: list<string>}>
+     */
+    private function refuseAtSend(array $entries, SectionOneGate $sectionOne): array
+    {
+        return array_values(array_filter($entries, function (array $entry) use ($sectionOne): bool {
+            $refusal = $sectionOne->refuses($entry['listing'], $entry['key']);
+            if ($refusal === null) {
+                return true;
+            }
+            $this->warn(sprintf(
+                '%s — §1 : %s (%s) — retirée du récapitulatif',
+                $entry['key'],
+                $refusal['detail'],
+                $refusal['route'],
+            ));
+
+            return false;
+        }));
     }
 
     /**
@@ -2736,11 +2768,13 @@ final readonly class RentScout
         }));
 
         // NOW the emptiness check, on what will actually be announced.
-        if ($batch->entries === [] && $lowScore === []) {
+        $entries = $this->refuseAtSend($batch->entries, $sectionOne);
+
+        if ($entries === [] && $lowScore === []) {
             return;
         }
 
-        $notification = (new Formatter())->digest($batch->entries, $lowScore);
+        $notification = (new Formatter())->digest($entries, $lowScore);
         $failures = $notifier->send($notification);
 
         foreach ($failures as $failure) {
@@ -2756,7 +2790,7 @@ final readonly class RentScout
             return;
         }
 
-        foreach ($batch->entries as $entry) {
+        foreach ($entries as $entry) {
             $store->markNotified($entry['key'], $now, 'DIGEST');
         }
         foreach ($lowScore as $entry) {
@@ -2771,7 +2805,7 @@ final readonly class RentScout
             // so a gate-refused row was reported as emitted — while `overflow()` subtracted it too,
             // so no remainder line said it was still waiting. Both halves of one line wrong in
             // opposite directions (C2 round 5). The verb's count was corrected in the same commit.
-            count($batch->entries) + count($lowScore),
+            count($entries) + count($lowScore),
             $batch->overflow($drainedKeys, true, $lowScore) > 0
                 // Named, like every other cap in this file. A floor that drains one batch a day
                 // without saying so reads as the whole backlog having been dealt with — and it is

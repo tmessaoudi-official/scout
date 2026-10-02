@@ -688,6 +688,28 @@ final class RentScoutDigestTest extends TestCase
         self::assertFalse(Store::open($root . '/state/rent-watch.sqlite3')->wasNotified($key));
     }
 
+    /**
+     * THE COLLECTION-TIME READ, PINNED ON ITS OWN (ledger finding, 2026-10-02).
+     *
+     * Once the send-time read existed, removing the collection-time one left every test green: both
+     * refuse the same row, so nothing SENT differs. What only the collection-time read governs is
+     * what the operator is TOLD — `--dry-run` previews `$entries` as collected, before any send
+     * happens, so a doubt row that is about to be refused must not appear in that preview or the
+     * preview lies about the mail.
+     */
+    public function testADryRunPreviewDoesNotListADoubtRowItsTwinHoldsBack(): void
+    {
+        $root = $this->tempRoot();
+        $key = $this->seedDigestRow($root, $this->queueable('cdc_habitat', 'DOUBT-DRYRUN'));
+        Store::open($root . '/state/rent-watch.sqlite3')->recordTwin($key, Tenure::PLS, 'seloger', 9000);
+
+        $result = $this->scout($root, ['digest', '--dry-run']);
+
+        $said = $result['out'] . $result['err'];
+        self::assertStringNotContainsString('au régime indéterminé', $said, 'the preview must not announce the held-back row');
+        self::assertStringContainsString('jumeau', $said, 'and says why it was held back');
+    }
+
     /** THE COUNTERWEIGHT: a PLS row that is a DIFFERENT flat leaves the doubt announced. */
     public function testAnUnrelatedExcludedRowDoesNotKeepADoubtRowOutOfTheDigest(): void
     {
@@ -709,6 +731,41 @@ final class RentScoutDigestTest extends TestCase
 
         self::assertCount(1, $channel->sent);
         self::assertTrue(Store::open($root . '/state/rent-watch.sqlite3')->wasNotified($key));
+    }
+
+    /**
+     * THE AT-SEND READ, FOR THE DOUBT BIN (advisor review of the P0-3 fix, 2026-10-02).
+     *
+     * The low-score queue is checked at collection AND again just before the send; the tenure-doubt
+     * entries had only the first. A `run --watch` in another process can record a `PLS` twin after
+     * `collectDigest()` has read and before the mail goes out — the retries sent first are exactly
+     * that window — so the entry must meet the gate again at its own send. The double plays the
+     * writer on the first MATCH push.
+     */
+    public function testATwinRecordedAfterCollectionStopsADoubtRowAtSend(): void
+    {
+        $root = $this->tempRoot();
+        $this->seedQueuedMatch($root, $this->queueable('inli', 'SEAM-D-RETRY'));
+        $doubt = $this->seedDigestRow($root, $this->queueable('cdc_habitat', 'SEAM-D-DOUBT'));
+
+        $channel = $this->delivering();
+        $wrote = false;
+        $channel->onSend = function (\Scout\Core\Notify\Notification $sent) use ($root, $doubt, &$wrote): void {
+            if ($wrote || $sent->kind !== NotificationKind::MATCH) {
+                return;
+            }
+            Store::open($root . '/state/rent-watch.sqlite3')->recordTwin($doubt, Tenure::PLS, 'seloger', 9000);
+            $wrote = true;
+        };
+
+        $result = $this->scout($root, ['digest'], $channel);
+
+        self::assertTrue($wrote, 'premise: the concurrent writer ran');
+        foreach ($channel->sent as $sent) {
+            self::assertNotSame(NotificationKind::DIGEST, $sent->kind, 'the doubt row met its twin at send and was held back');
+        }
+        self::assertStringContainsString('retirée du récapitulatif', $result['out'] . $result['err'], 'and the refusal is voiced');
+        self::assertFalse(Store::open($root . '/state/rent-watch.sqlite3')->wasNotified($doubt), 'left waiting, not consumed');
     }
 
     // ── C2 round 6 (2026-09-05): two tracks, ONE rollup entry ────────────────────────────────────

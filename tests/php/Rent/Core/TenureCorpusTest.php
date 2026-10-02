@@ -96,7 +96,7 @@ final class TenureCorpusTest extends TestCase
                 }
 
                 self::assertNull(
-                    Text::inflectedTokenPosition($haystack, $token),
+                    Text::inflectedTokenPosition($haystack, $token, true),
                     sprintf(
                         "fixture %s reached MATCH while its own listing says '%s'.\n"
                         . "That is CLAUDE.md §1. If this is a legitimate exception (the French "
@@ -291,7 +291,7 @@ final class TenureCorpusTest extends TestCase
                         sprintf('fixture %s no longer reaches MATCH, so its exemption is dead — remove it', $id),
                     );
                     self::assertNotNull(
-                        Text::inflectedTokenPosition($haystack, $token),
+                        Text::inflectedTokenPosition($haystack, $token, true),
                         sprintf('fixture %s no longer contains "%s" — remove the exemption', $id, $token),
                     );
                     self::assertNotSame('', trim($reason), sprintf('fixture %s exempts "%s" with no reason', $id, $token));

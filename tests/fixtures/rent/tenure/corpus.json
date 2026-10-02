@@ -22,7 +22,7 @@
   ],
   "version": 1,
   "declared_counts": {
-    "synthetic": 132,
+    "synthetic": 135,
     "captured": 8
   },
   "sources": {
@@ -1940,7 +1940,7 @@
         "tenure": "PLAI",
         "outcome": "REJECT"
       },
-      "why": "THE §1 HALF OF THE URL RULE, and the pair that proves the split is not arbitrary. RawListing::text() strips a URL's QUERY and FRAGMENT but keeps its PATH, and both halves are measured: `plai` as a path SEGMENT classifies PLAI/REJECT, while the same acronym inside `?c=plai_plus` classifies nothing at all. Blanking the whole URL would be simpler and would run the wrong way -- losing a social signal is the dangerous direction, where losing a campaign string costs nothing. Paired with url-001, which is the same rule read from the other side. (A hyphenated `logement-social` matches neither, because the label literal carries a space; that is a separate gap, not this rule's job.)"
+      "why": "THE §1 HALF OF THE URL RULE, and the pair that proves the split is not arbitrary. RawListing::text() strips a URL's QUERY and FRAGMENT but keeps its PATH, and both halves are measured: `plai` as a path SEGMENT classifies PLAI/REJECT, while the same acronym inside `?c=plai_plus` classifies nothing at all. Blanking the whole URL would be simpler and would run the wrong way -- losing a social signal is the dangerous direction, where losing a campaign string costs nothing. Paired with url-001, which is the same rule read from the other side. (A hyphenated `logement-social` matched neither until 2026-10-02 — see vocab-005, which closed that gap.)"
     },
     {
       "id": "vocab-001-pla-i-hyphenated",
@@ -2072,6 +2072,45 @@
         "max_confidence": 59
       },
       "why": "THE OTHER SIDE. A full stop followed by a space is a sentence break and must not join `logement` to `social`: only a dot with a letter on each side counts as a separator."
+    },
+    {
+      "id": "vocab-011-hyphenated-eligible-label-stays-a-doubt",
+      "provenance": "synthetic",
+      "source": "cdc_habitat",
+      "title": "T3 Sartrouville",
+      "description": "Beau logement-intermediaire de 3 pièces.",
+      "fields": {},
+      "expect": {
+        "tenure": "UNKNOWN",
+        "outcome": "DIGEST"
+      },
+      "why": "REVIEW 2026-10-02 (advisor, after the P0-1 fix). The separator tolerance added for excluded labels must NOT apply to ELIGIBLE ones: widening `logement intermediaire` to `logement-intermediaire` moved a doubt toward MATCH on a mixed source (and a URL slug such as /logements-intermediaires/ is classified text), the wrong direction for this repo. A hyphenated eligible label is NOT read as the label: the listing stays in the à vérifier digest, exactly as before."
+    },
+    {
+      "id": "vocab-012-hyphenated-eligible-label-does-not-soften-pls",
+      "provenance": "synthetic",
+      "source": "cdc_habitat",
+      "title": "T3 Sartrouville",
+      "description": "Logement-intermediaire, financement PLS, 3 pièces.",
+      "fields": {},
+      "expect": {
+        "tenure": "PLS",
+        "outcome": "REJECT"
+      },
+      "why": "REVIEW 2026-10-02 (advisor, after the P0-1 fix). The separator tolerance added for excluded labels must NOT apply to ELIGIBLE ones: widening `logement intermediaire` to `logement-intermediaire` moved a doubt toward MATCH on a mixed source (and a URL slug such as /logements-intermediaires/ is classified text), the wrong direction for this repo. Measured: with the widening applied to eligible labels this flipped PLS/REJECT to UNKNOWN/DIGEST, because the hyphenated eligible label conflicted with the PLS one. The excluded label must keep deciding."
+    },
+    {
+      "id": "vocab-013-dotted-eligible-acronym-stays-a-doubt",
+      "provenance": "synthetic",
+      "source": "cdc_habitat",
+      "title": "T3 Sartrouville",
+      "description": "Ce logement-intermediaire est un L.L.I. récent",
+      "fields": {},
+      "expect": {
+        "tenure": "UNKNOWN",
+        "outcome": "DIGEST"
+      },
+      "why": "REVIEW 2026-10-02 (advisor, after the P0-1 fix). The separator tolerance added for excluded labels must NOT apply to ELIGIBLE ones: widening `logement intermediaire` to `logement-intermediaire` moved a doubt toward MATCH on a mixed source (and a URL slug such as /logements-intermediaires/ is classified text), the wrong direction for this repo. `lli` is the one ELIGIBLE acronym, so it is not letter-spaced: `L.L.I.` stays unread."
     }
   ]
 }

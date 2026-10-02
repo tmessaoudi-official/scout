@@ -98,7 +98,7 @@ final class SurfaceMatrixTest extends TestCase
                 // the spaces and so hands the classifier `champplai`, the single-word case skipped
                 // just above for the reason given there.
                 if ($surface === 'field name, lowercased identifier'
-                    && in_array(str_replace(' ', '', $token), ['lli', 'plai', 'pls', 'anru', 'anah', 'hlm'], true)) {
+                    && in_array(str_replace(' ', '', $token), ['plai', 'pls', 'anru', 'anah', 'hlm'], true)) {
                     continue;
                 }
 

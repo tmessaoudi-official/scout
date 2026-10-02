@@ -272,8 +272,8 @@ Two smaller things landed with it, both hard rule 9: `Payload::floor()` reads fl
 they are (`RDC` is **0**, not unknown; and the generic number reader would return the ROOM COUNT from
 `3 pièces - 4ème étage - 82m²`), and `Payload::bool()` accepts the amenity noun `ascenseur`, which
 can only ever yield `true` or `null` and so cannot manufacture the explicit `false` the high-floor
-penalty needs. **`tests/fixtures/rent/tenure/corpus.json` now has CAPTURED cases** (140
-total, 132 synthetic + 8 captured): two CDC cards — including the `au plus près` one, which is what
+penalty needs. **`tests/fixtures/rent/tenure/corpus.json` now has CAPTURED cases** (143
+total, 135 synthetic + 8 captured): two CDC cards — including the `au plus près` one, which is what
 stops that classifier fix from being quietly undone — two Cityloger detail pages, and two Logirep
 captures added 2026-08-22, one an ordinary card that states no tenure at all and one the site's own
 FILTER FACET STRIP, which contains `PLAI` inside `Plain-pied`, `LLI` inside `Ce·lli·er` and `PLUS`

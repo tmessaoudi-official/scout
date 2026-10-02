@@ -988,8 +988,9 @@ final readonly class TenureClassifier
      * method got that wrong in a way its own docblock denied. It appended field values after a
      * newline and claimed *"an inflection or a `sans` negation cannot straddle the join between a
      * description and a field, or between two fields"*. False:
-     * {@see Text::inflectedTokenPosition()} joins a literal's words with `\s*`, which matches a
-     * newline, and only ELIGIBLE tells were blocked from spanning. So a description ending
+     * {@see Text::inflectedTokenPosition()} joins a literal's words with `\s*` (for an excluded literal
+     * a WIDER gap that still contains `\s`), which matches a newline, and only ELIGIBLE tells were
+     * blocked from spanning. So a description ending
      * *"…aucune commission"* and the next field opening *"Attribution directe par le bailleur"* —
      * the brief's canonical INTERMEDIATE tell — assembled into the social `commission attribution`
      * and hard-REJECTED. `REJECT` is silent by design, so nothing arrived and nothing said why.
@@ -1072,7 +1073,7 @@ final readonly class TenureClassifier
         foreach (self::PROCEDURAL as $literal => $tenure) {
             // Inflected for the same reason as the labels: `commissions d'attribution`,
             // `numéros uniques` and `attributions directes` are all ordinary phrasings.
-            $hit = Text::inflectedTokenPosition($folded, $literal);
+            $hit = Text::inflectedTokenPosition($folded, $literal, !$tenure->isEligible());
 
             if ($hit === null) {
                 continue;
@@ -1085,7 +1086,8 @@ final readonly class TenureClassifier
             }
 
             // An ELIGIBLE tell may not be assembled across a phrase boundary. `Text::
-            // inflectedTokenPosition()` joins a multi-word literal with `\s*` so that an inflected
+            // inflectedTokenPosition()` joins a multi-word literal with `\s*` (an eligible literal keeps
+            // exactly that gap — the separator tolerance is for excluded ones only) so that an inflected
             // or line-wrapped phrase still matches — which is right for an EXCLUDED literal, where
             // failing to match is the §1 fail-open, and wrong for an eligible one, where matching
             // manufactures eligibility out of two unrelated fragments. A title ending `T3 Cergy
@@ -1278,7 +1280,7 @@ final readonly class TenureClassifier
             // Inflected, not exact: French agreement and plurals are not optional decoration.
             // `conventionnée`, `logements sociaux` and `prêts locatifs sociaux` were all silent
             // non-matches while their singular masculine forms matched. See Text.
-            $hit = Text::inflectedTokenPosition($folded, $literal);
+            $hit = Text::inflectedTokenPosition($folded, $literal, !$tenure->isEligible());
 
             if ($hit === null) {
                 continue;
@@ -1301,7 +1303,8 @@ final readonly class TenureClassifier
      * `reasons[]` is the product's only user-facing output (`spec/PROJECT_BRIEF.md` §5) and it is
      * built from the text that ACTUALLY matched. Since folding began preserving newlines — so the
      * title/description boundary could act as a phrase break — that matched text can contain one:
-     * `Text::inflectedTokenPosition()` joins a multi-word literal with `\s*`, so a label straddling
+     * `Text::inflectedTokenPosition()` joins a multi-word literal with `\s*` (or a wider gap that
+     * contains it), so a label straddling
      * the join produced « logement\nintermediaire » in a notification. A hard-wrapped `text/plain`
      * IMAP alert body, which `CLAUDE.md` hard rule 4 makes the PRIMARY ingestion path, does it in
      * the middle of a sentence. Fixed at the formatting site rather than in the fold, because the
@@ -1419,7 +1422,7 @@ final readonly class TenureClassifier
                     continue;
                 }
 
-                $hit = Text::inflectedTokenPosition($haystack, $literal);
+                $hit = Text::inflectedTokenPosition($haystack, $literal, true);
 
                 if ($hit === null) {
                     continue;
