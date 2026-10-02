@@ -1344,6 +1344,15 @@ final readonly class RentScout
         $warnings = [];
         $withoutSnapshot = 0;
 
+        // §1 ON THE TENURE-DOUBT BIN TOO (audit 2026-10-02, P0-3). `Pipeline` refuses a DIGEST row
+        // on any persisted excluded reading — "§1 ON THE DIGEST BIN TOO" — because the digest is an
+        // announcement, not a destination. This drain applied the same four routes to the queued
+        // MATCHES below and never to these rows, so a doubt whose twin, cluster sibling or same
+        // dwelling was on record as PLS reached the phone under « au régime indéterminé ». It sits
+        // HERE, in the collector `digest` and the daily floor both call, so the two cannot drift
+        // apart. A refused row stays pending and is said out loud, as the queued matches are.
+        $sectionOne = new SectionOneGate($store, new Dedup());
+
         foreach ($rows as $row) {
             $listing = null;
             $json = $row['evidence_json'];
@@ -1374,6 +1383,18 @@ final readonly class RentScout
                 url: $row['url'],
                 rentCc: $row['rent_cc'],
             );
+
+            $refusal = $sectionOne->refuses($listing, $row['dedup_key']);
+            if ($refusal !== null) {
+                $warnings[] = sprintf(
+                    '%s : §1 — %s (%s) — laissée en attente, `scout --domain=rent reclassify` la revoit',
+                    $row['dedup_key'],
+                    $refusal['detail'],
+                    $refusal['route'],
+                );
+
+                continue;
+            }
 
             /** @var list<string> $reasons */
             $reasons = $this->decodeSignals($row['signals_json']);

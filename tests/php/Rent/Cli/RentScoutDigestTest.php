@@ -633,6 +633,84 @@ final class RentScoutDigestTest extends TestCase
         self::assertFalse(Store::open($root . '/state/rent-watch.sqlite3')->wasNotified($key));
     }
 
+    // ── Audit 2026-10-02, P0-3: the tenure-doubt bin takes the same three vetoes ─────────────────
+    //
+    // `Pipeline` refuses a DIGEST row on any persisted excluded reading (Pipeline.php, "§1 ON THE
+    // DIGEST BIN TOO"), and the drain applied group/twin/dwelling to the queued MATCHES only — so a
+    // doubt row whose twin, cluster sibling or same dwelling was on record as PLS was announced
+    // under « au régime indéterminé » by `digest` and by the floor `--watch` runs.
+
+    public function testAnExcludedTwinKeepsADoubtRowOutOfTheDigest(): void
+    {
+        $root = $this->tempRoot();
+        $key = $this->seedDigestRow($root, $this->queueable('cdc_habitat', 'DOUBT-TWIN'));
+        Store::open($root . '/state/rent-watch.sqlite3')->recordTwin($key, Tenure::PLS, 'seloger', 9000);
+
+        $channel = $this->delivering();
+        $result = $this->scout($root, ['digest'], $channel);
+
+        self::assertSame([], $channel->sent, 'a doubt whose twin is PLS is not announced');
+        self::assertStringContainsString('jumeau', $result['out'] . $result['err'], 'and the refusal is said out loud');
+        self::assertFalse(Store::open($root . '/state/rent-watch.sqlite3')->wasNotified($key), 'left waiting, not consumed');
+    }
+
+    public function testAnExcludedClusterSiblingKeepsADoubtRowOutOfTheDigest(): void
+    {
+        $root = $this->tempRoot();
+        $key = $this->seedDigestRow($root, $this->queueable('cdc_habitat', 'DOUBT-GROUP'));
+
+        $store = Store::open($root . '/state/rent-watch.sqlite3');
+        $sibling = $this->queueable('seloger', 'DOUBT-GROUP-SIB');
+        $sighting = $store->record($sibling, $sibling->effectiveRentCc(), self::NOW);
+        $store->recordVerdict($sighting->dedupKey, 'PLS', 9000, ['plafond de ressources PLS'], $sibling);
+        $store->recordOutcome($sighting->dedupKey, 'REJECT');
+        $store->assignGroup([$key, $sighting->dedupKey]);
+
+        $channel = $this->delivering();
+        $result = $this->scout($root, ['digest'], $channel);
+
+        self::assertSame([], $channel->sent);
+        self::assertStringContainsString('groupe', $result['out'] . $result['err']);
+        self::assertFalse(Store::open($root . '/state/rent-watch.sqlite3')->wasNotified($key));
+    }
+
+    public function testTheSameDwellingRecordedExcludedKeepsADoubtRowOutOfTheDigest(): void
+    {
+        $root = $this->tempRoot();
+        $key = $this->seedDigestRow($root, $this->queueable('cdc_habitat', 'DOUBT-READVERT-NEW'));
+        $this->seedExcludedDwelling($root, $this->queueable('cdc_habitat', 'DOUBT-READVERT-OLD'), Tenure::PLS);
+
+        $channel = $this->delivering();
+        $result = $this->scout($root, ['digest'], $channel);
+
+        self::assertSame([], $channel->sent);
+        self::assertStringContainsString('même logement', $result['out'] . $result['err']);
+        self::assertFalse(Store::open($root . '/state/rent-watch.sqlite3')->wasNotified($key));
+    }
+
+    /** THE COUNTERWEIGHT: a PLS row that is a DIFFERENT flat leaves the doubt announced. */
+    public function testAnUnrelatedExcludedRowDoesNotKeepADoubtRowOutOfTheDigest(): void
+    {
+        $root = $this->tempRoot();
+        $key = $this->seedDigestRow($root, $this->queueable('cdc_habitat', 'DOUBT-UNRELATED'));
+        $this->seedExcludedDwelling($root, new RawListing(
+            sourceName: 'cdc_habitat',
+            externalId: 'ELSEWHERE-2',
+            title: 'Appartement 2 pièces',
+            commune: 'Dourdan',
+            postcode: '91410',
+            rentCc: 700,
+            surfaceM2: 41.0,
+            rooms: 2,
+        ), Tenure::PLS);
+
+        $channel = $this->delivering();
+        $this->scout($root, ['digest'], $channel);
+
+        self::assertCount(1, $channel->sent);
+        self::assertTrue(Store::open($root . '/state/rent-watch.sqlite3')->wasNotified($key));
+    }
+
     // ── C2 round 6 (2026-09-05): two tracks, ONE rollup entry ────────────────────────────────────
 
     /**
