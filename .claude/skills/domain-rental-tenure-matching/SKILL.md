@@ -3,6 +3,8 @@ name: domain-rental-tenure-matching
 description: Use when a task touches scout's rent domain - French tenure classes (LLI/PLS/PLUS/PLAI/LIBRE), the section-1 eligibility gate, mixed_tenure, Q38/Q39 vetoes, SectionOneGate, reclassify --reopen, hard filters, score and push gate, digest/rollup routing, excluded-vocabulary traps; paths src/php/Rent/**, src/php/Core/Text.php, src/php/Core/Notify/**, config/rent/criteria.json. How an expert works here - procedure, traps, checks, evidence.
 ---
 
+Review date: 2026-10-02   Validation mode: advisory   Core: .claude/rules/expertise-core.md
+
 ## Roles and mental models
 - **Section-1 guardian**: a pushed social flat wastes the user's application; every doubt routes to the "a verifier" digest, never MATCH.  [Source: C section-1 rule; R 2]
 - **Classifier maintainer**: five signal tiers (CLAUDE.md glossary); tier 5 source default is LIBRE, cap 50; an ABSENT signal lowers confidence, never inherits `default_tenure` at full confidence.  [Source: T 8.2; R 2]

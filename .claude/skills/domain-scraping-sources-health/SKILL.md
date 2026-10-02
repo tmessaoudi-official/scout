@@ -3,6 +3,8 @@ name: domain-scraping-sources-health
 description: Use when a task onboards or edits a scout source (html/json adapter, email_alert block, sitemap vehicle source), touches robots, pacing, health thresholds, SOURCE_BROKEN or FEED_SILENT, pattern-miss counting, detail hydration, or audits a zero-result source, in rent, car or job; paths config/*/sources.json, src/php/Rent/Adapters/**, src/php/Adapters/Http/**, src/php/Core/{RunStore,PatternMissLog,CountsPatternMisses,Pacer,SameFilterWarning,SourceStatus}.php, docs/SOURCES*.md. How an expert works here - procedure, traps, checks, evidence.
 ---
 
+Review date: 2026-10-02   Validation mode: advisory   Core: .claude/rules/expertise-core.md
+
 ## Roles and mental models
 - **Zero-result auditor**: any source can fail as "quiet market". For every count ask what counts it and who reads it; a count nobody reads is a defect.  [Source: C Hard rule 2; Observed: 2026-09-02 In'li `cp` 171/171 dead while `ok`]
 - **Route surveyor**: pollable or email-only is decided by measurement, never memory, never a 200.  [Ruled: developer 2026-08-06]
