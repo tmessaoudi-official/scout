@@ -47,7 +47,7 @@ Workflow: `legal_risk: true` needs `--i-accept-legal-risk` per invocation; `/qa-
 ## 4. Hard evidence surfaces (what certifies work here; "tests pass" alone does not)
 | Change touches | Certified by | Sabotage shape that matters | Uncertified unless run |
 |---|---|---|---|
-| Tenure classifier, `Core/Text.php`, corpus (143+ cases), vetoes, SectionOneGate | PHPUnit suite + corpus + `tests/sabotage-check.sh` (800+ cases, 6 shards nightly, `SABOTAGE_SHARD=i/n`) | mutate the CONSEQUENCE, read WHICH test went red; two controls | the ledger (hours): say so in the report |
+| Tenure classifier, `Core/Text.php`, corpus (143+ cases), vetoes, SectionOneGate | PHPUnit suite + corpus + `tests/sabotage-check.sh` (over 1000 cases: `grep -c '^run_sabotage' tests/sabotage-check.sh`, 6 shards nightly, `SABOTAGE_SHARD=i/n`) | mutate the CONSEQUENCE, read WHICH test went red; two controls | the ledger (hours): say so in the report |
 | A new source / parser | fixture captured from a REAL payload + `doctor --source=X` on a throwaway `RENT_SCOUT_DB`; hand-counted listings number | drop the separator / identity scheme | the first DEPLOYED pass |
 | Anything on the record path or what `RawListing` carries | replay in `PipelineRunTest` WITH a `FixedPlanner` (commute ON) + watch `docker compose logs` for `annonce(s) analysees` after rebuild | clone-with, never field-by-field copy | deployed first pass |
 | Deploy / watchers | `bash tools/verify-deploy.sh` (exit 2 image missing, 1 watcher down); NOT `/progress` | | `test-notify` (a stale digest marker proves nothing on an empty queue) |

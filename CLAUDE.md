@@ -397,8 +397,8 @@ it stays unanswered. A question asked only in chat is lost at the next session.
 
 ## Domain glossary — read this carefully
 
-Tenure is a property of the **listing**, not of the **source**. In'li is pure LLI, but CDC Habitat,
-Vilogia, Immobilière 3F and Seqens publish social *and* intermediate stock on the same pages, sometimes
+Tenure is a property of the **listing**, not of the **source**. In'li looked pure LLI and is not (hydrating its
+listings proved it), and CDC Habitat, Vilogia, Immobilière 3F and Seqens publish social *and* intermediate stock on the same pages, sometimes
 in the same result set.
 
 | Term | Meaning | In scope? |
@@ -975,7 +975,7 @@ tests/test-ci-workflow.sh          Proves ci.yml still wires every step this fil
                                      under the global-is-reference ruling)
 ```
 
-The repo carries exactly FOUR skills, all repo-specific by name and content (global-is-reference
+Besides the `domain-*` expertise packs (see `expertise-core`), the repo carries exactly FOUR skills, all repo-specific by name and content (global-is-reference
 ruling, 2026-08-18 — a repo may not duplicate anything that exists in `~/.claude/`): `/add-source`
 (onboard a landlord or portal, config-only), `/scout-ask-human` (this repo's additions to the
 global question protocol), `/scout-lenses` (the mandatory review dimensions + sleuth lens K), and

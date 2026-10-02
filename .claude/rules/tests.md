@@ -162,8 +162,8 @@ Moved verbatim from CLAUDE.md § "Gotchas & pitfalls" on 2026-09-28 (review-reme
   timeout; re-run that case alone on a quiet box, or raise `SABOTAGE_SUITE_TIMEOUT`. Same class as
   the JIT entry below — the harness broke, the guarantee did not.
 - **The local PHP's tracing JIT crashes the sabotage ledger nondeterministically.** [HOST CHANGED —
-  re-checked 2026-09-28: `php` is now the distro `/usr/bin/php8.5` and `~/.phpbrew` is gone, so the phpbrew
-  recipe below is historical; whether the distro build crashes the same way is untested. What still holds:
+  re-checked 2026-10-02: `php` is `/stack/tools/phpbrew/php/php-master/bin/php`, `8.7.0-dev (ZTS DEBUG GCOV)`,
+  not the 8.5.9 build below, so the recipe below is historical; whether this build crashes the same way is untested. What still holds:
   a crash exit is *harness broke*, not a detection.] `php` here was
   phpbrew's `8.5.9 (ZTS DEBUG)` with `opcache.jit=tracing` and `opcache.enable_cli=1`; under the
   ledger the suite dies mid-run with `zend_jit_trace.c … Assertion !p->op_array failed` (exit 134),

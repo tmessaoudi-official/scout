@@ -363,7 +363,7 @@ matters here is telling the classifier where to look and whether the source mixe
   publishes social **and** intermediate stock on the same pages: CDC Habitat, Vilogia, Immobilière 3F,
   Seqens, 1001 Vies, ICF. On these, confidence `< 0.6` means `UNKNOWN` → *"à vérifier"* digest, never a
   match.
-- `mixed_tenure: false` is **only** for a source that is provably pure one tenure (In'li = pure LLI).
+- `mixed_tenure: false` is **only** for a source that is provably pure one tenure (In'li was assumed pure and is not).
   Getting this wrong disables the fail-closed rule for that source entirely, which is how a PLAI listing
   reaches a notification. When unsure, leave it `true`.
 
