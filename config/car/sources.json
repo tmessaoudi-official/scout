@@ -107,6 +107,7 @@
       "enabled": true,
       "family": "auction",
       "type": "alcopa",
+      "legal_risk": true,
       "url": "https://www.alcopa-auction.fr/recherche?categories%5B%5D=VP&years%5B%5D=2020-2100&price_max=30000&km_max=100000&sites%5B%5D=1&sites%5B%5D=45&sites%5B%5D=21",
       "lot_budget_per_pass": 20,
       "rate_limit_ms": 3000
@@ -116,6 +117,7 @@
       "enabled": true,
       "family": "dealer",
       "type": "sitemap_jsonld",
+      "legal_risk": true,
       "url": "https://www.autohero.com/fr/sitemap_search.xml",
       "item_url_pattern": "~^https://www\\.autohero\\.com/fr/[^/]+/id/([0-9a-f-]{36})/?$~",
       "lot_budget_per_pass": 50,

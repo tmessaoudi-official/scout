@@ -14,6 +14,7 @@ final readonly class VehicleSourceDefinition
     /**
      * @param string               $family        portal | dealer | auction — a displayed fact and, later, a score component
      * @param array<string,string> $params        the adapter's string parameters (patterns, from, link_host, …)
+     * @param bool                 $legalRisk     RECORD ONLY (developer ruling 2026-10-02): the source's terms of use were not read. No runtime gate reads it — hard rule 4's refusal is rent-side — so it states a fact, it does not enforce one
      * @param array<string,string> $map           `sitemap_jsonld`: listing field => dotted path into the JSON-LD block
      */
     public function __construct(
@@ -29,6 +30,9 @@ final readonly class VehicleSourceDefinition
         public int $rateLimitMs = 2000,
         public ?int $feedSilentDays = null,
         public ?string $fixture = null,
+        // RECORD ONLY (developer ruling 2026-10-02): the source's terms of use were not read. No runtime
+        // gate reads it — hard rule 4's refusal is rent-side — so it states a fact, it does not enforce one.
+        public bool $legalRisk = false,
     ) {}
 
     public function param(string $key): ?string

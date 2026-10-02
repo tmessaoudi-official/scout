@@ -170,10 +170,22 @@ final readonly class CriteriaEngine
             return 'surface: ' . $listing->surfaceM2 . ' m² < ' . $this->criteria->minSurfaceM2 . ' m²';
         }
 
-        // --- rent (F6), charges comprises, and never on an HC-only figure ---
+        // --- rent (F6), charges comprises ---
         $rentCc = $listing->effectiveRentCc();
         if ($this->criteria->maxRentCc !== null && $rentCc !== null && $rentCc > $this->criteria->maxRentCc) {
             return 'rent: ' . $rentCc . ' € CC > ' . $this->criteria->maxRentCc . ' € CC';
+        }
+
+        // AN HC-ONLY FIGURE IS A LOWER BOUND, NOT AN UNKNOWN, once it is over the ceiling (audit
+        // 2026-10-02 P1-1; developer ruling the same day, refining Q32's edge). Q32 keeps an HC-only
+        // rent UNKNOWN as a CC figure — charges could land it either side of the line — and that still
+        // holds at or under the ceiling. Charges are never negative, so CC >= HC: an HC figure above
+        // the ceiling means the CC figure is above it too, and nothing is left to be unknown. Only
+        // when CC itself is unknown (`$rentCc === null`): a stated or derivable CC governs above.
+        if ($this->criteria->maxRentCc !== null && $rentCc === null
+            && $listing->rentHc !== null && $listing->rentHc > $this->criteria->maxRentCc) {
+            return 'rent: ' . $listing->rentHc . ' € HC > ' . $this->criteria->maxRentCc
+                . ' € CC — les charges ne sont jamais négatives, le loyer charges comprises dépasse donc aussi le plafond';
         }
 
         return null;

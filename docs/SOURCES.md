@@ -410,6 +410,22 @@ one only if a specific agency is found to withhold listings from the portals.
 
 ---
 
+## Car sources polled without a reviewed legal posture (recorded 2026-10-02)
+
+Audit 2026-10-02 (P1-2): rent refuses any `legal_risk` source without `--i-accept-legal-risk`
+(hard rule 4); the car domain has no such gate, and two car sources poll `enabled: true`. Developer
+ruling: **mark and record only** — both stay polling, both carry `"legal_risk": true` in
+`config/car/sources.json`, and nothing enforces it at runtime (`VehicleSourceDefinition::$legalRisk`
+is a statement, read by `tests/php/Car/VehicleSourcesLegalRiskTest.php`, not a gate).
+
+| Source | Known | NOT known |
+|---|---|---|
+| Autohero (`sitemap_jsonld`) | `robots.txt` open and enforced at runtime; the sitemap it publishes for crawlers is what is read; 2 s between requests, honest User-Agent | its terms of use — never read; whether automated reading of lot pages is permitted |
+| Alcopa (`alcopa`) | public auction site; `robots.txt` disallows only `/*.pdf$` and `/calendrier/`, enforced at runtime; ~13 search pages per pass, 3 s apart | its terms of use — never read; whether a polling cadence of this size is acceptable |
+
+Closing this means reading both sets of terms, then either removing the flag with the evidence here
+or disabling the source. Until then the flag is the only place the gap is written down.
+
 ## Honest note: for Tier B, a product already exists
 
 **Jinka** (`www.jinka.fr`, HTTP 200) aggregates SeLoger / Leboncoin / PAP / Bien'ici and alerts on new

@@ -140,6 +140,7 @@ final class VehicleSourceLoader
             $lotBudget = $r->optInt('lot_budget_per_pass', 50, 1, 5000) ?? 50;
             $rateLimit = $r->optInt('rate_limit_ms', 2000, 0, 600000) ?? 2000;
             $fixture = $r->optString('fixture', null);
+            $legalRisk = $r->optBool('legal_risk', false);
 
             $params = [];
             $p = $r->optObject('params');
@@ -345,7 +346,7 @@ final class VehicleSourceLoader
             $out[$name] = new VehicleSourceDefinition(
                 name: $name, enabled: $enabled, family: $family, type: $type, params: $params, url: $url,
                 itemUrlPattern: $itemUrlPattern, map: $map, lotBudgetPerPass: $lotBudget, rateLimitMs: $rateLimit,
-                feedSilentDays: $feedSilentDays, fixture: $fixture,
+                feedSilentDays: $feedSilentDays, fixture: $fixture, legalRisk: $legalRisk,
             );
         }
         $sources->done();

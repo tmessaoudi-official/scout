@@ -1024,6 +1024,13 @@ present**. Only when neither holds is the CC rent unknown. Treating a derivable 
 away a hard filter; treating an HC-only rent as CC notifies a ~1900 € flat against an 1800 € ceiling.
 The unknown case is not disqualified, scores 0 on S3, and says so.
 
+**Refined 2026-10-02 (audit P1-1, developer ruling):** the unknown case is only unknown while the HC
+figure is **at or under** the ceiling. Charges are never negative, so CC >= HC always, and an HC-only
+rent that already exceeds `max_rent_cc` is a lower bound that fails the test — it is **rejected**
+(`rent: N € HC > M € CC`). At or under the ceiling it stays unknown exactly as ruled above. Before
+this, a 1900 € HC leboncoin flat against a 1200 € ceiling scored 60 and was pushed. Measured cost of
+the old behaviour: nil (353 stored HC-only rows, 8 over the ceiling, none ever a notified match).
+
 ### Ⓐ Q33 — a rent drop that crosses a disqualifier boundary always notifies
 
 The thresholds were written for a known match getting cheaper. A listing seen at 1810 € CC is

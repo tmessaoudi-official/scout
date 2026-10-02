@@ -6362,6 +6362,18 @@ run_sabotage "tenure: an empty detail fetch un-reads an already hydrated listing
   src/php/Rent/Core/RawListing.php \
   's@detailRead: \$this->detailRead || @detailRead: @'
 
+run_sabotage "criteria: an HC-only rent over the ceiling stops being rejected (audit 2026-10-02 P1-1)" \
+  src/php/Rent/Core/CriteriaEngine.php \
+  's@ && \$listing->rentHc > \$this->criteria->maxRentCc) {@ \&\& false) {@'
+
+run_sabotage "criteria: the HC lower-bound rejection fires even when a CC figure is known (audit 2026-10-02 P1-1)" \
+  src/php/Rent/Core/CriteriaEngine.php \
+  's@ && \$rentCc === null$@@'
+
+run_sabotage "criteria: an HC-only rent exactly AT the ceiling is rejected (audit 2026-10-02 P1-1)" \
+  src/php/Rent/Core/CriteriaEngine.php \
+  's@\$listing->rentHc > \$this->criteria->maxRentCc@$listing->rentHc >= $this->criteria->maxRentCc@'
+
 # THE ABORT COMES BEFORE THE TALLY, and that ordering is the finding rather than a nicety (C2
 # round 7, resilience P3). The alert job harvests the `N sabotage(s) detected, M undetected` line;
 # printed AFTER it, a shard that selected no case ended its log with a clean-looking `0 / 0` and the
