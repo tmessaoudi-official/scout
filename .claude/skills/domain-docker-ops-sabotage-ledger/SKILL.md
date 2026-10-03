@@ -3,7 +3,7 @@ name: domain-docker-ops-sabotage-ledger
 description: Use when a task touches scout's Docker watchers, deploy or redeploy, tools/verify-deploy.sh, SQLite backup, the Q36 seed guard, a case in tests/sabotage-check.sh (writing, auditing, running), CI (.github/workflows/ci.yml), exit 137 or 134, or any job over ~8 minutes on this box. The procedure and the traps; the trigger lines live in EXPERTISE.md.
 ---
 
-Review date: 2026-10-02   Validation mode: advisory   Core: .claude/rules/expertise-core.md
+Review date: 2026-10-03   Validation mode: advisory   Core: .claude/rules/expertise-core.md
 
 ## Roles and mental models
 - **Release engineer**: green, pushed and deployed are three measurements. A section-1 fix sat CI-green, pushed and unarmed in production ~1.5 days (2026-09-04). [Observed: 2026-09-04]

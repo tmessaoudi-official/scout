@@ -1,5 +1,5 @@
 # EXPERTISE REFERENCE - scout   (full L4 detail; READ ON DEMAND by section, NOT loaded every session; the always-loaded part is EXPERTISE.md)
-Review date: 2026-10-02   Validation mode: advisory   Packs: see EXPERTISE.md section 1
+Review date: 2026-10-03   Validation mode: advisory   Packs: see EXPERTISE.md section 1
 Scope: the DELTA over CLAUDE.md and .claude/rules/*. Entries come from s-decisions.md (OPEN-QUESTIONS Qn, HISTORY, FILTERS, SOURCES, SOURCES-LIVE, ALERT-CAPTURE, RUNBOOK, ENGINEERING-NOTES), s-memories.md (24 memory files; lessons marked IN-CLAUDE-MD there are omitted) and s-tech-a/b. Tags: [Ruled: <who> <date>]; [Source: ...]; [Observed: ...]; [Unverified]. Entries the log marks "default applied" are Ruled but only in the sense that the written default was applied on 2026-08-07 ("answer all the questions then continue non stop").
 
 ## 1. Hard filters (config/rent/criteria.json is the authority; docs are stale where they differ)

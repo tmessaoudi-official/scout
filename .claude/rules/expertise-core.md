@@ -1,5 +1,5 @@
 # EXPERTISE - scout   (L4 core; loaded every session in this project)
-Review date: 2026-10-02   Validation mode: advisory   Packs (project skills in .claude/skills/): domain-rental-tenure-matching, domain-scraping-sources-health, domain-alert-email-ingestion, domain-docker-ops-sabotage-ledger
+Review date: 2026-10-03   Validation mode: advisory   Packs (project skills in .claude/skills/): domain-rental-tenure-matching, domain-scraping-sources-health, domain-alert-email-ingestion, domain-docker-ops-sabotage-ledger
 Scope: the DELTA over CLAUDE.md (its 10 Hard rules, section-1 eligibility rule, certification ladder, git autonomy and the .claude/rules/{health,mail,rent,tests,prototype,tooling}.md files are NOT repeated). Detail with dates and thresholds: EXPERTISE-REFERENCE.md (at .claude/EXPERTISE-REFERENCE.md; read the section named in the pointer table when the task touches it; never load it whole). Tags: [Ruled: <who> <date>] = a dated owner ruling; [Source: ...] = a document; [Observed: ...] = measured/seen; [Unverified]. `Qn` = OPEN-QUESTIONS.md entry.
 
 ## 0. What a generic engineer gets wrong here (read this first)
