@@ -39,8 +39,10 @@ check "compose.yaml still declares exactly the three watchers" \
   bash -c '[ "$(docker compose config --services | sort | tr "\n" " ")" = "car-scout job-scout rent-scout " ]'
 check "the dev service loads no env_file (offline, credential-free)" \
   bash -c '! docker compose -f compose.dev.yaml config --format json | jq -e ".services.dev.env_file" >/dev/null'
-check "the wrapper is committed executable (git mode)" \
-  bash -c '[ "$(git ls-files -s -- tools/in-docker.sh | cut -c1-6)" = 100755 ]'
+# HEAD, not the index: this repo sets core.fileMode=false, so a pathspec commit records 100644 while
+# `git ls-files -s` (the index) already says 100755 — the check passed on a wrapper a clone could not run.
+check "the wrapper is committed executable (mode in HEAD)" \
+  bash -c '[ "$(git ls-tree HEAD -- tools/in-docker.sh | cut -c1-6)" = 100755 ]'
 
 printf '\n  behavioural — inside the container\n\n'
 run() { SCOUT_UID="$(id -u)" SCOUT_GID="$(id -g)" tools/in-docker.sh "$@"; }
