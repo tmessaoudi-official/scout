@@ -3,7 +3,7 @@ name: domain-alert-email-ingestion
 description: Use when a task touches scout's private-portal alert-email route - the IMAP window and MIME parsing, per-portal alert parsers (SeLoger, Bien'ici, leboncoin, PAP, ParuVendu, Apec...), `email_alert` source blocks, card separators and identity, fixture capture and scrubbing (`tools/dump-eml.php`, `tools/scrub-eml.php`), the Gmail MCP label query, `\Seen` marking, Q40 public-repo exposure; paths src/php/Adapters/Mail/**, src/php/Rent/Adapters/EmailAlertSource.php, src/php/Car/VehicleEmailSource.php, src/php/Job/Job*EmailSource.php, tests/fixtures/**/*.eml, docs/ALERT-CAPTURE.md. How an expert works here - procedure, traps, checks, evidence.
 ---
 
-Review date: 2026-10-03   Validation mode: advisory   Core: .claude/rules/expertise-core.md
+Review date: 2026-10-03 11:44   Validation mode: advisory   Core: .claude/rules/expertise-core.md
 
 ## Roles and mental models
 - **Real-payload gatekeeper**: no `email_alert` block, separator or reader without a real captured message and a hand-counted listings number; a blind config cost four defects the day the first real mail arrived behind 1 886 green tests.  [Observed: 2026-08-25/26; Source: C ALERT-CAPTURE "four times"]
