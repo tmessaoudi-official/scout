@@ -50,3 +50,17 @@ Moved verbatim from CLAUDE.md § "Gotchas & pitfalls" on 2026-09-28 (review-reme
   > match in one step. The three firings that session were `array $fields = []` in a test helper, a
   > constant named `…CLEARING_CONFIDENCE` sitting inside the window of an `isExcluded()` call, and
   > the cross-declaration one above. All three were reworded; no pattern was touched.
+- **`core.fileMode=false` makes a PATHSPEC commit drop a mode change (2026-10-03).** `tools/in-docker.sh` was staged `100755`
+  (`git update-index --chmod=+x`), `git commit -- <paths>` still recorded `100644`, and `git ls-files -s` (the index) said
+  `100755` the whole time — so a guard reading the index passed on a wrapper a fresh clone could not run. Commit a mode change
+  from the index (`git diff --cached --name-only` must list ONLY that file, then a plain `git commit -F`), and have a guard read
+  `git ls-tree HEAD -- <path>`, never `git ls-files -s`.
+- **In the dev image an uncreated `HOME` silently downgrades `fetch-phpunit.sh` to "signature UNVERIFIED" (2026-10-03).** With
+  `HOME=/tmp/home` not existing, gpg dies (`can't create directory '/tmp/home/.gnupg'`) and the script falls back to the pinned
+  sha256 alone, still exiting 0. Found only by running the chain on a FRESH clone: every earlier run reused a host-fetched
+  `tools/phpunit.phar`. `compose.dev.yaml` now mounts a per-container tmpfs home owned by the mapped uid, and
+  `tests/test-in-docker.sh` asserts gpg can create its keyring. The same fresh clone showed Docker creating a missing `state/`
+  mountpoint ON THE HOST as root, so `tools/in-docker.sh` runs `mkdir -p state` first.
+- **`docker build` on this box uses the docker-container driver: pass `--load` or the image never reaches the daemon (2026-10-03).**
+  Without it the build exits 0 and the next `docker run` reports `pull access denied`, which reads as a registry problem.
+  `docker compose build` of the dev image needs no flag.

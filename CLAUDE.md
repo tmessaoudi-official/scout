@@ -496,8 +496,9 @@ that are written as a bare `php …` or `bash tests/…` mean `tools/in-docker.s
 ## Common workflows
 
 ```bash
-# Each line below runs as `tools/in-docker.sh <line>` — § "Run everything in Docker". Host-only: the
-# last two (verify-deploy, backup-state) and anything starting `docker`.
+# Each line below runs as `tools/in-docker.sh <line>` — § "Run everything in Docker". HOST-ONLY (the
+# container has no docker and a masked state/): test-in-docker.sh, verify-deploy.sh, backup-state.sh and
+# anything starting `docker`.
 composer install                        # generates the PSR-4 autoloader; zero runtime deps
 bash tools/fetch-phpunit.sh             # the runner — pinned SHA-256, refuses on mismatch
 php tools/scrub-eml.php in.eml out.eml me@example.com   # capture an alert as a fixture
