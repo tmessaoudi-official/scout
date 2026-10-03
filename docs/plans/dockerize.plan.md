@@ -13,6 +13,10 @@ Run every scout gate in Docker (`/dockerize-project`, 2026-10-03). Files: Docker
 <!-- progress-block v1 -->
 | # | Step | Size | State | Evidence | Files |
 |---|------|------|-------|----------|-------|
+| 1 | dev stage, compose.dev.yaml and the tools/in-docker.sh wrapper; host baseline and container parity | M | done | 0e5389b | Dockerfile, compose.dev.yaml, tools/in-docker.sh |
+| 2 | guard test for the dev toolchain, mode read from HEAD | S | done | fc0cc99 | tests/test-in-docker.sh |
+| 3 | fresh-clone defects (gpg HOME, state/ owner, one PHP_VERSION ARG) and drift-scan S6 | M | done | 2ea5573 | Dockerfile, compose.dev.yaml, tools/in-docker.sh, .claude/skills/scout-repair/drift-scan.sh, tests/test-drift-scan.sh |
+| 4 | docs rewiring and the recorded lessons | S | done | fdd25ed | CLAUDE.md, README.md, .claude/rules/tooling.md, .claude/agents/*.md |
 <!-- /progress-block -->
 
 ### Known issues
