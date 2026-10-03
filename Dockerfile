@@ -28,6 +28,26 @@ COPY src/ ./src/
 # omitting `--dev` silently breaks the corpus suite — see CLAUDE.md § Gotchas.)
 RUN composer dump-autoload --no-dev --optimize --classmap-authoritative --no-interaction
 
+# ── dev ───────────────────────────────────────────────────────────────────────────────────────────
+# The toolchain every gate runs in (`compose.dev.yaml`, `tools/in-docker.sh`): the host needs Docker
+# and nothing else. It sits BEFORE the runtime stage on purpose — `docker compose build` with no
+# `target:` builds the LAST stage, and that must stay the runtime image the watchers run.
+#
+# `php:8.5-cli` ships none of what the gates call, measured: no git (test-backup-state, the deploy
+# verifier's tests), sqlite3 (backup-state.sh), gpg (fetch-phpunit.sh verifies a signature with it),
+# jq, python3 + PyYAML (test-ci-workflow and drift-scan skip or die without them), shellcheck or
+# yamllint. A gate whose tool is missing SKIPS rather than failing, so each one is installed here —
+# an image without them would report green for checks that never ran.
+FROM php:8.5-cli AS dev
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        ca-certificates git gnupg jq python3 python3-yaml shellcheck sqlite3 unzip yamllint \
+    && rm -rf /var/lib/apt/lists/* \
+    && docker-php-ext-install -j"$(nproc)" pcntl
+# An arbitrary uid has no passwd entry and so no writable $HOME; compose sets HOME explicitly.
+ENV TZ=Europe/Paris
+
 # ── runtime ───────────────────────────────────────────────────────────────────────────────────────
 FROM php:8.5-cli
 

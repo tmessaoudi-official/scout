@@ -25,7 +25,7 @@ to…", stop and go read it.
 
 **The tenure path EXISTS as of 2026-08-06 and it is PHP, not Python.** It is
 `src/php/Rent/Core/TenureClassifier.php`, `Tenure.php`, `Text.php`, `Outcome.php` and the corpus at
-`tests/fixtures/rent/tenure/corpus.json`; the suite is `tests/php/Rent/Core/ (+ the generic tests/php/Core/)` run with `php tools/phpunit.phar`.
+`tests/fixtures/rent/tenure/corpus.json`; the suite is `tests/php/Rent/Core/ (+ the generic tests/php/Core/)` run with `tools/in-docker.sh php tools/phpunit.phar`.
 `src/php/Rent/Store/` also exists as of 2026-08-07 and carries the within-source dedup key, so findings
 about `dedupKey()` over-merging or under-merging have a real subject. `config/` and the adapters now exist; verify with `git ls-files` whether CROSS-PORTAL dedup does — that half was a target.
 
@@ -113,7 +113,7 @@ result — it is a wasted application, and it is the thing that makes the user s
 ## Regression angle
 
 - Which existing tests cover the changed code, and were they **executed**? Run them and paste the
-  output. "The tests should pass" is not evidence. The runner is `php tools/phpunit.phar` (PHPUnit's PHAR, not a Composer dev dependency — see `README.md` § Getting started). "No test runner in the tree" is NOT an available answer for any change under `src/`, `config/` or `tests/`; run the suite.
+  output. "The tests should pass" is not evidence. The runner is `tools/in-docker.sh php tools/phpunit.phar` (PHPUnit's PHAR, not a Composer dev dependency — see `README.md` § Getting started). "No test runner in the tree" is NOT an available answer for any change under `src/`, `config/` or `tests/`; run the suite.
   Do not name `pytest`: the only Python here is the superseded prototype.
 - **The classifier corpus is the crown jewel.** It must hold ≥30 hand-labelled real listing texts
   covering pure-LLI In'li, mixed CDC Habitat, an explicit PLAI, an explicit PLS, and an ambiguous

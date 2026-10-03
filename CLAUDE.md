@@ -463,9 +463,40 @@ reads back. No repo copy of that hook exists: global-is-reference ruling, 2026-0
 
 ---
 
+## Run everything in Docker (developer ruling, 2026-10-02)
+
+The host needs **Docker and nothing else**. Every test, guard script, `composer` call and `bin/scout`
+verb that is not a watcher runs in the `dev` image, through ONE wrapper: `tools/in-docker.sh <command…>`.
+Never `php`, `composer`, `python3`, `sqlite3`, `jq`, `shellcheck` or `yamllint` from the host `PATH` —
+this box's `php` is an 8.7-dev ZTS/DEBUG/GCOV build, and the container's is the 8.5 NTS the watchers run.
+
+| Command | Replaces | Notes |
+|---|---|---|
+| `tools/in-docker.sh php tools/phpunit.phar` | host `php tools/phpunit.phar` | measured identical to the host run (5395 tests, 16200 assertions) in 62 s against 159 s |
+| `tools/in-docker.sh bash tests/test-<name>.sh` | host `bash tests/test-<name>.sh` | all 13 guard scripts proven at identical pass and skip counts; `tests/test-in-docker.sh` guards the setup itself |
+| `tools/in-docker.sh composer dump-autoload --dev` | host `composer …` | |
+| `tools/in-docker.sh bash .claude/skills/scout-repair/drift-scan.sh` | host drift-scan | |
+| `tools/in-docker.sh php bin/scout --domain=<slug> <verb>` | host `php bin/scout` | `state/` is MASKED inside: for a verb that needs a live database use the watcher service (`docker compose run --rm <slug>-scout <verb>`) |
+
+What stays on the host, and why: `tools/verify-deploy.sh` and `docker compose …` (they ARE the Docker
+client), `tools/backup-state.sh` (it copies the live `state/`, which the dev image masks so no test
+can write to the seen-set), the Claude hooks in `.claude/hooks/` (their `python3` is hook-protocol JSON
+plumbing, and a fail-open tripwire must not depend on the Docker daemon being up), and CI, which keeps
+`setup-php` on purpose: its PCRE2 is 10.42 against the image's 10.44, and that divergence is what caught
+the variable-length lookbehind (§ `.claude/rules/tests.md`). A dev service lives in `compose.dev.yaml`
+under its own project name, never in `compose.yaml`: `tools/verify-deploy.sh` classifies every container
+carrying the watchers' project labels, and a redeploy runs `--remove-orphans`.
+
+Build it once: `docker compose -f compose.dev.yaml build dev`. Command examples elsewhere in this repo
+that are written as a bare `php …` or `bash tests/…` mean `tools/in-docker.sh` of the same line.
+
+---
+
 ## Common workflows
 
 ```bash
+# Each line below runs as `tools/in-docker.sh <line>` — § "Run everything in Docker". Host-only: the
+# last two (verify-deploy, backup-state) and anything starting `docker`.
 composer install                        # generates the PSR-4 autoloader; zero runtime deps
 bash tools/fetch-phpunit.sh             # the runner — pinned SHA-256, refuses on mismatch
 php tools/scrub-eml.php in.eml out.eml me@example.com   # capture an alert as a fixture
@@ -493,6 +524,8 @@ bash tests/test-dotenv-cli.sh           # proves the .env loader the CLI actuall
 bash tests/test-backup-state.sh         # proves the seen-set backup produces a copy that READS
                                         #   BACK — a torn WAL copy opens without complaint, so `cp`
                                         #   is the wrong tool and its failure is found at restore
+bash tests/test-in-docker.sh           # proves the dev toolchain: runtime stays the last stage, state/ masked,
+                                        #   every gate's tool present, uid mapped (needs the dev image built)
 bash tests/test-verify-deploy.sh        # proves the deploy verifier catches a watcher that is
                                         #   DOWN, STALE or wedged — the three states `up -d`
                                         #   printing "Started" does not distinguish

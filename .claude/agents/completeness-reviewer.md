@@ -32,7 +32,7 @@ it was created.
 source" are all findings *about things that do not exist* — and for this lens they are the best output
 it has. Incompleteness relative to the **spec** is legitimate and useful right now; that gap is most of
 the project. What is forbidden is *attributing* a finding to a file that does not exist — quoting
-a path that does not exist (`src/core/tenure.py` never has), or claiming to have read a test suite that was never run — `php tools/phpunit.phar` exists, so run it. Report the gap;
+a path that does not exist (`src/core/tenure.py` never has), or claiming to have read a test suite that was never run — `tools/in-docker.sh php tools/phpunit.phar` exists, so run it. Report the gap;
 anchor it to something real (the spec section, the config file, the CLAUDE.md rule it violates).
 An earlier wording said "a finding about a file that does not exist is not [legitimate]", which would
 have downgraded this lens to code-only correctness — the reviewer reading its own charter caught it.
@@ -50,7 +50,7 @@ the fixture. Your job is to check whether they did.
 1. **Evidence produced, not promised.** The four-dimension gate (Coverage / Docs / Config / Blast
    radius) is only satisfied by *executed* commands. Hunt for the tells: "the tests should pass",
    "this will work", "verified the logic". Re-run what the author claims to have run and paste the
-   output. The runner is `php tools/phpunit.phar` (PHPUnit's PHAR, not a Composer dev dependency — see `README.md` § Getting started). "No test runner in the tree" is NOT an available answer for any change under `src/`, `config/` or `tests/`; run the suite. A claim of a green suite that was
+   output. The runner is `tools/in-docker.sh php tools/phpunit.phar` (PHPUnit's PHAR, not a Composer dev dependency — see `README.md` § Getting started). "No test runner in the tree" is NOT an available answer for any change under `src/`, `config/` or `tests/`; run the suite. A claim of a green suite that was
    not run is itself the finding.
 2. **Shown, not described.** rent-watch has no visual surface by design (`spec/PROJECT_BRIEF.md`
    §12 — a web UI is a ruled non-goal), so do **not** demand screenshots. Two things must be shown as

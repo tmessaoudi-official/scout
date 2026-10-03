@@ -139,14 +139,15 @@ enumerating domains by hand.
 ## Getting started
 
 ```bash
-composer install            # generates the PSR-4 autoloader. There are no runtime dependencies.
-php tools/phpunit.phar      # the core suite
+docker compose -f compose.dev.yaml build dev    # the toolchain image; the host needs Docker and nothing else
+tools/in-docker.sh composer install                # generates the PSR-4 autoloader. There are no runtime dependencies.
+tools/in-docker.sh php tools/phpunit.phar          # the core suite
 ```
 
 `tools/phpunit.phar` is gitignored; fetch it once with:
 
 ```bash
-bash tools/fetch-phpunit.sh    # downloads and checks a pinned SHA-256; refuses to install on a mismatch
+tools/in-docker.sh bash tools/fetch-phpunit.sh    # downloads and checks a pinned SHA-256; refuses to install on a mismatch
 ```
 
 **Why a PHAR rather than a Composer dev dependency.** This project runs in a container whose egress

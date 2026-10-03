@@ -2,10 +2,10 @@
   "_comment": "Adapter for ~/.claude/bin/project-state.sh — what /progress, /next and /goal-brief read. Every path is relative and inside the repo, as the collector requires. Added 2026-09-04: without a test_cmd, `--record-test` dies, so NO step could ever reach the `certified` state — the plan's status block could say `done` with a sha and never anything stronger.",
 
   "_test_cmd": "The CORE suite, and deliberately only that. It is the one command CLAUDE.md calls 'must stay green', it is offline by construction (tests/bootstrap.php sets SCOUT_OFFLINE=1), and it finishes in ~90s on an idle box. The sabotage ledger is NOT here on purpose: it takes hours, it is a nightly CI job, and a `certified` marker that needs a two-hour run is one nobody will ever produce. The guard scripts are not here either — they are wired into CI, where a green push is the record.",
-  "test_cmd": "php tools/phpunit.phar",
+  "test_cmd": "tools/in-docker.sh php tools/phpunit.phar",
 
   "_requires": "Named so a missing prerequisite is reported rather than discovered as a failing run. tools/phpunit.phar is gitignored and fetched by tools/fetch-phpunit.sh, so a fresh clone genuinely does not have it.",
-  "requires": ["php", "git", "jq"],
+  "requires": ["docker", "git", "jq"],
 
   "_registers": "The fragile-implementations register lives in the plan file, which the collector already reads through the active-plan pointer, so nothing is listed twice here.",
 

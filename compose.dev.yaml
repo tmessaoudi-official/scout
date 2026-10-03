@@ -1,0 +1,45 @@
+# The development toolchain: every test, guard script and `bin/scout` verb that is not a watcher.
+# Drive it through `tools/in-docker.sh <command…>`; a bare `docker compose -f compose.dev.yaml run
+# --rm dev …` is the same thing.
+#
+# A SEPARATE FILE AND PROJECT NAME, not a profile in compose.yaml. `tools/verify-deploy.sh` lists
+# `docker compose ps -a` for the watchers' project and classifies every container carrying its labels
+# as a watcher, a leftover or an orphan, and a redeploy runs `--remove-orphans`. A `dev` run container
+# in that project would be read as one of those — and a redeploy could kill a test run in flight.
+# Its own `name:` keeps the two worlds from seeing each other.
+name: scout-dev
+
+services:
+  dev:
+    build:
+      context: .
+      target: dev
+    image: scout-dev:local
+    # The repo is mounted at its REAL absolute path: tests and tools read `git log` and compute paths
+    # from it, and a different path in the container would make them disagree with the host.
+    working_dir: /stack/projects/scout
+    volumes:
+      - .:/stack/projects/scout
+      # The live seen-set, price history and run log. The suites build their own databases in temp
+      # dirs; masking `state/` guarantees that no test, however it is edited, can write to the real
+      # one. A tmpfs rather than a file overlay: it cannot create anything on the host, whichever
+      # side of a fresh clone this runs on. (`tools/backup-state.sh` therefore runs on the host.)
+      - type: tmpfs
+        target: /stack/projects/scout/state
+    # Same mapping as the watchers (compose.yaml): files written into the bind mount stay owned by
+    # the developer.
+    user: "${SCOUT_UID:-1000}:${SCOUT_GID:-1000}"
+    environment:
+      TZ: ${TZ:-Europe/Paris}
+      # No passwd entry for an arbitrary uid, so no home: composer, git and gpg all need one.
+      HOME: /tmp/home
+      COMPOSER_HOME: /tmp/home/.composer
+      # The mount is owned by the mapped uid, but git still refuses a tree it cannot attribute.
+      GIT_CONFIG_COUNT: "1"
+      GIT_CONFIG_KEY_0: safe.directory
+      GIT_CONFIG_VALUE_0: /stack/projects/scout
+    # Deliberately NO env_file: the suites are offline and need no credentials, and a tool that read
+    # the developer's `.env` here would pass on this machine and fail on a clean one.
+    init: true
+    entrypoint: []
+    command: ["bash"]
