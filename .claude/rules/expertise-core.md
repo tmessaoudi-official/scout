@@ -57,9 +57,9 @@ Workflow: `legal_risk: true` needs `--i-accept-legal-risk` per invocation; `/qa-
 | If the task... | Remember |
 |---|---|
 | adds/edits a ledger case in `tests/sabotage-check.sh` | on a scratch copy: apply (`diff -q`), parse (`php -l`), detect; ONE filtered run for all new cases; one-line sed only; a case can fail GREEN (RHS replaced, assignment left dangling)  [Observed: 2026-09-04/09] |
-| moves code or extracts constants a case targets | rerun `bash tests/test-sabotage-applies.sh`; re-derive the expression from the new SHAPE; if the guarantee inverts the case must reintroduce the thing  [Observed: 2026-09-04] |
+| moves code or extracts constants a case targets | rerun `tools/in-docker.sh bash tests/test-sabotage-applies.sh`; re-derive the expression from the new SHAPE; if the guarantee inverts the case must reintroduce the thing  [Observed: 2026-09-04] |
 | adds a decoder/parser/fallback to something a self-test guards | assert the MECHANISM not the outcome; re-run the sabotage the self-test exists for (one improvement made `FixtureSecretsTest` vacuous)  [Observed: 2026-09-04] |
-| runs the ledger locally | `PHP_INI_SCAN_DIR` from `php --ini` carries printed quotes: `tr -d '"'` and require `diff <(php -m) <(PHP_INI_SCAN_DIR=... php -m)` empty; suite 7-8 min: `SABOTAGE_SUITE_TIMEOUT=1500`; a timeout reads as "undetected"  [Observed: 2026-09-13/26; host may have changed 2026-09-28] |
+| runs the ledger locally | run it in the dev image: `tools/in-docker.sh bash tests/sabotage-check.sh`; ONE filtered case ran clean there (2026-10-03), the FULL ledger in the image has not been run, so keep `SABOTAGE_SUITE_TIMEOUT=1500` (7-8 min suite on the host; the core suite alone is 62 s in the image against 159 s on the host); a timeout reads as "undetected". HOST php only: `PHP_INI_SCAN_DIR` from `php --ini` carries printed quotes: `tr -d '"'` and require `diff <(php -m) <(PHP_INI_SCAN_DIR=... php -m)` empty  [Observed: 2026-09-13/26 (host), 2026-10-03 (image: docs/plans/dockerize.plan.md)] |
 | starts any job over ~8 min | background tasks die ~10 min; `setsid nohup ... > log 2>&1 < /dev/null & disown`, wait on the job's own `EXIT=` marker; a `pgrep -f` waiter matches itself, `pkill -f` kills your own shell (exit 144): kill by PGID  [Observed: 2026-09-04/25/26] |
 | stops/recreates a watcher or reads `exited (137)` | 137 after a stop is by design (pass in flight > `stop_grace_period 5m`); check `docker inspect --format '{{.State.OOMKilled}}'` first; compose detached via `setsid`, never under foreground `timeout`  [Observed: 2026-09-07] |
 | edits `tools/verify-deploy.sh` or finds a hex-prefixed container | three states (is the service: force-recreate; dead leftover: `docker rm -f`; another project's: count, never name); key the map per ROW, not per service  [Observed: rows 62-63] |
@@ -69,7 +69,7 @@ Workflow: `legal_risk: true` needs `--i-accept-legal-risk` per invocation; `/qa-
 | adds a persisted safety fact | ask at what scope it is decided (cluster, not row); write it on every member, read the most restrictive  [Observed: 2026-08-30] |
 
 ## 6. Machine facts that mislead
-- Local PHP is a dev/ZTS/DEBUG/GCOV build (8.6/8.7-dev observed; notes disagree): JIT assertion aborts (exit 134) are the harness, not detection; read `php -v`. CI: PCRE2 10.42, PRODUCTION ini.  [Observed: 2026-09-26, 2026-10-02]
+- The HOST php is a dev/ZTS/DEBUG/GCOV build (8.7.0-dev, re-checked 2026-10-02): never run the suite on it. The dev image (`tools/in-docker.sh …`) runs PHP 8.5.11 NTS, PCRE2 10.44, GNU grep. A JIT assertion abort (exit 134) is the host harness, not detection. CI keeps `setup-php`: PCRE2 10.42, PRODUCTION ini (developer ruling, docs/plans/dockerize.plan.md).  [Observed: 2026-09-26, 2026-10-02, 2026-10-03]
 - `uptime` prints LOCAL time (CEST); use `date -u`.  [Observed: 2026-09-14]
 
 ## 7. Known stale or contested (check before quoting; full list REFERENCE §11)
