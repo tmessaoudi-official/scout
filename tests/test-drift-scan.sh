@@ -245,6 +245,25 @@ claims "$s7_cases total, $s7_synth synthetic + $((s7_capt + 5)) captured" "$s7pa
 check "a stale CAPTURED half is reported (the number that moves as sources come online)" \
   bash -c 'o="$(CLAUDE_PROJECT_DIR="'"$s7part"'" bash "'"$scan"'" --quiet 2>&1)" || true; grep -qE "^P1 .*N synthetic \+ N captured" <<<"$o"'
 
+# ── S6: live surfaces run the suite through tools/in-docker.sh ───────────────────────────────────
+# Only S6's own message is matched: this scratch tree holds none of what the other sections read, so
+# they report their own absences, which would make a tally assertion meaningless.
+s6="$work/case-s6"
+mkdir -p "$s6/.claude/agents"
+printf 'The runner is `tools/in-docker.sh php tools/phpunit.phar`.\n' > "$s6/.claude/agents/completeness-reviewer.md"
+printf '{"test_cmd": "tools/in-docker.sh php tools/phpunit.phar"}\n' > "$s6/.claude/progress.json"
+printf 'tools/in-docker.sh php tools/phpunit.phar\n' > "$s6/README.md"
+s6_out() { CLAUDE_PROJECT_DIR="$1" bash "$scan" --quiet 2>&1 || true; }
+check "S6 is silent when every live surface goes through the wrapper (so the cases below mean something)" \
+  bash -c '! grep -q "bare host" <<<"$1"' _ "$(s6_out "$s6")"
+printf 'Run `php tools/phpunit.phar` to check.\n' > "$s6/.claude/agents/completeness-reviewer.md"
+check "S6 reports a bare host php in a reviewer charter" \
+  bash -c 'grep -qE "^P1 .*bare host .*completeness-reviewer\.md" <<<"$1"' _ "$(s6_out "$s6")"
+printf 'tools/in-docker.sh php tools/phpunit.phar\n' > "$s6/.claude/agents/completeness-reviewer.md"
+printf '{"test_cmd": "php tools/phpunit.phar"}\n' > "$s6/.claude/progress.json"
+check "S6 reports a bare host php in the progress adapter" \
+  bash -c 'grep -qE "^P1 .*bare host .*progress\.json" <<<"$1"' _ "$(s6_out "$s6")"
+
 printf '\n  %d passed, %d failed\n' "$pass" "$fail"
 
 if (( fail )); then

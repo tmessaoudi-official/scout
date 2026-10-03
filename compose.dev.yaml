@@ -38,8 +38,15 @@ services:
       GIT_CONFIG_COUNT: "1"
       GIT_CONFIG_KEY_0: safe.directory
       GIT_CONFIG_VALUE_0: /stack/projects/scout
-    # Deliberately NO env_file: the suites are offline and need no credentials, and a tool that read
-    # the developer's `.env` here would pass on this machine and fail on a clean one.
+    # The home must EXIST and belong to the mapped uid, or gpg dies creating ~/.gnupg
+    # (`can't create directory '/tmp/home/.gnupg'` — measured) and tools/fetch-phpunit.sh quietly
+    # degrades to "signature UNVERIFIED". A tmpfs: nothing is cached between runs, so every run
+    # verifies the PHPUnit signature from a clean keyring.
+    tmpfs:
+      - /tmp/home:mode=0700,uid=${SCOUT_UID:-1000},gid=${SCOUT_GID:-1000}
+    # Deliberately NO env_file: nothing from `.env` is injected into the environment. The repo mount
+    # still makes the FILE readable inside, as it is on the host, and `bin/scout` loads it itself, so
+    # this is not a credential barrier — it only stops the suites depending on injected settings.
     init: true
     entrypoint: []
     command: ["bash"]

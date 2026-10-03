@@ -31,13 +31,13 @@ printf '\n  static\n\n'
 last_from="$(grep -E '^FROM ' Dockerfile | tail -1)"
 check "the LAST Dockerfile stage is the runtime image, not dev" \
   bash -c '! grep -qE " AS dev$" <<<"$1"' _ "$last_from"
-check "a dev stage exists" grep -qE '^FROM php:8\.5-cli AS dev$' Dockerfile
+check "a dev stage exists" grep -qE '^FROM php:\$\{PHP_VERSION\}-cli AS dev$' Dockerfile
 check "compose.dev.yaml has its own project name (not the watchers')" grep -qE '^name: scout-dev$' compose.dev.yaml
 check "compose.yaml is not given a dev service" \
   bash -c '! docker compose config --services | grep -qx dev'
 check "compose.yaml still declares exactly the three watchers" \
   bash -c '[ "$(docker compose config --services | sort | tr "\n" " ")" = "car-scout job-scout rent-scout " ]'
-check "the dev service loads no env_file (offline, credential-free)" \
+check "the dev service injects no env_file into the environment" \
   bash -c '! docker compose -f compose.dev.yaml config --format json | jq -e ".services.dev.env_file" >/dev/null'
 # HEAD, not the index: this repo sets core.fileMode=false, so a pathspec commit records 100644 while
 # `git ls-files -s` (the index) already says 100755 — the check passed on a wrapper a clone could not run.
@@ -47,9 +47,10 @@ check "the wrapper is committed executable (mode in HEAD)" \
 printf '\n  behavioural — inside the container\n\n'
 run() { SCOUT_UID="$(id -u)" SCOUT_GID="$(id -g)" tools/in-docker.sh "$@"; }
 
-tools_missing="$(run bash -c 'for t in php composer git sqlite3 jq python3 gpg shellcheck yamllint curl sha256sum; do command -v $t >/dev/null || printf "%s " $t; done' 2>/dev/null)"
+tools_missing="$(run bash -c 'for t in php composer dirmngr git sqlite3 jq python3 gpg shellcheck yamllint curl sha256sum; do command -v $t >/dev/null || printf "%s " $t; done' 2>/dev/null)"
 [[ -z "$tools_missing" ]] && ok "every tool a gate calls is present" || no "missing tools: $tools_missing"
 check "PyYAML importable (test-ci-workflow skips its checks without it)" run python3 -c 'import yaml'
+check "gpg can create its keyring (else fetch-phpunit silently degrades to \"signature UNVERIFIED\")" run gpg --batch --list-keys
 check "pcntl is loaded (the watcher's clean shutdown)" run php -r 'exit(extension_loaded("pcntl") ? 0 : 1);'
 
 host_uid="$(id -u)"
@@ -69,6 +70,14 @@ mkdir -p var
 run bash -c "touch $probe" >/dev/null 2>&1
 [[ "$(stat -c %u "$probe" 2>/dev/null)" == "$host_uid" ]] && ok "a file written into the mount is owned by the invoking user" || no "wrong owner on a written file"
 rm -f "$probe"
+
+# A clone without state/ (gitignored, so every fresh clone): the tmpfs mountpoint must not be created
+# on the host as root. Runs in a scratch copy of the two files the wrapper needs.
+fresh="$(mktemp -d)"
+mkdir -p "$fresh/tools" && cp compose.dev.yaml "$fresh/" && cp tools/in-docker.sh "$fresh/tools/"
+( cd "$fresh" && tools/in-docker.sh true ) >/dev/null 2>&1
+if [[ "$(stat -c %u "$fresh/state" 2>/dev/null)" == "$host_uid" ]]; then ok "a clone with no state/ gets it owned by the invoking user, not root"; else no "state/ created with the wrong owner on a fresh clone"; fi
+rm -rf "$fresh" 2>/dev/null
 
 check "git sees the repo as the host does (same HEAD)" \
   bash -c '[ "$(git rev-parse HEAD)" = "$(SCOUT_UID=$(id -u) SCOUT_GID=$(id -g) tools/in-docker.sh git rev-parse HEAD)" ]'

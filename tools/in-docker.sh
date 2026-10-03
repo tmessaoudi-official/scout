@@ -20,6 +20,10 @@ command -v docker >/dev/null 2>&1 || { printf 'in-docker: docker introuvable\n' 
 export SCOUT_UID="${SCOUT_UID:-$(id -u)}"
 export SCOUT_GID="${SCOUT_GID:-$(id -g)}"
 
+# compose.dev.yaml masks `state/` with a tmpfs; on a clone with no `state/` Docker would create the
+# mountpoint ON THE HOST as root (measured on a fresh clone). Create it as the invoking user first.
+mkdir -p state
+
 # `-T` without a terminal: CI and hooks have none, and a TTY allocation there fails outright.
 tty_flag=()
 [[ -t 0 && -t 1 ]] || tty_flag=(-T)

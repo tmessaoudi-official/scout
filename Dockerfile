@@ -14,7 +14,10 @@
 #   2. **`vendor/` is gitignored**, so the image MUST generate it. Copying a host `vendor/` in would
 #      make the image depend on whatever the developer last ran locally.
 #
-FROM php:8.5-cli AS build
+# One ARG for all three stages: the dev image the gates run in and the runtime image the watchers run
+# must be the same PHP, and two literal tags can drift apart on a rebuild of only one of them.
+ARG PHP_VERSION=8.5
+FROM php:${PHP_VERSION}-cli AS build
 
 # Composer is needed only to write the autoload map, so it never reaches the runtime image.
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
@@ -36,20 +39,21 @@ RUN composer dump-autoload --no-dev --optimize --classmap-authoritative --no-int
 # `php:8.5-cli` ships none of what the gates call, measured: no git (test-backup-state, the deploy
 # verifier's tests), sqlite3 (backup-state.sh), gpg (fetch-phpunit.sh verifies a signature with it),
 # jq, python3 + PyYAML (test-ci-workflow and drift-scan skip or die without them), shellcheck or
-# yamllint. A gate whose tool is missing SKIPS rather than failing, so each one is installed here —
+# yamllint. `dirmngr` is NOT optional: without it gpg cannot fetch the PHPUnit signing key and
+# fetch-phpunit.sh silently falls back to "signature UNVERIFIED" (measured on a fresh clone). A gate whose tool is missing SKIPS rather than failing, so each one is installed here —
 # an image without them would report green for checks that never ran.
-FROM php:8.5-cli AS dev
+FROM php:${PHP_VERSION}-cli AS dev
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-        ca-certificates git gnupg jq python3 python3-yaml shellcheck sqlite3 unzip yamllint \
+        ca-certificates dirmngr git gnupg jq python3 python3-yaml shellcheck sqlite3 unzip yamllint \
     && rm -rf /var/lib/apt/lists/* \
     && docker-php-ext-install -j"$(nproc)" pcntl
 # An arbitrary uid has no passwd entry and so no writable $HOME; compose sets HOME explicitly.
 ENV TZ=Europe/Paris
 
 # ── runtime ───────────────────────────────────────────────────────────────────────────────────────
-FROM php:8.5-cli
+FROM php:${PHP_VERSION}-cli
 
 # The extensions the code actually uses, verified against the source rather than copied from
 # `composer.json` — which understated them until 2026-08-22:

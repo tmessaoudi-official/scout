@@ -472,8 +472,8 @@ this box's `php` is an 8.7-dev ZTS/DEBUG/GCOV build, and the container's is the 
 
 | Command | Replaces | Notes |
 |---|---|---|
-| `tools/in-docker.sh php tools/phpunit.phar` | host `php tools/phpunit.phar` | measured identical to the host run (5395 tests, 16200 assertions) in 62 s against 159 s |
-| `tools/in-docker.sh bash tests/test-<name>.sh` | host `bash tests/test-<name>.sh` | all 13 guard scripts proven at identical pass and skip counts; `tests/test-in-docker.sh` guards the setup itself |
+| `tools/in-docker.sh php tools/phpunit.phar` | host `php tools/phpunit.phar` | the suite's own final `OK (N tests, M assertions)` line is the tally; run on the host and in the image, both gave the same one (2026-10-03: 62 s against 159 s on the host's debug build) |
+| `tools/in-docker.sh bash tests/test-<name>.sh` | host `bash tests/test-<name>.sh` | every `tests/test-*.sh` gave the same pass and skip counts on the host and in the image (2026-10-03); `tests/test-in-docker.sh` guards the setup itself |
 | `tools/in-docker.sh composer dump-autoload --dev` | host `composer …` | |
 | `tools/in-docker.sh bash .claude/skills/scout-repair/drift-scan.sh` | host drift-scan | |
 | `tools/in-docker.sh php bin/scout --domain=<slug> <verb>` | host `php bin/scout` | `state/` is MASKED inside: for a verb that needs a live database use the watcher service (`docker compose run --rm <slug>-scout <verb>`) |
@@ -483,7 +483,8 @@ client), `tools/backup-state.sh` (it copies the live `state/`, which the dev ima
 can write to the seen-set), the Claude hooks in `.claude/hooks/` (their `python3` is hook-protocol JSON
 plumbing, and a fail-open tripwire must not depend on the Docker daemon being up), and CI, which keeps
 `setup-php` on purpose: its PCRE2 is 10.42 against the image's 10.44, and that divergence is what caught
-the variable-length lookbehind (§ `.claude/rules/tests.md`). A dev service lives in `compose.dev.yaml`
+the variable-length lookbehind (§ `.claude/rules/tests.md`). The image's PHP version is one build ARG
+(`PHP_VERSION`) shared by all three Dockerfile stages, so dev and the watchers cannot drift apart. A dev service lives in `compose.dev.yaml`
 under its own project name, never in `compose.yaml`: `tools/verify-deploy.sh` classifies every container
 carrying the watchers' project labels, and a redeploy runs `--remove-orphans`.
 

@@ -607,6 +607,19 @@ if (( ! QUIET )); then
   done
 fi
 
+# ── S6: the surfaces that tell Claude or a human how to run the suite use the dev toolchain ──────
+# `tools/in-docker.sh` is the one way to run php here (CLAUDE.md § "Run everything in Docker"): the
+# host's php is an 8.7-dev ZTS/DEBUG/GCOV build, not the 8.5 NTS the watchers run. A bare
+# `php tools/phpunit.phar` in a reviewer charter, the progress adapter or the README sends the next
+# session to the wrong interpreter, and nothing else would notice — the suite passes on both.
+# Scoped to the surfaces that were converted: CLAUDE.md legitimately NAMES the host command in its
+# "Replaces" column, and the dated rules and skills are narrative the blanket sentence there covers.
+say "── S6 live surfaces run the suite through tools/in-docker.sh"
+grep -nE 'php tools/phpunit\.phar' .claude/agents/*.md .claude/progress.json README.md 2>/dev/null \
+  | grep -v 'in-docker\.sh' \
+  | sed 's/^/P1  bare host `php tools\/phpunit.phar`, use `tools\/in-docker.sh php tools\/phpunit.phar` — /' \
+  | cut -c1-220 >>"$FINDINGS" || true
+
 # ── Tally from the findings file — the single source of both the report and the exit code ────────
 sort -u "$FINDINGS" > "$FINDINGS.u" && mv "$FINDINGS.u" "$FINDINGS"
 [[ -s "$FINDINGS" ]] && cat "$FINDINGS"

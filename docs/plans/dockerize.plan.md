@@ -14,3 +14,16 @@ Run every scout gate in Docker (`/dockerize-project`, 2026-10-03). Files: Docker
 | # | Step | Size | State | Evidence | Files |
 |---|------|------|-------|----------|-------|
 <!-- /progress-block -->
+
+### Known issues
+- **Host-version workarounds that look obsolete inside the dev image — FLAGGED, not deleted (the developer decides).**
+  Evidence: the image runs PHP 8.5.11 NTS (PCRE2 10.44, GNU grep 3.11); the host runs 8.7.0-dev ZTS DEBUG GCOV. Core suite 62 s in the
+  image against 159 s on the host, identical `OK (5395 tests, 16200 assertions)`; one filtered ledger case ran clean in the image
+  (`1 sabotage(s) detected, 0 undetected`). Candidates: `.claude/rules/tests.md` — the tracing-JIT / `PHP_INI_SCAN_DIR` entry (already
+  marked HOST CHANGED); `.claude/rules/expertise-core.md` §5 (the local-ledger row: scan-dir quoting, `SABOTAGE_SUITE_TIMEOUT=1500`) and
+  §6 (the dev/ZTS/DEBUG/GCOV machine fact); the ugrep `\|` note in CLAUDE.md's workflow block (the image's grep is GNU, where `\|` works —
+  but CI and a host `grep` may still differ, so keep it until the ledger runs only in Docker).
+- **Not converted, by decision (ASSUMED above):** CI (`setup-php`, PCRE2 10.42), the Claude hooks, `verify-deploy.sh`, `backup-state.sh`.
+- **Open — instruction surfaces still written as bare host commands:** `.claude/rules/*`, the `domain-*` skills, RUNBOOK, ALERT-CAPTURE and
+  the dated narrative. The CLAUDE.md sentence covers them; the live agents, README and progress adapter are converted and gated by
+  drift-scan S6. Count them: `git grep -cE 'php tools/|bash tests/' -- .claude docs README.md`.
