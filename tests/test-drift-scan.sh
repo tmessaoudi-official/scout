@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# test-drift-scan.sh — the drift gate's own self-test: S8 (`.env.example` sync) and S7's corpus
-# breakdown claim, the one S7 shape that had never been seen red.
+# test-drift-scan.sh — the drift gate's own self-test: S8 (`.env.example` sync), S7's corpus
+# breakdown claim (the one S7 shape that had never been seen red), the docs/plans/archive/ skip in
+# S7 and S2 (an archived plan is history, never edited to satisfy the gate), and S6.
 #
 # WHY THIS FILE EXISTS. `drift-scan.sh` runs in CI and fails the build on P0/P1, which makes it a
 # gate; and its own preamble records the failure every gate here is prone to — an earlier version
@@ -110,7 +111,7 @@ silent_about() {
   ! grep -qE -- "$2" <<<"$found"
 }
 
-printf '\n== drift-scan self-test (S8: .env.example sync · S7: corpus breakdown) ==\n\n'
+printf '\n== drift-scan self-test (S8: .env.example sync · S7: corpus breakdown · archive/ skip · S6) ==\n\n'
 
 # ── the gate must be QUIET on a correct tree ─────────────────────────────────────────────────────
 # First, because every case below asserts a message appears; if the scan reported something on a
@@ -244,6 +245,44 @@ scratch_corpus "$s7part"
 claims "$s7_cases total, $s7_synth synthetic + $((s7_capt + 5)) captured" "$s7part"
 check "a stale CAPTURED half is reported (the number that moves as sources come online)" \
   bash -c 'o="$(CLAUDE_PROJECT_DIR="'"$s7part"'" bash "'"$scan"'" --quiet 2>&1)" || true; grep -qE "^P1 .*N synthetic \+ N captured" <<<"$o"'
+
+# ── archived plans are HISTORY: the scan never makes anyone edit them (developer ruling 2026-10-06) ──
+# The S7 gate forced two edits to a count inside an ARCHIVED plan (b41432c, then d90c56e moved
+# 135 to 144 in the archived classifier plan) purely to stay green. A number in an archived plan is
+# a record of what was true then, not a live claim, so the scan skips docs/plans/archive/ in every
+# section that walks the docs. The SAME stale count in a live plan must still be reported: that
+# second half is the boundary, and a skip widened to all of docs/plans/ reddens it.
+# The file names are real ones from this repo, and the paths are built from variables, because S2
+# polices every docs path this script spells out in full.
+arch_dir="docs/plans/archive"
+arch_doc="$arch_dir/core-tenure-classifier.plan.md"
+live_doc="docs/plans/dockerize.plan.md"
+
+s7arch="$work/case-s7-archive"
+scratch_corpus "$s7arch"
+mkdir -p "$s7arch/$arch_dir"
+claims "$((s7_cases - 9)) total, $s7_synth synthetic + $s7_capt captured" "$s7arch"
+cp "$s7arch/CLAUDE.md" "$s7arch/$arch_doc"
+mv "$s7arch/CLAUDE.md" "$s7arch/$live_doc"
+s7arch_out="$(CLAUDE_PROJECT_DIR="$s7arch" bash "$scan" --quiet 2>&1)" || true
+check "S7 does NOT report a stale count inside docs/plans/archive/ (history is never edited for the gate)" \
+  bash -c '! grep -qF -e "$1" <<<"$2"' _ "P1  $arch_doc:" "$s7arch_out"
+check "S7 still reports the SAME stale count in a live plan (the skip stops at archive/)" \
+  bash -c 'grep -qE -e "^P1  $1:1 claims [0-9]+ where the corpus has [0-9]+ cases" <<<"$2"' _ "${live_doc//./\\.}" "$s7arch_out"
+
+# S2 walks the same tree: a path an archived plan cites may be renamed later, and that must not
+# force a history edit either. The missing path is assembled so this script holds no literal one.
+gone="docs/never-written-$$""-file.md"
+s2arch="$work/case-s2-archive"
+scratch_project "$s2arch"
+mkdir -p "$s2arch/$arch_dir"
+printf 'See %s for the detail.\n' "$gone" >"$s2arch/$arch_doc"
+printf 'See %s for the detail.\n' "$gone" >"$s2arch/$live_doc"
+s2arch_out="$(CLAUDE_PROJECT_DIR="$s2arch" bash "$scan" --quiet 2>&1)" || true
+check "S2 does NOT report a dangling path inside docs/plans/archive/" \
+  bash -c '! grep -qF -e "$1" <<<"$2"' _ "P1  $arch_doc:" "$s2arch_out"
+check "S2 still reports the same dangling path in a live plan" \
+  bash -c 'grep -qF -e "$1" <<<"$2"' _ "P1  $live_doc:1 cites $gone" "$s2arch_out"
 
 # ── S6: live surfaces run the suite through tools/in-docker.sh ───────────────────────────────────
 # Only S6's own message is matched: this scratch tree holds none of what the other sections read, so

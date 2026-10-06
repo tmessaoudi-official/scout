@@ -543,7 +543,8 @@ bash tests/test-scrub-eml.sh            # proves the scrubber refuses a RECOVERA
 bash tests/test-sabotage-baseline.sh    # proves the LEDGER is judged in a green scratch tree —
                                         #   it was not, from 2026-08-22 to 2026-08-24, so every one
                                         #   of its ~375 cases reported `ok` while proving nothing
-bash tests/test-drift-scan.sh           # proves that gate can still go RED (S8: .env.example sync)
+bash tests/test-drift-scan.sh           # proves that gate can still go RED (S8: .env.example sync),
+                                        #   and that it skips docs/plans/archive/ (history) but not a live plan
 bash -n .claude/hooks/*.sh tests/*.sh tools/*.sh
 python3 prototype/scout.py --help       # the superseded prototype, reference only
 ```
@@ -740,7 +741,8 @@ tests/test-lint-on-write.sh        Proves a finding reaches the MODEL (additiona
 .claude/agents/source-resilience-reviewer.md    resilience + legal posture + secrets lens
 .claude/agents/completeness-reviewer.md         completeness + blast-radius lens
 .claude/skills/                    Repo-native slash skills; `ls` is the authoritative list
-.claude/skills/scout-repair/drift-scan.sh  The mechanical half of /scout-repair — run it in a gate
+.claude/skills/scout-repair/drift-scan.sh  The mechanical half of /scout-repair — run it in a gate; it never
+                                   reads docs/plans/archive/ (history is not edited to satisfy it)
 tests/sabotage-check.sh            Breaks the classifier many ways; the suite must catch every one
 tests/test-fetch-phpunit.sh        Proves the runner fetch refuses a bad signature
 tests/test-drift-scan.sh           Sabotage test FOR that gate — each S8 sub-check must go red

@@ -98,6 +98,9 @@ CITE = re.compile(r'pointed at|used to|formerly|previously|only ever existed|was
 for p in pathlib.Path('.').rglob('*'):
     if p.suffix not in ('.md', '.sh') or not p.is_file(): continue
     if any(x in p.parts for x in ('.git', 'var', 'node_modules')): continue
+    # An archived plan is HISTORY (developer ruling 2026-10-06): a path it cites may be renamed later,
+    # and the gate must never make anyone edit history to stay green. Same skip in S2b and S7.
+    if p.parts[:3] == ('docs', 'plans', 'archive'): continue
     in_comment = False
     for n, line in enumerate(p.read_text(errors='replace').splitlines(), 1):
         if '<!--' in line and '-->' not in line: in_comment = True; continue
@@ -142,6 +145,7 @@ EXEMPT = ('claude-bundle-cross-repo-audit.plan.md',)
 pat = re.compile(r'\b(' + '|'.join(SIBS) + r')/[A-Za-z0-9_./-]*(CLAUDE\.md|\.plan\.md)')
 for p in pathlib.Path('.').rglob('*.md'):
     if any(x in p.parts for x in ('.git', 'var', 'node_modules')): continue
+    if p.parts[:3] == ('docs', 'plans', 'archive'): continue  # history, see S2
     if p.name in EXEMPT: continue
     for n, line in enumerate(p.read_text(errors='replace').splitlines(), 1):
         if 'earlier version' in line.lower() or 'was a defect' in line.lower(): continue
@@ -441,6 +445,10 @@ docs = sorted(
     str(q) for q in pathlib.Path('.').rglob('*')
     if q.suffix in ('.md', '.sh') and q.is_file()
     and not any(x in q.parts for x in ('.git', 'var', 'node_modules', 'vendor'))
+    # NOT an archived plan (developer ruling 2026-10-06). A count there is a record of what was true
+    # when the plan closed, and this check forced two edits to one (b41432c, d90c56e) only to stay
+    # green. Exactly docs/plans/archive/, never all of docs/plans/: a live plan's count is a claim.
+    and q.parts[:3] != ('docs', 'plans', 'archive')
 )
 
 for doc in docs:
