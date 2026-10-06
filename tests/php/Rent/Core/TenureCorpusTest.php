@@ -153,6 +153,15 @@ final class TenureCorpusTest extends TestCase
                 'plus' => 'the LOWERCASE adverb in "plus un bureau" — the prose doubt floor is '
                     . 'case-sensitive, and this fixture is what stops it being widened',
             ],
+            // The controls for the SPELLED-OUT PLUS (vocab-014..017, audit 2026-10-06): the joined
+            // adverb must keep matching, so these two carry it on purpose. `plus` ONLY — the
+            // separated-only token `p.l.u.s` stays checked against both, and neither contains it.
+            'vocab-020-joined-plus-adverb-stays-eligible' => [
+                'plus' => 'the adverb in "plus de 20 m²", "au plus près" and "Plus d\'informations"',
+            ],
+            'vocab-022-sentence-final-plus-adverb-stays-eligible' => [
+                'plus' => 'the adverb in "balcon en plus." — a dot right after the joined word',
+            ],
             // NOTE: `trap-005-surplus-not-plus` is deliberately NOT here. It was, until the
             // earned-exemption test above rejected it: `inflectedTokenPosition` is word-bounded, so
             // the `plus` inside `surplus` never matched and the exemption never excused anything.

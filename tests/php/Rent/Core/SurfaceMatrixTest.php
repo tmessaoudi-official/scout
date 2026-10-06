@@ -87,6 +87,19 @@ final class SurfaceMatrixTest extends TestCase
                           'title/description join, token spanning the break',
                           'field name, lowercased identifier'];
 
+        // The letter-spaced acronyms, JOINED — read from Text's own two lists rather than copied, so
+        // the spelled-out PLUS (`p l u s` → `champplus`, audit 2026-10-06) is the same skip as `plai`.
+        $text = new \ReflectionClass(Text::class);
+        $joinedAcronyms = [
+            ...(array) $text->getConstant('SPELLED_OUT_ACRONYMS'),
+            ...array_map(
+                static fn (string $needle): string => str_replace('.', '', $needle),
+                (array) $text->getConstant('SEPARATED_ONLY_ACRONYMS'),
+            ),
+        ];
+        self::assertContains('plai', $joinedAcronyms, 'the spelled-out acronym list moved');
+        self::assertContains('plus', $joinedAcronyms, 'the separated-only acronym list moved');
+
         foreach (self::excludedVocabulary() as $token) {
             foreach (self::surfaces() as $surface => $build) {
                 // See $multiWordOnly above for why each of these skips a single-word literal.
@@ -98,7 +111,7 @@ final class SurfaceMatrixTest extends TestCase
                 // the spaces and so hands the classifier `champplai`, the single-word case skipped
                 // just above for the reason given there.
                 if ($surface === 'field name, lowercased identifier'
-                    && in_array(str_replace(' ', '', $token), ['plai', 'pls', 'anru', 'anah', 'hlm'], true)) {
+                    && in_array(str_replace(' ', '', $token), $joinedAcronyms, true)) {
                     continue;
                 }
 
@@ -426,28 +439,42 @@ final class SurfaceMatrixTest extends TestCase
      * `P.L.S.` and `Logement-social` classified LIBRE/50 and reached MATCH 81 on a pure portal while
      * this matrix stayed green. Deriving the variants here keeps them in step with the tables — a
      * label added tomorrow is tested hyphenated and dotted without anyone remembering to ask.
-     * The acronyms are the ones `Text::SPELLED_OUT_ACRONYMS` names; `plus` is excluded for the
-     * reason given there.
+     * The acronyms are the ones `Text::SPELLED_OUT_ACRONYMS` names, and the dotted needles of
+     * `Text::SEPARATED_ONLY_ACRONYMS` (`p.l.u.s`, audit 2026-10-06) — for those, every variant keeps
+     * a separator between two letters, because the joined spelling is the adverb and is not theirs.
+     * The middle dot and `+` joined the variants the same day, when `PLA·I` and `PLA+I` were found
+     * reaching MATCH.
      *
      * @param list<string> $tokens
      * @return list<string>
      */
     private static function spellingVariants(array $tokens): array
     {
-        $acronyms = (new \ReflectionClass(Text::class))->getConstant('SPELLED_OUT_ACRONYMS');
+        $text = new \ReflectionClass(Text::class);
+        $acronyms = $text->getConstant('SPELLED_OUT_ACRONYMS');
+        $separatedOnly = $text->getConstant('SEPARATED_ONLY_ACRONYMS');
         self::assertIsArray($acronyms);
+        self::assertIsArray($separatedOnly);
         self::assertContains('plai', $acronyms, 'the spelled-out acronym list lost `plai`');
+        self::assertContains('p.l.u.s', $separatedOnly, 'the separated-only acronym list lost `p.l.u.s`');
+        self::assertContains('p.l.u.s', $tokens, 'the spelled-out PLUS left the label tables');
 
         $variants = [];
 
         foreach ($tokens as $token) {
-            if (in_array($token, $acronyms, true)) {
-                $letters = str_split($token);
+            $letters = match (true) {
+                in_array($token, $acronyms, true) => str_split($token),
+                in_array($token, $separatedOnly, true) => explode('.', $token),
+                default => null,
+            };
+
+            if ($letters !== null) {
                 $variants[] = implode('.', $letters) . '.';
                 $variants[] = implode(' ', $letters);
-                $variants[] = implode('', array_slice($letters, 0, -1)) . '-' . end($letters);
-                $variants[] = implode('', array_slice($letters, 0, -1)) . ' ' . end($letters);
-                $variants[] = implode('', array_slice($letters, 0, -1)) . '/' . end($letters);
+
+                foreach (['-', ' ', '/', '·', '+'] as $separator) {
+                    $variants[] = implode('', array_slice($letters, 0, -1)) . $separator . end($letters);
+                }
 
                 continue;
             }

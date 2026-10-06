@@ -274,24 +274,48 @@ final class Text
     private const array INVARIANT_WORDS = ['lli', 'plai', 'plus', 'pls', 'anru', 'anah', 'hlm', 'sne', 'apl'];
 
     /**
-     * The INVARIANT acronyms that are also written with a separator between their letters. `plus`,
-     * `sne` and `apl` are deliberately absent: `plus` is an ordinary adverb and `sne`/`apl` are
-     * procedural, so letter-spacing them would only add false positives. `lli` is absent too, and
-     * for a different reason: it is ELIGIBLE, and the tolerance only ever widens toward exclusion
-     * (see `$tolerateSeparators` on {@see inflectedTokenPosition()}).
+     * The INVARIANT acronyms that are also written with a separator between their letters. `sne`
+     * and `apl` are deliberately absent: they are procedural, so letter-spacing them would only add
+     * false positives. `lli` is absent too, and for a different reason: it is ELIGIBLE, and the
+     * tolerance only ever widens toward exclusion (see `$tolerateSeparators` on
+     * {@see inflectedTokenPosition()}). `plus` is absent because its JOINED spelling is the
+     * commonest adverb in French — its separated spelling is {@see SEPARATED_ONLY_ACRONYMS}.
      */
     private const array SPELLED_OUT_ACRONYMS = ['plai', 'pls', 'anru', 'anah', 'hlm'];
 
     /**
-     * What may sit BETWEEN the words of a multi-word literal: whitespace (possibly none — see the
-     * comment where it is used), a hyphen of any width, an underscore, a slash, or a dot that has a
-     * letter on each side. A dot followed by a space is a sentence break and is NOT a separator, so
-     * `proche du logement. Social club` stays two sentences.
+     * Acronyms that are ALSO an ordinary French word, named in a label table by their DOTTED
+     * spelling, and matched ONLY with at least one separator between two of their letters.
+     *
+     * `P.L.U.S.`, `P L U S`, `PLU-S` and `P.L.U.S` have no adverb reading, and leaving `plus` out
+     * of {@see SPELLED_OUT_ACRONYMS} let every one of them classify LIBRE and reach MATCH on a pure
+     * portal while the identical `P.L.A.I.` rejected (audit 2026-10-06). It could not simply join
+     * that list: an entry there also matches the joined word, and the joined `plus` must keep going
+     * through the classifier's collocation guard alone. So the needle is `p.l.u.s`, never `plus`,
+     * and the pattern refuses the joined spelling outright — whatever follows it, `balcon en plus.`
+     * included.
+     *
+     * The gap between the letters is {@see WORD_GAP}, NOT {@see LETTER_GAP}: `plu` is itself a
+     * French word, and a gap admitting a dot followed by whitespace reads `m'a plu. S'adresser` as
+     * the acronym. A dot counts only with a letter on each side. Stated cost: `P. L. U. S.` is not
+     * read.
      */
-    private const string WORD_GAP = '(?:[\\s\\-_\\/\\x{2010}-\\x{2015}]|(?<=[a-z])\\.(?=[a-z]))*';
+    private const array SEPARATED_ONLY_ACRONYMS = ['p.l.u.s'];
 
-    /** The same, plus any dot: `P.L.A.I.` has a dot after every letter, and a space or a dot may follow it. */
-    private const string LETTER_GAP = '(?:[\\s\\-_\\/\\.\\x{2010}-\\x{2015}])*';
+    /**
+     * What may sit BETWEEN the words of a multi-word literal: whitespace (possibly none — see the
+     * comment where it is used), a hyphen of any width, an underscore, a slash, a middle dot
+     * (U+00B7), a `+`, or a dot that has a letter on each side. A dot followed by a space is a
+     * sentence break and is NOT a separator, so `proche du logement. Social club` stays two sentences.
+     */
+    private const string WORD_GAP = '(?:[\\s\\-_\\/\\x{00B7}\\+\\x{2010}-\\x{2015}]|(?<=[a-z])\\.(?=[a-z]))*';
+
+    /**
+     * The same, plus any dot: `P.L.A.I.` has a dot after every letter, and a space or a dot may
+     * follow it. The middle dot and `+` were missing from both classes until 2026-10-06, so `PLA·I`
+     * and `PLA+I` classified LIBRE while `PLA-I` rejected.
+     */
+    private const string LETTER_GAP = '(?:[\\s\\-_\\/\\.\\x{00B7}\\+\\x{2010}-\\x{2015}])*';
 
     /**
      * Whole-token match that tolerates FRENCH AGREEMENT AND PLURALS.
@@ -336,6 +360,16 @@ final class Text
                     static fn (string $letter): string => preg_quote($letter, '/'),
                     str_split($word),
                 ));
+            } elseif (in_array($word, self::SEPARATED_ONLY_ACRONYMS, true) && $tolerateSeparators) {
+                // `P.L.U.S.`, `P L U S`, `PLU-S` — but never the joined adverb `plus`: the
+                // lookahead refuses the letters written together, so at least one separator must
+                // sit between two of them. See SEPARATED_ONLY_ACRONYMS for why the gap is WORD_GAP.
+                $letters = explode('.', $word);
+                $parts[] = '(?!' . preg_quote(implode('', $letters), '/') . '(?![a-z0-9]))'
+                    . implode(self::WORD_GAP, array_map(
+                        static fn (string $letter): string => preg_quote($letter, '/'),
+                        $letters,
+                    ));
             } elseif (in_array($word, self::INVARIANT_WORDS, true)) {
                 $parts[] = preg_quote($word, '/');
             } elseif (str_ends_with($word, 'al')) {

@@ -18,7 +18,7 @@ before touching anything under `src/`.
 Status (rewritten 2026-10-02 — the earlier paragraph still said a network adapter was missing): the rent, car
 and job domains all run, deployed as three watchers (rent-scout, car-scout, job-scout). Eight rent sources are
 live (polled institutional landlords plus private-portal alert emails over IMAP); the store is schema v12; the
-corpus is 143 cases (`tests/fixtures/rent/tenure/corpus.json`); the rent code lives under `src/php/Rent/`
+corpus is 152 cases (`tests/fixtures/rent/tenure/corpus.json`); the rent code lives under `src/php/Rent/`
 (`Core`, `Config`, `Adapters`, `Store`, `Enrich`, `Notify`, `Cli`), generic pieces under `src/php/Core/`,
 `src/php/Adapters/` and `src/php/Config/`. CI runs the suite on every push and a six-shard sabotage ledger
 nightly. Open inputs, not code: AL'in (needs a DevTools cURL capture — hard rule 1) and AutoScout24 (no alert
@@ -580,8 +580,8 @@ Required coverage, per spec §11 — non-negotiable once `src/` exists:
   Offline. No network in CI. A parser test that reaches the network is a monitoring check, not a test.
 - **Classifier tests.** ≥30 hand-labelled listing texts covering pure-LLI In'li, mixed CDC Habitat,
   an explicit PLAI, an explicit PLS, and an ambiguous case. The suite must go red if the classifier
-  regresses. **Done** — `tests/fixtures/rent/tenure/corpus.json`, 143 cases, and the suite asserts all five
-  shapes are present so "30 easy ones" cannot satisfy it. The corpus is **135 synthetic + 8 CAPTURED**
+  regresses. **Done** — `tests/fixtures/rent/tenure/corpus.json`, 152 cases, and the suite asserts all five
+  shapes are present so "30 easy ones" cannot satisfy it. The corpus is **144 synthetic + 8 CAPTURED**
   (2026-08-20 onward — CDC Habitat cards, Cityloger detail pages, Logirep card + filter facets, and a
   SeLoger alert CTA — the first captured from an EMAIL, and the first whose offending text belongs to
   a portal's template rather than to anyone's listing copy;

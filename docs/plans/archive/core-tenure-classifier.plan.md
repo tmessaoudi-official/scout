@@ -395,7 +395,7 @@ that would otherwise have shipped looking fine.
   catch a regression. Wired as `tests/sabotage-check.sh`, documented in `CLAUDE.md` § Common
   workflows, and it must be run after any change to the classifier, `Text.php` or the corpus.
 - [2026-08-06 23:20] AGREED: **the corpus declares its own provenance and the suite checks it.** The
-  spec asks for real listing texts; all 135 are synthetic until a payload can be captured. Making that
+  spec asks for real listing texts; all 144 are synthetic until a payload can be captured. Making that
   machine-checked keeps the gap visible instead of letting it decay into a stale comment.
 
 ---

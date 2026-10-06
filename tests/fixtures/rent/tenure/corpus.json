@@ -22,7 +22,7 @@
   ],
   "version": 1,
   "declared_counts": {
-    "synthetic": 135,
+    "synthetic": 144,
     "captured": 8
   },
   "sources": {
@@ -2111,6 +2111,123 @@
         "outcome": "DIGEST"
       },
       "why": "REVIEW 2026-10-02 (advisor, after the P0-1 fix). The separator tolerance added for excluded labels must NOT apply to ELIGIBLE ones: widening `logement intermediaire` to `logement-intermediaire` moved a doubt toward MATCH on a mixed source (and a URL slug such as /logements-intermediaires/ is classified text), the wrong direction for this repo. `lli` is the one ELIGIBLE acronym, so it is not letter-spaced: `L.L.I.` stays unread."
+    },
+    {
+      "id": "vocab-014-plus-dotted",
+      "provenance": "synthetic",
+      "source": "seloger",
+      "title": "T3 Sartrouville",
+      "description": "Logement P.L.U.S. disponible de suite.",
+      "fields": {},
+      "expect": {
+        "tenure": "PLUS",
+        "outcome": "REJECT"
+      },
+      "why": "AUDIT 2026-10-06, the P0-1 fix's own residual. `PLUS` was left out of the letter-spaced acronyms because the joined word is the commonest adverb in French, and that reason only covers the JOINED spelling: `P.L.U.S.` has no adverb reading, yet it classified LIBRE/50 and reached MATCH on this `mixed_tenure: false` portal while the identical `P.L.A.I.` (vocab-003) rejected. Dotted acronym, final dot."
+    },
+    {
+      "id": "vocab-015-plus-spaced",
+      "provenance": "synthetic",
+      "source": "seloger",
+      "title": "T3 Sartrouville",
+      "description": "Logement en P L U S.",
+      "fields": {},
+      "expect": {
+        "tenure": "PLUS",
+        "outcome": "REJECT"
+      },
+      "why": "AUDIT 2026-10-06, the P0-1 fix's own residual (see vocab-014). Letter-spaced with a space: LIBRE/MATCH before the fix."
+    },
+    {
+      "id": "vocab-016-plus-hyphenated",
+      "provenance": "synthetic",
+      "source": "seloger",
+      "title": "T3 Sartrouville",
+      "description": "Logement PLU-S disponible.",
+      "fields": {},
+      "expect": {
+        "tenure": "PLUS",
+        "outcome": "REJECT"
+      },
+      "why": "AUDIT 2026-10-06, the P0-1 fix's own residual (see vocab-014). The `PLA-I` shape (vocab-001) applied to PLUS: LIBRE/MATCH before the fix."
+    },
+    {
+      "id": "vocab-017-plus-dotted-no-final-dot",
+      "provenance": "synthetic",
+      "source": "seloger",
+      "title": "T3 Sartrouville",
+      "description": "Logement financé P.L.U.S, proche gare.",
+      "fields": {},
+      "expect": {
+        "tenure": "PLUS",
+        "outcome": "REJECT"
+      },
+      "why": "AUDIT 2026-10-06, the P0-1 fix's own residual (see vocab-014). Dotted without the final dot, followed by a comma: LIBRE/MATCH before the fix."
+    },
+    {
+      "id": "vocab-018-pla-i-middle-dot",
+      "provenance": "synthetic",
+      "source": "seloger",
+      "title": "T3 Sartrouville",
+      "description": "Programme financé en PLA·I, proche gare.",
+      "fields": {},
+      "expect": {
+        "tenure": "PLAI",
+        "outcome": "REJECT"
+      },
+      "why": "AUDIT 2026-10-06 (P2 beside the PLUS residual). The MIDDLE DOT U+00B7 — the French inclusive-writing point, and a common CMS rendering of a separator — was in neither separator class, so `PLA·I` classified LIBRE/MATCH while `PLA-I` (vocab-001) rejected."
+    },
+    {
+      "id": "vocab-019-pla-i-plus-sign",
+      "provenance": "synthetic",
+      "source": "seloger",
+      "title": "T3 Sartrouville",
+      "description": "Programme financé en PLA+I, proche gare.",
+      "fields": {},
+      "expect": {
+        "tenure": "PLAI",
+        "outcome": "REJECT"
+      },
+      "why": "AUDIT 2026-10-06 (P2 beside the PLUS residual). A `+` between the letters — how a space is written in a form-encoded URL — was in neither separator class: LIBRE/MATCH before the fix."
+    },
+    {
+      "id": "vocab-020-joined-plus-adverb-stays-eligible",
+      "provenance": "synthetic",
+      "source": "seloger",
+      "title": "T3 Sartrouville",
+      "description": "Appartement de plus de 20 m², au plus près des transports. Plus d'informations en agence.",
+      "fields": {},
+      "expect": {
+        "tenure": "LIBRE",
+        "outcome": "MATCH"
+      },
+      "why": "THE OTHER DIRECTION of vocab-014..017. The spelled-out PLUS is read only when at least one separator sits BETWEEN its letters, so the joined adverb — `plus de`, `au plus près`, a sentence-initial `Plus d'informations` — must keep reaching MATCH on a pure portal exactly as before. A separator tolerance that also matched the joined word would reject most of the private market in silence."
+    },
+    {
+      "id": "vocab-021-plu-then-sentence-break-is-not-plus",
+      "provenance": "synthetic",
+      "source": "seloger",
+      "title": "T3 Sartrouville",
+      "description": "Le quartier m'a plu. S'adresser à l'agence.",
+      "fields": {},
+      "expect": {
+        "tenure": "LIBRE",
+        "outcome": "MATCH"
+      },
+      "why": "`plu` is a French word (the participle of plaire and of pleuvoir), so the separator inside the spelled-out PLUS must not be a SENTENCE BREAK: `plu. S'adresser` folds to `plu. s'adresser`, which a gap admitting any dot followed by whitespace reads as `P.L.U.S` and REJECTS. Only a dot with a letter on each side counts there. Stated cost: `P. L. U. S.` (a dot and a space after every letter) is not read."
+    },
+    {
+      "id": "vocab-022-sentence-final-plus-adverb-stays-eligible",
+      "provenance": "synthetic",
+      "source": "seloger",
+      "title": "T3 Sartrouville",
+      "description": "Cuisine refaite, balcon en plus.",
+      "fields": {},
+      "expect": {
+        "tenure": "LIBRE",
+        "outcome": "MATCH"
+      },
+      "why": "The joined adverb followed by a dot — the one place a `.` sits right after the word — must stay the adverb: the spelled-out PLUS refuses the joined spelling whatever follows it."
     }
   ]
 }

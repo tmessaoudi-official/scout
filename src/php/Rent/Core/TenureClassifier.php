@@ -147,6 +147,12 @@ final readonly class TenureClassifier
         // `Text::INVARIANT_WORDS` had listed `pls` alongside `plai` the whole time: no French word
         // is spelled `pls`, so word boundaries are enough. Only `plus` is genuinely ambiguous.
         'pls' => Tenure::PLS,
+        // PLUS SPELLED OUT — `P.L.U.S.`, `P L U S`, `PLU-S` — and ONLY spelled out (audit
+        // 2026-10-06). The dotted key is `Text::SEPARATED_ONLY_ACRONYMS`' needle: it requires at
+        // least one separator between the letters and refuses the joined word, so the adverb
+        // `plus` never reaches this table and stays with the collocation guard in AMBIGUOUS_LABELS.
+        // A separated spelling has no adverb reading, which is why it may skip that guard.
+        'p.l.u.s' => Tenure::PLUS,
         'anru' => Tenure::ANRU,
         'anah' => Tenure::ANAH,
         'conventionne' => Tenure::CONVENTIONNE,
@@ -156,9 +162,11 @@ final readonly class TenureClassifier
      * Tier 2, but only under the collocation guard. See idea 2 in the class docblock.
      *
      * ONE entry, and that is the point: `plus` is a French adverb, `plai`/`pls`/`lli` are not
-     * words at all. An acronym only belongs behind the guard if the guard's failure to recognise a
-     * context is SAFER than matching — which is true for `plus` (matching costs eligible listings)
-     * and false for every other acronym (not matching costs an application).
+     * words at all. (Its SEPARATED spelling, `P.L.U.S.`, is not a word either, and so it lives in
+     * `LABELS` as `p.l.u.s` — the joined word alone stays here.) An acronym only belongs behind
+     * the guard if the guard's failure to recognise a context is SAFER than matching — which is
+     * true for `plus` (matching costs eligible listings) and false for every other acronym (not
+     * matching costs an application).
      */
     private const array AMBIGUOUS_LABELS = [
         'PLUS' => Tenure::PLUS,
