@@ -1294,6 +1294,14 @@ run_sabotage "dedup ignores a stated surface disagreement" \
   src/php/Rent/Core/Dedup.php \
   's%SURFACE_TOLERANCE_RATIO = 0.03%SURFACE_TOLERANCE_RATIO = 9.99%'
 
+run_sabotage "dedup ignores a stated room-count disagreement" \
+  src/php/Rent/Core/Dedup.php \
+  's%if (\$a->rooms !== \$b->rooms) {%if (false) {%'
+
+run_sabotage "dedup ignores a stated floor disagreement" \
+  src/php/Rent/Core/Dedup.php \
+  's%if (\$a->floor !== null \&\& \$b->floor !== null \&\& \$a->floor !== \$b->floor) {%if (false) {%'
+
 run_sabotage "dedup starts fuzzy-matching two listings from the SAME source" \
   src/php/Rent/Core/Dedup.php \
   's%if (\$a->sourceName === \$b->sourceName) {%if (false) {%'
@@ -6373,6 +6381,22 @@ run_sabotage "criteria: the HC lower-bound rejection fires even when a CC figure
 run_sabotage "criteria: an HC-only rent exactly AT the ceiling is rejected (audit 2026-10-02 P1-1)" \
   src/php/Rent/Core/CriteriaEngine.php \
   's@\$listing->rentHc > \$this->criteria->maxRentCc@$listing->rentHc >= $this->criteria->maxRentCc@'
+
+# AUDIT 2026-10-06, the P0-1 fix's own residual (d90c56e): `P.L.U.S.`, `P L U S`, `PLU-S` and `PLA·I` /
+# `PLA+I` classified LIBRE/50 and reached MATCH on a mixed_tenure:false portal. The three halves of the
+# fix live in two files, so each is mutated alone: the separated-only acronym arm, the LABELS entry that
+# makes every surface read it, and the two separators added to both gap classes.
+run_sabotage "tenure: a separator-spelled PLUS (P.L.U.S., P L U S) stops being read (audit 2026-10-06)" \
+  src/php/Core/Text.php \
+  's|in_array(\$word, self::SEPARATED_ONLY_ACRONYMS, true) \&\& \$tolerateSeparators|false|'
+
+run_sabotage "tenure: the p.l.u.s label leaves TenureClassifier::LABELS (audit 2026-10-06)" \
+  src/php/Rent/Core/TenureClassifier.php \
+  "/'p\\.l\\.u\\.s' => Tenure::PLUS,/d"
+
+run_sabotage "tenure: the middle dot and + stop separating a social label (audit 2026-10-06)" \
+  src/php/Core/Text.php \
+  's|\\\\x{00B7}\\\\+||'
 
 # THE ABORT COMES BEFORE THE TALLY, and that ordering is the finding rather than a nicety (C2
 # round 7, resilience P3). The alert job harvests the `N sabotage(s) detected, M undetected` line;

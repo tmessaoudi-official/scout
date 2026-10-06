@@ -155,6 +155,23 @@ final class DedupTest extends TestCase
         ));
     }
 
+    public function testAStatedRoomCountDisagreementIsDecisive(): void
+    {
+        // Rent and surface agree (two corroborating facts — enough to merge on their own), so the
+        // room-count refusal is the ONLY thing keeping a T3 and a T4 apart. Without this case the
+        // ledger's "dedup ignores a stated room-count disagreement" sabotage stayed green
+        // (audit 2026-10-06, D-F6): every other test pair either agreed on rooms or was already
+        // refused by rent or surface.
+        self::assertNull($this->reason(
+            $this->listing('seloger', 'a1', rooms: 4),
+            $this->listing('logic_immo', 'b9', rooms: 3),
+        ));
+        self::assertNotNull($this->reason(
+            $this->listing('seloger', 'a1', rooms: 4),
+            $this->listing('logic_immo', 'b9', rooms: 4),
+        ), 'control: the same pair with the same room count IS one flat');
+    }
+
     public function testDifferentFloorsNeverMerge(): void
     {
         // Two identical flats in the same building on different floors are genuinely two flats, and
