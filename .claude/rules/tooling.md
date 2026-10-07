@@ -64,3 +64,8 @@ Moved verbatim from CLAUDE.md § "Gotchas & pitfalls" on 2026-09-28 (review-reme
 - **`docker build` on this box uses the docker-container driver: pass `--load` or the image never reaches the daemon (2026-10-03).**
   Without it the build exits 0 and the next `docker run` reports `pull access denied`, which reads as a registry problem.
   `docker compose build` of the dev image needs no flag.
+- **`tools/in-docker.sh` forwards NO host environment variable (2026-10-08).** `SABOTAGE_FILTER=… tools/in-docker.sh bash
+  tests/sabotage-check.sh` drops the filter silently and starts the FULL ledger (hours) under the default 300 s per-case timeout,
+  which the dockerised suite (~3 min) brushes against; written after the wrapper, `tools/in-docker.sh SABOTAGE_FILTER=… bash …`
+  makes `docker` try to execute the assignment. Put `env` INSIDE: `tools/in-docker.sh env SABOTAGE_FILTER='…'
+  SABOTAGE_SUITE_TIMEOUT=1500 bash tests/sabotage-check.sh`. The same holds for every variable a test or tool reads.

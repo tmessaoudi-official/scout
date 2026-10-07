@@ -301,7 +301,9 @@ Restoring is a move: stop the container, put the file at `state/rent-watch.sqlit
 ```bash
 php tools/phpunit.phar                                   # the suite — read its last line, not the ✓ marks
 bash tests/sabotage-check.sh                             # the ledger: would the suite NOTICE a regression?
-SABOTAGE_FILTER='<regex on labels>' bash tests/sabotage-check.sh   # one case, not the multi-hour ledger
+env SABOTAGE_FILTER='<regex on labels>' bash tests/sabotage-check.sh   # one case, not the multi-hour ledger
+                                                         # (through tools/in-docker.sh: `env` goes INSIDE it,
+                                                         #  the wrapper forwards no host variable)
 bash tests/test-tenure-guard.sh                          # the §1 tripwire still fires (rent vocabulary)
 bash tests/test-vehicle-guard.sh                         # …and the car one
 bash .claude/skills/scout-repair/drift-scan.sh           # docs vs. reality; exit 1 on any P0/P1

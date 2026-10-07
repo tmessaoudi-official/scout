@@ -209,9 +209,9 @@ final readonly class RawListing
             // records the failure and returns the card untouched.
             detailRead: $this->detailRead || $detail->description !== '' || (string) ($detail->fields['tenureField'] ?? '') !== '',
             // Carried even though today's order (hydrate, THEN enrich) means the card never holds
-            // one yet. A constructor parameter this method forgets is silently DROPPED, and the
-            // reflection guard cannot catch it: that guard checks the snapshot ENCODER, not the
-            // merge. The trap arms itself the day the order changes.
+            // one yet. A constructor parameter this method forgets is silently DROPPED; since
+            // 2026-09-04 a reflection guard catches that, in BOTH merge directions:
+            // `ListingSnapshotTest::testEveryConstructorParameterSurvivesDecodeAndMerge`.
             commuteMinutes: $any($this->commuteMinutes, $detail->commuteMinutes),
             // The CARD's observation time: a detail page fetched now says nothing about when the
             // listing was observed, and a detail merge must not re-date an old card to the pass.

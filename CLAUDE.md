@@ -530,7 +530,9 @@ php tools/scrub-eml.php in.eml out.eml me@example.com   # capture an alert as a 
 composer dump-autoload --dev            # if the corpus suite errors with "Class ... not found"
 php tools/phpunit.phar                  # the core suite — must stay green
 bash tests/sabotage-check.sh            # proves the suite would CATCH a broken classifier
-SABOTAGE_FILTER='<regex on labels>' bash tests/sabotage-check.sh   # one new case, not the 2 h ledger
+env SABOTAGE_FILTER='<regex on labels>' bash tests/sabotage-check.sh   # one new case, not the 2 h ledger
+                                        #   `env` INSIDE the wrapper: tools/in-docker.sh forwards no host
+                                        #   variable, so a prefix before it is dropped and the FULL ledger runs
                                         #   join labels with a plain `|` — `/bin/grep` here is ugrep,
                                         #   where `\|` is LITERAL: a `\|` filter skips EVERY case and
                                         #   still exits 0 ("0 detected, 0 undetected", PARTIAL RUN)

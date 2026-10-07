@@ -56,9 +56,12 @@ recipe).
 - The ledger is `tests/sabotage-check.sh`; run it in the dev image (`tools/in-docker.sh bash
   tests/sabotage-check.sh`). The full ledger takes hours: it runs nightly in CI as six shards
   (`SABOTAGE_SHARD=<i>/<n>`).
-- One new case: `SABOTAGE_FILTER='<regex on labels>'`, labels joined with a plain `|`. `/bin/grep`
-  here is ugrep, where `\|` is literal: such a filter skips every case and still exits 0 with a loud
-  PARTIAL RUN line. A filtered run is never a ledger result.
+- One new case: `tools/in-docker.sh env SABOTAGE_FILTER='<regex on labels>'
+  SABOTAGE_SUITE_TIMEOUT=1500 bash tests/sabotage-check.sh`. The `env` goes INSIDE the wrapper:
+  `tools/in-docker.sh` forwards no host variable, so a prefix before it is dropped and the FULL
+  ledger starts (observed 2026-10-08). Join labels with a plain `|`. `/bin/grep` here is ugrep,
+  where `\|` is literal: such a filter skips every case and still exits 0 with a loud PARTIAL RUN
+  line. A filtered run is never a ledger result.
 - After any code move, run `tools/in-docker.sh bash tests/test-sabotage-applies.sh`: a sabotage
   expression that matches nothing reports coverage it does not have.
 
