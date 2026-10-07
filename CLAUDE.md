@@ -156,8 +156,8 @@ to weaken the social-housing exclusion** — ask *how* to satisfy it.
 
 **No interrupts mid-task; one closing question** (developer ruling, 2026-10-08, D-7). Routine work runs
 without stopping, but a turn that finishes its work closes with ONE `AskUserQuestion` ("what next?"),
-per the global § Mode table, never with a prose offer such as "say which to fix". No keep-going toggle
-and no non-stop ruling covers this tree.
+per the global § Mode table, never with a prose offer such as "say which to fix". If a keep-going
+toggle is later armed for this tree, the global § Mode exception applies and the toggle wins.
 
 Every unanswered question is also written to `docs/OPEN-QUESTIONS.md` with the default that applies if
 it stays unanswered. A question asked only in chat is lost at the next session.
