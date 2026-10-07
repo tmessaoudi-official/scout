@@ -1,9 +1,9 @@
 ---
 name: scout-lenses
 description: >
-  MANDATORY companion to every global review skill run in rent-watch (/sweep, /sleuth, /inspect,
-  /gaps, /forge, /cross-check, /converge, /pre-commit, /aggregate-findings) — load it first: the rent-
-  watch review dimensions, sleuth lens K and the repo conventions those skills lack.
+  MANDATORY companion to every global review skill run in rent-watch (/certify, /sweep, /sleuth,
+  /inspect, /gaps, /forge, /cross-check, /converge, /pre-commit, /sabotage-check, /aggregate-findings)
+  — load it first: review dimensions, panel lenses, sleuth lens K, repo conventions.
 ---
 
 <!-- Description history (moved out of the description 2026-09-28 to keep it ≤300 chars, review-remediation 5.8): Extracted 2026-08-18 from the deleted repo-local copies of those skills (global-is-reference ruling: a repo may not duplicate a global skill; what was repo-specific in them lives here instead). -->
@@ -15,17 +15,63 @@ skills: run the global skill for its machinery, with everything below folded int
 
 ## Repo conventions (apply to every review skill)
 
-- **Reports live in the repo**: `var/claude/<skill>/` (gitignored). Never `~/.claude/projects/…`.
-- **Non-blocking closes — no interrupts.** End with the findings and a plainly-stated offer
-  (`N findings (P0:a P1:b P2:c) — say which to fix`), never a blocking question. The standing
-  directive for this repo is no interrupts on routine work.
-- **`/converge` runs autonomous by default here** at the tier CLAUDE.md § "Certification ladder"
-  mandates (MAXIMAL unless the diff is docs/config-only). Reviewers probe in a pinned worktree,
-  never the live tree — the recipe is in each agent charter under § "Probe in a worktree".
+- **Reports**: scout's own skills and `/certify`'s raw files write to `var/claude/<skill>/`
+  (gitignored). The global analysis skills (`/sweep`, `/sleuth`, `/inspect`, `/gaps`,
+  `/aggregate-findings`) keep their own directories under `~/.claude/projects/`, because they find
+  each other's reports there.
+- **No interrupts mid-task; one closing question.** Routine review work runs without stopping, and
+  the turn closes with ONE `AskUserQuestion` listing the findings by severity (CLAUDE.md § Questions,
+  developer ruling 2026-10-08). Never a prose "say which to fix".
+- **Gates go through `/certify`**, never `/converge`: `/converge` spawns no panel. Reviewers probe in
+  a pinned worktree, never the live tree; the recipe is in each agent charter under § "Probe in a
+  worktree".
 - **Project scope only.** `~/.claude/` is the developer's own persistent install, out of this
   repo's audit scope — audit it from its own sessions, not from here.
 - Findings about files that do not exist yet are not findings — say the module is absent instead.
   The classifier is `src/php/Rent/Core/TenureClassifier.php`; `src/core/tenure.py` has never existed.
+
+## For `/certify`: the panel's lenses
+
+`/certify` takes its lenses from this skill and spawns general-purpose reviewers; it does not spawn
+the agents in `.claude/agents/` by type. So brief each reviewer with its lens AND its charter: the
+first instruction is "read `<charter>` and work as it says" (its attack surfaces and its worktree
+recipe).
+
+| Lens | Charter the reviewer reads first |
+|---|---|
+| correctness + regression | `.claude/agents/tenure-correctness-reviewer.md` |
+| resilience + legal posture + secrets | `.claude/agents/source-resilience-reviewer.md` |
+| completeness + blast radius | `.claude/agents/completeness-reviewer.md` |
+
+- **Convergence when a panel runs:** TWO consecutive fully-clean rounds, which is stricter than
+  `/certify`'s one; any finding resets the counter; cap 5, then ask (CLAUDE.md § "Certification
+  ladder", developer ruling 2026-10-08). The STANDARD carve-out there (a diff touching no
+  application source) still allows one reviewer and one clean round.
+- **Freeze first:** a round run on a moving tree does not count toward the two.
+- **Reviewers run every PHP, test and guard command through `tools/in-docker.sh`** (CLAUDE.md § "Run
+  everything in Docker"), never the host `php`.
+
+## For `/sabotage-check`: the ledger
+
+- The ledger is `tests/sabotage-check.sh`; run it in the dev image (`tools/in-docker.sh bash
+  tests/sabotage-check.sh`). The full ledger takes hours: it runs nightly in CI as six shards
+  (`SABOTAGE_SHARD=<i>/<n>`).
+- One new case: `SABOTAGE_FILTER='<regex on labels>'`, labels joined with a plain `|`. `/bin/grep`
+  here is ugrep, where `\|` is literal: such a filter skips every case and still exits 0 with a loud
+  PARTIAL RUN line. A filtered run is never a ledger result.
+- After any code move, run `tools/in-docker.sh bash tests/test-sabotage-applies.sh`: a sabotage
+  expression that matches nothing reports coverage it does not have.
+
+## For `/pre-commit`: scout's deltas
+
+- `core.fileMode=false` makes a pathspec commit drop a mode change. Commit a mode change from the
+  index on its own (`.claude/rules/tooling.md`, the 2026-10-03 entry).
+- Identity and trailers: CLAUDE.md § "Git autonomy" (the author's case is checked; no trailers).
+
+## For `/sleuth`: budget for lens K
+
+Run agent K (below) in sleuth's second batch, so the global cap of five concurrent agents holds. K is
+judgment work: it takes the model sleuth's table gives its judgment agents.
 
 ## Review dimensions — MANDATORY additions to any sweep/review of this repo
 
@@ -82,11 +128,8 @@ against these is legitimate and useful.
   explaining it. A score with no reasons is unreviewable by the user and untestable by us. Hard
   disqualifiers reject silently and are logged only — a disqualifier that notifies, or a score
   component that silently disqualifies, means the two mechanisms have been conflated.
-- **Anti-bandaid gate.** For every `||` fallback, `2>/dev/null`, `|| true`, bare `except:` or
-  `try {} catch {}` that continues, error trap, retry loop, timeout bump or default-value assignment
-  introduced: state the exact failure mode, the *physical* evidence that confirmed it (log,
-  measurement, trace, test output), and whether the root cause is fixed. No evidence ⇒ **P0**,
-  replace it with a root-cause fix. In this repo the highest-frequency instance is an adapter
+- **Anti-bandaid gate.** The global Phase 6 anti-bandaid gate applies to every review here (no
+  evidence ⇒ **P0**, replace it with a root-cause fix). In this repo its highest-frequency instance is an adapter
   swallowing a fetch exception and returning an empty list — that converts a loud breakage into a
   silent one, which is exactly the thing source health exists to prevent.
 

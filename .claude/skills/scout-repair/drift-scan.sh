@@ -182,7 +182,7 @@ for f in .claude/hooks/*.sh; do
   grep -qx "$b" <<<"$REG" \
     || printf 'P2  %s is on disk but not registered in .claude/settings.json — dead code\n' "$b" >>"$FINDINGS"
   grep -q 'log_obs' "$f" \
-    || printf 'P2  %s does not use log_obs() — violates Rule 13 of the framework this repo ships\n' "$b" >>"$FINDINGS"
+    || printf 'P2  %s does not use log_obs() — violates Rule 13 of the global framework (~/.claude/CLAUDE.md)\n' "$b" >>"$FINDINGS"
 done
 while read -r b; do
   [[ -z "$b" ]] && continue

@@ -78,8 +78,11 @@ read-only) and the merged prose as one review deep.
 
 ---
 
-## Decisions Log (seeded — THIS file is now where rulings land)
+## Decisions Log
 
+> Seeded: THIS file is now where rulings land. (The note left the heading on 2026-10-08, because
+> `project-state.sh --append-decision` accepts only the exact heading `## Decisions Log`.)
+>
 > Supersedes the predecessor plan's persistence instruction to append rulings to
 > `finish-everything.plan.md` / `car-domain-first-slice.plan.md` — those files are archived by
 > Step U2. From now on, every ruling for pending work is appended HERE, in the same commit as the

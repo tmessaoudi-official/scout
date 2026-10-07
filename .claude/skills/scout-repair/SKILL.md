@@ -1,8 +1,8 @@
 ---
 name: scout-repair
 description: >
-  Detect and repair drift between what CLAUDE.md, the shipped global framework and .claude/ CLAIM
-  exists, and what actually exists — skills, agents, hooks, settings entries, plan pointers, config
+  Detect and repair drift between what CLAUDE.md and .claude/ CLAIM exists in this repo, and what
+  actually exists — skills, agents, hooks, settings entries, plan pointers, config
   keys, fixtures, documented commands. Run after adding a skill/agent/hook, after a port from a
   sibling repo, or any time the config might be stale. Never weakens an invariant.
 user-invocable: true
@@ -155,7 +155,7 @@ grep -l 'log_obs' .claude/hooks/*.sh                             # Rule 13 — a
 - on disk but unregistered → dead code, **P2**
 - registered but absent → the hook silently never runs, **P1**
 - mode `100644` on a script → it will not execute after a fresh clone, **P1**
-- no `log_obs` → violates Rule 13 of the framework this repo ships, **P2** (this happened; see banner)
+- no `log_obs` → violates Rule 13 of the developer's global framework (`~/.claude/CLAUDE.md`), **P2** (this happened; see banner)
 
 ## Section 5 — DOCUMENTED COMMANDS THAT DO NOT RUN
 

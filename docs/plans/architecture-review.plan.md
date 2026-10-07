@@ -18,6 +18,9 @@ This file is the durable record; the scratch area is not.
 - [2026-10-08 00:26] AGREED: Mutation testing: Infection pilot on Rent/Core (pcov in the dev image), compared against the sabotage ledger, which stays for section-1 guarantees.
 - [2026-10-08 00:26] AGREED: Persist this review in docs/plans/architecture-review.plan.md; lane reports stay in var/claude/review-2026-10-07/.
 - [2026-10-08 00:27] ASSUMED (review): Review lanes ran as 5 unnamed general-purpose agents on the session model (override table: agents = as-is) — because autonomous mode does not ask the spawner model question. Alternatives: per-lane model choice.
+- [2026-10-08 00:43] AGREED: D-7: scout aligns with the global closing rule — no interrupts mid-task on routine work; a turn closes with one AskUserQuestion; scout-lenses' prose 'say which to fix' close is removed.
+- [2026-10-08 00:44] AGREED: D-10: scout pushes in batches per global Rule 10 (10 unpushed, milestone end, before a stop), reading CI at each push; scout's git section becomes its delta on Rule 10.
+- [2026-10-08 00:44] AGREED: D-3: per-task gates follow the certification schedule (advisor); the milestone panel stays MAXIMAL with TWO consecutive fully-clean rounds, a scout-only rule stricter than /certify, and scout-lenses tells /certify so.
 
 ## Formal Plan
 

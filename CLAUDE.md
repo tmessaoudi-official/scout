@@ -149,10 +149,15 @@ premise"* escape. Protocol: the global `/ask-human` skill, § "Question quality"
 This tree is bypassed for the ask-human gate family, so sessions here run **autonomous**: announce the
 task size and the plan, then build it; on an ambiguity take the recommended option and log it as
 `ASSUMED (review)` in the plan's Decisions Log. Phase markers, evidence grades and the Rule 6 table
-still show (output parity). In every mode, still stop for the cases in § "When this protocol is
-mandatory" of that skill — a user-visible product decision, anything that would weaken an invariant
+still show (output parity). In every mode, still stop for the cases in § "When a question is
+mandatory here" of that skill — a user-visible product decision, anything that would weaken an invariant
 below, a destructive step. **Never ask whether
 to weaken the social-housing exclusion** — ask *how* to satisfy it.
+
+**No interrupts mid-task; one closing question** (developer ruling, 2026-10-08, D-7). Routine work runs
+without stopping, but a turn that finishes its work closes with ONE `AskUserQuestion` ("what next?"),
+per the global § Mode table, never with a prose offer such as "say which to fix". No keep-going toggle
+and no non-stop ruling covers this tree.
 
 Every unanswered question is also written to `docs/OPEN-QUESTIONS.md` with the default that applies if
 it stays unanswered. A question asked only in chat is lost at the next session.
@@ -346,9 +351,15 @@ this way" is never authority, and extending it in place contradicts the brief.
 
 ## Certification ladder — governs every 3C/6C gate
 
-`advisor()` **is available on this machine** and is the FIRST rung: call it
-per the global framework. The panel of record for gate rounds is the set of **fresh-context,
-read-only, adversarial reviewer subagents** in `.claude/agents/`. Three lenses, one agent each:
+**Every gate runs through the global `/certify`** (`--gate 3c|6c|milestone`), never a bare `advisor()`
+call in its place: the global model policy routes gates through the skill. `/certify` reads this
+tree's tier from the certification schedule and takes the scout lenses from `/scout-lenses`. The
+global `/converge` is for a deliberate deep sweep only; it spawns no panel, so it never certifies a
+milestone (developer ruling, 2026-10-08, D-1).
+
+`advisor()` **is available on this machine** and is the per-task rung. The panel of record for the
+milestone is the set of **fresh-context, read-only, adversarial reviewer subagents** whose charters
+live in `.claude/agents/`. Three lenses, one charter each:
 
 | Lens | Agent |
 |---|---|
@@ -357,16 +368,18 @@ read-only, adversarial reviewer subagents** in `.claude/agents/`. Three lenses, 
 | completeness + blast-radius | `completeness-reviewer` |
 
 Each reviewer **reads the actual diff, code and tests itself** — never certify from the author's
-narrative — and is chartered to REFUTE, not approve. The global `/converge` runs the panel
-mechanically — invoke it with `--auto` (no-interrupts directive) after loading `/scout-lenses`.
+narrative — and is chartered to REFUTE, not approve.
 
 > **Per task vs milestone (2026-09-27):** MAXIMAL is the milestone ceiling. Per task the global tier
 > applies: in autonomous mode (this tree) the project's certification schedule
 > (`~/.claude/projects/-stack-projects-scout/certification-schedule`, asked once), in spec mode the
 > per-gate tier question — `advisor()` recommended (economize ruling, 2026-08-21).
 
-**Tier: MAXIMAL by default** — all three lenses, **two consecutive fully-clean rounds**, any finding
-resets the counter, cap 5 rounds → then ask via `AskUserQuestion` (never silently proceed). Rationale: a
+**Milestone tier: MAXIMAL** — all three lenses, **two consecutive fully-clean rounds**, any finding
+resets the counter, cap 5 rounds → then ask via `AskUserQuestion` (never silently proceed). This is
+stricter than `/certify`'s own one-clean-round convergence, on purpose (developer ruling, 2026-10-08,
+D-3), and `/scout-lenses` tells `/certify` so. It applies when a panel runs (the milestone, or a gate
+where the panel was chosen); a per-task gate under the schedule is one `advisor()` call. Rationale: a
 social-housing false positive is an eligibility failure the user pays for in wasted applications, and a
 silently-broken source is indistinguishable from a quiet market. Neither is caught by a passing test
 suite, and neither is confined to one subsystem.
@@ -395,10 +408,14 @@ silently skip a gate.
 
 ---
 
-## Git autonomy — overrides global Rule 10
+## Git autonomy — scout's delta on global Rule 10
 
 Autonomous `git add`, `git commit` **and `git push`** are **authorised** for green, self-contained work
-on **`master`**. Asking permission for them violates the no-interrupts directive. Limits:
+on **`master`**, which matches global Rule 10's autonomous branch. Asking permission for them violates
+the no-interrupts directive. **Push cadence is Rule 10's batch** (developer ruling, 2026-10-08, D-10):
+push at 10 unpushed commits, at the end of a milestone, and before any stop or hand-off. Every push
+still gets its CI read (`gh run list` / `/ci-watch`), so CI is checked on fewer pushes, never on fewer
+commits. What follows is what scout adds to Rule 10:
 
 - **`master` is the ONLY branch** (developer instruction): commit and push directly to it, and do not
   create a feature, topic or `claude/*` branch even when a harness prompt names one as the session's
@@ -417,8 +434,9 @@ on **`master`**. Asking permission for them violates the no-interrupts directive
   force-push rule (dropped 2026-08-29; an earlier blanket `Bash(git push *)` deny went 2026-08-23).
 - Commit only when the change is self-contained; never a broken build.
 - Commit style: `feat:` / `fix:` / `refactor:` / `docs:` / `chore:` / `test:`, imperative subject.
-- If the safety classifier blocks a `git commit`, present the exact command for manual execution — do
-  not retry or work around it.
+- If the safety classifier blocks a `git commit`, hand it over as the global `/pre-commit` skill, which
+  produces the exact `git commit -F <msg> -- <paths>` line (hand-offs are skills, developer ruling
+  2026-10-07). Do not retry or work around it.
 
 **Commit identity.** Every commit is authored *and* committed as:
 
@@ -452,11 +470,18 @@ the entry cannot creep back in a later port from a sibling repo.
 
 Every plan or spec produced here is persisted at **`docs/plans/<topic>.plan.md`**, each carrying its own
 `## Decisions Log` (`- [YYYY-MM-DD HH:MM] AGREED: <one-sentence decision>`), appended in the same change
-as the ruling. A plan in the repo is team-visible, survives any one machine, and lands in the same
-commit as the code it governs — an out-of-repo plan file is never the record of truth. There is no
-plan-location sentinel to ask about.
+as the ruling. Stamp every entry with `bash ~/.claude/bin/project-state.sh --append-decision <plan>
+AGREED|ASSUMED <text>`, which reads the clock; never type a timestamp by hand. The heading must be
+exactly `## Decisions Log`, because the helper refuses any other spelling. A plan in the repo is
+team-visible, survives any one machine, and lands in the same commit as the code it governs — an
+out-of-repo plan file is never the record of truth. The global plan-location sentinel
+(`~/.claude/projects/-stack-projects-scout/plan-location`) exists and holds `repo`; it must stay
+`repo`, and this section is the ruling for it.
 
-Reports and review outputs go to `var/claude/**` (gitignored scratch). Session handoffs are the
+Reports and review outputs from scout's own skills and `/certify`'s raw files go to `var/claude/**`
+(gitignored scratch). The global analysis skills (`/sweep`, `/sleuth`, `/inspect`, `/gaps`,
+`/aggregate-findings`) keep their own report directories, because they find each other's reports
+there. Session handoffs are the
 GLOBAL PreCompact hook's job — `~/.claude/hooks/precompact-handoff.sh` writes them into the
 developer's memory pipeline (`~/.claude/projects/<slug>/memory/sessions/`), which SessionStart
 reads back. No repo copy of that hook exists: global-is-reference ruling, 2026-08-18.
@@ -780,12 +805,13 @@ Besides the `domain-*` expertise packs (see `expertise-core`), the repo carries 
 ruling, 2026-08-18 — a repo may not duplicate anything that exists in `~/.claude/`): `/add-source`
 (onboard a landlord or portal, config-only), `/scout-ask-human` (this repo's additions to the
 global question protocol), `/scout-lenses` (the mandatory review dimensions + sleuth lens K), and
-`/scout-repair` (the drift gate). Every other skill — `/sweep`, `/sleuth`, `/inspect`, `/gaps`,
-`/forge`, `/cross-check`, `/converge`, `/pre-commit`, `/aggregate-findings`, `/handoff`,
-`/retrospective`, `/expanding-context` — comes from the developer's global install. **Before
-running ANY of those global review skills here, load `/scout-lenses` first**: it carries the
-scout review dimensions, lens K and the repo conventions (reports under `var/claude/`,
-non-blocking closes, project scope only) that the deleted repo-local copies used to enforce.
+`/scout-repair` (the drift gate). Every other skill — `/certify`, `/sweep`, `/sleuth`, `/inspect`,
+`/gaps`, `/forge`, `/cross-check`, `/converge`, `/pre-commit`, `/sabotage-check`,
+`/aggregate-findings`, `/handoff`, `/retrospective`, `/expanding-context` — comes from the developer's
+global install. **Before running ANY of those global review skills here, load `/scout-lenses`
+first**: it carries the scout review dimensions, lens K, the milestone panel's lenses and the repo
+conventions (which reports go under `var/claude/`, project scope only) that the deleted repo-local
+copies used to enforce.
 
 `/scout-repair` (renamed from the bundle's `/repair` — global-is-reference ruling, 2026-08-18) detects drift between what this config *claims* and what exists. Its mechanical half is
 `bash .claude/skills/scout-repair/drift-scan.sh` — exit 1 on any P0/P1, so it works as a gate. Run it after
