@@ -296,12 +296,12 @@ final readonly class CriteriaEngine
             $earned += $w->lift;
             $reasons[] = $listing->hasElevator === true
                 ? 'ascenseur'
-                : ($listing->floor === 0 ? 'rez-de-chaussée' : ($listing->floor . 'er étage'));
+                : FloorLabel::long($listing->floor);
         }
 
         if (!$lowFloor && $listing->hasElevator === false && $listing->floor !== null) {
             $earned += $w->highFloorNoLift;
-            $reasons[] = $listing->floor . 'e étage SANS ascenseur';
+            $reasons[] = FloorLabel::long($listing->floor) . ' SANS ascenseur';
         }
 
         // --- S8 individual heating (Track 7-A, developer ruling 2026-09-08) ---

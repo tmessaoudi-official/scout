@@ -7,6 +7,7 @@ namespace Scout\Rent\Notify;
 use Scout\Rent\Core\Amenities;
 use Scout\Rent\Core\Department;
 use Scout\Rent\Core\DigestCause;
+use Scout\Rent\Core\FloorLabel;
 use Scout\Rent\Core\RawListing;
 use Scout\Core\SourceHealth;
 use Scout\Core\SourceStatus;
@@ -374,11 +375,7 @@ final readonly class Formatter
         $bits = [];
 
         if ($listing->floor !== null) {
-            $bits[] = match (true) {
-                $listing->floor <= 0 => 'RDC',
-                $listing->floor === 1 => '1er étage',
-                default => $listing->floor . 'e étage',
-            };
+            $bits[] = FloorLabel::short($listing->floor);
         }
 
         if ($listing->hasElevator !== null) {
