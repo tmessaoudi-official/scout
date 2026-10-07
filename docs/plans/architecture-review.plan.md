@@ -67,10 +67,10 @@ step 1) → CALEOL → expertise facts → LICENSE → T9 now-items. The remaini
 <!-- progress-block v1 -->
 | # | Step | Size | State | Evidence | Files |
 |---|------|------|-------|----------|-------|
-| 1 | Framework sync fixes, SAFE-NOW (D-1 panel via /certify, D-2 main-plan Decisions Log heading, D-3 MAXIMAL/two-clean wording, D-4/D-5 scout-lenses, D-7 non-stop close, D-9 plan-location, D-10 Rule 10 cadence, D-12 dead cite, D-13 drift-gate claim, D-14, D-17, D-18) | M | todo | - | CLAUDE.md, .claude/** |
+| 1 | Framework sync fixes, SAFE-NOW (D-1 panel via /certify, D-2 main-plan Decisions Log heading, D-3 MAXIMAL/two-clean wording, D-4/D-5 scout-lenses, D-7 non-stop close, D-9 plan-location, D-10 Rule 10 cadence, D-12 dead cite, D-13 drift-gate claim, D-14, D-18; D-17 moved to step 4) | M | done | 483200c | CLAUDE.md, .claude/** |
 | 2 | T8 small defects, red test first: floor label (A-14), empty-reasons match (A-16), mergedWith reflection guard (A-11), commute failures counted (C-10 non-port half) | M | todo | - | src/php/Rent/** |
 | 3 | CALEOL (E-11): verify the term on an official source, then a procedural social tell + red-first synthetic corpus case + sabotage + surface matrix | M | todo | - | src/php/Rent/Core/TenureClassifier.php, tests/fixtures/rent/tenure/corpus.json |
-| 4 | Expertise facts refresh (E-7, E-9, D-8 facts only: counts, HC-rent ruling, post-review commits) | S | todo | - | .claude/rules/expertise-core.md, .claude/EXPERTISE-REFERENCE.md, .claude/skills/ |
+| 4 | Expertise facts refresh (E-7, E-9, D-8 facts only: counts, HC-rent ruling, post-review commits; D-17 /long-run and /ci-watch pointers) | S | todo | - | .claude/rules/expertise-core.md, .claude/EXPERTISE-REFERENCE.md, .claude/skills/ |
 | 5 | LICENSE: MIT + tests/fixtures/** third-party carve-out; composer.json license and description | S | todo | - | LICENSE, composer.json |
 | 6 | T9 now: actions/images pinned by SHA/digest, CI badges, forward-only commit-subject rule | S | todo | - | .github/workflows/ci.yml, Dockerfile, README.md |
 | 7 | Migration step 0: dependency-rule + network-guard tests, §1 discovery tests re-rooted, PHPStan PHAR + baseline, shellcheck/yamllint in CI | M | todo | - | tests/php/Repo/**, .github/workflows/ci.yml, tools/** |
