@@ -164,6 +164,55 @@ final class RentScoutDigestTest extends TestCase
         self::assertTrue($store->wasNotified($key));
     }
 
+    /**
+     * A DAMAGED REASON LIST IS COUNTED, NOT SWALLOWED (architecture review A-16, 2026-10-08).
+     *
+     * `decodeSignals()` is tolerant on purpose (a damaged column costs a sentence, the listing must
+     * still be announced), but it used to be SILENT too: the corrupt column became an empty list
+     * and nothing said so, while the corrupt SNAPSHOT beside it was warned. Both drains now name
+     * the row and the column.
+     */
+    public function testACorruptReasonListInTheDigestIsAnnouncedAndNamed(): void
+    {
+        $root = $this->tempRoot();
+        $key = $this->seedDigestRow($root, new RawListing(
+            sourceName: 'cityloger',
+            externalId: 'S-1',
+            title: 'T4 Antony',
+            rentCc: 1300,
+        ));
+        $this->corruptSignals($root, $key);
+
+        $result = $this->scout($root, ['digest'], $this->delivering());
+
+        self::assertSame(0, $result['code'], $result['err']);
+        self::assertStringContainsString('T4 Antony', $result['out'], 'still announced');
+        self::assertStringContainsString($key . ' : raisons enregistrées illisibles (signals_json)', $result['out'] . $result['err']);
+    }
+
+    public function testACorruptReasonListOnAQueuedMatchIsNamed(): void
+    {
+        $root = $this->tempRoot();
+        $key = $this->seedQueuedMatch($root, new RawListing(
+            sourceName: 'inli',
+            externalId: 'S-2',
+            title: 'Appartement 3 pièces',
+            description: 'Logement intermédiaire (LLI).',
+            fields: ['financement' => 'LLI'],
+            commune: 'Sartrouville',
+            postcode: '78500',
+            rentCc: 1450,
+            surfaceM2: 88.0,
+            rooms: 4,
+        ));
+        $this->corruptSignals($root, $key);
+
+        $result = $this->scout($root, ['digest'], $this->delivering());
+
+        self::assertSame(0, $result['code'], $result['err']);
+        self::assertStringContainsString($key . ' : raisons enregistrées illisibles (signals_json)', $result['out'] . $result['err']);
+    }
+
     public function testNothingIsMarkedWhenNoChannelAccepts(): void
     {
         // `ntfy` against a closed loopback port: `check()` passes, `send()` fails at the socket. No
@@ -1242,6 +1291,13 @@ final class RentScoutDigestTest extends TestCase
         $this->pdo($root)
             ->prepare('UPDATE listings SET evidence_json = NULL WHERE dedup_key = :key')
             ->execute(['key' => $key]);
+    }
+
+    private function corruptSignals(string $root, string $key): void
+    {
+        $this->pdo($root)
+            ->prepare('UPDATE listings SET signals_json = :json WHERE dedup_key = :key')
+            ->execute(['json' => '{not json at all', 'key' => $key]);
     }
 
     private function corruptSnapshot(string $root, string $key): void

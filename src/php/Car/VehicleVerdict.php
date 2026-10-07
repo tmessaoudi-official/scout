@@ -21,9 +21,18 @@ final readonly class VehicleVerdict
         return new self(VehicleOutcome::REJECT, null, $reasons, false);
     }
 
-    /** @param list<string> $reasons */
+    /** The reason a match carries when none was recorded: a bare score cannot be judged. */
+    public const string NO_REASON = 'aucune raison enregistrée pour ce score — à juger sur l\'annonce';
+
+    /**
+     * A match always carries a reason (architecture review A-16, 2026-10-08): an empty list is
+     * replaced by a stated one, never thrown on, because a throw would block the push. The text is
+     * the rent one, kept here rather than imported so the car domain does not depend on rent.
+     *
+     * @param list<string> $reasons
+     */
     public static function matched(int $score, array $reasons, bool $highPriority): self
     {
-        return new self(VehicleOutcome::MATCH, $score, $reasons, $highPriority);
+        return new self(VehicleOutcome::MATCH, $score, count($reasons) > 0 ? $reasons : [self::NO_REASON], $highPriority);
     }
 }

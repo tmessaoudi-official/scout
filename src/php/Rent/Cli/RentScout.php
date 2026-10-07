@@ -1398,7 +1398,7 @@ final readonly class RentScout
             }
 
             /** @var list<string> $reasons */
-            $reasons = $this->decodeSignals($row['signals_json']);
+            $reasons = $this->storedReasons($row, $warnings);
 
             // WHY it is in the bin, read off the stored verdict rather than re-formed. A row whose
             // tenure is `UNKNOWN` — or was never recorded at all — is the §1 landing zone proper;
@@ -1448,7 +1448,7 @@ final readonly class RentScout
             foreach ($store->pendingLowScore() as $row) {
                 $key = $row['dedup_key'];
                 /** @var list<string> $storedReasons */
-                $storedReasons = $this->decodeSignals($row['signals_json']);
+                $storedReasons = $this->storedReasons($row, $warnings);
 
                 // §1 FIRST, AND FROM EVERY PERSISTED READING — not from this row's own `tenure`
                 // column alone (C2 round 7, correctness P0). `pendingLowScore()` selects that
@@ -1787,15 +1787,37 @@ final readonly class RentScout
     }
 
     /**
-     * The stored `reasons[]`, or an empty list when the column holds something that is not one.
+     * The stored `reasons[]` of one row, with a damaged column SAID OUT LOUD.
      *
      * Tolerant on purpose, and it is the one place in this command that is: these are explanatory
      * strings shown next to an entry, so a damaged `signals_json` costs a sentence. The LISTING is
-     * what must always survive intact, and it is decoded separately and counted.
+     * what must always survive intact, and it is decoded separately and counted. Tolerant is not
+     * silent (architecture review A-16, 2026-10-08): the corrupt SNAPSHOT beside it was warned
+     * while this column became an empty list unseen, so a damaged row now names itself.
+     *
+     * @param array{dedup_key: string, signals_json: ?string} $row
+     * @param list<string>                                    $warnings
      *
      * @return list<string>
      */
-    private function decodeSignals(?string $json): array
+    private function storedReasons(array $row, array &$warnings): array
+    {
+        $reasons = $this->decodeSignals($row['signals_json']);
+
+        if ($reasons === null) {
+            $warnings[] = sprintf('%s : raisons enregistrées illisibles (signals_json) — annoncée sans elles', $row['dedup_key']);
+        }
+
+        return $reasons ?? [];
+    }
+
+    /**
+     * The stored `reasons[]`: an empty list when the column is empty, `null` when it holds
+     * something that is not a list (the caller warns, {@see storedReasons()}).
+     *
+     * @return list<string>|null
+     */
+    private function decodeSignals(?string $json): ?array
     {
         if (!is_string($json) || $json === '') {
             return [];
@@ -1805,11 +1827,11 @@ final readonly class RentScout
             /** @var mixed $decoded */
             $decoded = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
         } catch (\JsonException) {
-            return [];
+            return null;
         }
 
         if (!is_array($decoded)) {
-            return [];
+            return null;
         }
 
         $reasons = [];
