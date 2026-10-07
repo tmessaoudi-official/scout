@@ -107,6 +107,44 @@ final class NavitiaCommuteTest extends TestCase
         self::assertNull($planner->minutesFrom('Sartrouville', '78500'));
     }
 
+    /**
+     * A FAILED LOOKUP IS COUNTED (architecture review C-10, 2026-10-08). Both shapes used to become
+     * `null` and nothing else, so a revoked key or a dead API removed the commute component from
+     * every listing's score while the reasons simply stopped mentioning it.
+     */
+    public function testAFailedResponseIsCounted(): void
+    {
+        $planner = $this->plannerReturning(new HttpResponse(503, ''));
+        self::assertSame(0, $planner->failedLookups());
+
+        $planner->minutesFrom('Sartrouville', '78500');
+
+        self::assertSame(1, $planner->failedLookups());
+    }
+
+    public function testAnUnreachableApiIsCounted(): void
+    {
+        $planner = $this->plannerThrowing();
+
+        $planner->minutesFrom('Sartrouville', '78500');
+        $planner->minutesFrom('Houilles', '78800');
+
+        self::assertSame(2, $planner->failedLookups());
+    }
+
+    /** The counterweight: an answer is not a failure, and neither is a place the API cannot match. */
+    public function testAnAnsweredLookupIsNotAFailure(): void
+    {
+        $planner = $this->planner(1200);
+
+        self::assertSame(20, $planner->minutesFrom('Sartrouville', '78500'));
+        self::assertSame(0, $planner->failedLookups());
+
+        $empty = $this->plannerReturning(new HttpResponse(200, '{"places": []}'));
+        self::assertNull($empty->minutesFrom('Nulle-Part', '78500'));
+        self::assertSame(0, $empty->failedLookups(), 'no match is an answer, not an outage');
+    }
+
     public function testAPlaceWhosePostcodeDisagreesIsRefused(): void
     {
         // Commune names repeat across departements, and a wrong geocode is cached for ever and

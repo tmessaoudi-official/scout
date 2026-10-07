@@ -412,6 +412,43 @@ final class PipelineRunTest extends TestCase
     }
 
     /**
+     * A COMMUTE OUTAGE IS SAID, ONCE PER PASS (architecture review C-10, 2026-10-08). Enrichment
+     * never throws and never rejects, and both of its failure shapes used to vanish: the planner's
+     * own `null` and the pipeline's belt-and-braces catch. The warning reads a per-pass DELTA,
+     * because under `--watch` the planner outlives a pass and a total would warn for ever.
+     */
+    public function testACommuteOutageIsWarnedOncePerPassAndNotAfterwards(): void
+    {
+        $planner = new FailingPlanner();
+        $pipeline = $this->pipeline($this->store(), null, $planner);
+
+        $planner->failing = true;
+        $first = $pipeline->runOnce([new FakeSource('bienici', [
+            $this->dated('a', 1100, '2026-08-27T13:00:00Z'),
+            $this->dated('b', 1150, '2026-08-27T13:00:00Z'),
+        ])], '2026-08-27T14:00:00Z');
+
+        $outage = array_values(array_filter($first->warnings, static fn (string $w): bool => str_contains($w, 'de trajet en échec')));
+        self::assertCount(1, $outage, 'one line per pass, not one per listing');
+        self::assertMatchesRegularExpression('/(?<![0-9])2 calcul\(s\) de trajet en échec/', $outage[0]);
+
+        $planner->failing = false;
+        $second = $pipeline->runOnce([new FakeSource('bienici', [$this->dated('c', 1120, '2026-08-27T14:10:00Z')])], '2026-08-27T14:15:00Z');
+
+        self::assertSame([], array_values(array_filter($second->warnings, static fn (string $w): bool => str_contains($w, 'de trajet en échec'))), 'a clean pass says nothing');
+    }
+
+    public function testAPlannerThatThrowsIsCountedByThePipeline(): void
+    {
+        $pipeline = $this->pipeline($this->store(), null, new ThrowingPlanner());
+
+        $result = $pipeline->runOnce([new FakeSource('bienici', [$this->dated('t', 1100, '2026-08-27T13:00:00Z')])], '2026-08-27T14:00:00Z');
+
+        self::assertMatchesRegularExpression('/(?<![0-9])1 calcul\(s\) de trajet en échec/', implode("\n", $result->warnings));
+        self::assertSame(1, $result->itemsParsed, 'the pass still processed its listing');
+    }
+
+    /**
      * And the structural guard: enrichment changes `commuteMinutes` and NOTHING else, asserted over
      * every constructor parameter by reflection — so the next property added to `RawListing`
      * cannot be dropped on this hop either. Every parameter is given a non-default value first;
@@ -435,9 +472,12 @@ final class PipelineRunTest extends TestCase
         $listing = new RawListing(...$args);
         $pipeline = $this->pipeline($this->store(), null, new FixedPlanner(42));
 
-        $enriched = (new \ReflectionMethod(Pipeline::class, 'enrich'))->invoke($pipeline, $listing);
+        // `enrich()` also takes the pass's planner-exception counter by reference (C-10, 2026-10-08).
+        $plannerThrew = 0;
+        $enriched = (new \ReflectionMethod(Pipeline::class, 'enrich'))->invokeArgs($pipeline, [$listing, &$plannerThrew]);
 
         self::assertInstanceOf(RawListing::class, $enriched);
+        self::assertSame(0, $plannerThrew, 'a planner that answers is not counted as a failure');
         self::assertSame(42, $enriched->commuteMinutes);
         foreach (array_keys($args) as $name) {
             if ($name === 'commuteMinutes') {
@@ -3350,6 +3390,39 @@ final readonly class FixedPlanner implements CommutePlanner
     public function minutesFrom(?string $commune, ?string $postcode): ?int
     {
         return $this->minutes;
+    }
+}
+
+/** A planner that fails while `$failing` is set and counts it, as `NavitiaCommute` does. */
+final class FailingPlanner implements CommutePlanner, \Scout\Rent\Enrich\ReportsCommuteFailures
+{
+    public bool $failing = false;
+
+    private int $failed = 0;
+
+    public function minutesFrom(?string $commune, ?string $postcode): ?int
+    {
+        if ($this->failing) {
+            ++$this->failed;
+
+            return null;
+        }
+
+        return 30;
+    }
+
+    public function failedLookups(): int
+    {
+        return $this->failed;
+    }
+}
+
+/** A planner that breaks its never-throw contract, so the pipeline's own catch is reached. */
+final readonly class ThrowingPlanner implements CommutePlanner
+{
+    public function minutesFrom(?string $commune, ?string $postcode): ?int
+    {
+        throw new \RuntimeException('planner broke its contract');
     }
 }
 

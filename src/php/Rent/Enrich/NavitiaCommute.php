@@ -27,7 +27,7 @@ use Scout\Rent\Store\Store;
  * properties of the place rather than of the listing: ~83 daily matches across ~40 communes cost
  * about 40 pairs of requests once, against a documented quota of 20 000 requests a day.
  */
-final readonly class NavitiaCommute implements CommutePlanner
+final readonly class NavitiaCommute implements CommutePlanner, ReportsCommuteFailures
 {
     private const string BASE = 'https://prim.iledefrance-mobilites.fr/marketplace/v2/navitia';
 
@@ -49,7 +49,13 @@ final readonly class NavitiaCommute implements CommutePlanner
          */
         private string $referenceDeparture,
         private ?string $nowIso = null,
+        private CommuteFailures $failures = new CommuteFailures(),
     ) {}
+
+    public function failedLookups(): int
+    {
+        return $this->failures->count();
+    }
 
     public function minutesFrom(?string $commune, ?string $postcode): ?int
     {
@@ -114,6 +120,9 @@ final readonly class NavitiaCommute implements CommutePlanner
 
             return $minutes;
         } catch (\Throwable) {
+            // An exception is an outage, never an answer: counted (architecture review C-10).
+            $this->failures->record();
+
             return null;
         }
     }
@@ -140,6 +149,8 @@ final readonly class NavitiaCommute implements CommutePlanner
         ));
 
         if (!$response->isSuccess()) {
+            $this->failures->record();
+
             return null;
         }
 
@@ -221,6 +232,8 @@ final readonly class NavitiaCommute implements CommutePlanner
         ));
 
         if (!$response->isSuccess()) {
+            $this->failures->record();
+
             return null;
         }
 

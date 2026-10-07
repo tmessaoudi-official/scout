@@ -24,6 +24,7 @@ use Scout\Rent\Core\TenureSignal;
 use Scout\Rent\Core\TenureClassifier;
 use Scout\Rent\Core\Verdict;
 use Scout\Rent\Enrich\CommutePlanner;
+use Scout\Rent\Enrich\ReportsCommuteFailures;
 use Scout\Rent\Store\Store;
 
 /**
@@ -68,7 +69,7 @@ final readonly class Pipeline
      * around a third-party implementation — one bad lookup must not void a pass that has already
      * fetched real listings.
      */
-    private function enrich(RawListing $listing): RawListing
+    private function enrich(RawListing $listing, int &$plannerThrew): RawListing
     {
         if ($this->commute === null || $listing->commuteMinutes !== null) {
             return $listing;
@@ -77,6 +78,8 @@ final readonly class Pipeline
         try {
             $minutes = $this->commute->minutesFrom($listing->commune, $listing->postcode);
         } catch (\Throwable) {
+            ++$plannerThrew;
+
             return $listing;
         }
 
@@ -177,10 +180,19 @@ final readonly class Pipeline
         // Clustering is downstream of it because `$observed` is keyed on OBJECT IDENTITY: enriching
         // afterwards would replace member objects that the survivor is a second reference to, and
         // the cluster bookkeeping would quietly stop matching.
+        // A commute outage is COUNTED per pass (architecture review C-10, 2026-10-08): the planner's
+        // own failures as a DELTA, because under `--watch` it outlives the pass, plus this
+        // pipeline's catch of a planner that broke its never-throw contract.
+        $commuteFailedBefore = $this->commute instanceof ReportsCommuteFailures ? $this->commute->failedLookups() : 0;
+        $plannerThrew = 0;
         $harvested = array_map(
-            fn (array $row): array => ['listing' => $this->enrich($row['listing']), 'family' => $row['family']],
+            function (array $row) use (&$plannerThrew): array {
+                return ['listing' => $this->enrich($row['listing'], $plannerThrew), 'family' => $row['family']];
+            },
             $harvested,
         );
+        $commuteFailed = $plannerThrew
+            + ($this->commute instanceof ReportsCommuteFailures ? $this->commute->failedLookups() - $commuteFailedBefore : 0);
 
         $clustered = $this->dedup->cluster($harvested);
         $duplicates = count($harvested) - count($clustered);
@@ -887,6 +899,13 @@ final readonly class Pipeline
         // is terminal by query: it writes the row's own durable reading and `outcome = REJECT`,
         // which closes `pendingLowScore()`, `pendingDigest()` and `staleVerdicts()` at once.
         $warnings = [...$warnings, ...$sectionOneRefused];
+
+        if ($commuteFailed > 0) {
+            $warnings[] = sprintf(
+                'trajet : %d calcul(s) de trajet en échec pendant ce passage — la composante trajet manque sur ces annonces (clé IDFM_API_KEY, réseau ou API Navitia)',
+                $commuteFailed,
+            );
+        }
 
         return new RunResult(
             sourcesRun: $sourcesRun,

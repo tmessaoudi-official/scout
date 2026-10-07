@@ -537,7 +537,11 @@ final class TenureCorpusTest extends TestCase
             // mechanism, held by a `final readonly` adapter that could not otherwise accumulate
             // anything, and read only by `health()` and `doctor`. It carries no verdict: nothing
             // in it can change what a listing was judged to be.
-            ['ImapMailbox', 'IndexSize', 'Pacer', 'PatternMissLog', 'Reader', 'WatchLoop'],
+            // CommuteFailures (2026-10-08, architecture review C-10): how many commute lookups
+            // failed, held by the `final readonly` NavitiaCommute. The same shape again: counting
+            // IS its mechanism, its owner hands out the number and never the object, and it
+            // carries no verdict (commute is a score component, never a disqualifier).
+            ['CommuteFailures', 'ImapMailbox', 'IndexSize', 'Pacer', 'PatternMissLog', 'Reader', 'WatchLoop'],
             $exempt,
             'the MutableByDesign set changed. Every entry must be a non-value-object whose mutation '
             . 'IS its mechanism and which is never handed to a caller as a result — argue it here',
