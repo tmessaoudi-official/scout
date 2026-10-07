@@ -21,6 +21,11 @@ This file is the durable record; the scratch area is not.
 - [2026-10-08 00:43] AGREED: D-7: scout aligns with the global closing rule — no interrupts mid-task on routine work; a turn closes with one AskUserQuestion; scout-lenses' prose 'say which to fix' close is removed.
 - [2026-10-08 00:44] AGREED: D-10: scout pushes in batches per global Rule 10 (10 unpushed, milestone end, before a stop), reading CI at each push; scout's git section becomes its delta on Rule 10.
 - [2026-10-08 00:44] AGREED: D-3: per-task gates follow the certification schedule (advisor); the milestone panel stays MAXIMAL with TWO consecutive fully-clean rounds, a scout-only rule stricter than /certify, and scout-lenses tells /certify so.
+- [2026-10-08 01:12] ASSUMED (review): D-13: scout-repair's description and messages drop the claim that drift-scan checks the global framework — because drift-scan excludes ~/.claude references and runs in Docker where ~/.claude is absent, so the claim was false. Alternatives: add a host-side check that every cited /skill and ~/.claude path resolves (new code; could become a later plan step).
+- [2026-10-08 01:12] ASSUMED (review): D-5: scout-lenses briefs /certify's general-purpose reviewers with a charter pointer per lens, not a subagent_type — because /certify step 3 spawns general-purpose or Explore and documents no subagent_type hint from *-lenses. Alternatives: ask the framework to honour a subagent_type hint (framework-side, open).
+- [2026-10-08 01:13] ASSUMED (review): D-4: the var/claude report rule is narrowed to scout's own skills and /certify raw files; the global analysis skills keep their dirs — because they locate each other's reports there (449b09ac). Alternatives: ask the framework for a --output honoured by the whole pipeline.
+- [2026-10-08 01:13] ASSUMED (review): D-17: the /long-run and /ci-watch pointers move to step 4's expertise refresh — because they replace text inside the L4 packs, which step 4 rewrites anyway. Alternatives: fix them in step 1.
+- [2026-10-08 01:13] ASSUMED (review): D-3 charters: the 'TWO consecutive fully-clean rounds' lines in the three charters are left verbatim — because they apply when a panel runs, which the 2026-10-08 ruling keeps two-clean for. Alternatives: rescope them to 'at the milestone'.
 
 ## Formal Plan
 
@@ -67,7 +72,7 @@ step 1) → CALEOL → expertise facts → LICENSE → T9 now-items. The remaini
 <!-- progress-block v1 -->
 | # | Step | Size | State | Evidence | Files |
 |---|------|------|-------|----------|-------|
-| 1 | Framework sync fixes, SAFE-NOW (D-1 panel via /certify, D-2 main-plan Decisions Log heading, D-3 MAXIMAL/two-clean wording, D-4/D-5 scout-lenses, D-7 non-stop close, D-9 plan-location, D-10 Rule 10 cadence, D-12 dead cite, D-13 drift-gate claim, D-14, D-18; D-17 moved to step 4) | M | done | 483200c | CLAUDE.md, .claude/** |
+| 1 | Framework sync fixes, SAFE-NOW (D-1 panel via /certify, D-2 main-plan Decisions Log heading, D-3 MAXIMAL/two-clean wording, D-4/D-5 scout-lenses, D-7 non-stop close, D-9 plan-location, D-10 Rule 10 cadence, D-12 dead cite, D-13 drift-gate claim, D-14, D-18; D-17 moved to step 4) | M | done | 5f3061f | CLAUDE.md, .claude/** |
 | 2 | T8 small defects, red test first: floor label (A-14), empty-reasons match (A-16), mergedWith reflection guard (A-11), commute failures counted (C-10 non-port half) | M | todo | - | src/php/Rent/** |
 | 3 | CALEOL (E-11): verify the term on an official source, then a procedural social tell + red-first synthetic corpus case + sabotage + surface matrix | M | todo | - | src/php/Rent/Core/TenureClassifier.php, tests/fixtures/rent/tenure/corpus.json |
 | 4 | Expertise facts refresh (E-7, E-9, D-8 facts only: counts, HC-rent ruling, post-review commits; D-17 /long-run and /ci-watch pointers) | S | todo | - | .claude/rules/expertise-core.md, .claude/EXPERTISE-REFERENCE.md, .claude/skills/ |
