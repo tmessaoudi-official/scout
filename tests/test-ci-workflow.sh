@@ -263,6 +263,14 @@ check "…and every tracked YAML file goes through it" \
   has "git ls-files -z '*.yml' '*.yaml' | xargs -0 \"\$yl\" --strict .yamllint"
 check "the repo .yamllint exists for CI and the lint-on-write hook to read" \
   test -f "$(dirname "$wf")/../../.yamllint"
+# Static analysis gates new code (step 7e, 2026-10-08): the PHAR through the one verifier, then the
+# repo's phpstan.neon, whose shrink-only baseline is the only list of tolerated errors.
+check "the fast job fetches PHPStan through the pinned verifier" \
+  has 'bash tools/fetch-phar.sh phpstan'
+check "…and analyses under the repo phpstan.neon" \
+  has 'php -d memory_limit=2G tools/phpstan.phar analyse --no-progress'
+check "phpstan.neon keeps its baseline shrink-only" \
+  grep -q '^    reportUnmatchedIgnoredErrors: true$' "$(dirname "$wf")/../../phpstan.neon"
 # A shard that produced NO log was killed before writing; its silence is UNKNOWN, never clean.
 check "a shard with no log is named rather than read as clean" \
   grep -q "produced no log at all" "$wf"

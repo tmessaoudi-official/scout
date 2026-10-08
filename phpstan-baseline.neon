@@ -1,0 +1,415 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^PHPDoc tag @param references unknown parameter\: \$headers$#'
+			identifier: parameter.notFound
+			count: 1
+			path: src/php/Adapters/Http/HttpClient.php
+
+		-
+			message: '#^Static method Scout\\Adapters\\Mail\\ImapMailbox\:\:parseRfc2822\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: src/php/Adapters/Mail/ImapMailbox.php
+
+		-
+			message: '#^Call to function is_bool\(\) with int\|string will always evaluate to false\.$#'
+			identifier: function.impossibleType
+			count: 1
+			path: src/php/Car/Cli/CarScout.php
+
+		-
+			message: '#^Method Scout\\Car\\Cli\\CarScout\:\:onlySources\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/php/Car/Cli/CarScout.php
+
+		-
+			message: '#^Method Scout\\Car\\Cli\\CarScout\:\:pushRetries\(\) has parameter \$retries with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/php/Car/Cli/CarScout.php
+
+		-
+			message: '#^Method Scout\\Car\\Cli\\CarScout\:\:rollup\(\) has parameter \$flags with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/php/Car/Cli/CarScout.php
+
+		-
+			message: '#^Result of && is always false\.$#'
+			identifier: booleanAnd.alwaysFalse
+			count: 1
+			path: src/php/Car/Cli/CarScout.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between null and null will always evaluate to false\.$#'
+			identifier: notIdentical.alwaysFalse
+			count: 1
+			path: src/php/Car/Cli/CarScout.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>score" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: src/php/Car/Cli/CarScout.php
+
+		-
+			message: '#^Variable \$f might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: src/php/Car/VehicleEmailSource.php
+
+		-
+			message: '#^Method Scout\\Car\\VehicleFacts\:\:firstRegistered\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/php/Car/VehicleFacts.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type PDOStatement\|false\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 3
+			path: src/php/Car/VehicleStore.php
+
+		-
+			message: '#^Method Scout\\Cli\\Domains\:\:all\(\) return type with generic class Scout\\Cli\\Domain does not specify its types\: T$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/php/Cli/Domains.php
+
+		-
+			message: '#^Method Scout\\Cli\\Domains\:\:get\(\) return type with generic class Scout\\Cli\\Domain does not specify its types\: T$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/php/Cli/Domains.php
+
+		-
+			message: '#^Call to function is_bool\(\) with int will always evaluate to false\.$#'
+			identifier: function.impossibleType
+			count: 1
+			path: src/php/Config/Reader.php
+
+		-
+			message: '#^PHPDoc tag @param references unknown parameter\: \$tolerateSeparators$#'
+			identifier: parameter.notFound
+			count: 1
+			path: src/php/Core/Text.php
+
+		-
+			message: '#^Constructor of class Scout\\Job\\Cli\\JobScout has an unused parameter \$http\.$#'
+			identifier: constructor.unusedParameter
+			count: 1
+			path: src/php/Job/Cli/JobScout.php
+
+		-
+			message: '#^Match expression does not handle remaining value\: string$#'
+			identifier: match.unhandled
+			count: 1
+			path: src/php/Job/Cli/JobScout.php
+
+		-
+			message: '#^Result of && is always false\.$#'
+			identifier: booleanAnd.alwaysFalse
+			count: 1
+			path: src/php/Job/Cli/JobScout.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between null and null will always evaluate to false\.$#'
+			identifier: notIdentical.alwaysFalse
+			count: 1
+			path: src/php/Job/Cli/JobScout.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>score" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: src/php/Job/Cli/JobScout.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type PDOStatement\|false\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: src/php/Job/JobStore.php
+
+		-
+			message: '#^Anonymous function with return type void returns null but should not return anything\.$#'
+			identifier: return.void
+			count: 1
+			path: src/php/Rent/Adapters/DetailHydrator.php
+
+		-
+			message: '#^Offset 1 on array\{list\<string\>, list\<non\-falsy\-string\>\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/php/Rent/Adapters/EmailAlertSource.php
+
+		-
+			message: '#^Offset 1 on array\{non\-falsy\-string, '''', numeric\-string\}\|array\{non\-falsy\-string, numeric\-string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/php/Rent/Adapters/EmailAlertSource.php
+
+		-
+			message: '#^Instanceof between null and Dom\\HTMLElement will always evaluate to false\.$#'
+			identifier: instanceof.alwaysFalse
+			count: 1
+			path: src/php/Rent/Adapters/Html/Selector.php
+
+		-
+			message: '#^Anonymous function with return type void returns null but should not return anything\.$#'
+			identifier: return.void
+			count: 1
+			path: src/php/Rent/Adapters/HtmlSource.php
+
+		-
+			message: '#^Instanceof between Dom\\Element and Dom\\Element will always evaluate to true\.$#'
+			identifier: instanceof.alwaysTrue
+			count: 2
+			path: src/php/Rent/Adapters/HtmlSource.php
+
+		-
+			message: '#^PHPDoc tag @throws with type Scout\\Rent\\Adapters\\SourceError is not subtype of Throwable$#'
+			identifier: throws.notThrowable
+			count: 1
+			path: src/php/Rent/Adapters/PacedSource.php
+
+		-
+			message: '#^PHPDoc tag @throws with type Scout\\Rent\\Adapters\\SourceError is not subtype of Throwable$#'
+			identifier: throws.notThrowable
+			count: 1
+			path: src/php/Rent/Adapters/Source.php
+
+		-
+			message: '#^Instanceof between Scout\\Rent\\Enrich\\CommutePlanner&Scout\\Rent\\Enrich\\ReportsCommuteFailures and Scout\\Rent\\Enrich\\ReportsCommuteFailures will always evaluate to true\.$#'
+			identifier: instanceof.alwaysTrue
+			count: 1
+			path: src/php/Rent/Cli/Pipeline.php
+
+		-
+			message: '#^Anonymous function with return type void returns null but should not return anything\.$#'
+			identifier: return.void
+			count: 2
+			path: src/php/Rent/Cli/RentScout.php
+
+		-
+			message: '#^Method Scout\\Rent\\Cli\\RentScout\:\:buildChannel\(\) never returns null so it can be removed from the return type\.$#'
+			identifier: return.unusedType
+			count: 1
+			path: src/php/Rent/Cli/RentScout.php
+
+		-
+			message: '#^Method Scout\\Rent\\Cli\\RentScout\:\:buildMailTransport\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: src/php/Rent/Cli/RentScout.php
+
+		-
+			message: '#^Method Scout\\Rent\\Cli\\RentScout\:\:buildSource\(\) has parameter \$robotsByOrigin with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/php/Rent/Cli/RentScout.php
+
+		-
+			message: '#^Method Scout\\Rent\\Cli\\RentScout\:\:doctor\(\) has parameter \$flags with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/php/Rent/Cli/RentScout.php
+
+		-
+			message: '#^Method Scout\\Rent\\Cli\\RentScout\:\:feedSilentDays\(\) never returns null so it can be removed from the return type\.$#'
+			identifier: return.unusedType
+			count: 1
+			path: src/php/Rent/Cli/RentScout.php
+
+		-
+			message: '#^Method Scout\\Rent\\Cli\\RentScout\:\:onePass\(\) never assigns null to &\$matchesOut so it can be removed from the by\-ref type\.$#'
+			identifier: parameterByRef.unusedType
+			count: 1
+			path: src/php/Rent/Cli/RentScout.php
+
+		-
+			message: '#^Method Scout\\Rent\\Cli\\RentScout\:\:pushRetries\(\) has parameter \$retries with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/php/Rent/Cli/RentScout.php
+
+		-
+			message: '#^Method Scout\\Rent\\Cli\\RentScout\:\:robotsFor\(\) has parameter \$robotsByOrigin with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/php/Rent/Cli/RentScout.php
+
+		-
+			message: '#^Method Scout\\Rent\\Cli\\RentScout\:\:sources\(\) has parameter \$only with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/php/Rent/Cli/RentScout.php
+
+		-
+			message: '#^Method Scout\\Rent\\Cli\\RentScout\:\:sources\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/php/Rent/Cli/RentScout.php
+
+		-
+			message: '#^Offset ''confidence_bp'' on array\{dedup_key\: string, source\: string, external_id\: string, url\: string\|null, title\: string, rent_cc\: int\|null, evidence_json\: string\|null, signals_json\: string\|null, \.\.\.\} on left side of \?\? does not exist\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/php/Rent/Cli/RentScout.php
+
+		-
+			message: '#^Parameter \#1 \$array of function array_values contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: src/php/Rent/Cli/RentScout.php
+
+		-
+			message: '#^Result of && is always false\.$#'
+			identifier: booleanAnd.alwaysFalse
+			count: 1
+			path: src/php/Rent/Cli/RentScout.php
+
+		-
+			message: '#^Return type of call to function array_values contains unresolvable type\.$#'
+			identifier: function.unresolvableReturnType
+			count: 1
+			path: src/php/Rent/Cli/RentScout.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between null and null will always evaluate to false\.$#'
+			identifier: notIdentical.alwaysFalse
+			count: 1
+			path: src/php/Rent/Cli/RentScout.php
+
+		-
+			message: '#^Unable to resolve the template type T in call to function array_values$#'
+			identifier: argument.templateType
+			count: 1
+			path: src/php/Rent/Cli/RentScout.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>value" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: src/php/Rent/Cli/RentScout.php
+
+		-
+			message: '#^Variable \$notifier on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.variable
+			count: 1
+			path: src/php/Rent/Cli/RentScout.php
+
+		-
+			message: '#^Method Scout\\Rent\\Config\\FieldMap\:\:allPaths\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/php/Rent/Config/FieldMap.php
+
+		-
+			message: '#^Parameter \#1 \$array \(non\-empty\-list\<string\>\) of array_values is already a list, call has no effect\.$#'
+			identifier: arrayValues.list
+			count: 1
+			path: src/php/Rent/Core/CriteriaEngine.php
+
+		-
+			message: '#^Constant Scout\\Rent\\Core\\Department\:\:IDF \(array\<string, string\>\) does not accept value array\<int, string\>\.$#'
+			identifier: classConstant.value
+			count: 1
+			path: src/php/Rent/Core/Department.php
+
+		-
+			message: '#^Method Scout\\Rent\\Core\\LandlordRegistry\:\:names\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/php/Rent/Core/LandlordRegistry.php
+
+		-
+			message: '#^Method Scout\\Rent\\Core\\LandlordRegistry\:\:sourceKeys\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/php/Rent/Core/LandlordRegistry.php
+
+		-
+			message: '#^Offset ''tail'' on array\{0\: non\-falsy\-string, tail\: string, 1\: string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/php/Rent/Core/Prose.php
+
+		-
+			message: '#^Method Scout\\Rent\\Core\\TenureClassifier\:\:matchOffset\(\) never assigns null to &\$m so it can be removed from the by\-ref type\.$#'
+			identifier: parameterByRef.unusedType
+			count: 1
+			path: src/php/Rent/Core/TenureClassifier.php
+
+		-
+			message: '#^Offset ''matched'' on array\{tenure\: Scout\\Rent\\Core\\Tenure, literal\: string\} in isset\(\) does not exist\.$#'
+			identifier: isset.offset
+			count: 1
+			path: src/php/Rent/Core/TenureClassifier.php
+
+		-
+			message: '#^Offset ''matched'' on array\{tenure\: Scout\\Rent\\Core\\Tenure, literal\: string\} on left side of \?\? does not exist\.$#'
+			identifier: nullCoalesce.offset
+			count: 2
+			path: src/php/Rent/Core/TenureClassifier.php
+
+		-
+			message: '#^Offset 0 on array\{string, int\<\-1, max\>\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/php/Rent/Core/TenureClassifier.php
+
+		-
+			message: '#^Parameter &\$m by\-ref type of method Scout\\Rent\\Core\\TenureClassifier\:\:matchOffset\(\) expects array\<int, array\{string, int\}\>\|null, array\<array\{string, int\<\-1, max\>\}\> given\.$#'
+			identifier: parameterByRef.type
+			count: 1
+			path: src/php/Rent/Core/TenureClassifier.php
+
+		-
+			message: '#^Result of && is always false\.$#'
+			identifier: booleanAnd.alwaysFalse
+			count: 2
+			path: src/php/Rent/Core/TenureClassifier.php
+
+		-
+			message: '#^Method Scout\\Rent\\Enrich\\NavitiaCommute\:\:coordOf\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/php/Rent/Enrich/NavitiaCommute.php
+
+		-
+			message: '#^Parameter \#1 \$array \(array\{non\-falsy\-string, non\-falsy\-string\}\) of array_values is already a list, call has no effect\.$#'
+			identifier: arrayValues.list
+			count: 1
+			path: src/php/Rent/Notify/Formatter.php
+
+		-
+			message: '#^Parameter \#1 \$array \(array\{non\-falsy\-string, non\-falsy\-string\}\) to function array_filter does not contain falsy values, the array will always stay the same\.$#'
+			identifier: arrayFilter.same
+			count: 1
+			path: src/php/Rent/Notify/Formatter.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between non\-empty\-list\<array\{listing\: Scout\\Rent\\Core\\RawListing, verdict\: Scout\\Rent\\Core\\Verdict, key\: string, keys\: list\<string\>\}\> and array\{\} will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: src/php/Rent/Notify/Formatter.php
+
+		-
+			message: '#^Parameter \#1 \$array \(list\<string\>\) of array_values is already a list, call has no effect\.$#'
+			identifier: arrayValues.list
+			count: 1
+			path: src/php/Rent/Store/Store.php
+
+		-
+			message: '#^Property Scout\\Rent\\Store\\Store\:\:\$feedSilentDays is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: src/php/Rent/Store/Store.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type PDOStatement\|false\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: src/php/Rent/Store/Store.php

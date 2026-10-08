@@ -579,6 +579,9 @@ bash tests/test-drift-scan.sh           # proves that gate can still go RED (S8:
 bash -n .claude/hooks/*.sh tests/*.sh tools/*.sh
 find .claude/hooks .claude/skills tests tools -name '*.sh' -print0 | xargs -0 shellcheck --severity=warning   # as CI
 git ls-files -z '*.yml' '*.yaml' | xargs -0 yamllint --strict .yamllint   # as CI; config in .yamllint
+bash tools/fetch-phar.sh phpstan && php -d memory_limit=2G tools/phpstan.phar analyse --no-progress
+                                        #   level 6; phpstan-baseline.neon only SHRINKS (fix an
+                                        #   error, delete its entry; a stale entry fails the gate)
 python3 prototype/scout.py --help       # the superseded prototype, reference only
 ```
 

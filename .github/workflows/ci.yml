@@ -108,6 +108,13 @@ jobs:
       - name: Fetch the pinned PHPUnit runner
         run: bash tools/fetch-phpunit.sh
 
+      # Step 7e (2026-10-08): level 6 over src/php against a shrink-only baseline (phpstan.neon says
+      # why both). The PHAR is fetched by the same verifier as the runner, so CI refuses a SHA mismatch.
+      - name: Static analysis (PHPStan level 6; an error the baseline does not list fails)
+        run: |
+          bash tools/fetch-phar.sh phpstan
+          php -d memory_limit=2G tools/phpstan.phar analyse --no-progress
+
       - name: PHPUnit suite
         run: php tools/phpunit.phar --colors=never
 

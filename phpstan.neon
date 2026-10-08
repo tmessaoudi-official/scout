@@ -1,0 +1,23 @@
+# PHPStan for scout (architecture review step 7e, 2026-10-08). Run it as CI does:
+#   tools/in-docker.sh bash tools/fetch-phar.sh phpstan
+#   tools/in-docker.sh php -d memory_limit=2G tools/phpstan.phar analyse --no-progress
+#
+# Level 6, measured on 2026-10-08 (src/php, PHPStan 2.3.0): level 0 → 0 errors, 1 → 3, 2 → 8, 3 → 13,
+# 4 → 53, 5 → 58, 6 → 76, 8 → 166, 10 → 419. The 13 at levels 1-3 were each read: docblocks that name
+# a parameter or class that does not exist, void closures returning null, a dead `??`, an unused
+# constructor parameter — none changes behaviour. Every error found today is in the baseline, so the
+# gate is NEW code: an error the baseline does not list fails the build.
+#
+# The baseline ONLY SHRINKS. `reportUnmatchedIgnoredErrors` (PHPStan's default, stated here so nobody
+# turns it off) fails the build on a baseline entry that no longer matches — the same ratchet as
+# tests/php/Repo/DependencyRuleTest.php's BASELINE: fix an error, delete its entry in the same commit.
+# Regenerate only to remove entries: `analyse --generate-baseline phpstan-baseline.neon`.
+includes:
+    - phpstan-baseline.neon
+
+parameters:
+    level: 6
+    paths:
+        - src/php
+    tmpDir: var/phpstan
+    reportUnmatchedIgnoredErrors: true
