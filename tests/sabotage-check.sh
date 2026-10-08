@@ -1735,6 +1735,19 @@ run_sabotage "the dependency baseline excuses an edge that is gone (B-5)" \
   tests/php/Repo/DependencyRuleTest.php \
   "s%'Scout\\\\\\\\Rent\\\\\\\\Config\\\\\\\\Weights' => \['Scout\\\\\\\\Config\\\\\\\\Reader'\]%'Scout\\\\\\\\Rent\\\\\\\\Config\\\\\\\\Weights' => ['Scout\\\\\\\\Config\\\\\\\\Reader', 'Scout\\\\\\\\Config\\\\\\\\Gone']%"
 
+# EVERY WAY OFF THE MACHINE ASKS `Offline` FIRST (architecture review B-6, 2026-10-08). One case removes
+# a real guard (it reddens the structural test AND the behavioural offline test), two break the guard's
+# own reading: order no longer checked, and a single-quoted message read as a call.
+run_sabotage "the HTTP client leaves the machine without asking Offline (B-6)" \
+  src/php/Adapters/Http/CurlHttpClient.php \
+  's%\$refusal = Offline::refusal(\$request->url);%$refusal = null;%'
+run_sabotage "the network guard accepts an Offline read AFTER the call (B-6)" \
+  tests/php/Repo/NetworkPrimitivesAreGuardedTest.php \
+  's%\$guard !== false && \$guard < \$m\[0\]\[1\]%$guard !== false%'
+run_sabotage "the network guard reads a quoted message as a call (B-6)" \
+  tests/php/Repo/NetworkPrimitivesAreGuardedTest.php \
+  's%preg_replace(./\\.(?:\[^%preg_replace('\''/NEVER\\'\''(?:[^%'
+
 # SCOPED to reclassify(), for the reason on the drain's own pair above.
 #
 # DELIBERATELY NOT COMPOUND, and it was one measurement away from becoming one. The two reclassify
