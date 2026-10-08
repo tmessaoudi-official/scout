@@ -1,5 +1,8 @@
 # scout
 
+[![CI](https://github.com/tmessaoudi-official/scout/actions/workflows/ci.yml/badge.svg?branch=master&event=push)](https://github.com/tmessaoudi-official/scout/actions/workflows/ci.yml?query=event%3Apush)
+[![Nightly sabotage ledger](https://github.com/tmessaoudi-official/scout/actions/workflows/ci.yml/badge.svg?event=schedule)](https://github.com/tmessaoudi-official/scout/actions/workflows/ci.yml?query=event%3Aschedule)
+
 A self-hosted watcher for **rental listings in Île-de-France**. It polls institutional landlords,
 ingests private-portal alert emails over IMAP, classifies every listing by French housing **tenure
 type**, filters and scores it against personal criteria, and pushes a notification within minutes of

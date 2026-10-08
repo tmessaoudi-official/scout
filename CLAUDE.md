@@ -434,7 +434,10 @@ commits. What follows is what scout adds to Rule 10:
   `--force-with-lease`, which this repo still does not authorise. `~/.claude/settings.json` holds no
   force-push rule (dropped 2026-08-29; an earlier blanket `Bash(git push *)` deny went 2026-08-23).
 - Commit only when the change is self-contained; never a broken build.
-- Commit style: `feat:` / `fix:` / `refactor:` / `docs:` / `chore:` / `test:`, imperative subject.
+- Commit style: `feat:` / `fix:` / `refactor:` / `docs:` / `chore:` / `test:`, imperative subject of **at
+  most 72 characters**, the why in the body (C-16, developer ruling 2026-10-08). Forward-only: past
+  subjects are never rewritten. CI's fast job checks the pushed TIP only, so in a batch push every
+  earlier commit is on you; count characters, not bytes (`§` and `—` are one each).
 - If the safety classifier blocks a `git commit`, hand it over as the global `/pre-commit` skill, which
   produces the exact `git commit -F <msg> -- <paths>` line (hand-offs are skills, developer ruling
   2026-10-07). Do not retry or work around it.
