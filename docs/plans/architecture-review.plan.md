@@ -52,6 +52,10 @@ This file is the durable record; the scratch area is not.
 - [2026-10-08 17:01] ASSUMED (review): 7e: fetch-phpunit.sh generalised into tools/fetch-phar.sh <tool> with a pin table, fetch-phpunit.sh kept as a wrapper — because a second 150-line verifier is two places for one security fix. Alternatives: a copy per tool, a Composer dev dependency (egress-blocked).
 - [2026-10-08 17:01] ASSUMED (review): 7d: shellcheck at --severity=warning with the runner's own (unpinned, version printed) binary; yamllint pinned 1.37.1 in a private venv and asserted — because the runner image's pipx yamllint shadowed a plain pipx install. Alternatives: pin shellcheck too (no venv-style install on the runner), lint at info severity (hundreds of SC2016 notes on the ledger's literal seds).
 - [2026-10-08 17:07] ASSUMED (review): 7c: the network guard checks that an Offline:: refusal is READ before the first curl_exec/stream_socket_client/fsockopen/mail call, not that it is acted on — because acting on it is each site's own behavioural test's job (NetworkAdaptersTest reddens when the HTTP guard goes). Alternatives: parse the following if/throw (fragile across the five sites' shapes).
+- [2026-10-08 18:59] AGREED: Next after step 7: step 8, migration step 1 (ports: Store roles, Clock, health out of adapters, commute on the HTTP port) — chosen by the developer 2026-10-08.
+- [2026-10-08 19:05] ASSUMED (review): Step 8 runs as six sub-steps, smallest risk first: 8a commute on the HTTP port, 8b ImapMailbox env read, 8c Clock, 8d Reader edges, 8e health out of adapters, 8f Store role interfaces — because each is one reviewable commit and the guards from step 7 catch a slip. Alternatives: the review's order (Store roles first), one big commit.
+- [2026-10-08 19:05] ASSUMED (review): 8c resolves the Clock once per process from the existing nowIso string seam (strangler) rather than changing every test to pass a Clock — because ~13 test sites keep working and the ambient fallbacks still all go. Alternatives: Clock-typed constructors everywhere now (test churn), required non-null nowIso strings (stays stringly typed).
+- [2026-10-08 19:05] ASSUMED (review): 8e and 8f rely on the nightly ledger rather than a local full run (PacedSource and Rent/Store are named ledger triggers; the full ledger has never run in the dev image) — the nightly result is read and recorded on row 8 before step 9. Alternatives: run the Store/Pacer shards locally (hours, uncontrolled load on this box).
 
 ## Formal Plan
 
@@ -132,8 +136,40 @@ step 1) → CALEOL → expertise facts → LICENSE → T9 now-items. The remaini
   `mail(`), an `Offline::` call comes first; premise = the five methods measured 2026-10-08.
 - **7d** shellcheck (`--severity=warning`) and yamllint (repo `.yamllint`: `truthy` keys unchecked, line length
   measured) in CI's fast job; versions printed.
-- **7e** PHPStan 2.3.0 via `tools/fetch-phpstan.sh` (sha256 + GPG, egress and PHP 8.5 run measured 2026-10-08),
-  `phpstan.neon`, level and baseline measured, a CI step.
+- **7e** PHPStan 2.3.0 via `tools/fetch-phar.sh phpstan` (one verifier for both PHARs, sha256 + GPG; the planned
+  `fetch-phpstan.sh` copy was not written), `phpstan.neon` at level 6, a shrink-only baseline, a CI step.
+
+**Step 8 sub-steps** (2026-10-08; one commit each, smallest risk first, `test-sabotage-applies.sh` after every
+move, one `advisor()` per gate):
+
+- **8a** Commute on the injected HTTP port (C-10's port half): `RentScout::commutePlanner()` hands `NavitiaCommute`
+  the CLI's `$this->http` instead of a fresh `CurlHttpClient`, so a CLI-level test can observe commute traffic.
+  `$this->http` is the raw client (robots is a separate `RobotsResolver`), so PRIM gains no robots check. Commute is
+  ON only in production: 8a is verified on the deployed first pass, and NO step-8 redeploy happens before the
+  2026-10-09 00:47 phase-2 quota reading, which measures the current deploy.
+- **8b** `ImapMailbox::feedSilentWindowNote()` stops reading `IMAP_SINCE_DAYS` from the environment (B-13); the
+  window comes from the value the composition root already passes.
+- **8c** A Clock port (B-10, C-11's clock half): `Core/Clock` (`now(): DateTimeImmutable`), `SystemClock`,
+  `FixedClock`. The clock is resolved ONCE per process from the existing `nowIso` seam (so tests keep passing a
+  string) and handed down; the ambient wall-clock fallbacks go (measured 2026-10-08: RentScout ×4, CarScout,
+  JobScout, DetailHydrator, NavitiaCommute, ImapMailbox, AlcopaVehicleSource, FileTransport). Durations
+  (`hrtime`/`microtime`) stay: a stopwatch is not the clock. A guard test pins "only `SystemClock` reads the wall
+  clock". **The `health(?string $nowIso)` signatures are left alone here**: 8e deletes them from the ports.
+  Docs: `docs/ARCHITECTURE.md` rows for the three classes.
+- **8d** `Weights::fromReader()` / `NotifyPolicy::fromReader()` move into the loader; the 7b baseline empties.
+- **8e** Health out of the adapters (B-11): one application-level service does `escalate(runLog->health(…))` once
+  and takes `DateTimeImmutable $now` NON-NULLABLE; `health()` leaves the Source ports (rent, car, job). First read
+  all 13 `health()` bodies: `EmailAlertSource`'s is not a one-line delegation (per-source `feed_silent_days`), and
+  `PacedSource`'s delegation is what `PatternMissEscalationTest`'s decorator carve-out reads. That test is re-aimed
+  at the one place with its own measured sabotage, and the B-4 case on it is RE-DERIVED, not just re-applied.
+  `RunStore`'s `$now ?? last-run epoch` branch (the "STALE never fires" hole) becomes dead and is deleted, with a
+  STALE test that fires without a seam. Docs: `.claude/rules/health.md` and CLAUDE.md § Testing say `doctor` and
+  the run loop "MUST pass `$nowIso`" — rewritten to say why forgetting is now impossible, not deleted.
+- **8f** Store role interfaces (B-2, A-5, C-5 option 2): `SectionOneReadings`, `SeenSet`, `DigestQueue`,
+  `DetailCache`, `CommuteCache`; `Store` implements them, consumers are typed to the role they use. No table moves.
+- **Ledger for 8e and 8f.** `PacedSource.php` and `Rent/Store/` are on CLAUDE.md's "run `sabotage-check.sh` after
+  any change" list, and a filtered run does not satisfy it. The NIGHTLY is the run for those two sub-steps: their
+  commits say so, and the next morning's nightly result is read and recorded on this row before step 9 starts.
 
 ### Blocked
 ### Needs input
