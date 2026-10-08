@@ -6398,6 +6398,53 @@ run_sabotage "tenure: the middle dot and + stop separating a social label (audit
   src/php/Core/Text.php \
   's|\\\\x{00B7}\\\\+||'
 
+# ARCHITECTURE REVIEW STEP 2 (2026-10-08): A-14, A-16, C-10. Each was measured in a scratch copy
+# before it landed here: changed-line count as stated (S8 hits both error branches on purpose),
+# `php -l` clean, and the red is the behavioural test named in the label, never a structural guard.
+run_sabotage "floor: a basement is labelled '-1e étage' again (A-14)" \
+  src/php/Rent/Core/FloorLabel.php \
+  "s%\$floor < 0 => 'sous-sol',%\$floor < 0 => \$floor . 'e étage',%"
+
+run_sabotage "floor: the notification line keeps its own RDC for a basement (A-14)" \
+  src/php/Rent/Notify/Formatter.php \
+  "s%\$bits\[\] = FloorLabel::short(\$listing->floor);%\$bits[] = \$listing->floor <= 0 ? 'RDC' : FloorLabel::short(\$listing->floor);%"
+
+run_sabotage "reasons: a rent match may carry no reason (A-16)" \
+  src/php/Rent/Core/Verdict.php \
+  "s%count(\$reasons) > 0 ? \$reasons : \[self::NO_REASON\]%\$reasons%"
+
+run_sabotage "reasons: a car match may carry no reason (A-16)" \
+  src/php/Car/VehicleVerdict.php \
+  "s%count(\$reasons) > 0 ? \$reasons : \[self::NO_REASON\]%\$reasons%"
+
+run_sabotage "reasons: a job match may carry no reason (A-16)" \
+  src/php/Job/JobVerdict.php \
+  "s%count(\$reasons) > 0 ? \$reasons : \[self::NO_REASON\]%\$reasons%"
+
+run_sabotage "reasons: a corrupt stored signals_json is silent again (A-16)" \
+  src/php/Rent/Cli/RentScout.php \
+  "s%if (\$reasons === null) {%if (false) {%"
+
+run_sabotage "commute: an exception from the API is not counted (C-10)" \
+  src/php/Rent/Enrich/NavitiaCommute.php \
+  "/An exception is an outage/,/return null;/ s%\$this->failures->record();%%"
+
+run_sabotage "commute: an error response from the API is not counted (C-10)" \
+  src/php/Rent/Enrich/NavitiaCommute.php \
+  "/isSuccess()) {/,/return null;/ s%\$this->failures->record();%%"
+
+run_sabotage "commute: the pass never warns about failed lookups (C-10)" \
+  src/php/Rent/Cli/Pipeline.php \
+  "s%if (\$commuteFailed > 0) {%if (false) {%"
+
+run_sabotage "commute: the warning reads the planner's total, not this pass's delta (C-10)" \
+  src/php/Rent/Cli/Pipeline.php \
+  "s%->failedLookups() - \$commuteFailedBefore%->failedLookups()%"
+
+run_sabotage "commute: a planner that throws is not counted by the pipeline (C-10)" \
+  src/php/Rent/Cli/Pipeline.php \
+  "s%++\$plannerThrew;%%"
+
 # THE ABORT COMES BEFORE THE TALLY, and that ordering is the finding rather than a nicety (C2
 # round 7, resilience P3). The alert job harvests the `N sabotage(s) detected, M undetected` line;
 # printed AFTER it, a shard that selected no case ended its log with a clean-looking `0 / 0` and the
