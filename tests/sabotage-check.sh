@@ -6493,6 +6493,13 @@ run_sabotage "commute: the pass never names an exhausted quota (quota)" \
   src/php/Rent/Cli/Pipeline.php \
   "s%if (\$commuteRefused > 0) {%if (false) {%"
 
+# CALEOL (E-11, 2026-10-08): the post-ELAN acronym of the social allocation commission. The
+# consequence is mutated rather than the line deleted — the acronym reads INTERMEDIATE — so the
+# case proves the VALUE is load-bearing, and the red must be the two corpus cases, not a guard.
+run_sabotage "tenure: the CALEOL acronym reads as an intermediate tell (caleol)" \
+  src/php/Rent/Core/TenureClassifier.php \
+  "s%'caleol' => Tenure::SOCIAL,%'caleol' => Tenure::LLI,%"
+
 # THE ABORT COMES BEFORE THE TALLY, and that ordering is the finding rather than a nicety (C2
 # round 7, resilience P3). The alert job harvests the `N sabotage(s) detected, M undetected` line;
 # printed AFTER it, a shard that selected no case ended its log with a clean-looking `0 / 0` and the

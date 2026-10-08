@@ -236,6 +236,18 @@ final readonly class TenureClassifier
         'demande de logement social' => Tenure::SOCIAL,
         "commission d'attribution" => Tenure::SOCIAL,
         'commission attribution' => Tenure::SOCIAL,
+        // The same commission under its post-ELAN acronym (E-11, 2026-10-08). CCH L441-2 names it
+        // the "commission d'attribution des logements et d'examen de l'occupation des logements"
+        // (Légifrance LEGIARTI000045211440) — a spelling the entry above already matches — and the
+        // ministry's fact sheet and the State services' pages call it CALEOL. The acronym alone
+        // carried no signal, so a private-portal card whose only tell was "présentation en CALEOL"
+        // read LIBRE on the source default (corpus social-006, social-007).
+        //
+        // KNOWN AND LEFT: `sans CALEOL` is not in NEGATED_BY_SANS. That list holds the one phrase
+        // whose negated form is itself a documented intermediate tell; a negated acronym is not
+        // one, so it stays a social signal and over-rejects — the safe direction. A bare `cal`
+        // is not added either: no collocation list for it has been verified.
+        'caleol' => Tenure::SOCIAL,
     ];
 
     /**

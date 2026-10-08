@@ -22,7 +22,7 @@
   ],
   "version": 1,
   "declared_counts": {
-    "synthetic": 144,
+    "synthetic": 146,
     "captured": 8
   },
   "sources": {
@@ -405,6 +405,34 @@
         "outcome": "REJECT"
       },
       "why": "Commission d'attribution alone."
+    },
+    {
+      "id": "social-006-caleol-acronym-on-a-private-portal",
+      "provenance": "synthetic",
+      "source": "seloger",
+      "title": "T3 Bezons",
+      "description": "Dossier complet a fournir, presentation en CALEOL sous quinze jours.",
+      "fields": [],
+      "expect": {
+        "tenure": "SOCIAL",
+        "outcome": "REJECT"
+      },
+      "why": "E-11 (architecture review, 2026-10-08). Since loi ELAN the social allocation commission is the 'commission d'attribution des logements et d'examen de l'occupation des logements' (CCH L441-2, Legifrance LEGIARTI000045211440), and the ministry's fact sheet and the State services call it CALEOL. The full name already carries 'commission d'attribution'; the bare acronym carried nothing, so on a mixed_tenure:false portal this card read LIBRE on the source default and MATCHED."
+    },
+    {
+      "id": "social-007-caleol-acronym-in-a-structured-field",
+      "provenance": "synthetic",
+      "source": "cdc_habitat",
+      "title": "T3 Nanterre",
+      "description": "Appartement renove, proche RER.",
+      "fields": {
+        "procedure": "Passage en CALEOL"
+      },
+      "expect": {
+        "tenure": "SOCIAL",
+        "outcome": "REJECT"
+      },
+      "why": "The same acronym on the field surface of a mixed source, where its absence only withheld (UNKNOWN, digest) instead of rejecting. Tier 3 reads every field value separately (regress-038), so the acronym must be decided there too."
     },
     {
       "id": "conv-001-conventionne-bare",
