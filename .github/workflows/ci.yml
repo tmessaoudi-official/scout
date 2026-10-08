@@ -223,17 +223,20 @@ jobs:
           find .claude/hooks .claude/skills tests tools -type f -name '*.sh' -print0 \
             | LC_ALL=C.UTF-8 xargs -0 shellcheck --severity=warning
 
-      # --force, and the version asserted: the runner image already carries a pipx yamllint
-      # (1.38.0 on 2026-10-08), and a plain `pipx install` printed "already seems to be installed",
-      # exited 0 and left the pin unapplied — the step was green on a version nobody chose.
+      # A private venv, called by its absolute path, and the version asserted. The runner image
+      # already carries a pipx yamllint (1.38.0 on 2026-10-08): a plain `pipx install` printed
+      # "already seems to be installed", exited 0 and left the pin unapplied, and `--force` cannot
+      # replace it because that venv under /opt/pipx is root-owned.
       - name: YAML lint (yamllint, the repo .yamllint, warnings fail)
         env:
           YAMLLINT_VERSION: 1.37.1
         run: |
-          pipx install --force "yamllint==$YAMLLINT_VERSION"
-          yamllint --version
-          test "$(yamllint --version)" = "yamllint $YAMLLINT_VERSION"
-          git ls-files -z '*.yml' '*.yaml' | xargs -0 yamllint --strict .yamllint
+          python3 -m venv "$RUNNER_TEMP/yamllint"
+          "$RUNNER_TEMP/yamllint/bin/pip" install --quiet "yamllint==$YAMLLINT_VERSION"
+          yl="$RUNNER_TEMP/yamllint/bin/yamllint"
+          "$yl" --version
+          test "$("$yl" --version)" = "yamllint $YAMLLINT_VERSION"
+          git ls-files -z '*.yml' '*.yaml' | xargs -0 "$yl" --strict .yamllint
 
   sabotage:
     name: sabotage ledger ${{ matrix.shard }}/6 (detection proof)
