@@ -5854,6 +5854,9 @@ run_sabotage "job: bare remote read in descriptions (step 3a M13)" \
 run_sabotage "job: level read from the description (step 3a M14)" \
   src/php/Job/JobClassifier.php \
   's%level: self::level(\$title),%level: self::level($all),%'
+# The ’ below is the typographic apostrophe JobClassifier::CLEARANCE matches, inside a sed
+# expression — data, not a mistyped shell quote.
+# shellcheck disable=SC1112
 run_sabotage "job: bare habilitation is a clearance (step 3a M15)" \
   src/php/Job/JobClassifier.php \
   's%private const string CLEARANCE = '\''~\\bhabilitations? (?:au |de )?(?:niveau )?(?:secret|confidentiel|tres secret)(?:\[- ]defense)?\\b|\\bhabilitables?\\b|\\bhabilitations? defense\\b|\\beligible a (?:une |l\[\\'\''’])?habilitation\\b|\\bsecurity clearance\\b~u'\'';%private const string CLEARANCE = '\''~\\bhabilitations?\\b|\\bhabilitables?\\b|\\bhabilitations? defense\\b|\\beligible a (?:une |l[\\'\''’])?habilitation\\b|\\bsecurity clearance\\b~u'\'';%'

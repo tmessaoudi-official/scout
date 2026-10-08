@@ -213,6 +213,22 @@ jobs:
           find .claude/hooks tests tools \
             -type f -name '*.sh' -print0 | xargs -0 -n1 bash -n
 
+      # Step 7d (2026-10-08): the lint-on-write hook ran these on each file Claude wrote and nothing
+      # ran them on the tree. Warnings and errors fail; shellcheck's info/style notes (SC2016 on the
+      # ledger's single-quoted sed expressions, which are meant literally) do not. The runner's
+      # shellcheck is the image's, not pinned: its version is printed so a new finding can be dated.
+      - name: Shell lint (shellcheck, warnings and errors)
+        run: |
+          shellcheck --version | head -2
+          find .claude/hooks .claude/skills tests tools -type f -name '*.sh' -print0 \
+            | LC_ALL=C.UTF-8 xargs -0 shellcheck --severity=warning
+
+      - name: YAML lint (yamllint, the repo .yamllint, warnings fail)
+        run: |
+          pipx install yamllint==1.37.1
+          yamllint --version
+          git ls-files -z '*.yml' '*.yaml' | xargs -0 yamllint --strict .yamllint
+
   sabotage:
     name: sabotage ledger ${{ matrix.shard }}/6 (detection proof)
     runs-on: ubuntu-latest

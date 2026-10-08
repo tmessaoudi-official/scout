@@ -577,6 +577,8 @@ bash tests/test-sabotage-baseline.sh    # proves the LEDGER is judged in a green
 bash tests/test-drift-scan.sh           # proves that gate can still go RED (S8: .env.example sync),
                                         #   and that it skips docs/plans/archive/ (history) but not a live plan
 bash -n .claude/hooks/*.sh tests/*.sh tools/*.sh
+find .claude/hooks .claude/skills tests tools -name '*.sh' -print0 | xargs -0 shellcheck --severity=warning   # as CI
+git ls-files -z '*.yml' '*.yaml' | xargs -0 yamllint --strict .yamllint   # as CI; config in .yamllint
 python3 prototype/scout.py --help       # the superseded prototype, reference only
 ```
 

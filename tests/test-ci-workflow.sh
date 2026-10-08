@@ -251,6 +251,16 @@ check "every action is pinned to a 40-hex commit SHA ($uses_pinned of $uses_tota
 # A commit subject is at most 72 characters (C-16, forward-only): the fast job checks the pushed tip.
 check "the fast job caps the pushed tip's commit subject at 72 characters" \
   has 'COMMIT_SUBJECT_MAX: 72'
+# The tree is linted, not only the file just written (step 7d, 2026-10-08): shellcheck at warning
+# severity over every shell script, yamllint --strict under the repo's own config.
+check "the fast job runs shellcheck over the tree at warning severity" \
+  has 'xargs -0 shellcheck --severity=warning'
+check "the fast job runs a pinned yamllint, strict, under the repo .yamllint" \
+  has 'pipx install yamllint==1.37.1'
+check "…and every tracked YAML file goes through it" \
+  has "git ls-files -z '*.yml' '*.yaml' | xargs -0 yamllint --strict .yamllint"
+check "the repo .yamllint exists for CI and the lint-on-write hook to read" \
+  test -f "$(dirname "$wf")/../../.yamllint"
 # A shard that produced NO log was killed before writing; its silence is UNKNOWN, never clean.
 check "a shard with no log is named rather than read as clean" \
   grep -q "produced no log at all" "$wf"

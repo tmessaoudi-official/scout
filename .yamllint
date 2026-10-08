@@ -1,0 +1,15 @@
+---
+# yamllint for this repo (architecture review step 7d, 2026-10-08). Read by CI and by the
+# lint-on-write hook, which runs yamllint with no -c and so picks this file up from the tree.
+extends: default
+
+rules:
+  # The workflow and compose files carry their reasons as long comments; the longest line
+  # measured 112 characters on 2026-10-08.
+  line-length:
+    max: 120
+  # `on:` is the GitHub Actions trigger key, not a boolean.
+  truthy:
+    check-keys: false
+  # The files predate a `---` convention and nothing reads them as multi-document streams.
+  document-start: disable
