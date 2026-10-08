@@ -241,6 +241,16 @@ check "the no-case ABORT is printed BEFORE the tally the alert harvests" \
 # The evidence has to survive the job that produced it, or the alert reads six logs it cannot see.
 check "each shard keeps its ledger log for the alert job" grep -q "actions/upload-artifact" "$wf"
 check "…and the alert job collects them" grep -q "actions/download-artifact" "$wf"
+# EVERY ACTION IS PINNED TO A COMMIT, never a tag (C-15, 2026-10-08). A tag can be moved to other
+# code after review; a 40-hex commit SHA cannot. The version comment beside it is for humans and the
+# refresh command in ci.yml's header; this check reads only the reference itself.
+uses_total="$(grep -cE '^[[:space:]]*(- )?uses:' "$wf")"
+uses_pinned="$(grep -cE '^[[:space:]]*(- )?uses: [^@[:space:]]+@[0-9a-f]{40}([[:space:]]|$)' "$wf")"
+check "every action is pinned to a 40-hex commit SHA ($uses_pinned of $uses_total)" \
+  test "$uses_total" -gt 0 -a "$uses_total" -eq "$uses_pinned"
+# A commit subject is at most 72 characters (C-16, forward-only): the fast job checks the pushed tip.
+check "the fast job caps the pushed tip's commit subject at 72 characters" \
+  has 'COMMIT_SUBJECT_MAX: 72'
 # A shard that produced NO log was killed before writing; its silence is UNKNOWN, never clean.
 check "a shard with no log is named rather than read as clean" \
   grep -q "produced no log at all" "$wf"

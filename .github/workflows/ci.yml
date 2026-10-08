@@ -27,6 +27,16 @@ name: CI
 #     has found something. Do not read a fast red as an infrastructure problem.
 #
 # Toolchain notes, all forced by this repo (see CLAUDE.md § Gotchas):
+#   - Every action is pinned to a COMMIT SHA, the release it was taken from in a comment (C-15,
+#     2026-10-08; tests/test-ci-workflow.sh refuses a tag). A tag can be moved to other code after
+#     review; a commit cannot. No Dependabot: its branches and PRs conflict with master-only
+#     (developer ruling 2026-10-08). Refresh by hand — print a major tag's current commit, then
+#     replace the SHA and the comment:
+#       git ls-remote --tags https://github.com/actions/checkout 'refs/tags/v7*' | sort -k2 -V
+#     (the `^{}` line is the commit an annotated tag points to; setup-php tags carry no `v`).
+#     Base images (php:8.5-cli, composer:2) stay on TAGS on purpose: the floating patch tag is how
+#     PHP security fixes reach the watchers on each rebuild, and the three Dockerfile stages share
+#     one PHP_VERSION ARG that a digest pin would have to bypass.
 #   - PHP is 8.5, no Composer runtime deps. `composer dump-autoload --dev` generates the PSR-4
 #     autoloader (the `--dev` is load-bearing: without it the corpus suite errors "Class not found").
 #   - The runner is PHPUnit's official PHAR, fetched by tools/fetch-phpunit.sh against a pinned
@@ -66,10 +76,26 @@ jobs:
     # a hang budget, not a target.
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+
+      # C-16, forward-only (developer ruling 2026-10-08): a subject of at most 72 characters, the
+      # why in the body; past subjects are never rewritten. A push checks out its tip at depth 1,
+      # so this reads exactly the pushed tip — in a batch push, only the last commit. Counted in
+      # CHARACTERS under a UTF-8 locale: subjects here carry `§` and `—`.
+      - name: Commit subject is at most 72 characters (the pushed tip)
+        if: github.event_name == 'push'
+        env:
+          COMMIT_SUBJECT_MAX: 72
+        run: |
+          subject="$(git log -1 --format=%s)"
+          length="$(printf '%s' "$subject" | LC_ALL=C.UTF-8 wc -m)"
+          if (( length > COMMIT_SUBJECT_MAX )); then
+            printf '%s characters (max %s): %s\n' "$length" "$COMMIT_SUBJECT_MAX" "$subject"
+            exit 1
+          fi
 
       - name: Set up PHP 8.5
-        uses: shivammathur/setup-php@v2
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962  # 2.40.0
         with:
           php-version: '8.5'
           extensions: mbstring, curl, dom, iconv, pdo_sqlite, sqlite3, openssl
@@ -219,10 +245,10 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
 
       - name: Set up PHP 8.5
-        uses: shivammathur/setup-php@v2
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962  # 2.40.0
         with:
           php-version: '8.5'
           extensions: mbstring, curl, dom, iconv, pdo_sqlite, sqlite3, openssl
@@ -256,7 +282,7 @@ jobs:
       # shard is the only one anybody wants.
       - name: Keep this shard's ledger log for the alert job
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
         with:
           name: ledger-${{ matrix.shard }}
           path: ${{ runner.temp }}/ledger.log
@@ -284,7 +310,7 @@ jobs:
       # already carries a note about from 2026-08-29 (C2 round 7, two lenses).
       - name: Collect every shard's ledger log
         continue-on-error: true
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8.0.2
         with:
           path: ledger-logs
           pattern: ledger-*
@@ -314,7 +340,7 @@ jobs:
           # from the issue and their silence would read as clean. `test-ci-workflow.sh` now checks
           # this value against the matrix size, as it already did for SABOTAGE_SHARD.
           SHARDS: 6
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
         with:
           script: |
             const day = new Date().toISOString().slice(0, 10);
@@ -474,7 +500,7 @@ jobs:
       # this path must read live state. It returns pull requests as issues, hence the filter.
       - name: A green ledger must retract the alert it raised
         if: always() && needs.sabotage.result == 'success'
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
         with:
           script: |
             const url = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}` +
