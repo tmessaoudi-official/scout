@@ -223,10 +223,16 @@ jobs:
           find .claude/hooks .claude/skills tests tools -type f -name '*.sh' -print0 \
             | LC_ALL=C.UTF-8 xargs -0 shellcheck --severity=warning
 
+      # --force, and the version asserted: the runner image already carries a pipx yamllint
+      # (1.38.0 on 2026-10-08), and a plain `pipx install` printed "already seems to be installed",
+      # exited 0 and left the pin unapplied — the step was green on a version nobody chose.
       - name: YAML lint (yamllint, the repo .yamllint, warnings fail)
+        env:
+          YAMLLINT_VERSION: 1.37.1
         run: |
-          pipx install yamllint==1.37.1
+          pipx install --force "yamllint==$YAMLLINT_VERSION"
           yamllint --version
+          test "$(yamllint --version)" = "yamllint $YAMLLINT_VERSION"
           git ls-files -z '*.yml' '*.yaml' | xargs -0 yamllint --strict .yamllint
 
   sabotage:

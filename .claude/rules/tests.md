@@ -175,3 +175,9 @@ Moved verbatim from CLAUDE.md § "Gotchas & pitfalls" on 2026-09-28 (review-reme
   phpbrew dir from `php --ini`, and **strip the double quotes it prints around the scan dir**: pasted
   with them the path matches nothing, twelve extensions drop and the ledger baseline aborts red
   (measured 2026-09-13).
+- **A `pipx install` OF A TOOL THE RUNNER ALREADY SHIPS IS A GREEN NO-OP (2026-10-08).** Step 7d pinned
+  `yamllint==1.37.1`; the runner image carries its own pipx yamllint (1.38.0), so `pipx install` printed
+  *"already seems to be installed. Not modifying existing installation"*, exited 0, and the step linted
+  green under a version nobody chose. Found only by reading the printed version in the step log. A pin
+  on a runner is `pipx install --force` PLUS an assertion that `--version` equals the pin, so a skipped
+  install fails loudly; `tests/test-ci-workflow.sh` checks both lines.

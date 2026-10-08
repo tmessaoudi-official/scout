@@ -255,8 +255,10 @@ check "the fast job caps the pushed tip's commit subject at 72 characters" \
 # severity over every shell script, yamllint --strict under the repo's own config.
 check "the fast job runs shellcheck over the tree at warning severity" \
   has 'xargs -0 shellcheck --severity=warning'
-check "the fast job runs a pinned yamllint, strict, under the repo .yamllint" \
-  has 'pipx install yamllint==1.37.1'
+check "the fast job FORCES its pinned yamllint over the runner's own" \
+  has 'pipx install --force "yamllint==$YAMLLINT_VERSION"'
+check "…and refuses to lint under any other version" \
+  has 'test "$(yamllint --version)" = "yamllint $YAMLLINT_VERSION"'
 check "…and every tracked YAML file goes through it" \
   has "git ls-files -z '*.yml' '*.yaml' | xargs -0 yamllint --strict .yamllint"
 check "the repo .yamllint exists for CI and the lint-on-write hook to read" \
