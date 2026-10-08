@@ -24,7 +24,10 @@
 set -uo pipefail
 
 repo="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-script="$repo/tools/fetch-phpunit.sh"
+# The verifier is tools/fetch-phar.sh since 2026-10-08 (step 7e); fetch-phpunit.sh is a wrapper.
+script="$repo/tools/fetch-phar.sh"
+wrapper="$repo/tools/fetch-phpunit.sh"
+tools=(phpunit phpstan)
 
 pass=0
 fail=0
@@ -56,11 +59,21 @@ printf '\n== fetch-phpunit: refuses a bad signature, accepts a good one ==\n\n'
 # to any caller. That is the same false-green shape sabotage-check.sh was hardened against, in the
 # test written to close a different false-green.
 
-grep -qE '^EXPECTED_SHA256="[0-9a-f]{64}"' "$script" && r=yes || r=no
-check "the script pins a sha256" yes "$r"
+# Every tool row of the pin table pins BOTH, read from that tool's own `case` arm — a row that
+# forgot one would fetch unverified, and a count over the whole file could not say which.
+for t in "${tools[@]}"; do
+  arm="$(awk -v t="  $t)" '$0 == t {on=1; next} on && /^    ;;$/ {exit} on' "$script")"
+  grep -qE '^    EXPECTED_SHA256="[0-9a-f]{64}"$' <<<"$arm" && r=yes || r=no
+  check "the $t row pins a sha256" yes "$r"
+  grep -qE '^    EXPECTED_KEY="[0-9A-F]{40}"$' <<<"$arm" && r=yes || r=no
+  check "the $t row pins a key fingerprint" yes "$r"
+done
 
-grep -qE '^EXPECTED_KEY="[0-9A-F]{40}"' "$script" && r=yes || r=no
-check "the script pins a key fingerprint" yes "$r"
+grep -qE 'exec bash .*/fetch-phar\.sh" phpunit "\$@"$' "$wrapper" && r=yes || r=no
+check "fetch-phpunit.sh delegates to the one verifier" yes "$r"
+
+bash "$script" no-such-tool >/dev/null 2>&1 && r=accept || r=$?
+check "an unknown tool is refused before any fetch" 2 "$r"
 
 grep -qE '^set -euo pipefail' "$script" && r=yes || r=no
 check "the script still sets pipefail (the old form's only protection)" yes "$r"

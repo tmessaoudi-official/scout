@@ -714,7 +714,8 @@ tools/backup-state.sh       Backs up the seen-set — the one file this project 
 tests/test-backup-state.sh  Sabotage test FOR that tool. Its own first draft collided every
                             backup onto one second-granularity filename and a `<= 7` assertion
                             hid it — the exact count is asserted now
-tools/fetch-phpunit.sh      Fetches the runner; pinned SHA-256, refuses to install on a mismatch
+tools/fetch-phar.sh         The one PHAR verifier (`phpunit`, `phpstan`): pinned SHA-256 + signature per tool
+tools/fetch-phpunit.sh      Fetches the runner (a wrapper for `fetch-phar.sh phpunit`); refuses on a mismatch
 tools/phpunit.phar          Test runner (gitignored — see README § Getting started)
 var/claude/                 Reports, review outputs — gitignored scratch (handoffs are the
                             global PreCompact hook's job, not the repo's)
