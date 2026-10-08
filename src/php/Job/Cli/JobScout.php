@@ -150,7 +150,8 @@ final readonly class JobScout
 
         // The band advice both other doctors give: `IMAP_SINCE_DAYS` is shared, so a threshold at or
         // past the window leaves no observable band between `feed_silent` and `broken`.
-        $windowNote = ImapMailbox::feedSilentWindowNote($this->feedSilentDays(), 'JOB_FEED_SILENT_DAYS');
+        $window = ImapMailbox::sinceDaysFrom(getenv('IMAP_SINCE_DAYS'));
+        $windowNote = ImapMailbox::feedSilentWindowNote($window, $this->feedSilentDays(), 'JOB_FEED_SILENT_DAYS');
         if ($windowNote !== null) {
             $this->warn($windowNote);
         }
@@ -158,7 +159,7 @@ final readonly class JobScout
             if ($definition->feedSilentDays === null) {
                 continue;
             }
-            $note = ImapMailbox::feedSilentWindowNote($definition->feedSilentDays, 'feed_silent_days de ' . $definition->name);
+            $note = ImapMailbox::feedSilentWindowNote($window, $definition->feedSilentDays, 'feed_silent_days de ' . $definition->name);
             if ($note !== null) {
                 $this->warn($note);
             }
@@ -782,7 +783,7 @@ final readonly class JobScout
             folder: (string) (getenv('JOB_IMAP_MAILBOX') ?: self::DEFAULT_FOLDER),
             port: (int) (getenv('IMAP_PORT') ?: 993),
             fromFilter: $definition->param('from'),
-            sinceDays: max(1, (int) (getenv('IMAP_SINCE_DAYS') ?: 7)),
+            sinceDays: ImapMailbox::sinceDaysFrom(getenv('IMAP_SINCE_DAYS')),
             warn: fn (string $m) => $this->warn($m),
         );
     }

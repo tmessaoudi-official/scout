@@ -1754,6 +1754,12 @@ run_sabotage "the commute planner builds its own HTTP client again (8a)" \
   src/php/Rent/Cli/RentScout.php \
   's%^            \$this->http,$%            new CurlHttpClient(),%'
 
+# ONE PARSE OF IMAP_SINCE_DAYS (B-13, step 8b, 2026-10-08): the clamp is what makes the doctor's window
+# advice name the window the search actually uses.
+run_sabotage "IMAP_SINCE_DAYS is parsed without its one-day clamp (8b)" \
+  src/php/Adapters/Mail/ImapMailbox.php \
+  's%return max(1, (int) (\$raw ?: 7));%return (int) ($raw ?: 7);%'
+
 # SCOPED to reclassify(), for the reason on the drain's own pair above.
 #
 # DELIBERATELY NOT COMPOUND, and it was one measurement away from becoming one. The two reclassify

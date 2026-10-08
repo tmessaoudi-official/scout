@@ -434,6 +434,20 @@ final class ImapMailbox implements Mailbox, MutableByDesign
      * (`d-Mon-yyyy`) and which are locale-independent by construction. A locale-aware formatter
      * would emit `Aoû` here and the server would either reject the command or, worse, match nothing.
      */
+    /**
+     * THE ONE PARSE OF `IMAP_SINCE_DAYS`, for every composition root and for {@see self::feedSilentWindowNote()}
+     * (B-13, 2026-10-08). Four call sites parsed it with two different rules, so the window a domain
+     * searched and the window its `doctor` advice named could differ.
+     *
+     * At least one day, as {@see self::searchCommand()} has always clamped. And `"0"` reads as the default:
+     * `getenv() ?: 7` treats the STRING "0" as falsy, which is what every path has done since the key
+     * existed — kept here, and pinned by a test, rather than changed inside a refactor.
+     */
+    public static function sinceDaysFrom(string|false $raw): int
+    {
+        return max(1, (int) ($raw ?: 7));
+    }
+
     public static function searchCommand(?string $fromFilter, int $sinceDays, \DateTimeImmutable $now): string
     {
         // At least one day. A zero or negative window would match nothing and read as a quiet
@@ -908,10 +922,11 @@ final class ImapMailbox implements Mailbox, MutableByDesign
      * `doctor` DIAGNOSES, it does not refuse. Direct precedent in this same class: an unusable `TZ`
      * is reported by `doctor` as a line and refused only by `run`.
      */
-    public static function feedSilentWindowNote(?int $days, string $label = 'RENT_FEED_SILENT_DAYS'): ?string
+    public static function feedSilentWindowNote(int $window, ?int $days, string $label = 'RENT_FEED_SILENT_DAYS'): ?string
     {
-        $window = (int) (getenv('IMAP_SINCE_DAYS') ?: 7);
-
+        // The window comes from the caller, parsed by sinceDaysFrom() exactly as the mailbox it advises
+        // about was built (B-13, 2026-10-08): this read the environment itself, unclamped, so
+        // `IMAP_SINCE_DAYS=-3` searched one day while the advice reported a window of -3.
         if ($days === null || $days < $window) {
             return null;
         }

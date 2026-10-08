@@ -332,7 +332,8 @@ final readonly class RentScout
         // Diagnostic, never a refusal — see feedSilentWindowNote() for why that distinction cost a
         // review round. A misconfiguration that merely makes a verdict unlikely is advice; the tool
         // still runs, and on a deployment with no email source at all it is not even advice.
-        $windowNote = ImapMailbox::feedSilentWindowNote(self::feedSilentDays());
+        $window = ImapMailbox::sinceDaysFrom(getenv('IMAP_SINCE_DAYS'));
+        $windowNote = ImapMailbox::feedSilentWindowNote($window, self::feedSilentDays());
 
         if ($windowNote !== null) {
             $this->warn($windowNote);
@@ -345,7 +346,7 @@ final readonly class RentScout
             if ($definition->feedSilentDays === null) {
                 continue;
             }
-            $note = ImapMailbox::feedSilentWindowNote($definition->feedSilentDays, 'feed_silent_days de ' . $definition->name);
+            $note = ImapMailbox::feedSilentWindowNote($window, $definition->feedSilentDays, 'feed_silent_days de ' . $definition->name);
             if ($note !== null) {
                 $this->warn($note);
             }
@@ -3232,7 +3233,7 @@ final readonly class RentScout
             folder: (string) (getenv('RENT_IMAP_MAILBOX') ?: 'INBOX'),
             port: (int) (getenv('IMAP_PORT') ?: 993),
             fromFilter: \is_string($from) && $from !== '' ? $from : null,
-            sinceDays: (int) (getenv('IMAP_SINCE_DAYS') ?: 7),
+            sinceDays: ImapMailbox::sinceDaysFrom(getenv('IMAP_SINCE_DAYS')),
             // The mailbox has no channel of its own — `fetchRecent()` returns messages and nothing
             // else. Handing it `warn()` puts the line wherever the operator is already looking
             // rather than inventing a second place to look.

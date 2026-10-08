@@ -155,7 +155,8 @@ final readonly class CarScout
         //
         // Found 2026-09-01 by the RENT doctor warning about a value COPIED FROM THIS SIDE. A check
         // living on one of two symmetric surfaces is the shape this repo keeps paying for.
-        $windowNote = ImapMailbox::feedSilentWindowNote($this->feedSilentDays(), 'CAR_FEED_SILENT_DAYS');
+        $window = ImapMailbox::sinceDaysFrom(getenv('IMAP_SINCE_DAYS'));
+        $windowNote = ImapMailbox::feedSilentWindowNote($window, $this->feedSilentDays(), 'CAR_FEED_SILENT_DAYS');
 
         if ($windowNote !== null) {
             $this->warn($windowNote);
@@ -165,7 +166,7 @@ final readonly class CarScout
             if ($definition->feedSilentDays === null) {
                 continue;
             }
-            $note = ImapMailbox::feedSilentWindowNote($definition->feedSilentDays, 'feed_silent_days de ' . $definition->name);
+            $note = ImapMailbox::feedSilentWindowNote($window, $definition->feedSilentDays, 'feed_silent_days de ' . $definition->name);
             if ($note !== null) {
                 $this->warn($note);
             }
@@ -605,7 +606,7 @@ final readonly class CarScout
         if ($host === '') {
             throw ConfigError::at('.env', 'ni MAILBOX_DIR ni IMAP_HOST ne sont définis — la source ' . $definition->name . ' ne peut lire aucun courrier');
         }
-        $since = max(1, (int) (getenv('IMAP_SINCE_DAYS') ?: 7));
+        $since = ImapMailbox::sinceDaysFrom(getenv('IMAP_SINCE_DAYS'));
 
         return new ImapMailbox(
             host: $host,
