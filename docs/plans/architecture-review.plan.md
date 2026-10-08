@@ -31,6 +31,7 @@ This file is the durable record; the scratch area is not.
 - [2026-10-08 01:40] ASSUMED (review): A-11: no new guard — lane A's finding was stale: ListingSnapshotTest::testEveryConstructorParameterSurvivesDecodeAndMerge (2026-09-04) already checks every RawListing constructor parameter through mergedWith() in both directions; the fix is the stale RawListing comment that said the guard could not catch it. Alternatives: a second merge guard in RawListingMergeTest (duplicate).
 - [2026-10-08 01:40] ASSUMED (review): C-10: commute failures are counted by NavitiaCommute (non-success response or exception; an unmatched address is not a failure) through a CommuteFailures MutableByDesign counter pinned in TenureCorpusTest, exposed as failedLookups(): int; Pipeline warns once per pass on the delta plus its own catch. The commute HTTP-port half stays in migration step 1. Alternatives: record the count on the run row via RunStore.
 - [2026-10-08 02:15] ASSUMED (review): step 2 landed as four commits (A-14 c1c6692, A-16 0bf693f, C-10 d292b6e, docs+A-11 d4fe57a) plus the ledger cases; the plan row cites d292b6e, the last code commit. Alternatives: one squashed commit
+- [2026-10-08 03:21] ASSUMED (review): redeploy recreated all three watchers (rent, car, job), not rent alone, because A-16 changes the car and job verdicts and all three run scout:local; rollback tag scout:pre-arch-step2. Alternatives: rent-scout only
 
 ## Formal Plan
 
@@ -99,7 +100,10 @@ step 1) → CALEOL → expertise facts → LICENSE → T9 now-items. The remaini
 ### Needs input
 ### Needs research
 - PHPStan and Infection PHAR reachability from this box (GitHub release hosts; the egress has blocked codeload before) — probe before steps 7 and 15.
+- Old watchers lost DNS for four polled hosts (inli, cityloger, logirep, cdc_habitat) from 2026-10-04 14:37 to 2026-10-08 (every run failed; `broken` alerts recorded in `source_alerts`), while IMAP through the same resolver worked. The containers replaced on 2026-10-08 00:40Z had started inside the outage, so the recreate is NOT shown to be the fix; the hosts resolve in the new ones. Default if unexamined: watch `source_runs` for those four; a recurrence re-fires `broken`. First check if pursued: host `/etc/resolv.conf` against the container's.
+- `scout --domain=rent doctor` run with `docker compose exec` inside the live rent-scout hung 13+ min during its first pass (stopped by PID; read-only). Default: reproduce against a backup copy, not the live store.
 ### Fragile
 - Every code move re-derives sabotage-ledger cases: run `tools/in-docker.sh bash tests/test-sabotage-applies.sh` after each migration step.
 ### Known issues
 - Step 17 waits for the ~/.claude framework-health §D "expertise entry point" plan (peer session, 2026-10-07); restructuring now risks redoing it.
+- C-10 (d292b6e) counts a Navitia 404-with-error-id as a failed lookup, and that is a domain answer, not an outage: probed live 2026-10-08, an unreachable origin returns `404 {"id":"no_origin"}`, a normal journey 200. The first deployed pass warned `23 calcul(s) de trajet en échec` against 2 new `commute_cache` rows; how many of the 23 are such answers is unmeasured. Consequence: the warning blames key/network/API for what may be "no route", and an uncached no-route lookup retries every pass, so the line may fire on every pass. Fix (TDD): classify a 404 carrying a Navitia error id as an answer (not counted, and cached or negatively cached), count transport and 401/403/429/5xx only, and say which kind in the warning.
