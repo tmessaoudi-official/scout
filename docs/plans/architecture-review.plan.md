@@ -48,6 +48,10 @@ This file is the durable record; the scratch area is not.
 - [2026-10-08 14:15] AGREED: Next: roadmap step 7, migration step 0 as its row states (dependency-rule + network-guard tests, section-1 discovery tests re-rooted, PHPStan PHAR + baseline, shellcheck/yamllint in CI)
 - [2026-10-08 15:05] ASSUMED (review): 7b: the pure set is a curated list (Rent/Core walked recursively + 37 named files across Rent/Config, Car, Job, Core), JobOutcome included as a pure two-case enum — because Car/Job/Core are flat namespaces where purity is a classification, not a folder. Alternatives: folder-only rule (impossible until step 13 splits Core).
 - [2026-10-08 15:05] ASSUMED (review): 7b: Rent/Config/{Weights,NotifyPolicy} -> Scout\Config\Reader are the only baseline edges (Reader::fromFile opens the file); the baseline only shrinks, removed at step 8 when the fromReader factories move to the loader. Alternatives: fix now (scope creep into step 8), exclude both files from the pure set (hides the debt).
+- [2026-10-08 17:01] ASSUMED (review): 7e: PHPStan at level 6 over src/php with all 76 current errors baselined (69 entries), the baseline shrink-only via reportUnmatchedIgnoredErrors — because levels 1-3 hold no behaviour defect (13 read) and level 8 (166) would baseline twice as much. Alternatives: level 5 (58), level 8 (166), fix the 13 low-level errors first (deferred to whoever touches those files).
+- [2026-10-08 17:01] ASSUMED (review): 7e: fetch-phpunit.sh generalised into tools/fetch-phar.sh <tool> with a pin table, fetch-phpunit.sh kept as a wrapper — because a second 150-line verifier is two places for one security fix. Alternatives: a copy per tool, a Composer dev dependency (egress-blocked).
+- [2026-10-08 17:01] ASSUMED (review): 7d: shellcheck at --severity=warning with the runner's own (unpinned, version printed) binary; yamllint pinned 1.37.1 in a private venv and asserted — because the runner image's pipx yamllint shadowed a plain pipx install. Alternatives: pin shellcheck too (no venv-style install on the runner), lint at info severity (hundreds of SC2016 notes on the ledger's literal seds).
+- [2026-10-08 17:07] ASSUMED (review): 7c: the network guard checks that an Offline:: refusal is READ before the first curl_exec/stream_socket_client/fsockopen/mail call, not that it is acted on — because acting on it is each site's own behavioural test's job (NetworkAdaptersTest reddens when the HTTP guard goes). Alternatives: parse the following if/throw (fragile across the five sites' shapes).
 
 ## Formal Plan
 
@@ -100,7 +104,7 @@ step 1) → CALEOL → expertise facts → LICENSE → T9 now-items. The remaini
 | 4 | Expertise facts refresh (E-7, E-9, D-8 facts only: counts, HC-rent ruling, post-review commits; D-17 /long-run and /ci-watch pointers; expertise-core's ledger row must say `env` goes inside tools/in-docker.sh; C-18: the dockerised suite now takes ~3 min, not 62 s; E-11 remainder: one "deliberately conservative" row each for PLI → UNKNOWN, Loc1 under loc'avantages → excluded, ANRU as an agency not a regime, verified on an official source first) | S | done | e6d882e | .claude/rules/expertise-core.md, .claude/EXPERTISE-REFERENCE.md, .claude/skills/ |
 | 5 | LICENSE: MIT + tests/fixtures/** third-party carve-out; composer.json license and description | S | done | f87e5b4 | LICENSE, composer.json |
 | 6 | T9 now: actions pinned by commit SHA (images stay on tags, see the ASSUMED entry), CI badges, forward-only 72-char commit-subject rule + CI tip check | S | done | 6bcbe13 | .github/workflows/ci.yml, tests/test-ci-workflow.sh, README.md, CLAUDE.md |
-| 7 | Migration step 0: dependency-rule + network-guard tests, §1 discovery tests re-rooted, PHPStan PHAR + baseline, shellcheck/yamllint in CI | M | todo | - | tests/php/Repo/**, .github/workflows/ci.yml, tools/** |
+| 7 | Migration step 0: §1 discovery guards re-rooted (e5c31c0), dependency rule (8513b40), network guard (2a0c716), shellcheck/yamllint in CI with the yamllint pin enforced (e09b383, 9f05f1a), one PHAR verifier (5092b23), PHPStan level 6 + shrink-only baseline (a529a61) | M | done | a529a61 | tests/php/Repo/**, .github/workflows/ci.yml, tools/**, phpstan.neon, phpstan-baseline.neon, .yamllint |
 | 8 | Migration step 1: ports (Store roles, Clock, health out of adapters, commute on HTTP port) | L | todo | - | src/php/** |
 | 9 | Migration step 2: shared Car/Job application layer | L | todo | - | src/php/Car/**, src/php/Job/** |
 | 10 | Migration step 3: light CQRS query services + doctor split | M | todo | - | src/php/** |
@@ -122,7 +126,8 @@ step 1) → CALEOL → expertise facts → LICENSE → T9 now-items. The remaini
   `PatternMissEscalationTest` (recursive discovery of the 10 implementors). Each gets a premise that goes red if its
   root is narrowed again.
 - **7b** `DependencyRuleTest`: pure rings may not import infrastructure or use I/O and clock primitives; a shrinking
-  baseline (today's edges, the `Core` kernel/infra split, the B-10 clock fallbacks) points at steps 8 and 13.
+  baseline points at step 8. As landed (8513b40): the primitive half found nothing in a pure file, so its baseline
+  is empty; the reference baseline is two edges, `Rent/Config/{Weights,NotifyPolicy}` → `Config\Reader`.
 - **7c** `NetworkPrimitivesAreGuardedTest`: in every method doing network I/O (`curl_exec`, `stream_socket_client`,
   `mail(`), an `Offline::` call comes first; premise = the five methods measured 2026-10-08.
 - **7d** shellcheck (`--severity=warning`) and yamllint (repo `.yamllint`: `truthy` keys unchecked, line length
