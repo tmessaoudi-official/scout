@@ -498,7 +498,7 @@ this box's `php` is an 8.7-dev ZTS/DEBUG/GCOV build, and the container's is the 
 
 | Command | Replaces | Notes |
 |---|---|---|
-| `tools/in-docker.sh php tools/phpunit.phar` | host `php tools/phpunit.phar` | the suite's own final `OK (N tests, M assertions)` line is the tally; run on the host and in the image, both gave the same one (2026-10-03: 62 s against 159 s on the host's debug build) |
+| `tools/in-docker.sh php tools/phpunit.phar` | host `php tools/phpunit.phar` | the suite's own final `OK (N tests, M assertions)` line is the tally; run on the host and in the image, both gave the same one (2026-10-03: 62 s against 159 s on the host's debug build; the suite has grown since, and took 2:49 in the image on 2026-10-08 with ~5 800 tests) |
 | `tools/in-docker.sh bash tests/test-<name>.sh` | host `bash tests/test-<name>.sh` | every `tests/test-*.sh` gave the same pass and skip counts on the host and in the image (2026-10-03); `tests/test-in-docker.sh` guards the setup itself |
 | `tools/in-docker.sh composer dump-autoload --dev` | host `composer …` | |
 | `tools/in-docker.sh bash .claude/skills/scout-repair/drift-scan.sh` | host drift-scan | |

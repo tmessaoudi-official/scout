@@ -1593,6 +1593,34 @@ committed on 2026-08-26**, from two dated official publications, each carried in
 > **rent** ceiling as a plausible annual figure, which defeats both other guards and leaves only the
 > anchor standing.
 
+> **TENURE VOCABULARY AFTER THE 2026-10-03 EXPERTISE REVIEW, written here so the next expertise
+> refresh has a source for it (2026-10-08).** Four changes, each with its evidence where it was made:
+>
+> - **Spelled-out acronyms reject (`d90c56e`, 2026-10-06).** `P.L.U.S.`, `P L U S`, `PLU-S` and
+>   `PLA·I` / `PLA+I` reached LIBRE/MATCH on a `mixed_tenure: false` portal while `P.L.A.I.`
+>   rejected. `Text::SEPARATED_ONLY_ACRONYMS` reads `plus` only when at least one separator sits
+>   between two letters, so the JOINED word stays the adverb under the collocation guard; U+00B7
+>   and `+` joined both separator classes. Ruled the same day: the wider separators apply to
+>   NON-ELIGIBLE literals only, because widening an eligible label moved a doubt toward MATCH.
+> - **A stated room-count disagreement refuses a merge (`f65e6b2`, 2026-10-06).** The ledger case
+>   for it ran UNDETECTED — no test pair isolated rooms — and `DedupTest::
+>   testAStatedRoomCountDisagreementIsDecisive` closed the hole.
+> - **CALEOL is a social procedural tell (`daa7975`, 2026-10-08).** CCH L441-2 names the
+>   commission (Légifrance LEGIARTI000045211440); the ministry's fact sheet and the State services
+>   use the acronym. The full name was already caught by `commission d'attribution`. A bare `cal`
+>   is not read: no collocation list for it is verified.
+> - **Three mappings are DELIBERATELY CONSERVATIVE, and none is a mistake to "fix"** (checked
+>   2026-10-08 against official sources): `financement: PLI` is intermediate financing (Banque des
+>   Territoires: households at 1.4–1.8× the PLUS ceilings) and still digests (`unknown-003`), because
+>   the field alone does not say the regime the flat is let under; `loc'avantages` is excluded
+>   although its Loc1 level is intermediate (Loc1 −15 %, Loc2 social, Loc3 very social:
+>   economie.gouv.fr, ANIL), because the scheme name does not say which level; and ANRU is an
+>   agency (loi 2003-710) funding urban renewal, not a tenure regime, read as social because the
+>   stock it finances is.
+>
+> And one tooling ruling with no other source doc: **drift-scan skips `docs/plans/archive/`**
+> (`950cea3`, developer ruling 2026-10-06) in S2, S2b and S7, because an archived plan is history.
+
 ## Status narrative moved out of CLAUDE.md (2026-10-02)
 
 The paragraphs below filled lines 30-279 of `CLAUDE.md` (the "status" narrative after the opening state paragraph) and were moved here VERBATIM on 2026-10-02 because they are dated records, not rules; `CLAUDE.md` keeps a one-line ruling for each. They were NOT duplicated anywhere in `docs/` before this move.

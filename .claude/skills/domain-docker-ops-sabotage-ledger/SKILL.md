@@ -3,7 +3,7 @@ name: domain-docker-ops-sabotage-ledger
 description: Use when a task touches scout's Docker watchers, deploy or redeploy, tools/verify-deploy.sh, SQLite backup, the Q36 seed guard, a case in tests/sabotage-check.sh (writing, auditing, running), CI (.github/workflows/ci.yml), exit 137 or 134, or any job over ~8 minutes on this box. The procedure and the traps; the trigger lines live in EXPERTISE.md.
 ---
 
-Review date: 2026-10-03 11:44   Validation mode: advisory   Core: .claude/rules/expertise-core.md
+Review date: 2026-10-08 12:54 (fact refresh, architecture-review step 4)   Validation mode: advisory   Core: .claude/rules/expertise-core.md
 
 ## Roles and mental models
 - **Release engineer**: green, pushed and deployed are three measurements. A section-1 fix sat CI-green, pushed and unarmed in production ~1.5 days (2026-09-04). [Observed: 2026-09-04]
@@ -48,8 +48,8 @@ Review date: 2026-10-03 11:44   Validation mode: advisory   Core: .claude/rules/
 - **Host run env (not needed in the dev image)**: take `PHP_INI_SCAN_DIR` from `php --ini | sed -n 's/^Scan for additional .ini files in: *//p'`, strip the quotes, require the `php -m` diff empty (unquoted loses 12 extensions: iconv, intl, gmp). A ledger ABORT under a custom env is an env fault until the plain suite says otherwise. `SABOTAGE_FILTER` joins with `|`. [Observed: 2026-09-13/26, 2026-08-30]
 
 ## CI, long jobs, exit codes
-- ci.yml jobs: `test` (suite + ~12 bash self-tests + drift-scan + `bash -n`), `sabotage` (nightly/dispatch, 6 shards, 240-min cap), `sabotage-alert`. A red `test` job is silent: `gh run list --limit 5` after EVERY push. Emulate the runner's production ini: `php -d zend.exception_ignore_args=1 tools/phpunit.phar --filter <Class>`. [Observed: 2026-09-05; Source: rules/tests.md]
-- Long jobs: `run_in_background` was killed at ~10 min (`status: killed`); a pipe to `tail` makes a kill read "no output". Use `setsid nohup env VAR=... bash script.sh > "$log" 2>&1 < /dev/null & disown`, poll the log with Read, wait on `EXIT=`. If a process check is unavoidable: `pgrep -f 'sabotage-chec[k].sh'`. Kill by PGID: `kill -TERM -- -$(ps -o pgid= -p <pid> | tr -d ' ')`; `pkill -f` killed the Bash tool's own shell (exit 144). [Observed: 2026-09-04/25/26]
+- ci.yml jobs: `test` (suite + ~12 bash self-tests + drift-scan + `bash -n`), `sabotage` (nightly/dispatch, 6 shards, 240-min cap), `sabotage-alert`. A red `test` job is silent: `/ci-watch` after EVERY push (it reads `gh run list` for the pushed SHA). drift-scan skips `docs/plans/archive/` since `950cea3` (2026-10-06 ruling); a live plan is still checked. Emulate the runner's production ini: `php -d zend.exception_ignore_args=1 tools/phpunit.phar --filter <Class>`. [Observed: 2026-09-05; Source: rules/tests.md]
+- Long jobs: use `/long-run` (detached run, wait on `EXIT=`). Scout facts it does not carry: `run_in_background` was killed at ~10 min here (`status: killed`); a pipe to `tail` makes a kill read "no output"; through the dev image every variable goes INSIDE the wrapper (`tools/in-docker.sh env VAR=... bash script.sh`). If a process check is unavoidable: `pgrep -f 'sabotage-chec[k].sh'`. Kill by PGID: `kill -TERM -- -$(ps -o pgid= -p <pid> | tr -d ' ')`; `pkill -f` killed the Bash tool's own shell (exit 144). [Observed: 2026-09-04/25/26]
 - **137**: after a watcher stop it is the design (above); read `OOMKilled` before saying OOM. **134**: `zend_jit_trace.c ... Assertion !p->op_array failed` is harness broke, not detection (host changed 2026-09-28: read `php -v`); CI unaffected. Local runs take ~14x CI. [Observed: 2026-08-30, 2026-09-26, 2026-10-02]
 
 ## Traps (symptom -> cause)
@@ -70,5 +70,5 @@ Review date: 2026-10-03 11:44   Validation mode: advisory   Core: .claude/rules/
 | Ledger case | applies + parses + detected, both controls, changed-line count, restored byte-exact | the consequence, assignment intact | nightly (hours) |
 | Deploy / watcher | `verify-deploy.sh` exit 0 + `test-notify` | | first deployed pass; channel on an empty-queue day |
 | Backup | `test-backup-state.sh`, read-back count | | restore drill [Unverified] |
-| CI / workflow | `gh run list` on the full SHA, every job read | | the nightly |
+| CI / workflow | `/ci-watch` on the pushed SHA, every job read | | the nightly |
 | Record path | `PipelineRunTest` + `FixedPlanner` + logs `annonce(s) analysees` | clone-with, never field copy | |
