@@ -850,7 +850,15 @@ declared `mixed_tenure` to the corpus, so the two cannot drift apart silently.
 
 ## Part 3 — Raised by the bundle integration (2026-08-06)
 
-### Ⓐ Q12 — ANSWERED 2026-08-07: unlicensed
+### Ⓐ Q12 — ANSWERED 2026-08-07: unlicensed — **REVERSED 2026-10-08: MIT, `tests/fixtures/` excluded**
+
+> **REVERSED 2026-10-08, by developer ruling** (architecture review, `docs/plans/architecture-review.plan.md`
+> Decisions Log 00:25): *"MIT for the code, with tests/fixtures/\*\* carved out as third-party material
+> included for testing only; composer.json follows."* The repo was measured public on 2026-09-07
+> (CLAUDE.md hard rule 7), and "unlicensed" on a public repo grants nobody anything. `LICENSE` holds the
+> unmodified MIT text, so GitHub detects it; the exclusion lives in `tests/fixtures/NOTICE.md`, beside
+> the material it governs. No SPDX headers are added to files. The text below is the 2026-08-07 answer,
+> kept as history.
 
 **ANSWERED 2026-08-07 — the default applies.** The repo stays unlicensed (all rights reserved). No
 `LICENSE` file, no SPDX headers restored. If AGPL is ever adopted that is a new decision.

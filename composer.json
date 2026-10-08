@@ -1,8 +1,8 @@
 {
     "name": "tmessaoudi/scout",
-    "description": "scout — one self-hosted watcher, several domains: rental listings (rent) and used cars (car) in Île-de-France",
+    "description": "scout — one self-hosted watcher, several domains: rental listings (rent) and used cars (car) in Île-de-France, and job alerts (job)",
     "type": "project",
-    "license": "proprietary",
+    "license": "MIT",
     "require": {
         "php": ">=8.5",
         "ext-curl": "*",

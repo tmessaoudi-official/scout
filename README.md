@@ -845,3 +845,9 @@ either way ships regardless (Q11, ruled 2026-08-07):
   real budget and real preferences never have to enter git. That claim was written in four documents
   before anything enforced it; `/config/*.local.json` is now in `.gitignore`, and
   `git check-ignore -v config/rent/criteria.local.json` is how to confirm it rather than believe it.
+
+## Licence
+
+The code is MIT-licensed ([`LICENSE`](LICENSE)). `tests/fixtures/` is excluded as a whole: it contains pages and
+emails captured from third-party sites for offline parser tests, and no licence to that material is granted
+([`tests/fixtures/NOTICE.md`](tests/fixtures/NOTICE.md)).

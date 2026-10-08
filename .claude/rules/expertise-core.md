@@ -42,7 +42,7 @@ Scoring and routing:
 Sources and legality:
 - Robots.txt status handling: 404/410 allow; 403/5xx and an HTML 200 fail closed. A bot-challenge cookie (`/shield`, DataDome) is a CAPTCHA-class refusal: the route is the email alert, never a headless browser.  [Ruled: 2026-08-26; Observed: 2026-08-25]
 - Never write an endpoint from memory (A4/AL'in stays blocked on a DevTools capture); do not re-try ICF Novedis, Seqens, RIVP, Val d'Oise without new evidence.  [Observed: 2026-08-20/26]
-- Config is JSON, ZERO Composer deps (egress blocks codeload); `_`-keys are comments, unknown keys error loudly. Repo is PUBLIC and UNLICENSED; history purge is Q40 (default ACCEPT; never force-push).  [Ruled: 2026-08-07; Observed: 2026-09-07]
+- Config is JSON, ZERO Composer deps (egress blocks codeload); `_`-keys are comments, unknown keys error loudly. Repo is PUBLIC and MIT since 2026-10-08, `tests/fixtures/` excluded (`tests/fixtures/NOTICE.md`); history purge is Q40 (default ACCEPT; never force-push).  [Ruled: 2026-08-07; Observed: 2026-09-07]
 Workflow: `legal_risk: true` needs `--i-accept-legal-risk` per invocation; `/qa-sweep` stays rejected.  [Ruled: 2026-08-07, 2026-08-19]
 ## 4. Hard evidence surfaces (what certifies work here; "tests pass" alone does not)
 | Change touches | Certified by | Sabotage shape that matters | Uncertified unless run |
