@@ -414,8 +414,9 @@ final class PipelineRunTest extends TestCase
     /**
      * A COMMUTE OUTAGE IS SAID, ONCE PER PASS (architecture review C-10, 2026-10-08). Enrichment
      * never throws and never rejects, and both of its failure shapes used to vanish: the planner's
-     * own `null` and the pipeline's belt-and-braces catch. The warning reads a per-pass DELTA,
-     * because under `--watch` the planner outlives a pass and a total would warn for ever.
+     * own `null` and the pipeline's belt-and-braces catch. The warning reads a per-pass DELTA, so
+     * it stays one pass's count whatever the planner's lifetime (`RentScout::onePass()` builds one
+     * per pass today; a planner reused across passes would otherwise warn for ever).
      */
     public function testACommuteOutageIsWarnedOncePerPassAndNotAfterwards(): void
     {
@@ -436,6 +437,30 @@ final class PipelineRunTest extends TestCase
         $second = $pipeline->runOnce([new FakeSource('bienici', [$this->dated('c', 1120, '2026-08-27T14:10:00Z')])], '2026-08-27T14:15:00Z');
 
         self::assertSame([], array_values(array_filter($second->warnings, static fn (string $w): bool => str_contains($w, 'de trajet en échec'))), 'a clean pass says nothing');
+    }
+
+    /**
+     * AN EXHAUSTED QUOTA IS NAMED AS ONE, NOT AS AN OUTAGE (2026-10-08). PRIM allows 1000 requests a
+     * day (measured from its own 429 headers); once they are spent every lookup is refused until the
+     * reset, and the generic line blamed the key, the network or the API. The quota gets its own
+     * line, carrying what the 429 said, and the generic line stays for real failures only.
+     */
+    public function testAnExhaustedQuotaIsWarnedAsTheQuota(): void
+    {
+        $planner = new FailingPlanner();
+        $planner->quotaRefusing = true;
+        $pipeline = $this->pipeline($this->store(), null, $planner);
+
+        $result = $pipeline->runOnce([new FakeSource('bienici', [
+            $this->dated('q1', 1100, '2026-08-27T13:00:00Z'),
+            $this->dated('q2', 1150, '2026-08-27T13:00:00Z'),
+        ])], '2026-08-27T14:00:00Z');
+
+        $quota = array_values(array_filter($result->warnings, static fn (string $w): bool => str_contains($w, 'quota')));
+        self::assertCount(1, $quota, 'one line per pass');
+        self::assertMatchesRegularExpression('/(?<![0-9])2 calcul\(s\) de trajet refusé\(s\)/', $quota[0]);
+        self::assertStringContainsString('0 restant sur 1000', $quota[0], 'what the 429 said, not a hard-coded figure');
+        self::assertSame([], array_values(array_filter($result->warnings, static fn (string $w): bool => str_contains($w, 'de trajet en échec'))), 'a refusal by quota is not an outage');
     }
 
     public function testAPlannerThatThrowsIsCountedByThePipeline(): void
@@ -3393,15 +3418,25 @@ final readonly class FixedPlanner implements CommutePlanner
     }
 }
 
-/** A planner that fails while `$failing` is set and counts it, as `NavitiaCommute` does. */
+/** A planner that fails while `$failing` is set, or is refused by quota while `$quotaRefusing` is, and counts both as `NavitiaCommute` does. */
 final class FailingPlanner implements CommutePlanner, \Scout\Rent\Enrich\ReportsCommuteFailures
 {
     public bool $failing = false;
 
+    public bool $quotaRefusing = false;
+
     private int $failed = 0;
+
+    private int $refused = 0;
 
     public function minutesFrom(?string $commune, ?string $postcode): ?int
     {
+        if ($this->quotaRefusing) {
+            ++$this->refused;
+
+            return null;
+        }
+
         if ($this->failing) {
             ++$this->failed;
 
@@ -3414,6 +3449,16 @@ final class FailingPlanner implements CommutePlanner, \Scout\Rent\Enrich\Reports
     public function failedLookups(): int
     {
         return $this->failed;
+    }
+
+    public function quotaRefusedLookups(): int
+    {
+        return $this->refused;
+    }
+
+    public function quotaDetail(): ?string
+    {
+        return $this->refused > 0 ? 'quota journalier épuisé : 0 restant sur 1000' : null;
     }
 }
 

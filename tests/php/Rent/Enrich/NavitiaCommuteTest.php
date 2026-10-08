@@ -196,6 +196,109 @@ final class NavitiaCommuteTest extends TestCase
         self::assertNull($store->cachedCommuteMinutes('sartrouville', '78500', sha1('somewhere else')));
     }
 
+    /**
+     * THE QUOTA IS 1000 REQUESTS A DAY, AND OUT-OF-AREA LISTINGS WERE SPENDING IT (2026-10-08). Every
+     * harvested listing is enriched, and 59 of the 66 uncached communes of one deployed pass were
+     * outside the location filter (Indre, Loire, Nantes...): rejected by the engine moments later,
+     * after up to three requests each. A listing the location rule refuses now costs nothing, and is
+     * not a failure: nothing was attempted.
+     */
+    public function testAListingOutsideTheLocationFilterCostsNoRequest(): void
+    {
+        $planner = $this->planner(1200);
+
+        self::assertNull($planner->minutesFrom('Châteauroux', '36000'));
+        self::assertSame([], $this->urls);
+        self::assertSame(0, $planner->failedLookups());
+        self::assertSame(0, $planner->quotaRefusedLookups());
+    }
+
+    /** The destination is one place: resolved once per planner, not once per commune. */
+    public function testTheDestinationIsResolvedOncePerPlanner(): void
+    {
+        $planner = $this->plannerAnsweringJourneys(new HttpResponse(200, '{"journeys":[{"duration":1200}]}'));
+
+        self::assertSame(20, $planner->minutesFrom('Sartrouville', '78500'));
+        self::assertSame(20, $planner->minutesFrom('Houilles', '78800'));
+
+        $destination = array_filter($this->urls, static fn (string $u): bool => str_contains(urldecode($u), 'Quai test'));
+        self::assertCount(1, $destination, 'the destination is re-resolved on every cache miss');
+    }
+
+    /**
+     * A 429 ENDS THE PASS'S LOOKUPS AND IS REPORTED AS THE QUOTA. Measured live: the answer carries
+     * `x-ratelimit-limit-day: 1000` and `x-ratelimit-remaining-day: 0` and stays 429 until the daily
+     * reset, so every further request is spent for nothing. The planner stops asking, counts each
+     * lookup it could not make, and reports the figures the API gave rather than a hard-coded one.
+     */
+    public function testA429StopsEveryLaterLookupAndIsReportedAsTheQuota(): void
+    {
+        $planner = $this->plannerReturning(new HttpResponse(429, '{"message":"API rate limit exceeded"}', [
+            'x-ratelimit-limit-day' => '1000',
+            'x-ratelimit-remaining-day' => '0',
+        ]));
+
+        self::assertNull($planner->minutesFrom('Sartrouville', '78500'));
+        self::assertCount(1, $this->urls);
+        self::assertNull($planner->minutesFrom('Houilles', '78800'));
+        self::assertCount(1, $this->urls, 'no request after the quota said no');
+
+        self::assertSame(2, $planner->quotaRefusedLookups());
+        self::assertSame(0, $planner->failedLookups(), 'a quota refusal is not an outage');
+        self::assertSame('quota journalier épuisé : 0 restant sur 1000', $planner->quotaDetail());
+    }
+
+    /** The same refusal on the SECOND request of a lookup: places answered, the journey was refused. */
+    public function testA429OnTheJourneyIsAQuotaRefusalToo(): void
+    {
+        $planner = $this->plannerAnsweringJourneys(new HttpResponse(429, '{"message":"API rate limit exceeded"}', [
+            'x-ratelimit-limit-day' => '1000',
+            'x-ratelimit-remaining-day' => '0',
+        ]));
+
+        self::assertNull($planner->minutesFrom('Sartrouville', '78500'));
+
+        self::assertSame(1, $planner->quotaRefusedLookups());
+        self::assertSame(0, $planner->failedLookups());
+    }
+
+    public function testA429WithoutQuotaHeadersSaysOnlyWhatItKnows(): void
+    {
+        $planner = $this->plannerReturning(new HttpResponse(429, ''));
+        $planner->minutesFrom('Sartrouville', '78500');
+
+        self::assertSame('HTTP 429, limite de débit (sans détail de quota)', $planner->quotaDetail());
+        self::assertNull($this->plannerReturning(new HttpResponse(503, ''))->quotaDetail(), 'no refusal, no detail');
+    }
+
+    /**
+     * A 404 THAT ANSWERS IS NOT AN OUTAGE. Probed live 2026-10-08: an origin no public transport
+     * reaches returns `404 {"error":{"id":"no_origin"}}`. Counted, it made the warning blame the key
+     * or the network for "no route from here". Only answers are excused; any other 404 still counts.
+     */
+    public function testA404ThatAnswersIsNotAFailureAndIsNotAskedTwice(): void
+    {
+        $planner = $this->plannerAnsweringJourneys(new HttpResponse(404, '{"error":{"id":"no_origin","message":"Public transport is not reachable from origin"}}'));
+
+        self::assertNull($planner->minutesFrom('Sartrouville', '78500'));
+        self::assertSame(0, $planner->failedLookups());
+
+        $before = count($this->urls);
+        self::assertNull($planner->minutesFrom('Sartrouville', '78500'));
+        self::assertCount($before, $this->urls, 'a no-route answer is remembered for the planner\'s life');
+    }
+
+    public function testAnyOther404IsStillAFailure(): void
+    {
+        $outOfBounds = $this->plannerAnsweringJourneys(new HttpResponse(404, '{"error":{"id":"date_out_of_bounds"}}'));
+        $outOfBounds->minutesFrom('Sartrouville', '78500');
+        self::assertSame(1, $outOfBounds->failedLookups(), 'a timetable the date falls outside is a real problem');
+
+        $bare = $this->plannerAnsweringJourneys(new HttpResponse(404, 'Not Found'));
+        $bare->minutesFrom('Sartrouville', '78500');
+        self::assertSame(1, $bare->failedLookups(), 'a 404 that says nothing is not an answer');
+    }
+
     /** The fingerprint the planner writes: a HASH, because the destination is a personal address. */
     private static function destinationKey(): string
     {
@@ -253,6 +356,33 @@ final class NavitiaCommuteTest extends TestCase
                 $this->urls[] = $request->url;
 
                 return $this->response;
+            }
+        });
+    }
+
+    /**
+     * `places` answers with the postcode the query asked for (so any commune passes the postcode
+     * check), and `journeys` answers with `$journeys`.
+     */
+    private function plannerAnsweringJourneys(HttpResponse $journeys): NavitiaCommute
+    {
+        return $this->build(new class($journeys, $this->urls) implements HttpClient {
+            public function __construct(private readonly HttpResponse $journeys, private array &$urls) {}
+
+            public function send(HttpRequest $request): HttpResponse
+            {
+                $this->urls[] = $request->url;
+
+                if (str_contains($request->url, '/journeys')) {
+                    return $this->journeys;
+                }
+
+                parse_str((string) parse_url($request->url, PHP_URL_QUERY), $query);
+                $zip = preg_match('~(\d{5})$~', (string) ($query['q'] ?? ''), $m) === 1 ? $m[1] : '92600';
+
+                return new HttpResponse(200, json_encode(['places' => [[
+                    'address' => ['coord' => ['lon' => 2.16, 'lat' => 48.93], 'administrative_regions' => [['zip_code' => $zip]]],
+                ]]], JSON_THROW_ON_ERROR));
             }
         });
     }

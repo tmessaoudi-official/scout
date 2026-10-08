@@ -6445,6 +6445,54 @@ run_sabotage "commute: a planner that throws is not counted by the pipeline (C-1
   src/php/Rent/Cli/Pipeline.php \
   "s%++\$plannerThrew;%%"
 
+# THE PRIM QUOTA (2026-10-08, C-10 follow-up): 1000 requests a day, measured from the 429's own
+# headers, spent on out-of-area listings and repeated misses. Same measuring discipline as above:
+# one changed line each, `php -l` clean, the named behavioural test is the red. The two 429 sites
+# are scoped by method, since the same line appears in both.
+run_sabotage "commute: the planner spends a request on an out-of-area listing (quota)" \
+  src/php/Rent/Enrich/NavitiaCommute.php \
+  "s%if (!\$this->criteria->matchesLocation(\$commune, \$postcode)) {%if (false) {%"
+
+run_sabotage "location: the shared rule ignores the commune and lets the prefix decide (quota)" \
+  src/php/Rent/Config/Criteria.php \
+  "/public function matchesLocation/,/^    }/ s%if (\$commune !== null) {%if (false) {%"
+
+run_sabotage "commute: the destination is re-resolved on every miss (quota)" \
+  src/php/Rent/Enrich/NavitiaCommute.php \
+  "s%\$to = \$this->memo->destination(\$destination);%\$to = null;%"
+
+run_sabotage "commute: the planner keeps asking after the quota said no (quota)" \
+  src/php/Rent/Enrich/NavitiaCommute.php \
+  "s%if (\$this->failures->quotaExhausted()) {%if (false) {%"
+
+run_sabotage "commute: a 429 on places is counted as an outage (quota)" \
+  src/php/Rent/Enrich/NavitiaCommute.php \
+  "/function coordinatesOf/,/function coordOf/ s%if (\$response->status === 429) {%if (false) {%"
+
+run_sabotage "commute: a 429 on journeys is counted as an outage (quota)" \
+  src/php/Rent/Enrich/NavitiaCommute.php \
+  "/function journeyMinutes/,/function answersNoRoute/ s%if (\$response->status === 429) {%if (false) {%"
+
+run_sabotage "commute: a no-route 404 is counted as an outage (quota)" \
+  src/php/Rent/Enrich/NavitiaCommute.php \
+  "s%if (\$response->status === 404 \&\& self::answersNoRoute(\$response->body)) {%if (false) {%"
+
+run_sabotage "commute: a no-route commune is asked again in the same pass (quota)" \
+  src/php/Rent/Enrich/NavitiaCommute.php \
+  "s%if (\$this->memo->isNoRoute(\$origin)) {%if (false) {%"
+
+run_sabotage "commute: every Navitia 404 id is excused as an answer (quota)" \
+  src/php/Rent/Enrich/NavitiaCommute.php \
+  "s%return is_string(\$id) \&\& in_array(\$id, self::NO_ROUTE_ANSWERS, true);%return is_string(\$id);%"
+
+run_sabotage "commute: the quota line drops the figures the 429 gave (quota)" \
+  src/php/Rent/Enrich/NavitiaCommute.php \
+  "s#? sprintf('quota journalier épuisé : 0 restant sur %s', \$limit)#? 'quota journalier épuisé'#"
+
+run_sabotage "commute: the pass never names an exhausted quota (quota)" \
+  src/php/Rent/Cli/Pipeline.php \
+  "s%if (\$commuteRefused > 0) {%if (false) {%"
+
 # THE ABORT COMES BEFORE THE TALLY, and that ordering is the finding rather than a nicety (C2
 # round 7, resilience P3). The alert job harvests the `N sabotage(s) detected, M undetected` line;
 # printed AFTER it, a shard that selected no case ended its log with a clean-looking `0 / 0` and the

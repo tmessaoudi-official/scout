@@ -541,7 +541,10 @@ final class TenureCorpusTest extends TestCase
             // failed, held by the `final readonly` NavitiaCommute. The same shape again: counting
             // IS its mechanism, its owner hands out the number and never the object, and it
             // carries no verdict (commute is a score component, never a disqualifier).
-            ['CommuteFailures', 'ImapMailbox', 'IndexSize', 'Pacer', 'PatternMissLog', 'Reader', 'WatchLoop'],
+            // CommuteMemo (2026-10-08): what the same planner already learned in its life (one pass) —
+            // the destination's coordinates and the communes PRIM answered "no route" for. Remembering
+            // IS its mechanism, against a quota of 1000 requests a day; it carries no verdict either.
+            ['CommuteFailures', 'CommuteMemo', 'ImapMailbox', 'IndexSize', 'Pacer', 'PatternMissLog', 'Reader', 'WatchLoop'],
             $exempt,
             'the MutableByDesign set changed. Every entry must be a non-value-object whose mutation '
             . 'IS its mechanism and which is never handed to a caller as a result — argue it here',

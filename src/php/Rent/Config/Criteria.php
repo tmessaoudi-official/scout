@@ -169,6 +169,41 @@ final readonly class Criteria
     }
 
     /**
+     * Location, under the Q32 ruling: judged on whichever of the two fields is present.
+     *
+     * THE ONE location rule (moved verbatim from `CriteriaEngine` on 2026-10-08): the engine rejects on
+     * it and the commute planner asks it before spending a request, so the two cannot disagree.
+     *
+     * With a commune, {@see self::matchesCommune()} applies and the postcode narrows it. With
+     * only a postcode — an ordinary shape when a selector catches the address but not the city —
+     * the prefix alone decides, which is looser than the commune list but is the right kind of
+     * loose: it admits a few neighbouring communes rather than dropping a real listing silently.
+     */
+    public function matchesLocation(?string $commune, ?string $postcode): bool
+    {
+        if ($commune !== null) {
+            return $this->matchesCommune($commune, $postcode);
+        }
+
+        if ($this->postcodePrefixes === []) {
+            return true;
+        }
+
+        $digits = preg_replace('~\D+~', '', (string) $postcode) ?? '';
+        if ($digits === '') {
+            return false;
+        }
+
+        foreach ($this->postcodePrefixes as $prefix) {
+            if (str_starts_with($digits, $prefix)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Region mode's whole filter: does this postcode start with one of the configured prefixes?
      *
      * Separate from the name path on purpose. Sharing one method would have meant threading a flag

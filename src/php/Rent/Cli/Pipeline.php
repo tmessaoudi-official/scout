@@ -181,9 +181,11 @@ final readonly class Pipeline
         // afterwards would replace member objects that the survivor is a second reference to, and
         // the cluster bookkeeping would quietly stop matching.
         // A commute outage is COUNTED per pass (architecture review C-10, 2026-10-08): the planner's
-        // own failures as a DELTA, because under `--watch` it outlives the pass, plus this
+        // own failures and quota refusals as DELTAS, so each stays one pass's count whatever the
+        // planner's lifetime (`RentScout::onePass()` builds one per pass today), plus this
         // pipeline's catch of a planner that broke its never-throw contract.
         $commuteFailedBefore = $this->commute instanceof ReportsCommuteFailures ? $this->commute->failedLookups() : 0;
+        $commuteRefusedBefore = $this->commute instanceof ReportsCommuteFailures ? $this->commute->quotaRefusedLookups() : 0;
         $plannerThrew = 0;
         $harvested = array_map(
             function (array $row) use (&$plannerThrew): array {
@@ -193,6 +195,7 @@ final readonly class Pipeline
         );
         $commuteFailed = $plannerThrew
             + ($this->commute instanceof ReportsCommuteFailures ? $this->commute->failedLookups() - $commuteFailedBefore : 0);
+        $commuteRefused = $this->commute instanceof ReportsCommuteFailures ? $this->commute->quotaRefusedLookups() - $commuteRefusedBefore : 0;
 
         $clustered = $this->dedup->cluster($harvested);
         $duplicates = count($harvested) - count($clustered);
@@ -904,6 +907,16 @@ final readonly class Pipeline
             $warnings[] = sprintf(
                 'trajet : %d calcul(s) de trajet en échec pendant ce passage — la composante trajet manque sur ces annonces (clé IDFM_API_KEY, réseau ou API Navitia)',
                 $commuteFailed,
+            );
+        }
+
+        // A QUOTA REFUSAL IS NOT AN OUTAGE, and the line above blamed the key, the network or the API
+        // for it (2026-10-08: PRIM allows 1000 requests a day). Its own line, carrying what the 429 said.
+        if ($commuteRefused > 0) {
+            $warnings[] = sprintf(
+                'trajet : %d calcul(s) de trajet refusé(s) par l\'API PRIM — %s ; la composante trajet manque sur ces annonces jusqu\'à la remise à zéro du quota',
+                $commuteRefused,
+                $this->commute instanceof ReportsCommuteFailures ? ($this->commute->quotaDetail() ?? 'HTTP 429') : 'HTTP 429',
             );
         }
 

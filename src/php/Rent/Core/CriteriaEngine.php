@@ -151,7 +151,7 @@ final readonly class CriteriaEngine
             return 'no commune and no postcode — the listing carries no location evidence at all';
         }
 
-        if (!$this->matchesLocation($listing)) {
+        if (!$this->criteria->matchesLocation($listing->commune, $listing->postcode)) {
             return 'commune: ' . ($listing->commune ?? '(absent)') . ' / ' . ($listing->postcode ?? '(absent)');
         }
 
@@ -189,38 +189,6 @@ final readonly class CriteriaEngine
         }
 
         return null;
-    }
-
-    /**
-     * Location, under the Q32 ruling: judged on whichever of the two fields is present.
-     *
-     * With a commune, {@see Criteria::matchesCommune()} applies and the postcode narrows it. With
-     * only a postcode — an ordinary shape when a selector catches the address but not the city —
-     * the prefix alone decides, which is looser than the commune list but is the right kind of
-     * loose: it admits a few neighbouring communes rather than dropping a real listing silently.
-     */
-    private function matchesLocation(RawListing $listing): bool
-    {
-        if ($listing->commune !== null) {
-            return $this->criteria->matchesCommune($listing->commune, $listing->postcode);
-        }
-
-        if ($this->criteria->postcodePrefixes === []) {
-            return true;
-        }
-
-        $digits = preg_replace('~\D+~', '', (string) $listing->postcode) ?? '';
-        if ($digits === '') {
-            return false;
-        }
-
-        foreach ($this->criteria->postcodePrefixes as $prefix) {
-            if (str_starts_with($digits, $prefix)) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     private function score(RawListing $listing, Classification $classification, ?int $firstSeenAgeSeconds): Verdict

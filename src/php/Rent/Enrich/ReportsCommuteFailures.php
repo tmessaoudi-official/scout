@@ -17,4 +17,10 @@ interface ReportsCommuteFailures
 {
     /** Lookups that FAILED (an error response or an exception), never ones the API answered. */
     public function failedLookups(): int;
+
+    /** Lookups the API's quota refused (a 429), and every lookup not attempted after one. */
+    public function quotaRefusedLookups(): int;
+
+    /** What the first 429 said (the daily figures when it gave them), or `null` if none came. */
+    public function quotaDetail(): ?string;
 }

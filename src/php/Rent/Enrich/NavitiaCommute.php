@@ -6,6 +6,7 @@ namespace Scout\Rent\Enrich;
 
 use Scout\Adapters\Http\HttpClient;
 use Scout\Adapters\Http\HttpRequest;
+use Scout\Adapters\Http\HttpResponse;
 use Scout\Rent\Config\Criteria;
 use Scout\Rent\Store\Store;
 
@@ -24,8 +25,15 @@ use Scout\Rent\Store\Store;
  * 2. `journeys` asks for the trip to the configured destination.
  *
  * The result is cached in the store PER COMMUNE, because a commune's coordinates and its journey are
- * properties of the place rather than of the listing: ~83 daily matches across ~40 communes cost
- * about 40 pairs of requests once, against a documented quota of 20 000 requests a day.
+ * properties of the place rather than of the listing.
+ *
+ * **THE QUOTA IS 1000 REQUESTS A DAY**, read off PRIM's own 429 on 2026-10-08
+ * (`x-ratelimit-limit-day: 1000`). This docblock said "a documented quota of 20 000", and the
+ * difference was being spent: every harvested listing was looked up, out-of-area ones included, a
+ * failure was never cached, and each miss re-resolved the destination, so the quota ran out daily and
+ * every later lookup was refused until the reset. Three economies follow, each in `minutesFrom()`:
+ * a listing outside the location rule costs nothing, the destination is resolved once per planner,
+ * and the first 429 ends the planner's lookups.
  */
 final readonly class NavitiaCommute implements CommutePlanner, ReportsCommuteFailures
 {
@@ -50,11 +58,32 @@ final readonly class NavitiaCommute implements CommutePlanner, ReportsCommuteFai
         private string $referenceDeparture,
         private ?string $nowIso = null,
         private CommuteFailures $failures = new CommuteFailures(),
+        private CommuteMemo $memo = new CommuteMemo(),
     ) {}
+
+    /**
+     * Navitia's 404 error ids that ANSWER rather than fail: there is no public transport at one end.
+     * `no_origin` was probed live on 2026-10-08 (`404 {"error":{"id":"no_origin","message":"Public
+     * transport is not reachable from origin"}}`); its two siblings are named by symmetry and are
+     * [Unverified]. `no_solution` is deliberately absent: an origin with transport but no journey may
+     * well come back as a 200 with no journeys, which `journeyMinutes()` already reads as an answer,
+     * and an unprobed id must not excuse a failure. Every other 404 is still counted.
+     */
+    private const array NO_ROUTE_ANSWERS = ['no_origin', 'no_destination', 'no_origin_nor_destination'];
 
     public function failedLookups(): int
     {
         return $this->failures->count();
+    }
+
+    public function quotaRefusedLookups(): int
+    {
+        return $this->failures->quotaRefusals();
+    }
+
+    public function quotaDetail(): ?string
+    {
+        return $this->failures->quotaDetail();
     }
 
     public function minutesFrom(?string $commune, ?string $postcode): ?int
@@ -85,6 +114,29 @@ final readonly class NavitiaCommute implements CommutePlanner, ReportsCommuteFai
             return $cached;
         }
 
+        // OUTSIDE THE LOCATION RULE, NOTHING IS SPENT. The engine rejects such a listing on this same
+        // predicate moments later, and 59 of the 66 uncached communes of one deployed pass were of
+        // that kind. After the cache read, so a row cached before a narrowing stays readable.
+        // Stated cost: such a listing is snapshotted without a commute, so if `postcode_prefixes` is
+        // later WIDENED, `scout reclassify` judges it without the component until it is sighted again.
+        if (!$this->criteria->matchesLocation($commune, $postcode)) {
+            return null;
+        }
+
+        $origin = $key . '|' . $postcode;
+
+        if ($this->memo->isNoRoute($origin)) {
+            return null;
+        }
+
+        // The quota said no earlier in this planner's life: every further request would be refused
+        // too. Counted, because the listing still lacks its commute.
+        if ($this->failures->quotaExhausted()) {
+            $this->failures->recordQuota(null);
+
+            return null;
+        }
+
         // NOTHING BELOW MAY THROW. Enrichment runs inside a pass that has already fetched real
         // listings from live sources, so a commute lookup that voided the pass would trade a missing
         // score component for every listing in it — the blast-radius mistake detail hydration made
@@ -96,13 +148,21 @@ final readonly class NavitiaCommute implements CommutePlanner, ReportsCommuteFai
                 return null;
             }
 
-            $to = $this->coordinatesOf($destination, null);
+            $to = $this->memo->destination($destination);
+
+            if ($to === null) {
+                $to = $this->coordinatesOf($destination, null);
+
+                if ($to !== null) {
+                    $this->memo->rememberDestination($destination, $to);
+                }
+            }
 
             if ($to === null) {
                 return null;
             }
 
-            $minutes = $this->journeyMinutes($from, $to);
+            $minutes = $this->journeyMinutes($from, $to, $origin);
 
             if ($minutes === null) {
                 return null;
@@ -147,6 +207,12 @@ final readonly class NavitiaCommute implements CommutePlanner, ReportsCommuteFai
             ]),
             headers: ['apikey' => $this->apiKey],
         ));
+
+        if ($response->status === 429) {
+            $this->failures->recordQuota(self::quotaDetailOf($response));
+
+            return null;
+        }
 
         if (!$response->isSuccess()) {
             $this->failures->record();
@@ -217,7 +283,7 @@ final readonly class NavitiaCommute implements CommutePlanner, ReportsCommuteFai
      * @param array{0: float, 1: float} $from
      * @param array{0: float, 1: float} $to
      */
-    private function journeyMinutes(array $from, array $to): ?int
+    private function journeyMinutes(array $from, array $to, string $origin): ?int
     {
         $response = $this->http->send(new HttpRequest(
             url: self::BASE . '/journeys?' . http_build_query([
@@ -230,6 +296,18 @@ final readonly class NavitiaCommute implements CommutePlanner, ReportsCommuteFai
             headers: ['apikey' => $this->apiKey],
             timeoutSeconds: 30,
         ));
+
+        if ($response->status === 429) {
+            $this->failures->recordQuota(self::quotaDetailOf($response));
+
+            return null;
+        }
+
+        if ($response->status === 404 && self::answersNoRoute($response->body)) {
+            $this->memo->rememberNoRoute($origin);
+
+            return null;
+        }
 
         if (!$response->isSuccess()) {
             $this->failures->record();
@@ -262,5 +340,31 @@ final readonly class NavitiaCommute implements CommutePlanner, ReportsCommuteFai
         }
 
         return $best === null ? null : (int) round($best / 60);
+    }
+
+    private static function answersNoRoute(string $body): bool
+    {
+        $data = json_decode($body, true);
+        $id = is_array($data) && is_array($data['error'] ?? null) ? ($data['error']['id'] ?? null) : null;
+
+        return is_string($id) && in_array($id, self::NO_ROUTE_ANSWERS, true);
+    }
+
+    /**
+     * What a 429 said, from PRIM's own headers when it sent them: a day's figures are evidence, a
+     * hard-coded one would go stale exactly as the "20 000" in this class's docblock did.
+     */
+    private static function quotaDetailOf(HttpResponse $response): string
+    {
+        $limit = $response->header('x-ratelimit-limit-day');
+        $remaining = $response->header('x-ratelimit-remaining-day');
+
+        if ($limit === null || $remaining === null || !ctype_digit($limit) || !ctype_digit($remaining)) {
+            return 'HTTP 429, limite de débit (sans détail de quota)';
+        }
+
+        return $remaining === '0'
+            ? sprintf('quota journalier épuisé : 0 restant sur %s', $limit)
+            : sprintf('HTTP 429, limite de débit (quota journalier : %s restant sur %s)', $remaining, $limit);
     }
 }
