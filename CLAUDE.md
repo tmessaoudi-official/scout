@@ -177,7 +177,7 @@ in the same result set.
 | **PLUS** — Prêt Locatif à Usage Social | Mainstream social housing. Requires SNE registration (numéro unique), allocated by commission d'attribution. | **NEVER** |
 | **PLAI** — Prêt Locatif Aidé d'Intégration | Very-low-income social housing. | **NEVER** |
 | **LIBRE** | Private market rate, no cap, no income condition. SeLoger / Leboncoin / PAP / Bien'ici / agencies. | **YES** — ruled 2026-08-06 (Q4), a full match on its own track |
-| **ANRU / ANAH / conventionné** | Various subsidised regimes. Treat as social unless explicitly labelled intermediate. | **NEVER** |
+| **ANRU / ANAH / conventionné** | Various subsidised schemes (ANRU is the urban-renewal agency, not a regime: its label is read for the social stock it finances). Treat as social unless explicitly labelled intermediate. | **NEVER** |
 
 Classifier signal priority (highest → lowest confidence). A lower-priority signal must never override a
 higher one:
