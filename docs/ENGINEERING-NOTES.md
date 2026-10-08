@@ -887,6 +887,30 @@ one probe of four communes settled it.
 > plainly: `{"message":"No API key found in request"}`. **Never append a key that already has a
 > template line — edit the line in place.** `.env.example` now carries that warning where it happens.
 
+> **THE QUOTA IS 1000 REQUESTS A DAY, NOT 20 000, AND IT RAN OUT UNSEEN (2026-10-08).**
+> The class docblock said "a documented quota of 20 000". PRIM's own 429 says otherwise:
+> `x-ratelimit-limit-day: 1000`, `x-ratelimit-remaining-day: 0`, `retry-after` ~21 h. It was found
+> the day failures started being counted (architecture review C-10): the first deployed pass warned
+> `23 calcul(s) de trajet en échec` against 2 new `commute_cache` rows, and a replay of the 66
+> uncached communes of that pass got 66 × `429`. Three things spent the quota. **Every harvested
+> listing was looked up**, and 59 of the 66 were outside the location filter (Indre, Loire, Nantes…),
+> rejected by the engine moments later. **A failure is never cached** (the bullet above, still
+> right), so each was retried every pass. And **each miss re-resolved the destination**. Once the
+> quota ran out, every lookup was refused until the reset, and the reasons said `trajet inconnu`,
+> which is true and explains nothing. That it ran out EVERY day is inferred (~23 uncached lookups a
+> pass × ~96 passes against 1000), not measured over days.
+> The repair, in `NavitiaCommute::minutesFrom()`: a listing the shared `Criteria::matchesLocation()`
+> refuses costs no request (the engine rejects on the same predicate, so they cannot disagree); the
+> destination is resolved once per planner (one pass); the first 429 ends the pass's lookups and the
+> pass prints its own line with the figures the 429 gave; a `404` whose error id is `no_origin` (probed
+> live; `no_destination` and `no_origin_nor_destination` by symmetry, [Unverified]) is an answer,
+> not an outage, and is remembered for the pass. **Stated costs:** an out-of-area listing is
+> snapshotted without a commute, so a later WIDENING of `postcode_prefixes` leaves `reclassify`
+> scoring it without the component until it is sighted again; and an in-area commune with no public
+> transport still costs about two requests per pass, because a persisted no-route cache was ruled
+> out (no schema change). Read `x-ratelimit-remaining-day` the day after a reset to see whether that
+> second cost matters.
+
 **Commute is OFF everywhere except the developer's machine.** The activation is a personal address
 and lives only in the gitignored `config/rent/criteria.local.json`, and the loader's two-sided guard
 refuses `weights.commute` without `commute.enabled` — so CI, the fixtures and the sabotage ledger all
