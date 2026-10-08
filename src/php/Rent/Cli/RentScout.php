@@ -2453,8 +2453,10 @@ final readonly class RentScout
             return null;
         }
 
+        // The CLI's own client, the seam every other outbound request goes through: a commute call built
+        // on a private `new CurlHttpClient()` was the one request no CLI test could observe (C-10, 8a).
         return new NavitiaCommute(
-            new CurlHttpClient(),
+            $this->http,
             $store,
             $criteria,
             trim($key),

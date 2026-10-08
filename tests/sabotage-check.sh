@@ -1748,6 +1748,12 @@ run_sabotage "the network guard reads a quoted message as a call (B-6)" \
   tests/php/Repo/NetworkPrimitivesAreGuardedTest.php \
   's%preg_replace(./\\.(?:\[^%preg_replace('\''/NEVER\\'\''(?:[^%'
 
+# COMMUTE GOES THROUGH THE CLI's HTTP SEAM (C-10's port half, step 8a, 2026-10-08). Measured: the
+# expression changes one line (the planner's client argument), and RentScoutCommuteSeamTest reddens.
+run_sabotage "the commute planner builds its own HTTP client again (8a)" \
+  src/php/Rent/Cli/RentScout.php \
+  's%^            \$this->http,$%            new CurlHttpClient(),%'
+
 # SCOPED to reclassify(), for the reason on the drain's own pair above.
 #
 # DELIBERATELY NOT COMPOUND, and it was one measurement away from becoming one. The two reclassify
