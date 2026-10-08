@@ -413,8 +413,8 @@ silently skip a gate.
 
 Autonomous `git add`, `git commit` **and `git push`** are **authorised** for green, self-contained work
 on **`master`**, which matches global Rule 10's autonomous branch. Asking permission for them violates
-the no-interrupts directive. **Push cadence is Rule 10's batch** (developer ruling, 2026-10-08, D-10):
-push at 10 unpushed commits, at the end of a milestone, and before any stop or hand-off. Every push
+the no-interrupts directive. **Push cadence is Rule 10's batch** (developer ruling, 2026-10-08, D-10; count 10 → 30 by developer
+ruling 2026-10-08 23:44): push at 30 unpushed commits, at the end of a milestone, and before any stop or hand-off. Every push
 still gets its CI read (`gh run list` / `/ci-watch`), so CI is checked on fewer pushes, never on fewer
 commits. What follows is what scout adds to Rule 10:
 
