@@ -103,11 +103,21 @@ final class PatternMissEscalationTest extends TestCase
     {
         $implementors = $this->countingSources();
 
+        // Ten measured 2026-10-08 (Rent/Adapters 5, Car 3, Job 2), asserted as a FLOOR: a new counting
+        // adapter makes this stricter, never red for the wrong reason. Each context must contribute,
+        // because a scan that silently lost one tree would still clear a bare count.
         self::assertGreaterThanOrEqual(
-            5,
+            10,
             count($implementors),
             'the implementor scan found too few classes to be trusted — it is the guard, not a formality',
         );
+        foreach (['Scout\\Rent\\', 'Scout\\Car\\', 'Scout\\Job\\'] as $context) {
+            self::assertNotSame(
+                [],
+                array_filter($implementors, static fn (string $c): bool => str_starts_with($c, $context)),
+                'the implementor scan found no counting source in ' . $context . ' — did a tree drop out of the walk?',
+            );
+        }
 
         foreach ($implementors as $class) {
             $method = new \ReflectionMethod($class, 'health');
@@ -155,26 +165,87 @@ final class PatternMissEscalationTest extends TestCase
         }
     }
 
-    /** @return list<class-string> every loaded class implementing the interface */
-    private function countingSources(): array
+    /**
+     * THE WALK FOLLOWS THE TREE, NOT TODAY'S LAYOUT (architecture review B-4, 2026-10-08).
+     *
+     * The discovery used to glob three directories one level deep — `Rent/Adapters`, `Car`, `Job` — and
+     * try three namespace prefixes, and its own comment warned that a class outside them "is never
+     * declared and never checked". The migration this review plans moves adapters into new folders
+     * (`Car/Adapters/`, a shared application layer), which is exactly the move that would have dropped an
+     * implementor out of this guard while it stayed green. A file planted two levels deep in a scratch
+     * tree must be found; the self-test below is that proof.
+     */
+    public function testTheImplementorWalkReachesANestedFolder(): void
     {
-        // A DIRECTORY WITHOUT ITS NAMESPACE LOADS NOTHING: the loop below only tries these FQCNs,
-        // so a class under a listed dir in a namespace missing here is never declared and never checked.
-        foreach (['Rent/Adapters', 'Car', 'Job'] as $dir) {
-            foreach (glob(__DIR__ . '/../../../src/php/' . $dir . '/*.php') ?: [] as $path) {
-                $name = basename($path, '.php');
-                foreach (['Scout\\Rent\\Adapters\\' . $name, 'Scout\\Car\\' . $name, 'Scout\\Job\\' . $name] as $fqcn) {
-                    if (class_exists($fqcn)) {
-                        break;
+        $dir = sys_get_temp_dir() . '/pmwalk-' . bin2hex(random_bytes(6));
+        $class = 'NestedCounter' . bin2hex(random_bytes(4));
+        mkdir($dir . '/Deep/Nested', 0o777, true);
+
+        try {
+            file_put_contents($dir . '/Deep/Nested/' . $class . '.php', <<<PHP
+                <?php
+                namespace Scout\\Tests\\Scratch;
+                final class {$class} implements \\Scout\\Core\\CountsPatternMisses
+                {
+                    public function patternMisses(): \\Scout\\Core\\PatternMissLog
+                    {
+                        return new \\Scout\\Core\\PatternMissLog();
                     }
                 }
-            }
-        }
+                PHP);
 
+            self::assertContains(
+                'Scout\\Tests\\Scratch\\' . $class,
+                $this->countingSourcesUnder($dir),
+                'an implementor two folders deep was not discovered — the walk does not follow the tree',
+            );
+        } finally {
+            @unlink($dir . '/Deep/Nested/' . $class . '.php');
+            @rmdir($dir . '/Deep/Nested');
+            @rmdir($dir . '/Deep');
+            @rmdir($dir);
+        }
+    }
+
+    /** @return list<class-string> every class under `src/php` implementing the interface */
+    private function countingSources(): array
+    {
+        return $this->countingSourcesUnder(__DIR__ . '/../../../src/php');
+    }
+
+    /**
+     * Every class under `$dir`, at any depth, whose CODE declares it implements the interface.
+     *
+     * The namespace and class name are read from the file itself, so no prefix list can go stale. A class
+     * the autoloader cannot reach (a scratch file) is required directly; a `src/php` class is already
+     * autoloadable, so `class_exists()` declares it first and the file is never included twice.
+     *
+     * @return list<class-string>
+     */
+    private function countingSourcesUnder(string $dir): array
+    {
         $out = [];
-        foreach (get_declared_classes() as $class) {
-            if (is_a($class, CountsPatternMisses::class, true) && $class !== CountsPatternMisses::class) {
-                $out[] = $class;
+        $it = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($dir, \FilesystemIterator::SKIP_DOTS));
+        foreach ($it as $file) {
+            if (!$file instanceof \SplFileInfo || $file->getExtension() !== 'php') {
+                continue;
+            }
+            $lines = file($file->getPathname(), \FILE_IGNORE_NEW_LINES);
+            if ($lines === false) {
+                continue;
+            }
+            // CODE ONLY: a docblock saying "implements CountsPatternMisses" is prose, not a declaration.
+            $code = implode("\n", array_filter($lines, static fn (string $l): bool => preg_match('/^\s*(\*|\/\/|\/\*)/', $l) !== 1));
+            if (preg_match('/\bclass\s+([A-Za-z_][A-Za-z0-9_]*)[^{]*\bimplements\b[^{]*\bCountsPatternMisses\b/', $code, $c) !== 1) {
+                continue;
+            }
+            $namespace = preg_match('/^\s*namespace\s+([^;]+);/m', $code, $n) === 1 ? trim($n[1]) . '\\' : '';
+            $fqcn = $namespace . $c[1];
+            if (!class_exists($fqcn)) {
+                require_once $file->getPathname();
+            }
+            if (is_a($fqcn, CountsPatternMisses::class, true)) {
+                $out[] = $fqcn;
             }
         }
         sort($out);

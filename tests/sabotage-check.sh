@@ -1693,7 +1693,26 @@ run_sabotage "overflow() counts the queued rollup instead of the announced one (
 # switched off one `//` at a time. Nothing but its own counterweight would notice.
 run_sabotage "the call-site guard accepts a COMMENTED-OUT §1 gate" \
   tests/php/Repo/SectionOneGateCallSitesTest.php \
-  's%\$out\[\] = \[basename(\$file, ..php.), \$name, \$code\];%$out[] = [basename($file, ".php"), $name, $body];%'
+  's%\$out\[\] = \[basename(\$file, ..php.), \$name, \$code, \$rent\];%$out[] = [basename($file, ".php"), $name, $body, $rent];%'
+
+# THE THREE DISCOVERY GUARDS FOLLOW THE TREE, NOT TODAY'S LAYOUT (architecture review B-4, 2026-10-08).
+# Each was rooted at a directory or keyed on a variable name, so the planned migration (a shared
+# application layer, adapters in new folders) would have moved a §1 send, a doctor or a counting
+# adapter out of their sight while they stayed green. Every sender lives under `Rent/` today, so
+# narrowing a root back is visible only through what the walk would no longer SEE — these cases prove
+# the premises that see it.
+run_sabotage "the call-site guard walks src/php/Rent only again (B-4)" \
+  tests/php/Repo/SectionOneGateCallSitesTest.php \
+  's%private const string SCAN_ROOT = ./src/php.;%private const string SCAN_ROOT = "/src/php/Rent";%'
+run_sabotage "the call-site guard takes a car or job send for a rent announcement (B-4)" \
+  tests/php/Repo/SectionOneGateCallSitesTest.php \
+  's%\$rent = self::isRentScoped(implode(%$rent = true || self::isRentScoped(implode(%'
+run_sabotage "the acknowledge guard matches only \$source->acknowledge() again (B-4)" \
+  tests/php/Repo/AcknowledgeCallSitesTest.php \
+  's%(->|::)acknowledge\\s\*%\\$source->acknowledge\\s*%'
+run_sabotage "the pattern-miss implementor walk stops at the top folder again (B-4)" \
+  tests/php/Core/PatternMissEscalationTest.php \
+  's%new \\RecursiveIteratorIterator(new \\RecursiveDirectoryIterator(\$dir, \\FilesystemIterator::SKIP_DOTS))%new \\FilesystemIterator($dir)%'
 
 # SCOPED to reclassify(), for the reason on the drain's own pair above.
 #

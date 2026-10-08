@@ -41,13 +41,24 @@ final class SectionOneGateCallSitesTest extends TestCase
      */
     private const array NOT_ABOUT_A_LISTING = ['alertOnHealth', 'beat', 'testNotify'];
 
+    /**
+     * THE WHOLE SOURCE TREE, NOT `src/php/Rent` (architecture review B-4, 2026-10-08).
+     *
+     * The scan was rooted at `src/php/Rent` with a floor of four methods, so a sending method moved into
+     * a shared application layer — the natural home for Rent/Car/Job reuse, and the migration this review
+     * plans — escaped it while the methods left behind kept the floor satisfied. What makes a send a RENT
+     * announcement is now read from the file ({@see self::isRentScoped()}), so the root can be the whole
+     * tree without dragging in the car and job senders, which have no §1 route to consult.
+     */
+    private const string SCAN_ROOT = '/src/php';
+
     public function testEveryMethodThatAnnouncesAListingConsultsTheGate(): void
     {
         $root = \dirname(__DIR__, 3);
         $offenders = [];
         $checked = 0;
 
-        foreach (self::announcingMethods($root . '/src/php/Rent') as [$class, $method, $code]) {
+        foreach (self::announcingMethods($root . self::SCAN_ROOT) as [$class, $method, $code]) {
             if (\in_array($method, self::NOT_ABOUT_A_LISTING, true)) {
                 continue;
             }
@@ -79,13 +90,40 @@ final class SectionOneGateCallSitesTest extends TestCase
     {
         $methods = array_map(
             static fn (array $m): string => $m[1],
-            self::announcingMethods(\dirname(__DIR__, 3) . '/src/php/Rent'),
+            self::announcingMethods(\dirname(__DIR__, 3) . self::SCAN_ROOT),
         );
 
         self::assertContains('runOnce', $methods, 'the live pass sends matches AND rent drops');
         self::assertContains('pushRetries', $methods, 'the retry drain sends individual matches');
         self::assertContains('announcePromotions', $methods, 'reclassify sends its promotions');
         self::assertGreaterThanOrEqual(4, \count($methods), 'at least the known sending methods');
+    }
+
+    /**
+     * The walk must reach beyond `src/php/Rent`, and the rent filter must drop what it finds there.
+     *
+     * Every rent sender lives under `Rent/` today, so a scan narrowed back to `src/php/Rent` would find
+     * the same offenders and stay green: the narrowing is visible only through the senders it would no
+     * longer SEE. The car and job pipelines send notifications too; the unfiltered walk must reach them,
+     * and the rent filter must keep every one of them out of the §1 set.
+     */
+    public function testTheWalkReachesTheWholeTreeAndKeepsOnlyRentSends(): void
+    {
+        $root = \dirname(__DIR__, 3) . self::SCAN_ROOT;
+        $outsideRent = array_map(
+            static fn (array $m): string => $m[0],
+            array_filter(self::notificationSends($root), static fn (array $m): bool => !$m[3]),
+        );
+
+        self::assertContains('VehiclePipeline', $outsideRent, 'the walk did not reach src/php/Car — is the root narrowed?');
+        self::assertContains('JobPipeline', $outsideRent, 'the walk did not reach src/php/Job — is the root narrowed?');
+
+        $announcing = array_map(static fn (array $m): string => $m[0], self::announcingMethods($root));
+        self::assertSame(
+            [],
+            array_values(array_intersect($announcing, ['VehiclePipeline', 'JobPipeline', 'CarScout', 'JobScout'])),
+            'a car or job sender was taken for a rent announcement — those domains persist no §1 route',
+        );
     }
 
     /**
@@ -108,6 +146,7 @@ final class SectionOneGateCallSitesTest extends TestCase
         try {
             file_put_contents($dir . '/Commented.php', <<<'PHP'
                 <?php
+                namespace Scout\Rent\Cli;
                 final class Commented
                 {
                     private function announce($channel, array $rows): void
@@ -131,12 +170,42 @@ final class SectionOneGateCallSitesTest extends TestCase
                     }
                 }
                 PHP);
+            // A rent sender MOVED OUT of `Rent/`, into the shared layer the migration plans. It must
+            // import the rent formatter to use it, and that is what keeps it in scope.
+            mkdir($dir . '/Application', 0o777, true);
+            file_put_contents($dir . '/Application/Announcer.php', <<<'PHP'
+                <?php
+                namespace Scout\Application;
+                use Scout\Rent\Notify\Formatter;
+                final class Announcer
+                {
+                    public function announce($channel, $listing, $verdict): void
+                    {
+                        $channel->send((new Formatter())->match($listing, $verdict));
+                    }
+                }
+                PHP);
+            // A car sender: a notification send through its own formatter, no §1 route to consult.
+            mkdir($dir . '/Car', 0o777, true);
+            file_put_contents($dir . '/Car/CarAnnouncer.php', <<<'PHP'
+                <?php
+                namespace Scout\Car;
+                final class CarAnnouncer
+                {
+                    public function announce($channel, $vehicle): void
+                    {
+                        $channel->send((new VehicleFormatter())->match($vehicle));
+                    }
+                }
+                PHP);
 
             $found = self::announcingMethods($dir);
             $names = array_map(static fn (array $m): string => $m[0] . '::' . $m[1], $found);
 
             self::assertContains('Commented::announce', $names, 'a renamed notifier must still be discovered');
             self::assertNotContains('Http::fetch', $names, 'an HTTP send is not an announcement');
+            self::assertContains('Announcer::announce', $names, 'a rent sender moved out of Rent/ escaped the scan');
+            self::assertNotContains('CarAnnouncer::announce', $names, 'a car send was taken for a rent announcement');
 
             foreach ($found as [$class, $method, $code]) {
                 if ($class === 'Commented') {
@@ -148,7 +217,8 @@ final class SectionOneGateCallSitesTest extends TestCase
                 }
             }
         } finally {
-            array_map('unlink', glob($dir . '/*.php') ?: []);
+            array_map('unlink', array_merge(glob($dir . '/*.php') ?: [], glob($dir . '/*/*.php') ?: []));
+            array_map('rmdir', glob($dir . '/*', \GLOB_ONLYDIR) ?: []);
             rmdir($dir);
         }
     }
@@ -169,18 +239,55 @@ final class SectionOneGateCallSitesTest extends TestCase
      * false NEGATIVES, because a send is always attributed to a declaration at or before it, so
      * imprecision can only ever make the guard STRICTER. `Scout\Car` is out of scope — the car
      * domain persists no §1 route at all, a claim verified against `VehicleStore`'s schema rather
-     * than asserted.
+     * than asserted. Since the scan covers the whole tree, that scoping is done per FILE by
+     * {@see self::isRentScoped()} rather than by the root.
      *
      * @return list<array{0: string, 1: string, 2: string}>
      */
     private static function announcingMethods(string $dir): array
     {
         $out = [];
-        foreach (self::rentPhpFiles($dir) as $file) {
+        foreach (self::notificationSends($dir) as [$class, $method, $code, $rent]) {
+            if ($rent) {
+                $out[] = [$class, $method, $code];
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * WHAT MAKES A SEND A RENT ANNOUNCEMENT, read from the file's code (comments stripped).
+     *
+     * A file in the `Scout\Rent` namespace, or one that names the rent formatter. A rent sender moved
+     * into a shared layer must import `Scout\Rent\Notify\Formatter` to build its notification, which is
+     * what keeps it in scope. Keyed per FILE on purpose: `VehicleFormatter` and `JobFormatter` contain
+     * the word `Formatter`, so a method-level match on the class name would drag every car and job send
+     * into the §1 set. Both of those formatter FILES do import the rent formatter, but neither sends.
+     */
+    private static function isRentScoped(string $code): bool
+    {
+        return preg_match('/^\s*namespace\s+Scout\\\\Rent(\\\\|;)/m', $code) === 1
+            || str_contains($code, 'Scout\\Rent\\Notify\\Formatter');
+    }
+
+    /**
+     * Every method under `$dir` that sends a NOTIFICATION, rent-scoped or not — the unfiltered walk.
+     *
+     * @return list<array{0: string, 1: string, 2: string, 3: bool}>
+     */
+    private static function notificationSends(string $dir): array
+    {
+        $out = [];
+        foreach (self::phpFilesUnder($dir) as $file) {
             $lines = file($file, \FILE_IGNORE_NEW_LINES);
             if ($lines === false) {
                 continue;
             }
+            $rent = self::isRentScoped(implode("\n", array_filter(
+                $lines,
+                static fn (string $l): bool => preg_match('/^\s*(\*|\/\/|\/\*)/', $l) !== 1,
+            )));
             $starts = [];
             foreach ($lines as $i => $line) {
                 if (preg_match('/function\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(/', $line, $m) === 1) {
@@ -204,7 +311,7 @@ final class SectionOneGateCallSitesTest extends TestCase
                     // deleted `announcePromotions()`'s gate, left a TRUE comment in its place, and
                     // all 3018 tests passed. `testACommentDoesNotSatisfyTheGate()` below is the
                     // self-test this guard had never had.
-                    $out[] = [basename($file, '.php'), $name, $code];
+                    $out[] = [basename($file, '.php'), $name, $code, $rent];
                 }
             }
         }
@@ -213,7 +320,7 @@ final class SectionOneGateCallSitesTest extends TestCase
     }
 
     /** @return list<string> */
-    private static function rentPhpFiles(string $dir): array
+    private static function phpFilesUnder(string $dir): array
     {
         $files = [];
         $it = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($dir, \FilesystemIterator::SKIP_DOTS));

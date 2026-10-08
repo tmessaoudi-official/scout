@@ -45,6 +45,7 @@ This file is the durable record; the scratch area is not.
 - [2026-10-08 13:29] AGREED: Step 6 pinning: actions pinned by commit SHA with the version comment and the exact refresh command in ci.yml; NO Dependabot, because its dependabot/* branches and PRs conflict with the master-only rule (narrows C-15's recommended option)
 - [2026-10-08 13:29] AGREED: Commit subjects: at most 72 characters from now on (C-16), past subjects never rewritten; CI's test job checks the pushed tip's subject (a batch push checks only its last commit)
 - [2026-10-08 13:29] ASSUMED (review): Step 6 leaves Docker base images on tags (php:8.5-cli, composer:2), recorded in ci.yml's pin comment rather than the Dockerfile — because the floating patch tag is how PHP security fixes reach the watchers on each rebuild, a digest pin needs an updater that cannot read the shared PHP_VERSION ARG, and a Dockerfile comment would stale the deployed image. Alternatives: digest pins with a manual bump command
+- [2026-10-08 14:15] AGREED: Next: roadmap step 7, migration step 0 as its row states (dependency-rule + network-guard tests, section-1 discovery tests re-rooted, PHPStan PHAR + baseline, shellcheck/yamllint in CI)
 
 ## Formal Plan
 
@@ -109,6 +110,24 @@ step 1) → CALEOL → expertise facts → LICENSE → T9 now-items. The remaini
 | 16 | T9 at milestones: CHANGELOG + tags (first tag at the step-0 freeze), CONTRIBUTING, SECURITY | M | todo | - | CHANGELOG.md, CONTRIBUTING.md, SECURITY.md |
 | 17 | Expertise restructure (dedupe 5-10x copies, checkable sources, session load) | M | deferred | - | .claude/** |
 <!-- /progress-block -->
+
+**Step 7 sub-steps** (2026-10-08; one commit each, every new guard red-first plus a ledger case; certification: one
+`advisor()` per sub-step gate under the schedule, the MAXIMAL panel deferred to the migration milestone at step 11):
+
+- **7a** Re-root the §1 discovery guards at `src/php`: `SectionOneGateCallSitesTest` (rent-scoped files: namespace
+  `Scout\Rent\…` or code naming `Scout\Rent\Notify\Formatter`; measured identical to the old `src/php/Rent` set),
+  `AcknowledgeCallSitesTest` (any `->acknowledge(` outside an `acknowledge()` method = the three pipelines),
+  `PatternMissEscalationTest` (recursive discovery of the 10 implementors). Each gets a premise that goes red if its
+  root is narrowed again.
+- **7b** `DependencyRuleTest`: pure rings may not import infrastructure or use I/O and clock primitives; a shrinking
+  baseline (today's edges, the `Core` kernel/infra split, the B-10 clock fallbacks) points at steps 8 and 13.
+- **7c** `NetworkPrimitivesAreGuardedTest`: in every method doing network I/O (`curl_exec`, `stream_socket_client`,
+  `mail(`), an `Offline::` call comes first; premise = the five methods measured 2026-10-08.
+- **7d** shellcheck (`--severity=warning`) and yamllint (repo `.yamllint`: `truthy` keys unchecked, line length
+  measured) in CI's fast job; versions printed.
+- **7e** PHPStan 2.3.0 via `tools/fetch-phpstan.sh` (sha256 + GPG, egress and PHP 8.5 run measured 2026-10-08),
+  `phpstan.neon`, level and baseline measured, a CI step.
+
 ### Blocked
 ### Needs input
 ### Needs research
