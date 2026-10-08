@@ -1714,6 +1714,27 @@ run_sabotage "the pattern-miss implementor walk stops at the top folder again (B
   tests/php/Core/PatternMissEscalationTest.php \
   's%new \\RecursiveIteratorIterator(new \\RecursiveDirectoryIterator(\$dir, \\FilesystemIterator::SKIP_DOTS))%new \\FilesystemIterator($dir)%'
 
+# THE DEPENDENCY RULE IS A TEST NOW (architecture review B-5, 2026-10-08). Two cases break the RULE in
+# the source — a pure file that imports PDO, a pure car scorer that names its store as a bare
+# same-namespace class, the reference an import scan misses — and three break the GUARD: the primitive
+# pattern losing a branch, the pure walk going one folder deep, and the baseline excusing an edge that
+# is gone. Each was measured to redden its own test and no other (changed=1, parses).
+run_sabotage "a pure core file imports PDO (B-5)" \
+  src/php/Rent/Core/Tenure.php \
+  's%^namespace Scout\\Rent\\Core;$%namespace Scout\\Rent\\Core; use PDO;%'
+run_sabotage "the pure car scorer names its store (B-5)" \
+  src/php/Car/VehicleScorer.php \
+  's%^    public const array COMPONENTS = \[%    public const string STORE = VehicleStore::class;\n    public const array COMPONENTS = [%'
+run_sabotage "the dependency rule no longer sees the wall clock (B-5)" \
+  tests/php/Repo/DependencyRuleTest.php \
+  's%|time\\s\*\\(\\s\*\\)|date\\s\*\\(|%|date\\s*\\(|%'
+run_sabotage "the dependency rule walks a pure folder one level deep (B-5)" \
+  tests/php/Repo/DependencyRuleTest.php \
+  's%new \\RecursiveIteratorIterator(new \\RecursiveDirectoryIterator(\$dir, \\FilesystemIterator::SKIP_DOTS))%new \\FilesystemIterator($dir)%'
+run_sabotage "the dependency baseline excuses an edge that is gone (B-5)" \
+  tests/php/Repo/DependencyRuleTest.php \
+  "s%'Scout\\\\\\\\Rent\\\\\\\\Config\\\\\\\\Weights' => \['Scout\\\\\\\\Config\\\\\\\\Reader'\]%'Scout\\\\\\\\Rent\\\\\\\\Config\\\\\\\\Weights' => ['Scout\\\\\\\\Config\\\\\\\\Reader', 'Scout\\\\\\\\Config\\\\\\\\Gone']%"
+
 # SCOPED to reclassify(), for the reason on the drain's own pair above.
 #
 # DELIBERATELY NOT COMPOUND, and it was one measurement away from becoming one. The two reclassify

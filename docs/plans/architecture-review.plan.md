@@ -46,6 +46,8 @@ This file is the durable record; the scratch area is not.
 - [2026-10-08 13:29] AGREED: Commit subjects: at most 72 characters from now on (C-16), past subjects never rewritten; CI's test job checks the pushed tip's subject (a batch push checks only its last commit)
 - [2026-10-08 13:29] ASSUMED (review): Step 6 leaves Docker base images on tags (php:8.5-cli, composer:2), recorded in ci.yml's pin comment rather than the Dockerfile — because the floating patch tag is how PHP security fixes reach the watchers on each rebuild, a digest pin needs an updater that cannot read the shared PHP_VERSION ARG, and a Dockerfile comment would stale the deployed image. Alternatives: digest pins with a manual bump command
 - [2026-10-08 14:15] AGREED: Next: roadmap step 7, migration step 0 as its row states (dependency-rule + network-guard tests, section-1 discovery tests re-rooted, PHPStan PHAR + baseline, shellcheck/yamllint in CI)
+- [2026-10-08 15:05] ASSUMED (review): 7b: the pure set is a curated list (Rent/Core walked recursively + 37 named files across Rent/Config, Car, Job, Core), JobOutcome included as a pure two-case enum — because Car/Job/Core are flat namespaces where purity is a classification, not a folder. Alternatives: folder-only rule (impossible until step 13 splits Core).
+- [2026-10-08 15:05] ASSUMED (review): 7b: Rent/Config/{Weights,NotifyPolicy} -> Scout\Config\Reader are the only baseline edges (Reader::fromFile opens the file); the baseline only shrinks, removed at step 8 when the fromReader factories move to the loader. Alternatives: fix now (scope creep into step 8), exclude both files from the pure set (hides the debt).
 
 ## Formal Plan
 
