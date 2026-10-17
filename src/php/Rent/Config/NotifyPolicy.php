@@ -3,7 +3,6 @@
 declare(strict_types=1);
 
 namespace Scout\Rent\Config;
-use Scout\Config\Reader;
 
 /**
  * Notification routing, ruled 2026-08-07 (`docs/OPEN-QUESTIONS.md` § "Resolution of 1c").
@@ -68,21 +67,5 @@ final readonly class NotifyPolicy
         }
 
         return ($drop * 100.0 / $previousCc) >= $this->rentDropMinPct;
-    }
-
-    public static function fromReader(Reader $r): self
-    {
-        $p = new self(
-            channels: $r->has('channels') ? $r->requireStringList('channels') : ['console'],
-            highPriorityScore: $r->optInt('high_priority_score', 70, 0, 100) ?? 70,
-            rentDropMinEur: $r->optInt('rent_drop_min_eur', 20, 0) ?? 0,
-            rentDropMinPct: $r->has('rent_drop_min_pct') ? $r->requireFloat('rent_drop_min_pct', 0.0, 100.0) : 2.0,
-            sourceBrokenCooldownHours: $r->optInt('source_broken_cooldown_hours', 24, 0) ?? 0,
-            digestHour: $r->optInt('digest_hour', 8, 0, 23) ?? 8,
-            pushMinScore: $r->optInt('push_min_score', null, 0, 100),
-        );
-        $r->done();
-
-        return $p;
     }
 }

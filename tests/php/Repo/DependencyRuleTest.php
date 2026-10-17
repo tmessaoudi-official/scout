@@ -24,8 +24,8 @@ use PHPUnit\Framework\TestCase;
  * ({@see self::testEveryPureEntryExists()}), so a rename cannot drop a file out of the rule silently. Step 13
  * of the plan splits `Core` into kernel and infrastructure; the list shrinks to folders then.
  *
- * {@see self::BASELINE} holds today's known edges and only ever shrinks: an edge that no longer exists
- * fails the suite until its line is deleted.
+ * {@see self::BASELINE} holds the known edges (none since step 8d) and only ever shrinks: an edge that no
+ * longer exists fails the suite until its line is deleted.
  *
  * The import scan reads `use` at the start of a line only, so a trait `use` inside a class body is not read
  * as an import. That loses nothing: a trait named there by a short name is either a sibling (caught bare),
@@ -78,13 +78,16 @@ final class DependencyRuleTest extends TestCase
         'Core/MutableByDesign.php',
     ];
 
-    /** Known edges from a pure file to an impure class, `Pure\Class => [Referenced\Class, …]`. Shrinks only. */
-    private const array BASELINE = [
-        // Both read their block through `Reader`, whose `fromFile()` opens the file (`file_get_contents`), so
-        // the policy object knows how it is loaded. Removed when the factories move to the loader (plan step 8).
-        'Scout\\Rent\\Config\\NotifyPolicy' => ['Scout\\Config\\Reader'],
-        'Scout\\Rent\\Config\\Weights' => ['Scout\\Config\\Reader'],
-    ];
+    /**
+     * Known edges from a pure file to an impure class, `Pure\Class => [Referenced\Class, …]`. Shrinks only.
+     *
+     * EMPTY since step 8d (2026-10-17): its two lines were `Weights` and `NotifyPolicy` -> `Scout\Config\Reader`,
+     * whose `fromFile()` opens the file, so each policy object knew how it was loaded. Their parsing now lives
+     * in `Rent\Config\ConfigLoader`. A new line here is a debt someone chose to take, not a fix.
+     *
+     * @var array<string, list<string>>
+     */
+    private const array BASELINE = [];
 
     /**
      * I/O, the clock, randomness, the environment and the process — code lines only. A method or static call

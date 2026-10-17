@@ -1733,7 +1733,7 @@ run_sabotage "the dependency rule walks a pure folder one level deep (B-5)" \
   's%new \\RecursiveIteratorIterator(new \\RecursiveDirectoryIterator(\$dir, \\FilesystemIterator::SKIP_DOTS))%new \\FilesystemIterator($dir)%'
 run_sabotage "the dependency baseline excuses an edge that is gone (B-5)" \
   tests/php/Repo/DependencyRuleTest.php \
-  "s%'Scout\\\\\\\\Rent\\\\\\\\Config\\\\\\\\Weights' => \['Scout\\\\\\\\Config\\\\\\\\Reader'\]%'Scout\\\\\\\\Rent\\\\\\\\Config\\\\\\\\Weights' => ['Scout\\\\\\\\Config\\\\\\\\Reader', 'Scout\\\\\\\\Config\\\\\\\\Gone']%"
+  "s%    private const array BASELINE = \[\];%    private const array BASELINE = ['Scout\\\\\\\\Rent\\\\\\\\Config\\\\\\\\Weights' => ['Scout\\\\\\\\Config\\\\\\\\Reader']];%"   # 8d emptied it: a stale edge must redden the shrink test
 
 # EVERY WAY OFF THE MACHINE ASKS `Offline` FIRST (architecture review B-6, 2026-10-08). One case removes
 # a real guard (it reddens the structural test AND the behavioural offline test), two break the guard's

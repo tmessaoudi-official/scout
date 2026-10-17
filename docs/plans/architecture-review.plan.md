@@ -160,6 +160,8 @@ move, one `advisor()` per gate):
   re-derived (`(*FAIL)`); the deployed first pass is still owed (the watchers were stopped 2026-10-08 at the
   developer's request).
 - **8d** `Weights::fromReader()` / `NotifyPolicy::fromReader()` move into the loader; the 7b baseline empties.
+  **Landed 2026-10-17** (`ConfigLoader::weightsFrom()` / `notifyPolicyFrom()`, bodies moved byte-identical); the
+  baseline ledger case re-derived against the empty declaration (reddens `testEveryBaselineEdgeStillExists`).
 - **8e** Health out of the adapters (B-11): one application-level service does `escalate(runLog->health(…))` once
   and takes `DateTimeImmutable $now` NON-NULLABLE; `health()` leaves the Source ports (rent, car, job). First read
   all 13 `health()` bodies: `EmailAlertSource`'s is not a one-line delegation (per-source `feed_silent_days`), and

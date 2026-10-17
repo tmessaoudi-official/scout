@@ -3,7 +3,6 @@
 declare(strict_types=1);
 
 namespace Scout\Rent\Config;
-use Scout\Config\Reader;
 
 /**
  * The score components of `spec/PROJECT_BRIEF.md` §5, with the weights ruled on 2026-08-07.
@@ -66,30 +65,5 @@ final readonly class Weights
             + max(0, $this->surface)
             + max(0, $this->lift)
             + max(0, $this->freshness);
-    }
-
-    public static function fromReader(Reader $r): self
-    {
-        $w = new self(
-            commune: $r->optInt('commune', 25, 0, 1000) ?? 0,
-            commute: $r->optInt('commute', 0, 0, 1000) ?? 0,
-            rentHeadroom: $r->optInt('rent_headroom', 15, 0, 1000) ?? 0,
-            surface: $r->optInt('surface', 10, 0, 1000) ?? 0,
-            lift: $r->optInt('lift', 15, 0, 1000) ?? 0,
-            // The one weight allowed to be negative, and required to be: a positive "high floor, no
-            // lift" weight would be a bonus for the exact thing the developer is escaping.
-            highFloorNoLift: $r->optInt('high_floor_no_lift', -20, -1000, 0) ?? 0,
-            freshness: $r->optInt('freshness', 10, 0, 1000) ?? 0,
-            // Negative for the same reason and by the same bound: a POSITIVE heating penalty would
-            // be a bonus for the exact thing the developer asked to be penalised severely.
-            heatingIndividual: $r->optInt('heating_individual', -20, -1000, 0) ?? 0,
-            // A SURCHARGE that stacks on the line above, never a replacement for it — so setting
-            // this alone still leaves an electric flat carrying the base penalty, and zeroing the
-            // base while keeping this one is a configuration that penalises electric heating only.
-            heatingIndividualElectric: $r->optInt('heating_individual_electric', -15, -1000, 0) ?? 0,
-        );
-        $r->done();
-
-        return $w;
     }
 }

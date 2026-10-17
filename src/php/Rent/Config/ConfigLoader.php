@@ -252,10 +252,10 @@ final class ConfigLoader
         }
 
         $weightsReader = $r->optObject('weights');
-        $weights = $weightsReader === null ? new Weights() : Weights::fromReader($weightsReader);
+        $weights = $weightsReader === null ? new Weights() : self::weightsFrom($weightsReader);
 
         $notifyReader = $r->optObject('notify');
-        $notify = $notifyReader === null ? new NotifyPolicy() : NotifyPolicy::fromReader($notifyReader);
+        $notify = $notifyReader === null ? new NotifyPolicy() : self::notifyPolicyFrom($notifyReader);
 
         $freshness = $r->optInt('freshness_minutes', 60, 1, 10080) ?? 60;
 
@@ -1003,5 +1003,51 @@ final class ConfigLoader
         }
 
         return $base;
+    }
+
+    /**
+     * The `weights` block, read here rather than by {@see Weights} itself (step 8d, 2026-10-17): a pure policy
+     * object that read its own block depended on {@see Reader}, whose `fromFile()` opens the file.
+     */
+    private static function weightsFrom(Reader $r): Weights
+    {
+        $w = new Weights(
+            commune: $r->optInt('commune', 25, 0, 1000) ?? 0,
+            commute: $r->optInt('commute', 0, 0, 1000) ?? 0,
+            rentHeadroom: $r->optInt('rent_headroom', 15, 0, 1000) ?? 0,
+            surface: $r->optInt('surface', 10, 0, 1000) ?? 0,
+            lift: $r->optInt('lift', 15, 0, 1000) ?? 0,
+            // The one weight allowed to be negative, and required to be: a positive "high floor, no
+            // lift" weight would be a bonus for the exact thing the developer is escaping.
+            highFloorNoLift: $r->optInt('high_floor_no_lift', -20, -1000, 0) ?? 0,
+            freshness: $r->optInt('freshness', 10, 0, 1000) ?? 0,
+            // Negative for the same reason and by the same bound: a POSITIVE heating penalty would
+            // be a bonus for the exact thing the developer asked to be penalised severely.
+            heatingIndividual: $r->optInt('heating_individual', -20, -1000, 0) ?? 0,
+            // A SURCHARGE that stacks on the line above, never a replacement for it — so setting
+            // this alone still leaves an electric flat carrying the base penalty, and zeroing the
+            // base while keeping this one is a configuration that penalises electric heating only.
+            heatingIndividualElectric: $r->optInt('heating_individual_electric', -15, -1000, 0) ?? 0,
+        );
+        $r->done();
+
+        return $w;
+    }
+
+    /** The `notify` block — moved out of {@see NotifyPolicy} for the same reason as {@see self::weightsFrom()}. */
+    private static function notifyPolicyFrom(Reader $r): NotifyPolicy
+    {
+        $p = new NotifyPolicy(
+            channels: $r->has('channels') ? $r->requireStringList('channels') : ['console'],
+            highPriorityScore: $r->optInt('high_priority_score', 70, 0, 100) ?? 70,
+            rentDropMinEur: $r->optInt('rent_drop_min_eur', 20, 0) ?? 0,
+            rentDropMinPct: $r->has('rent_drop_min_pct') ? $r->requireFloat('rent_drop_min_pct', 0.0, 100.0) : 2.0,
+            sourceBrokenCooldownHours: $r->optInt('source_broken_cooldown_hours', 24, 0) ?? 0,
+            digestHour: $r->optInt('digest_hour', 8, 0, 23) ?? 8,
+            pushMinScore: $r->optInt('push_min_score', null, 0, 100),
+        );
+        $r->done();
+
+        return $p;
     }
 }
