@@ -56,6 +56,7 @@ This file is the durable record; the scratch area is not.
 - [2026-10-08 19:05] ASSUMED (review): Step 8 runs as six sub-steps, smallest risk first: 8a commute on the HTTP port, 8b ImapMailbox env read, 8c Clock, 8d Reader edges, 8e health out of adapters, 8f Store role interfaces — because each is one reviewable commit and the guards from step 7 catch a slip. Alternatives: the review's order (Store roles first), one big commit.
 - [2026-10-08 19:05] ASSUMED (review): 8c resolves the Clock once per process from the existing nowIso string seam (strangler) rather than changing every test to pass a Clock — because ~13 test sites keep working and the ambient fallbacks still all go. Alternatives: Clock-typed constructors everywhere now (test churn), required non-null nowIso strings (stays stringly typed).
 - [2026-10-08 19:05] ASSUMED (review): 8e and 8f rely on the nightly ledger rather than a local full run (PacedSource and Rent/Store are named ledger triggers; the full ledger has never run in the dev image) — the nightly result is read and recorded on row 8 before step 9. Alternatives: run the Store/Pacer shards locally (hours, uncontrolled load on this box).
+- [2026-10-17 10:05] ASSUMED (review): 8c's seam test (RentScoutCommuteSeamTest departures) uses a planning fake that answers /places with the queried postcode and /journeys with a duration, not the recording fake — because matchesPostcode() refuses an unanswered geocode, so /journeys (where datetime is) is never reached. Alternatives: assert on NavitiaCommute directly (misses the CLI clock hop), a Navitia fixture file (more surface).
 
 ## Formal Plan
 
@@ -155,7 +156,9 @@ move, one `advisor()` per gate):
   JobScout, DetailHydrator, NavitiaCommute, ImapMailbox, AlcopaVehicleSource, FileTransport). Durations
   (`hrtime`/`microtime`) stay: a stopwatch is not the clock. A guard test pins "only `SystemClock` reads the wall
   clock". **The `health(?string $nowIso)` signatures are left alone here**: 8e deletes them from the ports.
-  Docs: `docs/ARCHITECTURE.md` rows for the three classes.
+  Docs: `docs/ARCHITECTURE.md` rows for the three classes. **Landed `3044c67` (2026-10-17)**; the B-5 ledger case
+  re-derived (`(*FAIL)`); the deployed first pass is still owed (the watchers were stopped 2026-10-08 at the
+  developer's request).
 - **8d** `Weights::fromReader()` / `NotifyPolicy::fromReader()` move into the loader; the 7b baseline empties.
 - **8e** Health out of the adapters (B-11): one application-level service does `escalate(runLog->health(…))` once
   and takes `DateTimeImmutable $now` NON-NULLABLE; `health()` leaves the Source ports (rent, car, job). First read
