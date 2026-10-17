@@ -58,6 +58,7 @@ This file is the durable record; the scratch area is not.
 - [2026-10-08 19:05] ASSUMED (review): 8e and 8f rely on the nightly ledger rather than a local full run (PacedSource and Rent/Store are named ledger triggers; the full ledger has never run in the dev image) — the nightly result is read and recorded on row 8 before step 9. Alternatives: run the Store/Pacer shards locally (hours, uncontrolled load on this box).
 - [2026-10-17 10:05] ASSUMED (review): 8c's seam test (RentScoutCommuteSeamTest departures) uses a planning fake that answers /places with the queried postcode and /journeys with a duration, not the recording fake — because matchesPostcode() refuses an unanswered geocode, so /journeys (where datetime is) is never reached. Alternatives: assert on NavitiaCommute directly (misses the CLI clock hop), a Navitia fixture file (more surface).
 - [2026-10-17 10:20] ASSUMED (review): 8e not started on 2026-10-17: the unattended window and every gate rule expire at 09:47Z and 8e (13 health() bodies, a new service, PacedSource + RunStore with nightly-only certification, CLAUDE.md and health.md rewrites) cannot be committed whole before then; a half-moved 8e at the mode flip is the dirty-tree state recover-session cleaned that morning. Basis: advisor() agreed. Alternatives: start 8e and stop mid-way (worse), 8f (also nightly-certified).
+- [2026-10-17 10:53] AGREED: 8e is split into two commits (developer ruling): 8e-1 adds the application-level health service and each source's health() delegates to it, with no test change; 8e-2 removes health() from the Source ports (rent, car, job) and migrates the 106 test call sites, the six ledger cases and the docs. Each half leaves a green tree and fits one window.
 
 ## Formal Plan
 
@@ -184,6 +185,20 @@ move, one `advisor()` per gate):
     2136 (PacedSource delegation, which the escalation carve-out reads), 4206 (rent escalate removed), 4721 (rent
     `feedSilentDays` dropped), 5059 (`$s->health($this->now())` loses its clock), 5331 (car escalate
     neutralised), 6152 (job health not escalated). The nightly is the certification (§ Ledger for 8e and 8f).
+  **Split into two commits (developer ruling 2026-10-17 10:53)**, each leaving a green tree and each sized for one
+  window (~3 h):
+  - **8e-1 — the service, behind the old ports.** Add the application-level health service: given a source's name,
+    its `PatternMissLog` and an optional `feedSilentDays`, it does `escalate(<runLog>->health(…))` once. Every
+    source's `health()` body becomes a one-line delegation to it; the port signatures, every caller and every test
+    stay as they are. The cases that target the BODIES (4206, 4721, 5331, 6152) are re-derived here, against the
+    service, because that is where `escalate` and the threshold now live. 2136 and 5059 do not move. `RunStore`
+    and the docs are untouched.
+  - **8e-2 — off the ports.** `health()` leaves `Source`, `VehicleSource` and `JobSource`; the CLIs and pipelines
+    call the service with a NON-NULLABLE `DateTimeImmutable $now`; the 106 test call sites migrate; 2136
+    (`PacedSource`, with `PatternMissEscalationTest`'s carve-out re-aimed) and 5059 are re-derived; `RunStore`'s
+    `$now ?? last-run epoch` branch is deleted with its seamless STALE test; the CLAUDE.md § Testing and
+    `.claude/rules/health.md` "MUST pass `$nowIso`" text is rewritten. 8e-2 is the half that touches `PacedSource`
+    and `RunStore`, so it is the one the nightly certifies; 8e-1 still gets the full ledger the night after it lands.
 - **8f** Store role interfaces (B-2, A-5, C-5 option 2): `SectionOneReadings`, `SeenSet`, `DigestQueue`,
   `DetailCache`, `CommuteCache`; `Store` implements them, consumers are typed to the role they use. No table moves.
 - **Ledger for 8e and 8f.** `PacedSource.php` and `Rent/Store/` are on CLAUDE.md's "run `sabotage-check.sh` after
