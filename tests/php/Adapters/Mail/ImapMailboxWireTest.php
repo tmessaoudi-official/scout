@@ -7,6 +7,7 @@ namespace Scout\Tests\Adapters\Mail;
 use PHPUnit\Framework\TestCase;
 use Scout\Adapters\Mail\ImapMailbox;
 use Scout\Adapters\Mail\MailboxError;
+use Scout\Core\FixedClock;
 
 /**
  * `ImapMailbox` ON THE WIRE, against a scripted loopback server — its first wire coverage at all.
@@ -261,7 +262,7 @@ final class ImapMailboxWireTest extends TestCase
             timeoutSeconds: 5,
             fromFilter: 'alertes@portal.test',
             sinceDays: 7,
-            now: new \DateTimeImmutable('2026-09-03 12:00:00'),
+            clock: FixedClock::at('2026-09-03 12:00:00'),
             connector: static function (string $host, int $port, int $timeout) {
                 $errno = 0;
                 $errstr = '';

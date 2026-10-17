@@ -11,7 +11,9 @@ use Scout\Adapters\Http\HttpError;
 use Scout\Adapters\Http\HttpRequest;
 use Scout\Adapters\Http\Robots;
 use Scout\Adapters\SourceError;
+use Scout\Core\Clock;
 use Scout\Core\Redact;
+use Scout\Core\SystemClock;
 use Scout\Rent\Adapters\Html\Selector;
 use Scout\Rent\Config\FieldMap;
 use Scout\Rent\Config\SourceDefinition;
@@ -99,12 +101,13 @@ final readonly class DetailHydrator
         /** @param ?\Closure(RawListing): int $detailPriority lower ranks first; ties keep source order. */
         private ?\Closure $detailPriority = null,
         /**
-         * A FIXED clock for tests, per the convention {@see \Scout\Rent\Cli\RentScout} already uses.
-         * The cache records when each attempt happened and the retry backoff reads it back — a
-         * backoff measured by SQL `now()` cannot be tested, and an untested backoff is how a dead
-         * page gets re-fetched every fifteen minutes for ever.
+         * The clock, pinned in tests ({@see FixedClock}) — a {@see Clock} since step 8c, where it
+         * was a `?string $nowIso` with a wall-clock fallback. The cache records when each attempt
+         * happened and the retry backoff reads it back — a backoff measured by SQL `now()` cannot be
+         * tested, and an untested backoff is how a dead page gets re-fetched every fifteen minutes
+         * for ever.
          */
-        private ?string $nowIso = null,
+        private Clock $clock = new SystemClock(),
         /**
          * The SOURCE's miss log, so a detail-map field that stops extracting is reported against
          * the source rather than against this collaborator — Track 6-A3. Optional, because a
@@ -270,10 +273,9 @@ final readonly class DetailHydrator
         return $out;
     }
 
-    /** The convention {@see \Scout\Rent\Cli\RentScout::nowIso()} uses: injected for tests, real otherwise. */
     private function now(): string
     {
-        return $this->nowIso ?? (new \DateTimeImmutable())->format('Y-m-d\TH:i:sP');
+        return $this->clock->now()->format('Y-m-d\TH:i:sP');
     }
 
     /**

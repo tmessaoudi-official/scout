@@ -592,6 +592,12 @@ src/php/Car/                the car domain — the Vehicle* classes and Cli/CarS
 src/php/Job/                the job domain — the Job* classes and Cli/JobScout. Deployed as the
                             `job-scout` compose service since 2026-09-14
 src/php/Core/Pacer.php      the Q37 cadence; clock, sleeper and RNG all injected so it is testable
+src/php/Core/Clock.php      the wall clock as a port (`now(): DateTimeImmutable`, step 8c, B-10);
+                            durations (`hrtime`, `microtime(true)`) are not its business
+src/php/Core/SystemClock.php  the ONE class that reads the wall clock — pinned by
+                            tests/php/Repo/WallClockTest.php (exact allowed set)
+src/php/Core/FixedClock.php   the test seam; `orSystem($nowIso)` turns the CLIs' existing `nowIso`
+                            string into a Clock once per process
 src/php/Cli/WatchLoop.php   the `--watch` loop; survives a failing pass, stops after the one in flight
 src/php/Rent/Adapters/PacedSource.php   decorator applying Pacer, so Pipeline never learns time exists
 src/php/Rent/Store/              SQLite seen-set, price history, cross-portal group (v4); run log

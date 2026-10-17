@@ -19,6 +19,7 @@ use Scout\Car\VehicleSourceDefinition;
 use Scout\Car\VehicleSourceLoader;
 use Scout\Car\VehicleStore;
 use Scout\Car\VehicleVerdict;
+use Scout\Core\FixedClock;
 
 /**
  * ALCOPA THROUGH THE ADAPTER, AGAINST PAGES CAPTURED ON 2026-09-24 — THE VALUES HAND-READ.
@@ -293,7 +294,7 @@ final class AlcopaFixtureTest extends TestCase
             $client->urls = [];
         }
 
-        return new AlcopaVehicleSource($definition, $store, $client, $robots ?? $this->robots(), $warn, null, static fn (): int => (int) strtotime($now));
+        return new AlcopaVehicleSource($definition, $store, $client, $robots ?? $this->robots(), $warn, null, FixedClock::at($now));
     }
 
     private function robots(): Robots

@@ -11,7 +11,9 @@ use Scout\Adapters\Mail\FileMailbox;
 use Scout\Adapters\Mail\ImapMailbox;
 use Scout\Adapters\SourceError;
 use Scout\Config\ConfigError;
+use Scout\Core\Clock;
 use Scout\Core\CountsPatternMisses;
+use Scout\Core\FixedClock;
 use Scout\Car\VehicleSnapshot;
 use Scout\Car\VehicleListing;
 use Scout\Core\Heartbeat;
@@ -60,6 +62,9 @@ final readonly class CarScout
     /** @var resource */
     private mixed $err;
     private HttpClient $http;
+
+    /** The `$nowIso` seam as a {@see Clock}: pinned in tests, the real clock otherwise (B-10, step 8c). */
+    private Clock $clock;
     private RobotsResolver $robotsResolver;
 
     public function __construct(
@@ -74,6 +79,7 @@ final readonly class CarScout
         $this->err = $err ?? STDERR;
         $this->http = $http ?? new CurlHttpClient();
         $this->robotsResolver = new RobotsResolver($this->http);
+        $this->clock = FixedClock::orSystem($nowIso);
     }
 
     /** @param list<string> $argv */
@@ -591,7 +597,7 @@ final readonly class CarScout
         return match ($definition->type) {
             'email_alert' => new VehicleEmailSource($definition, $store, $this->mailbox($definition), $warn, (int) (getenv('IMAP_MAX_MESSAGES') ?: 50)),
             'sitemap_jsonld' => new SitemapVehicleSource($definition, $store, $this->http, $this->robotsResolver->forUrl((string) $definition->url), $warn),
-            'alcopa' => new AlcopaVehicleSource($definition, $store, $this->http, $this->robotsResolver->forUrl((string) $definition->url), $warn, null, fn (): int => (int) strtotime($this->now())),
+            'alcopa' => new AlcopaVehicleSource($definition, $store, $this->http, $this->robotsResolver->forUrl((string) $definition->url), $warn, null, $this->clock),
             default => null,
         };
     }
@@ -616,6 +622,7 @@ final readonly class CarScout
             port: (int) (getenv('IMAP_PORT') ?: 993),
             fromFilter: $definition->param('from'),
             sinceDays: $since,
+            clock: $this->clock,
             warn: fn (string $m) => $this->warn($m),
         );
     }
@@ -994,7 +1001,7 @@ final readonly class CarScout
 
     private function now(): string
     {
-        return $this->nowIso ?? (new \DateTimeImmutable())->format('Y-m-d\TH:i:sP');
+        return $this->clock->now()->format('Y-m-d\TH:i:sP');
     }
 
     /** @param list<string> $flags */

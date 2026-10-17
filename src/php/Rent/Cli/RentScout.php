@@ -28,7 +28,9 @@ use Scout\Rent\Config\Criteria;
 use Scout\Rent\Config\SourceDefinition;
 use Scout\Rent\Core\CriteriaEngine;
 use Scout\Rent\Core\DigestSchedule;
+use Scout\Core\Clock;
 use Scout\Core\CountsPatternMisses;
+use Scout\Core\FixedClock;
 use Scout\Core\Heartbeat;
 use Scout\Rent\Core\ListingSnapshot;
 use Scout\Core\Notify\Channel;
@@ -96,6 +98,9 @@ final readonly class RentScout
      */
     private HttpClient $http;
 
+    /** The `$nowIso` seam as a {@see Clock}: pinned in tests, the real clock otherwise (B-10, step 8c). */
+    private Clock $clock;
+
     /**
      * Turns an HTTP answer for `/robots.txt` into a verdict. Stateless — the once-per-host cache is
      * a local in {@see sources()}, so that its lifetime is one build of the source list and this
@@ -145,6 +150,7 @@ final readonly class RentScout
         // command that never polls (`dump`, `digest`, `reclassify`) still makes no request.
         $this->http = $http ?? new CurlHttpClient();
         $this->robotsResolver = new RobotsResolver($this->http);
+        $this->clock = FixedClock::orSystem($nowIso);
     }
 
     /** @param list<string> $argv command-line arguments, WITHOUT the program name */
@@ -1239,7 +1245,7 @@ final readonly class RentScout
 
         $this->warnIfNothingDelivers($notifier);
 
-        $now = $this->nowIso ?? date('c');
+        $now = $this->now();
         // The retries first, as the individual pushes they are (C2 round 6, resilience P2).
         //
         // AND THE REMAINDER IS REPORTED AFTER THEM, never before (C2 round 8, P1): a refused retry
@@ -2304,7 +2310,7 @@ final readonly class RentScout
     private function announcePromotions(Store $store, Notifier $notifier, array $promotions): int
     {
         $formatter = new Formatter();
-        $now = $this->nowIso ?? date('c');
+        $now = $this->now();
         $undelivered = 0;
 
         // The list arrives already capped — see the caller. Capping HERE made the summary count a
@@ -2369,7 +2375,7 @@ final readonly class RentScout
 
         try {
             $first = new \DateTimeImmutable($snapshot->firstSeenAt);
-            $now = new \DateTimeImmutable($this->nowIso ?? 'now');
+            $now = $this->clock->now();
         } catch (\Exception) {
             return null;
         }
@@ -2461,15 +2467,15 @@ final readonly class RentScout
             $store,
             $criteria,
             trim($key),
-            self::nextWeekdayAt('08:30'),
-            $this->now(),
+            self::nextWeekdayAt('08:30', $this->clock->now()),
+            $this->clock,
         );
     }
 
     /** The next weekday at `$time`, as Navitia's `YYYYMMDDTHHMMSS`. */
-    private static function nextWeekdayAt(string $time): string
+    private static function nextWeekdayAt(string $time, \DateTimeImmutable $now): string
     {
-        $at = new \DateTimeImmutable('tomorrow ' . $time);
+        $at = $now->modify('tomorrow ' . $time);
 
         while (in_array($at->format('N'), ['6', '7'], true)) {
             $at = $at->modify('+1 day');
@@ -3234,6 +3240,7 @@ final readonly class RentScout
             port: (int) (getenv('IMAP_PORT') ?: 993),
             fromFilter: \is_string($from) && $from !== '' ? $from : null,
             sinceDays: ImapMailbox::sinceDaysFrom(getenv('IMAP_SINCE_DAYS')),
+            clock: $this->clock,
             // The mailbox has no channel of its own — `fetchRecent()` returns messages and nothing
             // else. Handing it `warn()` puts the line wherever the operator is already looking
             // rather than inventing a second place to look.
@@ -3337,7 +3344,7 @@ final readonly class RentScout
 
     private function now(): string
     {
-        return $this->nowIso ?? (new \DateTimeImmutable())->format('Y-m-d\TH:i:sP');
+        return $this->clock->now()->format('Y-m-d\TH:i:sP');
     }
 
     private function unknownCommand(string $command): int

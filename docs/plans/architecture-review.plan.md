@@ -109,7 +109,7 @@ step 1) → CALEOL → expertise facts → LICENSE → T9 now-items. The remaini
 | 5 | LICENSE: MIT + tests/fixtures/** third-party carve-out; composer.json license and description | S | done | f87e5b4 | LICENSE, composer.json |
 | 6 | T9 now: actions pinned by commit SHA (images stay on tags, see the ASSUMED entry), CI badges, forward-only 72-char commit-subject rule + CI tip check | S | done | 6bcbe13 | .github/workflows/ci.yml, tests/test-ci-workflow.sh, README.md, CLAUDE.md |
 | 7 | Migration step 0: §1 discovery guards re-rooted (e5c31c0), dependency rule (8513b40), network guard (2a0c716), shellcheck/yamllint in CI with the yamllint pin enforced (e09b383, 9f05f1a), one PHAR verifier (5092b23), PHPStan level 6 + shrink-only baseline (a529a61) | M | done | a529a61 | tests/php/Repo/**, .github/workflows/ci.yml, tools/**, phpstan.neon, phpstan-baseline.neon, .yamllint |
-| 8 | Migration step 1: ports (Store roles, Clock, health out of adapters, commute on HTTP port) | L | todo | - | src/php/** |
+| 8 | Migration step 1: ports (Store roles, Clock, health out of adapters, commute on HTTP port) | L | doing | - | src/php/** |
 | 9 | Migration step 2: shared Car/Job application layer | L | todo | - | src/php/Car/**, src/php/Job/** |
 | 10 | Migration step 3: light CQRS query services + doctor split | M | todo | - | src/php/** |
 | 11 | Migration step 4: §1 cluster aggregate + typed send gate (MAXIMAL cert, frozen commit) | L | todo | - | src/php/Rent/** |

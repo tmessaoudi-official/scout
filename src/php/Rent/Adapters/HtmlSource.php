@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Scout\Rent\Adapters;
 
 use Scout\Core\CountsPatternMisses;
+use Scout\Core\FixedClock;
 use Scout\Core\PatternMissLog;
 use Dom\Element;
 use Dom\HTMLDocument;
@@ -139,7 +140,7 @@ final readonly class HtmlSource implements CountsPatternMisses, Source
             // live behaviour change wearing an extraction's clothes.
             $definition->params,
             $detailPriority,
-            $nowIso,
+            FixedClock::orSystem($nowIso),
             $this->patternMisses,
             $sleeper,
         );

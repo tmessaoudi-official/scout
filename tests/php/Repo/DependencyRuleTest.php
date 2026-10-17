@@ -95,9 +95,12 @@ final class DependencyRuleTest extends TestCase
         . '|curl_\w+\s*\(|stream_socket_\w+\s*\(|fsockopen\s*\(|imap_\w+\s*\(|mail\s*\('
         . '|getenv\s*\(|putenv\s*\(|STDOUT\b|STDERR\b|STDIN\b|echo\b|print\s*\(|printf\s*\(|var_dump\s*\('
         . '|file_get_contents\s*\(|file_put_contents\s*\(|fopen\s*\(|file\s*\(|glob\s*\(|unlink\s*\(|mkdir\s*\('
-        . '|time\s*\(\s*\)|date\s*\(|date_create\s*\(|uniqid\s*\(|random_int\s*\(|random_bytes\s*\(|mt_rand\s*\(|rand\s*\(|usleep\s*\(|sleep\s*\('
+        . '|' . WallClockPattern::FRAGMENT
+        // Stricter than the shared vocabulary on purpose: in a pure file even `date('Y', $ts)` reads the
+        // ambient default timezone, so every `date(` and `date_create(` is refused here.
+        . '|date\s*\(|date_create\s*\(|random_int\s*\(|random_bytes\s*\(|mt_rand\s*\(|rand\s*\(|usleep\s*\(|sleep\s*\('
         . '|hrtime\s*\(|microtime\s*\(|shell_exec\s*\(|exec\s*\(|proc_open\s*\(|passthru\s*\(|system\s*\('
-        . ')|\$_(?:ENV|SERVER|GET|POST|COOKIE)\b|new\s+\\\\?DateTime(?:Immutable)?\s*\(\s*(?:[\'"]now[\'"]\s*)?\)/';
+        . ')|\$_(?:ENV|SERVER|GET|POST|COOKIE)\b/';
 
     public function testNoPureFileUsesIoClockRandomnessOrTheEnvironment(): void
     {
@@ -204,6 +207,8 @@ final class DependencyRuleTest extends TestCase
             "\$d = new DateTimeImmutable('now');",
             '$d = date_create();',
             '$id = uniqid();',
+            "\$d = new \\DateTimeImmutable('tomorrow 08:30');",
+            "\$t = strtotime('+2 days');",
             '$raw = file_get_contents($path);',
             '$db = new \PDO($dsn);',
             '$key = $_ENV[\'KEY\'];',

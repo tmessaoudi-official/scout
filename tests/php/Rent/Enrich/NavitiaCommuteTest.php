@@ -9,6 +9,7 @@ use PHPUnit\Framework\TestCase;
 use Scout\Adapters\Http\HttpClient;
 use Scout\Adapters\Http\HttpRequest;
 use Scout\Adapters\Http\HttpResponse;
+use Scout\Core\FixedClock;
 use Scout\Rent\Config\ConfigLoader;
 use Scout\Rent\Enrich\NavitiaCommute;
 use Scout\Rent\Store\Store;
@@ -407,7 +408,7 @@ final class NavitiaCommuteTest extends TestCase
             ConfigLoader::loadCriteria(self::CRITERIA),
             'test-key',
             '20260827T083000',
-            '2026-08-26T12:00:00+00:00',
+            FixedClock::at('2026-08-26T12:00:00+00:00'),
         );
     }
 

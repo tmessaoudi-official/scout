@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Scout\Tests\Rent\Cli;
 
 use PHPUnit\Framework\Attributes\CoversNothing;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Scout\Adapters\Http\HttpClient;
 use Scout\Adapters\Http\HttpError;
@@ -61,19 +62,53 @@ final class RentScoutCommuteSeamTest extends TestCase
         self::assertSame([], array_values(array_diff($client->urls, $prim)), 'a fixture source makes no other request');
     }
 
+    /** @return iterable<string, array{string, string}> */
+    public static function departures(): iterable
+    {
+        yield 'a Friday plans for Monday' => ['2026-08-07T12:00:00+02:00', '20260810T083000'];
+        yield 'a Wednesday plans for Thursday' => ['2026-08-05T12:00:00+02:00', '20260806T083000'];
+    }
+
+    /**
+     * THE CLI's CLOCK DECIDES THE REFERENCE DEPARTURE (step 8c, 2026-10-08): `nextWeekdayAt()` is read off the
+     * injected clock, so a pinned instant pins the timetable every commute is measured against. A departure
+     * read off the wall clock would make this assertion depend on the day the suite runs.
+     */
+    #[DataProvider('departures')]
+    public function testTheReferenceDepartureIsTheNextWeekdayOfTheCliClock(string $now, string $departure): void
+    {
+        $this->root = $this->tempRoot();
+        putenv('IDFM_API_KEY=test-key-not-a-secret');
+        putenv('RENT_SCOUT_DB=' . $this->root . '/state/rent-watch.sqlite3');
+        $client = new CommutePlanningClient();
+
+        $this->scout($client, ['run', '--once', '--seed'], $now);
+        $run = $this->scout($client, ['run', '--once', '-v'], $now);
+
+        $journeys = array_values(array_filter(
+            $client->urls,
+            static fn (string $url): bool => str_contains($url, '/journeys?'),
+        ));
+        self::assertNotSame([], $journeys, "no journey was planned\n" . $run);
+        foreach ($journeys as $url) {
+            parse_str((string) parse_url($url, PHP_URL_QUERY), $query);
+            self::assertSame($departure, $query['datetime'] ?? null, $url);
+        }
+    }
+
     /**
      * @param list<string> $argv
      *
      * @return string what the run printed, so a failure says what the CLI did rather than only what it did not
      */
-    private function scout(HttpClient $client, array $argv): string
+    private function scout(HttpClient $client, array $argv, string $now = self::NOW): string
     {
         $out = fopen('php://memory', 'r+');
         $err = fopen('php://memory', 'r+');
         self::assertIsResource($out);
         self::assertIsResource($err);
 
-        $code = (new RentScout($this->root, $out, $err, self::NOW, $client))->run($argv);
+        $code = (new RentScout($this->root, $out, $err, $now, $client))->run($argv);
         rewind($out);
         rewind($err);
 
@@ -157,5 +192,33 @@ final class CommuteRecordingClient implements HttpClient
         $this->urls[] = $request->url;
 
         throw new HttpError('CommuteRecordingClient answers nothing: ' . $request->url);
+    }
+}
+
+/**
+ * Answers the planner well enough to reach `/journeys`: a `/places` candidate carrying the postcode the query
+ * named (`matchesPostcode()` refuses any other), and a 20-minute journey. Every url is recorded.
+ */
+final class CommutePlanningClient implements HttpClient
+{
+    /** @var list<string> */
+    public array $urls = [];
+
+    public function send(HttpRequest $request): HttpResponse
+    {
+        $this->urls[] = $request->url;
+
+        if (str_contains($request->url, '/journeys?')) {
+            return new HttpResponse(200, json_encode(['journeys' => [['duration' => 1200]]], \JSON_THROW_ON_ERROR));
+        }
+
+        parse_str((string) parse_url($request->url, \PHP_URL_QUERY), $query);
+        $zip = preg_match('/\b(\d{5})$/', (string) ($query['q'] ?? ''), $m) === 1 ? $m[1] : '75012';
+
+        return new HttpResponse(200, json_encode([
+            'places' => [[
+                'address' => ['coord' => ['lon' => 2.37, 'lat' => 48.84], 'administrative_regions' => [['zip_code' => $zip]]],
+            ]],
+        ], \JSON_THROW_ON_ERROR));
     }
 }

@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Scout\Core\Notify;
 
+use Scout\Core\Clock;
+use Scout\Core\SystemClock;
+
 /**
  * Writes each message to a directory as an `.eml` file. Never sends anything.
  *
@@ -16,7 +19,10 @@ namespace Scout\Core\Notify;
  */
 final readonly class FileTransport implements MailTransport
 {
-    public function __construct(private string $directory) {}
+    public function __construct(
+        private string $directory,
+        private Clock $clock = new SystemClock(),
+    ) {}
 
     public function check(): ?string
     {
@@ -75,7 +81,7 @@ final readonly class FileTransport implements MailTransport
         $path = sprintf(
             '%s/%s-%s.eml',
             rtrim($this->directory, '/'),
-            date('Ymd-His'),
+            $this->clock->now()->format('Ymd-His'),
             bin2hex(random_bytes(4)),
         );
 

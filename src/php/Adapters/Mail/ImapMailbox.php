@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Scout\Adapters\Mail;
 
+use Scout\Core\Clock;
 use Scout\Core\MutableByDesign;
+use Scout\Core\SystemClock;
 
 /**
  * IMAP over TLS, hand-rolled on stream sockets.
@@ -135,7 +137,7 @@ final class ImapMailbox implements Mailbox, MutableByDesign
         private readonly int $timeoutSeconds = 20,
         private readonly ?string $fromFilter = null,
         private readonly int $sinceDays = 7,
-        private readonly ?\DateTimeImmutable $now = null,
+        private readonly Clock $clock = new SystemClock(),
         /**
          * Where a non-fatal remark about this fetch goes, or `null` to say nothing.
          *
@@ -281,7 +283,7 @@ final class ImapMailbox implements Mailbox, MutableByDesign
             // ASK THE SERVER WHICH MESSAGES ARE RECENT. Reading the tail of the folder instead was
             // the defect of 2026-08-25 — see the class docblock.
             $matched = self::allSequencesIn(
-                $this->command(self::searchCommand($this->fromFilter, $this->sinceDays, $this->now ?? new \DateTimeImmutable())),
+                $this->command(self::searchCommand($this->fromFilter, $this->sinceDays, $this->clock->now())),
             );
 
             $sequences = $this->capWithNotice($matched, $limit);

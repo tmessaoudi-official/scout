@@ -7,6 +7,8 @@ namespace Scout\Rent\Enrich;
 use Scout\Adapters\Http\HttpClient;
 use Scout\Adapters\Http\HttpRequest;
 use Scout\Adapters\Http\HttpResponse;
+use Scout\Core\Clock;
+use Scout\Core\SystemClock;
 use Scout\Rent\Config\Criteria;
 use Scout\Rent\Store\Store;
 
@@ -56,7 +58,7 @@ final readonly class NavitiaCommute implements CommutePlanner, ReportsCommuteFai
          * it does not reflect the hour a particular listing was found, nor a strike, nor works.
          */
         private string $referenceDeparture,
-        private ?string $nowIso = null,
+        private Clock $clock = new SystemClock(),
         private CommuteFailures $failures = new CommuteFailures(),
         private CommuteMemo $memo = new CommuteMemo(),
     ) {}
@@ -174,7 +176,7 @@ final readonly class NavitiaCommute implements CommutePlanner, ReportsCommuteFai
                 $from[1],
                 $from[0],
                 $minutes,
-                $this->nowIso ?? (new \DateTimeImmutable())->format(\DATE_ATOM),
+                $this->clock->now()->format(\DATE_ATOM),
                 $destinationKey,
             );
 

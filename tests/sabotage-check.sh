@@ -1727,7 +1727,7 @@ run_sabotage "the pure car scorer names its store (B-5)" \
   's%^    public const array COMPONENTS = \[%    public const string STORE = VehicleStore::class;\n    public const array COMPONENTS = [%'
 run_sabotage "the dependency rule no longer sees the wall clock (B-5)" \
   tests/php/Repo/DependencyRuleTest.php \
-  's%|time\\s\*\\(\\s\*\\)|date\\s\*\\(|%|date\\s*\\(|%'
+  "s%WallClockPattern::FRAGMENT\$%'(*FAIL)'%"   # 8c: the clock reads moved into WallClockPattern; (*FAIL) never matches
 run_sabotage "the dependency rule walks a pure folder one level deep (B-5)" \
   tests/php/Repo/DependencyRuleTest.php \
   's%new \\RecursiveIteratorIterator(new \\RecursiveDirectoryIterator(\$dir, \\FilesystemIterator::SKIP_DOTS))%new \\FilesystemIterator($dir)%'

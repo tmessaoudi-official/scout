@@ -10,9 +10,11 @@ use Scout\Adapters\Http\HttpClient;
 use Scout\Adapters\Http\HttpRequest;
 use Scout\Adapters\Http\Robots;
 use Scout\Adapters\SourceError;
+use Scout\Core\Clock;
 use Scout\Core\CountsPatternMisses;
 use Scout\Core\PatternMissLog;
 use Scout\Core\SourceHealth;
+use Scout\Core\SystemClock;
 
 /**
  * Alcopa Auction — the saved search, polled, because its alert fails auction rule 2.
@@ -67,7 +69,6 @@ final readonly class AlcopaVehicleSource implements CountsPatternMisses, Indexed
     /**
      * @param ?\Closure(string): void $warn
      * @param ?\Closure(int): void    $sleeper milliseconds
-     * @param ?\Closure(): int        $clock   epoch seconds
      */
     public function __construct(
         private VehicleSourceDefinition $definition,
@@ -76,7 +77,7 @@ final readonly class AlcopaVehicleSource implements CountsPatternMisses, Indexed
         private Robots $robots,
         private ?\Closure $warn = null,
         private ?\Closure $sleeper = null,
-        private ?\Closure $clock = null,
+        private Clock $clock = new SystemClock(),
         private IndexSize $lastIndexSize = new IndexSize(),
         private PatternMissLog $patternMisses = new PatternMissLog(),
     ) {}
@@ -519,7 +520,7 @@ final readonly class AlcopaVehicleSource implements CountsPatternMisses, Indexed
 
     private function now(): int
     {
-        return $this->clock !== null ? ($this->clock)() : time();
+        return $this->clock->now()->getTimestamp();
     }
 
     private function say(string $message): void

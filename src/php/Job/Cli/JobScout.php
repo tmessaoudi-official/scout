@@ -13,7 +13,9 @@ use Scout\Adapters\SourceError;
 use Scout\Cli\ChannelFactory;
 use Scout\Cli\WatchLoop;
 use Scout\Config\ConfigError;
+use Scout\Core\Clock;
 use Scout\Core\CountsPatternMisses;
+use Scout\Core\FixedClock;
 use Scout\Core\Heartbeat;
 use Scout\Core\Notify\Notification;
 use Scout\Core\Notify\NotificationKind;
@@ -65,6 +67,9 @@ final readonly class JobScout
     /** @var resource */
     private mixed $err;
 
+    /** The `$nowIso` seam as a {@see Clock}: pinned in tests, the real clock otherwise (B-10, step 8c). */
+    private Clock $clock;
+
     public function __construct(
         private string $rootDir,
         mixed $out = null,
@@ -76,6 +81,7 @@ final readonly class JobScout
     ) {
         $this->out = $out ?? STDOUT;
         $this->err = $err ?? STDERR;
+        $this->clock = FixedClock::orSystem($nowIso);
     }
 
     /** @param list<string> $argv */
@@ -784,6 +790,7 @@ final readonly class JobScout
             port: (int) (getenv('IMAP_PORT') ?: 993),
             fromFilter: $definition->param('from'),
             sinceDays: ImapMailbox::sinceDaysFrom(getenv('IMAP_SINCE_DAYS')),
+            clock: $this->clock,
             warn: fn (string $m) => $this->warn($m),
         );
     }
@@ -881,7 +888,7 @@ final readonly class JobScout
 
     private function now(): string
     {
-        return $this->nowIso ?? (new \DateTimeImmutable())->format('Y-m-d\TH:i:sP');
+        return $this->clock->now()->format('Y-m-d\TH:i:sP');
     }
 
     private static function show(mixed $value): string
