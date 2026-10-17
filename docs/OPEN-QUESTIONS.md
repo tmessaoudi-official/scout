@@ -1388,6 +1388,25 @@ a window that has already been open for weeks.
 work rather than as its aftermath — every Evidence cell in `docs/plans/*.plan.md` and every
 commit-referencing sentence in `CLAUDE.md` goes stale in the same instant.
 
+### Ⓞ Q41 — `.claude/settings.json` lost `"defaultMode": "auto"` on 2026-10-10: keep or restore?
+
+Found 2026-10-17 as the one dirty file left after step 8c was recovered and committed. The working
+tree's `.claude/settings.json` differs from HEAD by a single deleted line, `"defaultMode": "auto",`
+under `permissions`. **Provenance, measured:** the file's mtime is 2026-10-10 12:48 (CEST), a day
+after the last scout session's final write (2026-10-09 12:59), and that session's transcript holds no
+tool call naming the file. So it was neither that session nor this one. Another session, a global
+tool or the developer made it, and nothing on disk says which.
+
+Why it matters: `CLAUDE.md` § "Claude config in this repo" documents `.claude/settings.json` as
+*"Allow-list permissions, defaultMode auto, hook wiring"*, and § "Git autonomy" leans on `defaultMode:
+auto` for cloud sessions. `drift-scan.sh` does not check the key (it passed 0/0/0 on the dirty tree),
+so nothing mechanical will notice either way. A permission-mode change is the developer's, so no
+session commits or reverts it.
+
+**Default if unanswered:** leave it uncommitted. HEAD keeps `auto`, and the local tree runs
+without it. **To resolve:** commit the deletion and update `CLAUDE.md` § "Claude config", or
+`git checkout -- .claude/settings.json`.
+
 ## Decisions Log
 
 - [2026-08-06] AGREED: work on `master` only; no `claude/*` branch (developer instruction).
