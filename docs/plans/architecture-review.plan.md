@@ -171,6 +171,19 @@ move, one `advisor()` per gate):
   `RunStore`'s `$now ?? last-run epoch` branch (the "STALE never fires" hole) becomes dead and is deleted, with a
   STALE test that fires without a seam. Docs: `.claude/rules/health.md` and CLAUDE.md § Testing say `doctor` and
   the run loop "MUST pass `$nowIso`" — rewritten to say why forgetting is now impossible, not deleted.
+  **Reading done 2026-10-17 (no code yet)** — the inventory 8e starts from:
+  - **The 10 source bodies are one shape**: `patternMisses->escalate(<runLog>->health(name(), $nowIso[, feedSilentDays]))`.
+    Rent `FixtureSource`/`HtmlSource`/`HttpJsonSource` and car `AlcopaVehicleSource`/`SitemapVehicleSource` pass no
+    threshold; `EmailAlertSource`, `VehicleEmailSource`, `JobEmailSource`, `JobDigestEmailSource` pass
+    `definition->feedSilentDays`. Rent reads `$this->store->health()`, car and job `$this->store->runs()->health()`.
+    `PacedSource::health()` is a pure delegation. So the service needs, per source, exactly: its name, its
+    `PatternMissLog` (`CountsPatternMisses`) and an optional `feedSilentDays`, which is the whole port surface to replace.
+  - **Reach**: 23 `->health(` call sites in 17 `src/` files (the three CLIs, the three pipelines, the store, the
+    sources), and **106 in 23 test files**. The test count is the cost driver; plan the test migration as its own pass.
+  - **Ledger cases on these bodies, each to RE-DERIVE and measure (not re-apply)**: `tests/sabotage-check.sh` lines
+    2136 (PacedSource delegation, which the escalation carve-out reads), 4206 (rent escalate removed), 4721 (rent
+    `feedSilentDays` dropped), 5059 (`$s->health($this->now())` loses its clock), 5331 (car escalate
+    neutralised), 6152 (job health not escalated). The nightly is the certification (§ Ledger for 8e and 8f).
 - **8f** Store role interfaces (B-2, A-5, C-5 option 2): `SectionOneReadings`, `SeenSet`, `DigestQueue`,
   `DetailCache`, `CommuteCache`; `Store` implements them, consumers are typed to the role they use. No table moves.
 - **Ledger for 8e and 8f.** `PacedSource.php` and `Rent/Store/` are on CLAUDE.md's "run `sabotage-check.sh` after
