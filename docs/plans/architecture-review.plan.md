@@ -61,6 +61,7 @@ This file is the durable record; the scratch area is not.
 - [2026-10-17 10:53] AGREED: 8e is split into two commits (developer ruling): 8e-1 adds the application-level health service and each source's health() delegates to it, with no test change; 8e-2 removes health() from the Source ports (rent, car, job) and migrates the 106 test call sites, the six ledger cases and the docs. Each half leaves a green tree and fits one window.
 - [2026-11-15 13:06] AGREED: Run /rules-split on CLAUDE.md only after 8e-1 lands: the 2026-11-15 dry run (rows 1-6, ~128 lines, ~18 % of tokens) moves the $nowIso/journalMode() Store::health() MUSTs that 8e-1 changes; rerun the dry run then, with .claude/settings.json (Q41) resolved first.
 - [2026-11-15 15:33] AGREED: 8e-1 amends ONE test, against the 2026-10-17 'no test change' clause: PatternMissEscalationTest's structural assertion required '->escalate(' in every counting source's health() body, so it now asserts routing through Core/SourceHealthService plus escalate() inside the service; the other 105 test call sites stay untouched (developer ruling).
+- [2026-11-15 17:32] AGREED: From 2026-11-15 on, every per-task 3C/6C gate is certified by advisor() alone and the per-gate tier question is not asked again (developer ruling); the CLAUDE.md milestone MAXIMAL panel ruling is unchanged.
 
 ## Formal Plan
 
