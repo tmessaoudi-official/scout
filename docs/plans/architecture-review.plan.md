@@ -63,6 +63,10 @@ This file is the durable record; the scratch area is not.
 - [2026-11-15 15:33] AGREED: 8e-1 amends ONE test, against the 2026-10-17 'no test change' clause: PatternMissEscalationTest's structural assertion required '->escalate(' in every counting source's health() body, so it now asserts routing through Core/SourceHealthService plus escalate() inside the service; the other 105 test call sites stay untouched (developer ruling).
 - [2026-11-15 17:32] AGREED: From 2026-11-15 on, every per-task 3C/6C gate is certified by advisor() alone and the per-gate tier question is not asked again (developer ruling); the CLAUDE.md milestone MAXIMAL panel ruling is unchanged.
 - [2026-11-15 17:40] AGREED: /rules-split re-derived after 8e-1 (2026-11-15 dry run): defer the whole split until after 8e-2 (developer ruling). Only the 19-line LandlordRegistry note is free now; the Store-tests bullet with its $nowIso paragraph (lines ~657-714, at least one inbound anchor in StoreEvidenceTest) moves whole to a new store.md after 8e-2; the robots.txt runtime paragraph stays (car sources and CarScout use Robots too); § Claude config stays until drift-scan.sh:169 also reads the rule files.
+- [2026-11-15 18:35] AGREED: 8e-2 plan approved as written (developer ruling); implementation starts only after the next nightly's result is recorded on the 8e-1 row.
+- [2026-11-15 18:35] AGREED: 8e-2: the three pipelines take an optional Core/SourceHealthReader collaborator (default: SourceHealthService on the store's RunStore); only the 9 scripted rent routing tests inject one, and a new default-reader pipeline test plus a ledger case pin the default (developer ruling).
+- [2026-11-15 18:35] AGREED: 8e-2 removes rent Store::health() (about 55 test calls move to runs()->health()) rather than keeping or deferring it (developer ruling).
+- [2026-11-15 18:35] AGREED: 8e-2 may update .claude/agents/completeness-reviewer.md's health() wording, but only after the exact diff is shown to the developer and approved (developer ruling).
 
 ## Formal Plan
 
@@ -225,6 +229,80 @@ move, one `advisor()` per gate):
     `$now ?? last-run epoch` branch is deleted with its seamless STALE test; the CLAUDE.md § Testing and
     `.claude/rules/health.md` "MUST pass `$nowIso`" text is rewritten. 8e-2 is the half that touches `PacedSource`
     and `RunStore`, so it is the one the nightly certifies; 8e-1 still gets the full ledger the night after it lands.
+    **8e-2 plan (2026-11-15, Large; implementation waits for the 8e-1 nightly to be recorded above).** Inventory
+    re-derived 2026-11-15 (grep, not recalled): 109 `->health(` hits in 24 test files (33 pass no clock), 11 test
+    doubles implementing `health()` (two return a SCRIPTED verdict: `PipelineRunTest`'s `FakeSource(…, health:)` feeds
+    ~9 alert-routing tests, `PacedSourceTest` records the clock it was handed), 11 `src` caller lines (3 CLIs, 3
+    pipelines), 4 `instanceof CountsPatternMisses` that the new port makes always-true (`RentScout:447`, `CarScout:220`,
+    `JobScout:202`, `PacedSource:119` with its fresh-log fallback), 14 Markdown files naming `health()`. **Ledger: at
+    least 10 cases move, not 2** — 2136 (`PacedSource` clock), 5084 (ex-5059, car heartbeat clock), 956 (`if ($nowIso
+    !== null)` in `RunStore`, a guard that goes) AND the seven 8e-1 cases (4210, 4216, 4221, 4227, 4744, 5358, 6181),
+    because the service signature changes under them; the 50 expressions on `RunStore.php` are re-checked by
+    `test-sabotage-applies`. **Clock equivalence MEASURED 2026-11-15** on a scratch copy (deleted after the measurement):
+    `$nowIso ??= <last-inserted run's at>` at the top of `RunStore::health()` → `Tests: 5847, Failures: 2`, both copy
+    artefacts (`bin/scout`, `tools/dump-eml.php` not copied), no health test changed verdict. So the 33 clockless calls
+    take the last-inserted stamp with no verdict change; the tests OF the no-clock contract (found by name, since they
+    still pass under the measurement: `SourceHealthServiceTest:97`, `RentScoutTest:1130`'s "WITHOUT a clock" half,
+    `StoreTest:1484`) are retired with the reason recorded.
+    - **Port.** `Core/ReportsHealth extends CountsPatternMisses { name(): string; feedSilentDays(): ?int; }`; `Source`,
+      `VehicleSource`, `JobSource` extend it and lose `health()`. The four email sources return their
+      `definition->feedSilentDays`, the other five `null`; `PacedSource` forwards both (its fresh-log fallback goes).
+      The four always-true `instanceof` checks are deleted (PHPStan; the baseline only shrinks).
+    - **Service.** `SourceHealthService::of(ReportsHealth $source, DateTimeImmutable $now): SourceHealth`, behind a
+      `Core/SourceHealthReader` interface the three pipelines take as an optional constructor collaborator, in the
+      style of their existing defaulted collaborators (classifier, engine, dedup, formatter). The default (the service
+      on the store's `RunStore`) is the production path AND what every pipeline test that injects nothing runs — the
+      CLIs and all car/job pipeline tests inject nothing, and only the 9 scripted-verdict rent routing tests
+      (`PipelineRunTest` 1394–1574) inject a scripted reader. Cost MEASURED 2026-11-15 (scratch copy, rent
+      `Pipeline::alertOnHealth()` reading `runs()->health()` instead of the double): `Failures: 7` = 2 copy artefacts
+      + 5 scripted routing tests, all among the 9 — **0** of the other ~161 `FakeSource`s (170 total) gains an alert,
+      so no unscripted rent test changes. **That same measurement was a sabotage nothing durable caught**: a rent
+      pipeline reading the raw run log (no miss escalation, no per-source threshold) reddened only scripted tests,
+      which will inject their own reader after 8e-2 — the beat-reads-`Store::health()`-by-name defect `health.md`
+      records, opened at every call site. So: a NEW red-first rent pipeline test through the DEFAULT reader with a
+      real counting source, where a pattern miss and a per-source `feed_silent_days` each change the alert sent; the
+      same one-line swap is tried on `VehiclePipeline` and `JobPipeline` to see whether car and job need one too; the
+      per-domain default-reader ledger case must redden it; and `PatternMissEscalationTest`'s structural assertion,
+      whose subject (the bodies) goes, is re-aimed at the CALLERS: `RunStore::health()` has exactly one caller in
+      `src/`, the service. CLIs call the service directly (doctor, the beat).
+      **Clock hops, named:** CLIs hold `Clock::now()` (an instant) and pass it as is; pipelines hold `string $nowIso`
+      and convert ONCE with `new DateTimeImmutable('@' . RunStore::epoch($nowIso))`, reusing the strict parser the
+      time tests pin; the service formats the instant back to ISO for `RunStore::health()`, which parses it with that
+      same `epoch()`. No second parser. Losing the offset on `'@'` is harmless: `RunStore` only ever hands `$nowIso`
+      to `epoch()` and never prints it (read 2026-11-15, lines 582–743, 1024–1030).
+    - **RunStore.** `health(string $sourceName, string $nowIso, ?int $feedSilentDays = null)`: the clock is
+      required, `windowCounts()`'s `$now ?? last-run` branch and every `$nowIso !== null` guard go. Rent
+      `Store::health()` (pass-through, no `src` caller) is removed; its ~55 test calls move to `runs()->health()`.
+    - **Order** (the SUITE green after each step; PHPStan is red from (1) until (3) removes the nullable port clock,
+      and green before the commit): (1) `RunStore::health()` takes a required clock, the fallback and guards go; the
+      33 clockless test calls take the last-inserted stamp (measured above). Read, not grepped: `StoreTest:1484` is a
+      mean-and-count test and KEEPS its assertions (clock `2026-08-05T09:00:00+00:00`, comment rewritten);
+      `RentScoutTest:1130` loses only its "WITHOUT a clock" assertion; `SourceHealthServiceTest:97` (the 8e-1 null
+      clock) is retired. The new STALE-without-a-seam test goes through the rent STARTUP beat (`RentScout` `--watch`,
+      the `isDue()` beat before the first pass, "no pass has run yet in this process"; `RentScoutHeartbeatTest`): a
+      health read no run precedes, unlike `doctor`, which records its own run first and so can never differ (the
+      RETIRED ledger note says why), and unlike the in-loop beat, which follows a pass. The wrong-clock twin of 5084
+      on the rent beat must redden it. (2) `ReportsHealth` +
+      service signature + reader, red-first `SourceHealthServiceTest`. (3) ports lose `health()`; sources, doubles,
+      callers migrate; the four `instanceof` go. (4) `Store::health()` out (~55 test edits in `StoreTest` and
+      `StoreFeedSilenceTest`; it is on no port, so this is an explicit scope line — dropping it leaves a dead
+      pass-through). (5) docs.
+    - **Ledger.** "Drops the clock" cases cannot become null/no-argument (a TypeError reddens everything for the wrong
+      reason): 4227 and 5084 are re-derived as a WRONG clock (a fixed past instant) and measured. **2136 is retired**
+      with the reason recorded — `PacedSource` carries no clock any more — and its guarantee moves to the rent call
+      site; the clock-recording double in `PacedSourceTest` goes with it; rent and job each get a twin of 5084 if they lack one. New cases on `PacedSource`'s forwarders
+      (`feedSilentDays()` → `null`, `patternMisses()` → a fresh log), with `PatternMissEscalationTest`'s decorator
+      carve-out re-aimed at them; one case on the pipeline's default reader per domain. Every case measured on a scratch copy
+      (lines, `php -l`, which behavioural test reddens), then one filtered `run_sabotage` run; the nightly certifies.
+    - **Docs** (grep list): CLAUDE.md § Architecture interface block + Core row, § Testing "MUST pass `$nowIso`",
+      § Credentials (`Store::health()` interpolates); `.claude/rules/health.md` (the "ONE funnel"
+      `EmailAlertSource::health()`); docblocks of `Source`, `FeedFreshness`, `PacedSource`, the service;
+      `docs/ARCHITECTURE.md`, `spec/PROJECT_BRIEF.md`, README, the two domain skills, `EXPERTISE-REFERENCE.md`.
+      `.claude/agents/completeness-reviewer.md` only with the developer's go. Archive and dated plan/notes text is
+      history and stays. Before rewriting the CLAUDE.md `$nowIso` paragraph, grep every test that quotes a phrase
+      from the Store-tests bullet (`StoreEvidenceTest` cites "CLAUDE.md § Store tests").
+    - **Verify:** suite + PHPStan in the image, `test-sabotage-applies`, drift-scan, `test-ci-workflow`, the filtered
+      ledger run; `advisor()` at 6C (ruling 2026-11-15 17:32).
 - **8f** Store role interfaces (B-2, A-5, C-5 option 2): `SectionOneReadings`, `SeenSet`, `DigestQueue`,
   `DetailCache`, `CommuteCache`; `Store` implements them, consumers are typed to the role they use. No table moves.
 - **Ledger for 8e and 8f.** `PacedSource.php` and `Rent/Store/` are on CLAUDE.md's "run `sabotage-check.sh` after
