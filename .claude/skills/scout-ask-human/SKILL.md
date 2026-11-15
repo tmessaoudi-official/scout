@@ -43,7 +43,8 @@ only what is specific to this repo.
   schema migration run against the real listings database, sending a live notification to the
   developer's phone, subscribing or reconfiguring the alert mailbox, or a first request to a landlord
   site from this machine. Note that ordinary `git add` / `git commit` / `git push` are
-  **autonomously authorised** here (CLAUDE.md § "Git autonomy") and must NOT be asked about.
+  **autonomously authorised** here (CLAUDE.md § "Git autonomy") and must NOT be asked about — in
+  spec mode as in autonomous mode (developer ruling, 2026-11-15).
 - Any **change to a documented invariant or a declared ceiling** — the excluded-tenure set, the 0.6
   fail-closed confidence threshold, where `UNKNOWN` is routed, the boundary between a hard
   disqualifier and a score penalty, the `Source` adapter contract, or the opt-in gate on portal

@@ -146,15 +146,17 @@ premise"* escape. Protocol: the global `/ask-human` skill, § "Question quality"
 `ask-human` 2026-08-18 — a repo skill may not share a global skill's name).
 
 **Mode — the global `~/.claude/CLAUDE.md` § Mode decides what stops** (developer rulings 2026-09-27).
-The mode is a property of the ask-human gate family (`ah`) for this tree, NOT of this file: read it from
-the SessionStart banner's `▸ MODE:` line, `/next`, or `bash ~/.claude/bin/project-state.sh --tier 0 | jq
--r .identity.mode` — never from prose here, which goes stale on the next `/gates-bypass --run|--spec`
+The mode is a property of the ask-human gate family (`ah`) for this tree, NOT of this file: read it with
+`bash ~/.claude/bin/project-state.sh --tier 0 | jq -r .identity.mode` or `/next` (the SessionStart
+banner prints a `▸ MODE:` line in every mode, but it is not guaranteed to reach the model's context; it
+did not on 2026-11-15) — never from prose here, which goes stale on the next `/gates-bypass --run|--spec`
 (this paragraph claimed autonomous while the tree read `spec`, found 2026-11-15). In **spec** mode the
-size gate, the plan gate, the tier question and a mid-task ambiguity all ask. In **autonomous** mode,
-announce the task size and the plan, then build it; on an ambiguity take the recommended option and log
-it as `ASSUMED (review)` in the plan's Decisions Log. Confident picks (`cf`), when armed, replace the
-mid-task rule in either mode (global § Mode). In BOTH modes phase markers, evidence grades and the Rule
-6 table still show (output parity), and both still stop for the cases in § "When a question is
+size gate, the plan gate and the tier question ask. In **both** modes a mid-task ambiguity takes the
+recommended option and is logged as `ASSUMED (review)` in the plan's Decisions Log (D-7 below holds in
+both); in **autonomous** mode the size and plan are also announced and built without stopping.
+Confident picks (`cf`), when armed, replace the mid-task rule in either mode (global § Mode). In BOTH
+modes phase markers, evidence grades and the Rule 6 table still show (output parity), and both still
+stop for the cases in § "When a question is
 mandatory here" of that skill — a user-visible product decision, anything that would weaken an invariant
 below, a destructive step. **Never ask whether
 to weaken the social-housing exclusion** — ask *how* to satisfy it.
@@ -162,7 +164,9 @@ to weaken the social-housing exclusion** — ask *how* to satisfy it.
 **No interrupts mid-task; one closing question** (developer ruling, 2026-10-08, D-7). Routine work runs
 without stopping, but a turn that finishes its work closes with ONE `AskUserQuestion` ("what next?"),
 per the global § Mode table, never with a prose offer such as "say which to fix". If a keep-going
-toggle is later armed for this tree, the global § Mode exception applies and the toggle wins.
+toggle is later armed for this tree, the global § Mode exception applies and the toggle wins. **D-7
+holds in BOTH modes** (developer ruling, 2026-11-15): in spec mode it overrides the global spec row for
+a mid-task ambiguity; the size, plan and tier gates and the mandatory cases above still ask.
 
 Every unanswered question is also written to `docs/OPEN-QUESTIONS.md` with the default that applies if
 it stays unanswered. A question asked only in chat is lost at the next session.
@@ -418,7 +422,9 @@ silently skip a gate.
 
 Autonomous `git add`, `git commit` **and `git push`** are **authorised** for green, self-contained work
 on **`master`**, which matches global Rule 10's autonomous branch. Asking permission for them violates
-the no-interrupts directive. **Push cadence is Rule 10's batch** (developer ruling, 2026-10-08, D-10; count 10 → 30 by developer
+the no-interrupts directive. **This holds in BOTH modes** (developer ruling, 2026-11-15): in spec mode it
+overrides global Rule 10's "commit and push only on request"; a mode switch does not reintroduce the
+prompt. **Push cadence is Rule 10's batch** (developer ruling, 2026-10-08, D-10; count 10 → 30 by developer
 ruling 2026-10-08 23:44): push at 30 unpushed commits, at the end of a milestone, and before any stop or hand-off. Every push
 still gets its CI read (`gh run list` / `/ci-watch`), so CI is checked on fewer pushes, never on fewer
 commits. What follows is what scout adds to Rule 10:

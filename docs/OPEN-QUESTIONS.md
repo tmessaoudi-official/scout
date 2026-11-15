@@ -1607,3 +1607,4 @@ without it. **To resolve:** commit the deletion and update `CLAUDE.md` § "Claud
   on 2026-08-26 — the entry had said UNANSWERED for two days after the code answered it, which is
   the drift `/scout-repair` exists to catch.
 - [2026-11-15 13:38] AGREED: (Q41): restore `"defaultMode": "auto"` in `.claude/settings.json` — the working tree is reset to HEAD; the remover is still unknown.
+- [2026-11-15 14:20] AGREED: § Git autonomy (autonomous commit+push on master) and D-7 (no interrupts mid-task) hold in BOTH modes; in spec mode they override global Rule 10 and the spec row. Size, plan and tier gates and the mandatory cases still ask.
