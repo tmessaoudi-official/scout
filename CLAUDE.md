@@ -151,7 +151,8 @@ The mode is a property of the ask-human gate family (`ah`) for this tree, NOT of
 banner prints a `▸ MODE:` line in every mode, but it is not guaranteed to reach the model's context; it
 did not on 2026-11-15) — never from prose here, which goes stale on the next `/gates-bypass --run|--spec`
 (this paragraph claimed autonomous while the tree read `spec`, found 2026-11-15). In **spec** mode the
-size gate, the plan gate and the tier question ask. In **both** modes a mid-task ambiguity takes the
+size gate and the plan gate ask; the per-gate tier question does not (advisor-only ruling, § Certification
+ladder). In **both** modes a mid-task ambiguity takes the
 recommended option and is logged as `ASSUMED (review)` in the plan's Decisions Log (D-7 below holds in
 both); in **autonomous** mode the size and plan are also announced and built without stopping.
 Confident picks (`cf`), when armed, replace the mid-task rule in either mode (global § Mode). In BOTH
@@ -380,10 +381,12 @@ live in `.claude/agents/`. Three lenses, one charter each:
 Each reviewer **reads the actual diff, code and tests itself** — never certify from the author's
 narrative — and is chartered to REFUTE, not approve.
 
-> **Per task vs milestone (2026-09-27):** MAXIMAL is the milestone ceiling. Per task the global tier
-> applies: in autonomous mode the project's certification schedule
-> (`~/.claude/projects/-stack-projects-scout/certification-schedule`, asked once), in spec mode the
-> per-gate tier question — `advisor()` recommended (economize ruling, 2026-08-21).
+> **Per task vs milestone (2026-09-27; per-task tier fixed 2026-11-15):** MAXIMAL is the milestone
+> ceiling. **Per task, every 3C/6C gate is one `advisor()` loop, in BOTH modes, and the per-gate tier
+> question is NOT asked** (developer ruling, 2026-11-15: *"use only advisor for validation/certification
+> from now on"*; it supersedes, for this tree, the global spec-mode tier question and the 2026-08-21
+> economize ruling that made `advisor()` the recommended answer). Gates still run through `/certify`; this
+> ruling is its answer. The milestone MAXIMAL panel below is unchanged by it.
 
 **Milestone tier: MAXIMAL** — all three lenses, **two consecutive fully-clean rounds**, any finding
 resets the counter, cap 5 rounds → then ask via `AskUserQuestion` (never silently proceed). This is

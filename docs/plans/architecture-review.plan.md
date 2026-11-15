@@ -62,6 +62,7 @@ This file is the durable record; the scratch area is not.
 - [2026-11-15 13:06] AGREED: Run /rules-split on CLAUDE.md only after 8e-1 lands: the 2026-11-15 dry run (rows 1-6, ~128 lines, ~18 % of tokens) moves the $nowIso/journalMode() Store::health() MUSTs that 8e-1 changes; rerun the dry run then, with .claude/settings.json (Q41) resolved first.
 - [2026-11-15 15:33] AGREED: 8e-1 amends ONE test, against the 2026-10-17 'no test change' clause: PatternMissEscalationTest's structural assertion required '->escalate(' in every counting source's health() body, so it now asserts routing through Core/SourceHealthService plus escalate() inside the service; the other 105 test call sites stay untouched (developer ruling).
 - [2026-11-15 17:32] AGREED: From 2026-11-15 on, every per-task 3C/6C gate is certified by advisor() alone and the per-gate tier question is not asked again (developer ruling); the CLAUDE.md milestone MAXIMAL panel ruling is unchanged.
+- [2026-11-15 17:40] AGREED: /rules-split re-derived after 8e-1 (2026-11-15 dry run): defer the whole split until after 8e-2 (developer ruling). Only the 19-line LandlordRegistry note is free now; the Store-tests bullet with its $nowIso paragraph (lines ~657-714, at least one inbound anchor in StoreEvidenceTest) moves whole to a new store.md after 8e-2; the robots.txt runtime paragraph stays (car sources and CarScout use Robots too); § Claude config stays until drift-scan.sh:169 also reads the rule files.
 
 ## Formal Plan
 
