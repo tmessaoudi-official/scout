@@ -167,7 +167,8 @@ without stopping, but a turn that finishes its work closes with ONE `AskUserQues
 per the global § Mode table, never with a prose offer such as "say which to fix". If a keep-going
 toggle is later armed for this tree, the global § Mode exception applies and the toggle wins. **D-7
 holds in BOTH modes** (developer ruling, 2026-11-15): in spec mode it overrides the global spec row for
-a mid-task ambiguity; the size, plan and tier gates and the mandatory cases above still ask.
+a mid-task ambiguity; the size and plan gates and the mandatory cases above still ask (the per-task tier
+is fixed at `advisor()`, § Certification ladder).
 
 Every unanswered question is also written to `docs/OPEN-QUESTIONS.md` with the default that applies if
 it stays unanswered. A question asked only in chat is lost at the next session.
@@ -363,8 +364,9 @@ this way" is never authority, and extending it in place contradicts the brief.
 ## Certification ladder — governs every 3C/6C gate
 
 **Every gate runs through the global `/certify`** (`--gate 3c|6c|milestone`), never a bare `advisor()`
-call in its place: the global model policy routes gates through the skill. `/certify` reads this
-tree's tier from the certification schedule and takes the scout lenses from `/scout-lenses`. The
+call in its place: the global model policy routes gates through the skill. `/certify` takes this
+tree's per-task tier from the 2026-11-15 ruling below (`advisor()`, which the certification schedule
+also states) and takes the scout lenses from `/scout-lenses`. The
 global `/converge` is for a deliberate deep sweep only; it spawns no panel, so it never certifies a
 milestone (developer ruling, 2026-10-08, D-1).
 
@@ -386,13 +388,14 @@ narrative — and is chartered to REFUTE, not approve.
 > question is NOT asked** (developer ruling, 2026-11-15: *"use only advisor for validation/certification
 > from now on"*; it supersedes, for this tree, the global spec-mode tier question and the 2026-08-21
 > economize ruling that made `advisor()` the recommended answer). Gates still run through `/certify`; this
-> ruling is its answer. The milestone MAXIMAL panel below is unchanged by it.
+> ruling is its answer, and it matches the schedule
+> (`~/.claude/projects/-stack-projects-scout/certification-schedule`: *advisor() at every 3C/6C gate +
+> one three-lens reviewer panel per milestone*). The milestone MAXIMAL panel below is unchanged by it.
 
 **Milestone tier: MAXIMAL** — all three lenses, **two consecutive fully-clean rounds**, any finding
 resets the counter, cap 5 rounds → then ask via `AskUserQuestion` (never silently proceed). This is
 stricter than `/certify`'s own one-clean-round convergence, on purpose (developer ruling, 2026-10-08,
-D-3), and `/scout-lenses` tells `/certify` so. It applies when a panel runs (the milestone, or a gate
-where the panel was chosen); a per-task gate under the schedule is one `advisor()` call. Rationale: a
+D-3), and `/scout-lenses` tells `/certify` so. It applies when a panel runs (the milestone); a per-task gate is one `advisor()` call. Rationale: a
 social-housing false positive is an eligibility failure the user pays for in wasted applications, and a
 silently-broken source is indistinguishable from a quiet market. Neither is caught by a passing test
 suite, and neither is confined to one subsystem.
