@@ -1392,11 +1392,24 @@ commit-referencing sentence in `CLAUDE.md` goes stale in the same instant.
 
 **ANSWERED 2026-11-15 by the developer: restore.** The working tree was reset to HEAD
 (`git checkout -- .claude/settings.json`), so `"defaultMode": "auto"` is back and the file matches
-both HEAD and `CLAUDE.md` § "Claude config in this repo". Provenance is still unknown: the global
-permission scripts (`permission-swap.sh`, `permission-swap-project.sh`, `perm-engine-apply.sh`,
-`perm-shadow-apply.sh`, `unattended.sh`) do not write the key, and the one `~/.claude/bin` commit that
-day (`e6f8fa2a`, 21:38) post-dates the file's 12:48 mtime. If the line disappears again, look for the
-writer before restoring a second time. The original entry follows.
+both HEAD and `CLAUDE.md` § "Claude config in this repo". **Provenance is still unknown, and this is
+what was searched (2026-11-15), no more:** (1) a literal `defaultMode` grep over five global scripts
+(`permission-swap.sh`, `permission-swap-project.sh`, `perm-engine-apply.sh`, `perm-shadow-apply.sh`,
+`unattended.sh`) — only `permission-swap.sh:222` names it, in a comment saying it is left untouched; a
+script rewriting the whole `permissions` object would not match, and six other scripts that handle
+`permissions` were NOT audited: `expertise-gate-protect-apply.sh`, `scope-parity-protect-apply.sh`,
+`perm-engine-doctor.sh`, `gates-bypass-ask-apply.sh`, `lib/claude-adapt/core/apply.sh`,
+`lib/claude-export/core/sanitize.sh` (that list was cut at 20 hits, so hooks were not covered either);
+(2) `~/.claude/logs/hooks-errors.log` 12:40-12:52 CEST shows no settings write, but it holds two
+same-minute leads: an `ask-bash-firewall` NOTE at 12:48:37 (a Bash call with command substitution; the
+log keeps no command text) and three `model-override` unsets at 12:48:54 (that script writes only
+`state/model-overrides.json`; whatever invoked it was not identified); (3) the transcripts could NOT be
+searched: none from 2026-10-10 survive (the oldest on disk is 2026-10-13). The same log also shows a
+session starting in scout at 11:36 CEST on 2026-10-10 (`session-start-banner … cwd=/stack/projects/scout`,
+one of four session starts within 81 s), which the original entry's dating did not account for; what
+that session did is unknown. The restore reset the file's mtime, so the 12:48 figure now survives only
+in this entry. A manual edit or a Claude Code UI action leaves no trace in any of these. If the line
+disappears again, look for the writer before restoring a second time. The original entry follows.
 
 Found 2026-10-17 as the one dirty file left after step 8c was recovered and committed. The working
 tree's `.claude/settings.json` differs from HEAD by a single deleted line, `"defaultMode": "auto",`
