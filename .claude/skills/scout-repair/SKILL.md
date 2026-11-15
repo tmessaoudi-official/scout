@@ -137,6 +137,10 @@ ls .claude/hooks/ .claude/agents/ .claude/skills/
 grep -n '\.claude/' CLAUDE.md | sed -n '/Claude config in this repo/,$p'
 ```
 
+Both directions are mechanical in `drift-scan.sh` and pinned by `tests/test-drift-scan.sh` (2026-11-15):
+S3 reports a hook or agent CLAUDE.md never names, and S2's dangling-path walk reports CLAUDE.md naming
+one that is not on disk — but only when it gives the full `.claude/…` path, and not on a line S2 reads
+as history (`renamed`, `previously`, `no longer`, …) or as another repo's; those rows stay manual.
 A file added without updating the table is **P2**; a table row naming a deleted file is **P1** (a
 future session will look for it).
 

@@ -586,7 +586,8 @@ bash tests/test-sabotage-baseline.sh    # proves the LEDGER is judged in a green
                                         #   it was not, from 2026-08-22 to 2026-08-24, so every one
                                         #   of its ~375 cases reported `ok` while proving nothing
 bash tests/test-drift-scan.sh           # proves that gate can still go RED (S8: .env.example sync),
-                                        #   and that it skips docs/plans/archive/ (history) but not a live plan
+                                        #   and that it skips docs/plans/archive/ (history) but not a live plan;
+                                        #   also the hook/agent inventory both ways (S3 P2, S2 P1)
 bash -n .claude/hooks/*.sh tests/*.sh tools/*.sh
 find .claude/hooks .claude/skills tests tools -name '*.sh' -print0 | xargs -0 shellcheck --severity=warning   # as CI
 git ls-files -z '*.yml' '*.yaml' | xargs -0 yamllint --strict .yamllint   # as CI; config in .yamllint
@@ -792,7 +793,8 @@ tests/test-lint-on-write.sh        Proves a finding reaches the MODEL (additiona
                                    reads docs/plans/archive/ (history is not edited to satisfy it)
 tests/sabotage-check.sh            Breaks the classifier many ways; the suite must catch every one
 tests/test-fetch-phpunit.sh        Proves the runner fetch refuses a bad signature
-tests/test-drift-scan.sh           Sabotage test FOR that gate — each S8 sub-check must go red
+tests/test-drift-scan.sh           Sabotage test FOR that gate — each S8 sub-check must go red, and
+                                   the hook/agent inventory both ways (S3 unlisted P2, S2 missing P1)
 tests/test-sabotage-applies.sh     Proves every sabotage expression still matches something. It
                                    checks each expression INDIVIDUALLY — it used to apply a case's
                                    expressions together and compare once, so a multi-expression case

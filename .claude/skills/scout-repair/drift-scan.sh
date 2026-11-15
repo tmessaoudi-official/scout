@@ -476,23 +476,10 @@ for doc in docs:
                     print(f"P1  {doc}:{line} claims {g} where the corpus has {EXPECT[kind]} "
                           f"{kind} ({label}) — a prose count drifted from the data it describes.")
 
-# The open-decision count in CLAUDE.md must match docs/OPEN-QUESTIONS.md.
-oq = pathlib.Path('docs/OPEN-QUESTIONS.md')
-cm = pathlib.Path('CLAUDE.md')
-if oq.is_file() and cm.is_file():
-    open_qs = len(re.findall(r'^### (?:Ⓑ|Ⓞ)', oq.read_text(), re.M))
-    WORDS = {'one':1,'two':2,'three':3,'four':4,'five':5,'six':6,'seven':7,'eight':8,'nine':9,
-             'ten':10,'eleven':11,'twelve':12,'thirteen':13,'fourteen':14,'fifteen':15,
-             'sixteen':16,'seventeen':17,'eighteen':18,'nineteen':19,'twenty':20}
-    m = re.search(r'\*\*(\w+) decisions are still open\*\*', cm.read_text(), re.I)
-    if m:
-        claimed = WORDS.get(m.group(1).lower())
-        if claimed is None:
-            print(f"P2  CLAUDE.md writes the open-decision count as '{m.group(1)}', which this check "
-                  f"cannot parse — use a word from one..twenty, or a digit.")
-        elif claimed != open_qs:
-            print(f"P1  CLAUDE.md says {m.group(1)} ({claimed}) decisions are open; "
-                  f"docs/OPEN-QUESTIONS.md has {open_qs} (Ⓑ + Ⓞ headings).")
+# An open-decision count check lived here until 2026-11-15. It matched only a bolded "N decisions
+# are still open" in CLAUDE.md, a sentence ed70acd removed on 2026-08-07, so it had no input from
+# then on, and no doc carries such a count today. Removed rather
+# than repointed (developer ruling, docs/OPEN-QUESTIONS.md Decisions Log, 2026-11-15 14:48).
 PY
 # A python section that CRASHES must not read as a section that found nothing. Under
 # `set -uo pipefail` with no `-e`, an exception here printed a traceback to stderr, wrote

@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # test-drift-scan.sh — the drift gate's own self-test: S8 (`.env.example` sync), S7's corpus
 # breakdown claim (the one S7 shape that had never been seen red), the docs/plans/archive/ skip in
-# S7 and S2 (an archived plan is history, never edited to satisfy the gate), and S6.
+# S7 and S2 (an archived plan is history, never edited to satisfy the gate), S6, and the hook/agent
+# inventory both ways (S3: on disk but unlisted, P2; S2: listed but not on disk, P1).
 #
 # WHY THIS FILE EXISTS. `drift-scan.sh` runs in CI and fails the build on P0/P1, which makes it a
 # gate; and its own preamble records the failure every gate here is prone to — an earlier version
@@ -111,7 +112,7 @@ silent_about() {
   ! grep -qE -- "$2" <<<"$found"
 }
 
-printf '\n== drift-scan self-test (S8: .env.example sync · S7: corpus breakdown · archive/ skip · S6) ==\n\n'
+printf '\n== drift-scan self-test (S8: .env.example sync · S7: corpus breakdown · archive/ skip · S3/S2 inventory · S6) ==\n\n'
 
 # ── the gate must be QUIET on a correct tree ─────────────────────────────────────────────────────
 # First, because every case below asserts a message appears; if the scan reported something on a
@@ -283,6 +284,52 @@ check "S2 does NOT report a dangling path inside docs/plans/archive/" \
   bash -c '! grep -qF -e "$1" <<<"$2"' _ "P1  $arch_doc:" "$s2arch_out"
 check "S2 still reports the same dangling path in a live plan" \
   bash -c 'grep -qF -e "$1" <<<"$2"' _ "P1  $live_doc:1 cites $gone" "$s2arch_out"
+
+# ── S3 + S2: the hook/agent inventory, both directions (2026-11-15) ──────────────────────────────
+# Two directions, two sections, two severities, none of them seen red until now. S3 is FORWARD: a
+# file under .claude/hooks/ or .claude/agents/ that CLAUDE.md never names is P2 (scout-repair
+# SKILL.md § Section 3: "A file added without updating the table is P2"). The REVERSE — CLAUDE.md
+# naming a hook that is not on disk, "a table row naming a deleted file is P1" — has no section of
+# its own: S2's dangling-path walk reports it, because it checks every `.claude/…` path any .md
+# cites. Pinned here with the two shapes live CLAUDE.md really holds that must NOT fire: a global
+# `~/.claude/hooks/…` path (S2's lookbehind) and a glob (`.claude/hooks/*.sh`). The paths are
+# assembled from variables, because S2 polices every `.claude/` path this script spells out.
+hk=".claude/hooks"; ag=".claude/agents"
+inv="$work/case-inventory"
+mkdir -p "$inv/$hk" "$inv/$ag"
+cp "$repo/.claude/settings.json" "$inv/.claude/settings.json"
+printf '#!/bin/sh\n' >"$inv/$hk/listed-hook.sh"
+printf '# x\n' >"$inv/$ag/listed-reviewer.md"
+inv_doc() {   # the CLAUDE.md under test: always the two listed files and both must-stay-silent shapes
+  printf 'Config: `%s`, `%s`, `~/%s/log-helpers.sh`, `%s/*.sh`. %s\n' \
+    "$hk/listed-hook.sh" "$ag/listed-reviewer.md" "$hk" "$hk" "${1:-}" >"$inv/CLAUDE.md"
+}
+inv_out() { CLAUDE_PROJECT_DIR="$inv" bash "$scan" --quiet 2>&1 || true; }
+
+inv_doc
+inv_clean="$(inv_out)"
+check "S3 is silent when every hook and agent is listed (so the cases below mean something)" \
+  bash -c '! grep -q "not listed in CLAUDE.md" <<<"$1"' _ "$inv_clean"
+# Asserted as NO dangling-path line for CLAUDE.md at all, not as "no line naming log-helpers": a
+# message filter that names the counterweight can be satisfied by the message changing shape. The
+# glob is safe by construction (S2's path class has no `*`, so it reads `.claude/hooks/`, which
+# exists); the `~/` path is what this case is for, and it is proven by deleting S2's `(?<!~/)`.
+check "S2 is silent on a global ~/.claude/hooks/ path (and a .claude/hooks/*.sh glob) in CLAUDE.md" \
+  bash -c '! grep -q "^P1  CLAUDE.md:" <<<"$1"' _ "$inv_clean"
+
+printf '#!/bin/sh\n' >"$inv/$hk/unlisted-hook.sh"
+printf '# x\n' >"$inv/$ag/unlisted-reviewer.md"
+inv_fwd="$(inv_out)"
+check "S3 reports an UNLISTED hook at P2" \
+  bash -c 'grep -qE "^P2  unlisted-hook\.sh is not listed in CLAUDE\.md" <<<"$1"' _ "$inv_fwd"
+check "S3 reports an UNLISTED agent at P2" \
+  bash -c 'grep -qE "^P2  unlisted-reviewer\.md is not listed in CLAUDE\.md" <<<"$1"' _ "$inv_fwd"
+rm -f "$inv/$hk/unlisted-hook.sh" "$inv/$ag/unlisted-reviewer.md"
+
+ghost="$hk/ghost-hook.sh"
+inv_doc "Also \`$ghost\`."
+check "S2 reports CLAUDE.md naming a hook that is NOT on disk, at P1" \
+  bash -c 'grep -qF -e "P1  CLAUDE.md:1 cites $1, which does not exist" <<<"$2"' _ "$ghost" "$(inv_out)"
 
 # ── S6: live surfaces run the suite through tools/in-docker.sh ───────────────────────────────────
 # Only S6's own message is matched: this scratch tree holds none of what the other sections read, so
