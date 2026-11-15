@@ -214,7 +214,8 @@ move, one `advisor()` per gate):
     tests (all as on the baseline). The three new service cases redden `SourceHealthServiceTest` plus rent, car and job
     behaviour tests. The test and docs clauses on the 8e-1 bullet above are superseded by the 15:33 ruling and this
     plan. Rent `Store::health()` has no caller left in `src/` (a pure pass-through, kept until 8e-2 removes it from
-    the ports). The seven cases were judged by a scratch measure script, NOT yet by `run_sabotage` itself. **Open:
+    the ports). The seven cases were first judged by a scratch measure script, then by `run_sabotage` itself: a filtered run in the image
+    on 2026-11-15 gave `7 sabotage(s) detected, 0 undetected`, both baselines green (a PARTIAL RUN, not the ledger). **Open:
     the next nightly's result, to be recorded here before 8e-2.**
   - **8e-2 — off the ports.** `health()` leaves `Source`, `VehicleSource` and `JobSource`; the CLIs and pipelines
     call the service with a NON-NULLABLE `DateTimeImmutable $now`; the 106 test call sites migrate; 2136
