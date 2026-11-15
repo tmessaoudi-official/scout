@@ -14,6 +14,7 @@ use Scout\Core\CountsPatternMisses;
 use Scout\Core\MalformedText;
 use Scout\Core\PatternMissLog;
 use Scout\Core\SourceHealth;
+use Scout\Core\SourceHealthService;
 use Scout\Core\SourceStatus;
 use Scout\Core\Text;
 
@@ -159,9 +160,13 @@ final readonly class VehicleEmailSource implements AcknowledgesMessages, CountsP
         // A PATTERN THAT MATCHED NOTHING AT ALL IS A TEMPLATE CHANGE, and every other verdict here
         // is blind to it: the cards still parsed, so `item_count` did not move, no run failed, and
         // the feed kept arriving. That is the state PAP ran in for four days on the rent side.
-        // The decoration is `PatternMissLog::escalate()` — one implementation for both domains.
-        return $this->patternMisses->escalate(
-            $this->store->runs()->health($this->name(), $nowIso, $this->definition->feedSilentDays),
+        // The decoration is `PatternMissLog::escalate()`, applied over the run log by
+        // `SourceHealthService` — one place for all three domains (step 8e-1).
+        return (new SourceHealthService($this->store->runs()))->of(
+            $this->name(),
+            $this->patternMisses,
+            $nowIso,
+            $this->definition->feedSilentDays,
         );
     }
 

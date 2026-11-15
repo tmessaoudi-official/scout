@@ -9,6 +9,7 @@ use PHPUnit\Framework\TestCase;
 use Scout\Core\CountsPatternMisses;
 use Scout\Core\PatternMissLog;
 use Scout\Core\SourceHealth;
+use Scout\Core\SourceHealthService;
 use Scout\Core\SourceStatus;
 
 /**
@@ -156,13 +157,33 @@ final class PatternMissEscalationTest extends TestCase
                 continue;
             }
 
+            // ROUTED THROUGH THE ONE SERVICE, WITH ITS OWN LOG (step 8e-1, developer ruling 2026-11-15). Naming
+            // the service is not enough: a body that handed it a fresh `new PatternMissLog()` would route
+            // through it and still report nothing, so the source's OWN log must be what it passes.
             self::assertStringContainsString(
-                '->escalate(',
+                'new SourceHealthService(',
                 $body,
-                $class . '::health() counts pattern misses and never reports them — route it through '
-                    . 'PatternMissLog::escalate(), the one implementation, rather than inlining a copy',
+                $class . '::health() counts pattern misses and does not route them through SourceHealthService, '
+                    . 'the one place that escalates them — rather than inlining a copy',
+            );
+            self::assertMatchesRegularExpression(
+                '/->of\(\s*\$this->name\(\),\s*\$this->patternMisses,/',
+                $body,
+                $class . '::health() must hand SourceHealthService its OWN pattern-miss log, or the count it keeps is never read',
             );
         }
+
+        // And the service escalates: without this, every adapter above routes into a pass-through.
+        $of = new \ReflectionMethod(SourceHealthService::class, 'of');
+        $ofFile = $of->getFileName();
+        self::assertIsString($ofFile);
+        $ofLines = file($ofFile);
+        self::assertIsArray($ofLines);
+        self::assertStringContainsString(
+            '->escalate(',
+            implode('', array_slice($ofLines, $of->getStartLine() - 1, $of->getEndLine() - $of->getStartLine() + 1)),
+            'SourceHealthService::of() must decorate the run log verdict through PatternMissLog::escalate()',
+        );
     }
 
     /**

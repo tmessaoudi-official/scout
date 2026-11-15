@@ -13,6 +13,7 @@ use Scout\Adapters\SourceError;
 use Scout\Core\CountsPatternMisses;
 use Scout\Core\PatternMissLog;
 use Scout\Core\SourceHealth;
+use Scout\Core\SourceHealthService;
 
 /**
  * A job portal's DIGEST alert — Free-Work (source #2, its text/plain part), HelloWork and Apec (both
@@ -157,8 +158,11 @@ final readonly class JobDigestEmailSource implements AcknowledgesMessages, Count
 
     public function health(?string $nowIso = null): SourceHealth
     {
-        return $this->patternMisses->escalate(
-            $this->store->runs()->health($this->name(), $nowIso, $this->definition->feedSilentDays),
+        return (new SourceHealthService($this->store->runs()))->of(
+            $this->name(),
+            $this->patternMisses,
+            $nowIso,
+            $this->definition->feedSilentDays,
         );
     }
 

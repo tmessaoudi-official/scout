@@ -12,6 +12,7 @@ use Scout\Adapters\SourceError;
 use Scout\Core\CountsPatternMisses;
 use Scout\Core\PatternMissLog;
 use Scout\Core\SourceHealth;
+use Scout\Core\SourceHealthService;
 
 /**
  * A site whose sitemap indexes lot pages carrying a schema.org `Vehicle` block — Autohero.
@@ -68,7 +69,7 @@ final readonly class SitemapVehicleSource implements CountsPatternMisses, Indexe
      */
     public function health(?string $nowIso = null): SourceHealth
     {
-        return $this->patternMisses->escalate($this->store->runs()->health($this->name(), $nowIso));
+        return (new SourceHealthService($this->store->runs()))->of($this->name(), $this->patternMisses, $nowIso);
     }
 
     /** The per-key miss counts of the last fetch — `scout --domain=car doctor` prints them. */

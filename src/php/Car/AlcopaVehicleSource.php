@@ -14,6 +14,7 @@ use Scout\Core\Clock;
 use Scout\Core\CountsPatternMisses;
 use Scout\Core\PatternMissLog;
 use Scout\Core\SourceHealth;
+use Scout\Core\SourceHealthService;
 use Scout\Core\SystemClock;
 
 /**
@@ -99,7 +100,7 @@ final readonly class AlcopaVehicleSource implements CountsPatternMisses, Indexed
 
     public function health(?string $nowIso = null): SourceHealth
     {
-        return $this->patternMisses->escalate($this->store->runs()->health($this->name(), $nowIso));
+        return (new SourceHealthService($this->store->runs()))->of($this->name(), $this->patternMisses, $nowIso);
     }
 
     public function patternMisses(): PatternMissLog

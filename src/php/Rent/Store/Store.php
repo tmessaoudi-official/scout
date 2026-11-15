@@ -2245,6 +2245,16 @@ final readonly class Store
         return $this->runs->health($sourceName, $nowIso, $feedSilentDays);
     }
 
+    /**
+     * The run log itself, as `VehicleStore::runs()` and `JobStore::runs()` already expose it — what
+     * {@see \Scout\Core\SourceHealthService} reads (step 8e-1). Nothing bypasses redaction through it:
+     * `RunStore::recordRun()` applies `Redact::text()` itself, so every writer reaches the same funnel.
+     */
+    public function runs(): RunStore
+    {
+        return $this->runs;
+    }
+
     // ── Internals ─────────────────────────────────────────────────────────────────────────────────
 
     private function schemaVersionOrNull(): ?int

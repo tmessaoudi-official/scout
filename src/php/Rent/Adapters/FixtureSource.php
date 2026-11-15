@@ -8,6 +8,7 @@ use Scout\Core\CountsPatternMisses;
 use Scout\Core\PatternMissLog;
 use Scout\Rent\Config\SourceDefinition;
 use Scout\Core\SourceHealth;
+use Scout\Core\SourceHealthService;
 use Scout\Rent\Core\SourceProfile;
 use Scout\Rent\Core\Tenure;
 use Scout\Rent\Store\Store;
@@ -120,12 +121,12 @@ final readonly class FixtureSource implements CountsPatternMisses, Source
      * `isAlerting()` and no alert — only a `doctor` printout (C2 round-1 resilience lens). In'li's
      * card `cp` went 171/171 dead on the deployed image exactly like that, and a human found it.
      *
-     * `PatternMissLog::escalate()` is the one implementation, shared with the email adapters and
-     * both domains.
+     * `SourceHealthService` is the one place that escalates them (`PatternMissLog::escalate()` over
+     * the run log), shared with the email adapters and all three domains.
      */
     public function health(?string $nowIso = null): SourceHealth
     {
-        return $this->patternMisses->escalate($this->store->health($this->name(), $nowIso));
+        return (new SourceHealthService($this->store->runs()))->of($this->name(), $this->patternMisses, $nowIso);
     }
 
     /**

@@ -12,6 +12,7 @@ use Scout\Rent\Core\RawListing;
 use Scout\Core\CountsPatternMisses;
 use Scout\Core\PatternMissLog;
 use Scout\Core\SourceHealth;
+use Scout\Core\SourceHealthService;
 use Scout\Core\SourceStatus;
 use Scout\Rent\Core\SourceProfile;
 use Scout\Rent\Core\Tenure;
@@ -295,10 +296,13 @@ final readonly class EmailAlertSource implements AcknowledgesMessages, CountsPat
         //
         // The decoration itself lives in `PatternMissLog::escalate()`, which used to be an inline
         // copy here and another verbatim one in the car twin, while three counting adapters had none
-        // at all (C2 round-1 resilience lens). One implementation, five callers, and a reflection
-        // test that fails when a sixth forgets.
-        return $this->patternMisses->escalate(
-            $this->store->health($this->name(), $nowIso, $this->definition->feedSilentDays),
+        // at all (C2 round-1 resilience lens). `SourceHealthService` applies it over the run log for
+        // every counting source (step 8e-1), and a reflection test fails when one does not route there.
+        return (new SourceHealthService($this->store->runs()))->of(
+            $this->name(),
+            $this->patternMisses,
+            $nowIso,
+            $this->definition->feedSilentDays,
         );
     }
 

@@ -50,6 +50,7 @@ flowchart TB
         Heartbeat["Heartbeat — liveness policy"]
         RunStore["RunStore — run log, health, cooldowns"]
         Health["SourceHealth · SourceStatus"]
+        HealthSvc["SourceHealthService — run log + misses, escalated once"]
         Misses["PatternMissLog · CountsPatternMisses"]
         Notify["Notify/ — Channel, Notifier, transports"]
     end
@@ -94,6 +95,8 @@ flowchart TB
     RStore --> RunStore
     VStore --> RunStore
     JStore --> RunStore
+    RAdapt & VAdapt & JAdapt --> HealthSvc
+    HealthSvc --> RunStore & Misses
 ```
 
 **The split rule.** A thing lives in `Core/` when it belongs to no domain — a portal changing
@@ -289,7 +292,8 @@ defaultTenure(): ?Tenure               // a hint; the classifier still runs
 profile(): SourceProfile               // the default + mixed_tenure, what LandlordRegistry may tighten
 host(): ?string                        // null = issues no outbound request, so it is never paced
 fetch(): RawListing[]
-health(?string $nowIso = null): SourceHealth   // the clock is what makes STALE derivable
+health(?string $nowIso = null): SourceHealth   // the clock is what makes STALE derivable;
+                                       // every counting source delegates to Core\SourceHealthService (8e-1)
 ```
 
 | Type | Class | How it reads a listing |
@@ -598,6 +602,9 @@ src/php/Core/SystemClock.php  the ONE class that reads the wall clock — pinned
                             tests/php/Repo/WallClockTest.php (exact allowed set)
 src/php/Core/FixedClock.php   the test seam; `orSystem($nowIso)` turns the CLIs' existing `nowIso`
                             string into a Clock once per process
+src/php/Core/SourceHealthService.php  a source's health in ONE place: the run log's verdict, escalated by
+                            the source's own PatternMissLog (step 8e-1, B-11); every counting source's
+                            health() delegates here, pinned by PatternMissEscalationTest
 src/php/Cli/WatchLoop.php   the `--watch` loop; survives a failing pass, stops after the one in flight
 src/php/Rent/Adapters/PacedSource.php   decorator applying Pacer, so Pipeline never learns time exists
 src/php/Rent/Store/              SQLite seen-set, price history, cross-portal group (v4); run log

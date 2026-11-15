@@ -4201,9 +4201,30 @@ run_sabotage "the miss escalation goes deaf (counted on every adapter, reported 
 # ONE ADAPTER REVERTS TO THE DEAF ONE-LINER. The escalation was inline in two adapters and absent
 # from three; extracting it is what makes a sixth adapter's omission FAIL rather than go dark, and
 # the reflection test over the CountsPatternMisses implementors is what enforces that.
+#
+# RE-DERIVED 2026-11-15 (step 8e-1): the escalation now lives in `Core/SourceHealthService`, and the
+# deaf one-liner is the body that BYPASSES the service. Measured before the move and after it: the
+# same behavioural test reddens (HtmlSourceDetailTest, a description selector missing every page).
 run_sabotage "an html source stops routing health() through the miss escalation" \
   src/php/Rent/Adapters/HtmlSource.php \
-  's%        return \$this->patternMisses->escalate(\$this->store->health(\$this->name(), \$nowIso));%        return \$this->store->health(\$this->name(), \$nowIso);%'
+  's%        return (new SourceHealthService(\$this->store->runs()))->of(\$this->name(), \$this->patternMisses, \$nowIso);%        return \$this->store->health(\$this->name(), \$nowIso);%'
+
+# THE SERVICE ITSELF GOES DEAF, and every counting source in all three domains with it: the one place
+# that escalates returns the run log's verdict untouched.
+run_sabotage "the health service stops escalating (every counting source goes deaf at once)" \
+  src/php/Core/SourceHealthService.php \
+  's%        return \$misses->escalate(\$this->runs->health(\$sourceName, \$nowIso, \$feedSilentDays));%        return \$this->runs->health(\$sourceName, \$nowIso, \$feedSilentDays);%'
+
+# THE SERVICE DROPS THE SOURCE'S OWN THRESHOLD: every email source falls back to the global one.
+run_sabotage "the health service drops a source's own feed_silent_days" \
+  src/php/Core/SourceHealthService.php \
+  's%\$this->runs->health(\$sourceName, \$nowIso, \$feedSilentDays)%$this->runs->health($sourceName, $nowIso)%'
+
+# THE SERVICE DROPS THE CLOCK: without it STALE never fires, and STALE is the verdict for a stopped
+# schedule.
+run_sabotage "the health service drops the clock, so STALE can never fire" \
+  src/php/Core/SourceHealthService.php \
+  's%\$this->runs->health(\$sourceName, \$nowIso, \$feedSilentDays)%$this->runs->health($sourceName, null, $feedSilentDays)%'
 
 # THE SITEMAP SOURCE STOPS COUNTING. autohero is enabled, and a renamed JSON-LD key would go null on
 # every lot with item_count unmoved, no run failed and `ok` reported.
@@ -4716,9 +4737,13 @@ run_sabotage "ImapMailbox keeps a stale feed date across a fetch that returned n
 # The GUARANTEE is untouched and is the one that matters -- the source's own feed_silent_days must
 # reach `health()`, the ONE funnel doctor, the pipeline and the heartbeat all read -- so the
 # expression now names the CALL rather than the assignment that used to hold it.
+#
+# RE-DERIVED 2026-11-15 (step 8e-1): the call is now `SourceHealthService::of(...)`, one argument per
+# line, and the threshold is its fourth. Replaced with `null` rather than deleted, so the call keeps its
+# shape; the same behavioural test reddens before and after the move (FeedFreshnessTest).
 run_sabotage "a per-source feed_silent_days is ignored by the source's own health()" \
   src/php/Rent/Adapters/EmailAlertSource.php \
-  's%\$this->store->health(\$this->name(), \$nowIso, \$this->definition->feedSilentDays)%\$this->store->health(\$this->name(), \$nowIso)%'
+  's%^            \$this->definition->feedSilentDays,$%            null,%'
 
 # Both load-time refusals share one guard: a threshold on a source that cannot act on it (html/json
 # report no feed date), and a threshold of 0, which disables the verdict. Disabling the guard accepts
@@ -5326,9 +5351,13 @@ run_sabotage "the car facts_pattern stops being counted (four fields go dark and
 # `test-sabotage-applies.sh` caught it: the `4d49eda` failure class, hit one commit after the commit
 # message describing it. The guarantee is unchanged -- this adapter ROUTES through the shared
 # escalation -- and deafening the escalation itself is a separate case on that class.
+#
+# RE-DERIVED 2026-11-15 (step 8e-1): routing now means handing `SourceHealthService` this source's OWN
+# log, so the counted-never-reported shape is a fresh, empty log in its place — the service still runs,
+# and reads a count nobody kept. Same behavioural test before and after (VehicleEmailPatternMissTest).
 run_sabotage "a car pattern that matched nothing never reaches health() (counted, never reported)" \
   src/php/Car/VehicleEmailSource.php \
-  's%        return \$this->patternMisses->escalate(%        return (fn (\$h) => \$h)(%'
+  's%^            \$this->patternMisses,$%            new PatternMissLog(),%'
 
 # Per-pass, never cumulative. Without the reset a template already fixed keeps warning, which sends
 # an operator to read a capture that is fine and teaches them to ignore the signal — a failure worse
@@ -6149,7 +6178,7 @@ run_sabotage "job: an acknowledge refusal is swallowed (step 5 S14)" \
   's%throw new SourceError(\$this->name(), '\''marquage des courriers traités refusé — '\'' \. \$e->getMessage(), \$e);%return;%'
 run_sabotage "job: health is not escalated (behaviour) (step 5 S15)" \
   src/php/Job/JobEmailSource.php \
-  '/\$this->store->runs()->health(\$this->name(), \$nowIso, \$this->definition->feedSilentDays),/,/);/ s%);%%; s%\$this->store->runs()->health(\$this->name(), \$nowIso, \$this->definition->feedSilentDays),%%; s%return \$this->patternMisses->escalate(%return $this->store->runs()->health($this->name(), $nowIso, $this->definition->feedSilentDays);%'
+  's%return (new SourceHealthService(\$this->store->runs()))->of($%return (fn (string $n, $m, ?string $t, ?int $d): SourceHealth => $this->store->runs()->health($n, $t, $d))(%'
 run_sabotage "job: the count spans fetches (step 5 S17)" \
   src/php/Job/JobEmailSource.php \
   's%\$this->patternMisses->reset();%%'

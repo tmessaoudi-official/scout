@@ -13,6 +13,7 @@ use Scout\Adapters\SourceError;
 use Scout\Core\CountsPatternMisses;
 use Scout\Core\PatternMissLog;
 use Scout\Core\SourceHealth;
+use Scout\Core\SourceHealthService;
 
 /**
  * A job portal's alert email, read from its HTML part — LinkedIn is source #1.
@@ -143,8 +144,11 @@ final readonly class JobEmailSource implements AcknowledgesMessages, CountsPatte
 
     public function health(?string $nowIso = null): SourceHealth
     {
-        return $this->patternMisses->escalate(
-            $this->store->runs()->health($this->name(), $nowIso, $this->definition->feedSilentDays),
+        return (new SourceHealthService($this->store->runs()))->of(
+            $this->name(),
+            $this->patternMisses,
+            $nowIso,
+            $this->definition->feedSilentDays,
         );
     }
 

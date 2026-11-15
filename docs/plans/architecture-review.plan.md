@@ -60,6 +60,7 @@ This file is the durable record; the scratch area is not.
 - [2026-10-17 10:20] ASSUMED (review): 8e not started on 2026-10-17: the unattended window and every gate rule expire at 09:47Z and 8e (13 health() bodies, a new service, PacedSource + RunStore with nightly-only certification, CLAUDE.md and health.md rewrites) cannot be committed whole before then; a half-moved 8e at the mode flip is the dirty-tree state recover-session cleaned that morning. Basis: advisor() agreed. Alternatives: start 8e and stop mid-way (worse), 8f (also nightly-certified).
 - [2026-10-17 10:53] AGREED: 8e is split into two commits (developer ruling): 8e-1 adds the application-level health service and each source's health() delegates to it, with no test change; 8e-2 removes health() from the Source ports (rent, car, job) and migrates the 106 test call sites, the six ledger cases and the docs. Each half leaves a green tree and fits one window.
 - [2026-11-15 13:06] AGREED: Run /rules-split on CLAUDE.md only after 8e-1 lands: the 2026-11-15 dry run (rows 1-6, ~128 lines, ~18 % of tokens) moves the $nowIso/journalMode() Store::health() MUSTs that 8e-1 changes; rerun the dry run then, with .claude/settings.json (Q41) resolved first.
+- [2026-11-15 15:33] AGREED: 8e-1 amends ONE test, against the 2026-10-17 'no test change' clause: PatternMissEscalationTest's structural assertion required '->escalate(' in every counting source's health() body, so it now asserts routing through Core/SourceHealthService plus escalate() inside the service; the other 105 test call sites stay untouched (developer ruling).
 
 ## Formal Plan
 
@@ -194,6 +195,27 @@ move, one `advisor()` per gate):
     stay as they are. The cases that target the BODIES (4206, 4721, 5331, 6152) are re-derived here, against the
     service, because that is where `escalate` and the threshold now live. 2136 and 5059 do not move. `RunStore`
     and the docs are untouched.
+    **8e-1 plan (2026-11-15, Large):** `src/php/Core/SourceHealthService.php` (`final readonly`, constructor
+    `RunStore`, `of(string $name, PatternMissLog $misses, ?string $nowIso, ?int $feedSilentDays = null)`; the clock
+    stays a nullable string here, because a defaulted `now` would make `STALE` fire where it does not today);
+    rent `Store` gains `runs(): RunStore`, as car and job have (`Redact` sits in `RunStore::recordRun()`, so it opens
+    no unredacted write path); the 9 counting bodies become `(new SourceHealthService(<run log>))->of(...)`, handing
+    over `$this->patternMisses`. Tests: a NEW `tests/php/Core/SourceHealthServiceTest.php` (blind log escalates, the
+    per-source threshold reaches the run log, the clock reaches it), red first; the ONE amended assertion in
+    `PatternMissEscalationTest` (ruling 2026-11-15 15:33) requires the body to pass `$this->patternMisses` to the
+    service and the service to call `->escalate(`. Ledger: 4206, 4721, 5331, 6152 re-derived and measured against
+    their 2026-11-15 baseline (which test each reddens); three new cases on the service, placed beside 4206.
+    Docs: the new class only, as 8c did (`docs/ARCHITECTURE.md` row and diagram node, CLAUDE.md's Core row); the
+    "MUST pass `$nowIso`" text stays for 8e-2. `Rent/Store/` is touched, so the nightly certifies the commit.
+    **8e-1 landed 2026-11-15** (`git log -1 -- src/php/Core/SourceHealthService.php`): suite `OK (5847 tests, 17158
+    assertions)` in the image, PHPStan clean, 1106 expressions apply, drift-scan 0/0/0, `test-ci-workflow` 71/0. The
+    seven cases were measured on scratch copies: each changes 2 lines, parses, and reddens a behavioural test. 4206 →
+    `HtmlSourceDetailTest`, 4721 → `FeedFreshnessTest`, 5331 → `VehicleEmailPatternMissTest`, 6152 → the three job
+    tests (all as on the baseline). The three new service cases redden `SourceHealthServiceTest` plus rent, car and job
+    behaviour tests. The test and docs clauses on the 8e-1 bullet above are superseded by the 15:33 ruling and this
+    plan. Rent `Store::health()` has no caller left in `src/` (a pure pass-through, kept until 8e-2 removes it from
+    the ports). The seven cases were judged by a scratch measure script, NOT yet by `run_sabotage` itself. **Open:
+    the next nightly's result, to be recorded here before 8e-2.**
   - **8e-2 — off the ports.** `health()` leaves `Source`, `VehicleSource` and `JobSource`; the CLIs and pipelines
     call the service with a NON-NULLABLE `DateTimeImmutable $now`; the 106 test call sites migrate; 2136
     (`PacedSource`, with `PatternMissEscalationTest`'s carve-out re-aimed) and 5059 are re-derived; `RunStore`'s
