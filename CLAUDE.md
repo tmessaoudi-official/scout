@@ -146,10 +146,15 @@ premise"* escape. Protocol: the global `/ask-human` skill, § "Question quality"
 `ask-human` 2026-08-18 — a repo skill may not share a global skill's name).
 
 **Mode — the global `~/.claude/CLAUDE.md` § Mode decides what stops** (developer rulings 2026-09-27).
-This tree is bypassed for the ask-human gate family, so sessions here run **autonomous**: announce the
-task size and the plan, then build it; on an ambiguity take the recommended option and log it as
-`ASSUMED (review)` in the plan's Decisions Log. Phase markers, evidence grades and the Rule 6 table
-still show (output parity). In every mode, still stop for the cases in § "When a question is
+The mode is a property of the ask-human gate family (`ah`) for this tree, NOT of this file: read it from
+the SessionStart banner's `▸ MODE:` line, `/next`, or `bash ~/.claude/bin/project-state.sh --tier 0 | jq
+-r .identity.mode` — never from prose here, which goes stale on the next `/gates-bypass --run|--spec`
+(this paragraph claimed autonomous while the tree read `spec`, found 2026-11-15). In **spec** mode the
+size gate, the plan gate, the tier question and a mid-task ambiguity all ask. In **autonomous** mode,
+announce the task size and the plan, then build it; on an ambiguity take the recommended option and log
+it as `ASSUMED (review)` in the plan's Decisions Log. Confident picks (`cf`), when armed, replace the
+mid-task rule in either mode (global § Mode). In BOTH modes phase markers, evidence grades and the Rule
+6 table still show (output parity), and both still stop for the cases in § "When a question is
 mandatory here" of that skill — a user-visible product decision, anything that would weaken an invariant
 below, a destructive step. **Never ask whether
 to weaken the social-housing exclusion** — ask *how* to satisfy it.
@@ -372,7 +377,7 @@ Each reviewer **reads the actual diff, code and tests itself** — never certify
 narrative — and is chartered to REFUTE, not approve.
 
 > **Per task vs milestone (2026-09-27):** MAXIMAL is the milestone ceiling. Per task the global tier
-> applies: in autonomous mode (this tree) the project's certification schedule
+> applies: in autonomous mode the project's certification schedule
 > (`~/.claude/projects/-stack-projects-scout/certification-schedule`, asked once), in spec mode the
 > per-gate tier question — `advisor()` recommended (economize ruling, 2026-08-21).
 
