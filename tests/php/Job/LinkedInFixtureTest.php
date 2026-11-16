@@ -139,7 +139,6 @@ final class LinkedInFixtureTest extends TestCase
     {
         return new JobEmailSource(
             JobSourceLoader::load(self::ROOT . '/config/job/sources.json')['linkedin'],
-            JobStore::open(':memory:'),
             new FileMailbox(self::ROOT . '/tests/fixtures/job/linkedin'),
             $warn,
         );

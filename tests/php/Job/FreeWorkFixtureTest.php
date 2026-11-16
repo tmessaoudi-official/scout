@@ -190,7 +190,6 @@ final class FreeWorkFixtureTest extends TestCase
     {
         return new JobDigestEmailSource(
             JobSourceLoader::load(self::ROOT . '/config/job/sources.json')['freework'],
-            JobStore::open(':memory:'),
             new FileMailbox(self::ROOT . '/tests/fixtures/job/freework'),
             $warn,
         );

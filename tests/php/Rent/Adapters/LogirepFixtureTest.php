@@ -307,7 +307,6 @@ final class LogirepFixtureTest extends TestCase
 
         return new HttpJsonSource(
             $definition,
-            Store::open($this->dbPath),
             new class($page) implements HttpClient {
                 public function __construct(private readonly string $page) {}
 

@@ -153,7 +153,6 @@ final class LeboncoinCarFixtureTest extends TestCase
         $definition = VehicleSourceLoader::load(self::ROOT . '/config/car/sources.json')['leboncoin'];
         $source = new VehicleEmailSource(
             $definition,
-            VehicleStore::open(':memory:'),
             new FileMailbox(self::ROOT . '/tests/fixtures/car/leboncoin'),
         );
 

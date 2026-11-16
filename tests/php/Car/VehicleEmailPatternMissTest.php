@@ -11,6 +11,8 @@ use Scout\Car\VehicleEmailSource;
 use Scout\Car\VehicleSourceDefinition;
 use Scout\Car\VehicleSourceLoader;
 use Scout\Car\VehicleStore;
+use Scout\Core\RunStore;
+use Scout\Core\SourceHealthService;
 use Scout\Core\CountsPatternMisses;
 use Scout\Core\SourceStatus;
 
@@ -110,7 +112,7 @@ final class VehicleEmailPatternMissTest extends TestCase
         self::assertSame([], $source->patternMisses()->total());
         self::assertSame(
             SourceStatus::OK,
-            $source->health(self::NOW)->status,
+            (new SourceHealthService($store->runs()))->of($source, RunStore::instant(self::NOW))->status,
             'a source whose patterns all match must not be warned about',
         );
     }
@@ -129,7 +131,7 @@ final class VehicleEmailPatternMissTest extends TestCase
 
         self::assertSame(['facts_pattern'], $source->patternMisses()->total());
 
-        $health = $source->health(self::NOW);
+        $health = (new SourceHealthService($store->runs()))->of($source, RunStore::instant(self::NOW));
         self::assertSame(SourceStatus::WARN_DROP, $health->status);
         self::assertStringContainsString('facts_pattern', $health->detail);
         self::assertStringContainsString('gabarit', $health->detail);
@@ -146,7 +148,7 @@ final class VehicleEmailPatternMissTest extends TestCase
         $this->recordHealthyRuns($store, 'leboncoin');
         $source->fetch();
 
-        self::assertNotSame(SourceStatus::BROKEN, $source->health(self::NOW)->status);
+        self::assertNotSame(SourceStatus::BROKEN, (new SourceHealthService($store->runs()))->of($source, RunStore::instant(self::NOW))->status);
     }
 
     /**
@@ -269,7 +271,7 @@ final class VehicleEmailPatternMissTest extends TestCase
         $store = VehicleStore::open(':memory:');
 
         return [
-            new VehicleEmailSource($d, $store, new FileMailbox(self::ROOT . '/tests/fixtures/car/' . $name)),
+            new VehicleEmailSource($d, new FileMailbox(self::ROOT . '/tests/fixtures/car/' . $name)),
             $store,
         ];
     }

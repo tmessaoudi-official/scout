@@ -12,6 +12,8 @@ use Scout\Adapters\Mail\FileMailbox;
 use Scout\Adapters\Mail\ImapMailbox;
 use Scout\Adapters\Mail\Mailbox;
 use Scout\Rent\Config\SourceDefinition;
+use Scout\Core\RunStore;
+use Scout\Core\SourceHealthService;
 use Scout\Core\SourceStatus;
 use Scout\Rent\Store\Store;
 
@@ -122,7 +124,7 @@ final class FeedFreshnessTest extends TestCase
      * source and reused across every `--watch` pass. So a pass that fetched NOTHING kept the
      * previous pass's date and reported it as its own, which is exactly what `Pipeline` documents
      * must never happen while guarding only the exception path. It was harmless only because
-     * `Store::health()` gates on `$lastCount > 0` in a different file — one mechanism accidentally
+     * `RunStore::health()` gates on `$lastCount > 0` in a different file — one mechanism accidentally
      * protected by another, this repo's own named trap.
      */
     public function testAFetchForgetsThePreviousFetchsDate(): void
@@ -189,11 +191,11 @@ final class FeedFreshnessTest extends TestCase
 
         $store->recordRun($source->name(), 3, true, null, '2026-08-29T09:00:00Z', null, $source->newestFeedItemAt());
 
-        self::assertSame(SourceStatus::FEED_SILENT, $store->health($source->name(), '2026-08-29T09:00:00Z', 3)->status);
+        self::assertSame(SourceStatus::FEED_SILENT, $store->runs()->health($source->name(), '2026-08-29T09:00:00Z', 3)->status);
     }
 
     /**
-     * A source's OWN `feed_silent_days` decides its verdict, through the source's `health()` — the
+     * A source's OWN `feed_silent_days` decides its verdict, through the port's `feedSilentDays()` — the
      * single funnel `doctor`, the pipeline and the heartbeat all read. A message two days old is
      * `OK` under the store's global three-day threshold and `FEED_SILENT` under this source's one
      * day, and the source is what has to say so; a threshold that only `doctor` honoured would leave
@@ -207,8 +209,8 @@ final class FeedFreshnessTest extends TestCase
 
         $store->recordRun($strict->name(), 3, true, null, '2026-08-29T09:00:00Z', null, $strict->newestFeedItemAt());
 
-        self::assertSame(SourceStatus::FEED_SILENT, $strict->health('2026-08-29T09:00:00Z')->status, 'one day of silence exceeded');
-        self::assertSame(SourceStatus::OK, $lenient->health('2026-08-29T09:00:00Z')->status, 'the global 3 says not yet');
+        self::assertSame(SourceStatus::FEED_SILENT, (new SourceHealthService($store->runs()))->of($strict, RunStore::instant('2026-08-29T09:00:00Z'))->status, 'one day of silence exceeded');
+        self::assertSame(SourceStatus::OK, (new SourceHealthService($store->runs()))->of($lenient, RunStore::instant('2026-08-29T09:00:00Z'))->status, 'the global 3 says not yet');
     }
 
     private function source(Mailbox $mailbox, ?Store $store = null, ?int $feedSilentDays = null): EmailAlertSource
@@ -222,7 +224,6 @@ final class FeedFreshnessTest extends TestCase
                 mixedTenure: false,
                 feedSilentDays: $feedSilentDays,
             ),
-            $store ?? Store::open(':memory:'),
             $mailbox,
         );
     }

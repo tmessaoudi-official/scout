@@ -120,7 +120,6 @@ final class MindquestFixtureTest extends TestCase
     {
         return new JobDigestEmailSource(
             JobSourceLoader::load(self::ROOT . '/config/job/sources.json')['mindquest'],
-            JobStore::open(':memory:'),
             new FileMailbox(self::ROOT . '/tests/fixtures/job/mindquest'),
             $warn,
         );

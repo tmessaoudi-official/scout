@@ -4,10 +4,15 @@ declare(strict_types=1);
 
 namespace Scout\Car;
 
-use Scout\Core\SourceHealth;
+use Scout\Core\ReportsHealth;
 
-/** The car domain's adapter contract — `Adapters\Source`, for cars. `fetch()` throws, never returns `[]` on failure (hard rule 3). */
-interface VehicleSource
+/**
+ * The car domain's adapter contract — `Adapters\Source`, for cars. `fetch()` throws, never returns `[]` on failure (hard rule 3).
+ *
+ * A source does not judge its own health (step 8e-2): it reports through {@see ReportsHealth} and
+ * {@see \Scout\Core\SourceHealthService} judges it.
+ */
+interface VehicleSource extends ReportsHealth
 {
     public function name(): string;
 
@@ -23,6 +28,4 @@ interface VehicleSource
      * @throws \Scout\Adapters\SourceError
      */
     public function fetch(): array;
-
-    public function health(?string $nowIso = null): SourceHealth;
 }

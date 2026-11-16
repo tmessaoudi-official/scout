@@ -136,7 +136,6 @@ final class LaCentraleFixtureTest extends TestCase
 
         return new VehicleEmailSource(
             $definitions['lacentrale'],
-            VehicleStore::open(':memory:'),
             new FileMailbox(self::ROOT . '/tests/fixtures/car/lacentrale'),
             $warn,
         );

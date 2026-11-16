@@ -33,7 +33,7 @@ final class JobPipelineTest extends TestCase
     public function testANewMatchIsPushedOnceWithTheSourceLeadingItsTitleAndMarkedAsAPush(): void
     {
         [$pipeline, $channel, $store] = $this->pipeline();
-        $source = new FakeJobSource('linkedin', $store, [$this->strong('s1')]);
+        $source = new FakeJobSource('linkedin', [$this->strong('s1')]);
 
         $first = $pipeline->runOnce([$source], self::NOW);
         $pipeline->runOnce([$source], '2026-09-13T10:15:00Z');
@@ -51,7 +51,7 @@ final class JobPipelineTest extends TestCase
     {
         [$pipeline, $channel, $store] = $this->pipeline();
 
-        $result = $pipeline->runOnce([new FakeJobSource('linkedin', $store, [$this->offer('d1', 'Data Engineer')])], self::NOW);
+        $result = $pipeline->runOnce([new FakeJobSource('linkedin', [$this->offer('d1', 'Data Engineer')])], self::NOW);
 
         self::assertSame([], $this->ofKind($channel, NotificationKind::MATCH));
         self::assertSame(1, $result->rejectedCount);
@@ -65,7 +65,7 @@ final class JobPipelineTest extends TestCase
     public function testSeedingMarksEverythingSeenAndPushesNothing(): void
     {
         [$pipeline, $channel, $store] = $this->pipeline();
-        $source = new FakeJobSource('linkedin', $store, [$this->strong('s1'), $this->weak('w1')]);
+        $source = new FakeJobSource('linkedin', [$this->strong('s1'), $this->weak('w1')]);
 
         $seed = $pipeline->runOnce([$source], self::NOW, seedOnly: true);
         $pipeline->runOnce([$source], '2026-09-13T10:15:00Z');
@@ -81,9 +81,9 @@ final class JobPipelineTest extends TestCase
         [$pipeline, $channel, $store] = $this->pipeline();
 
         $result = $pipeline->runOnce([
-            new FakeJobSource('broken', $store, throw: new SourceError('broken', 'IMAP refusé')),
-            new FakeJobSource('crashed', $store, throw: new \LogicException('boom')),
-            new FakeJobSource('linkedin', $store, [$this->strong('s1')]),
+            new FakeJobSource('broken', throw: new SourceError('broken', 'IMAP refusé')),
+            new FakeJobSource('crashed', throw: new \LogicException('boom')),
+            new FakeJobSource('linkedin', [$this->strong('s1')]),
         ], self::NOW);
 
         self::assertSame(2, $result->sourcesFailed);
@@ -97,8 +97,8 @@ final class JobPipelineTest extends TestCase
     public function testASourceGoneBrokenAlertsOncePerEscalationAndRecoversOnce(): void
     {
         [$pipeline, $channel, $store] = $this->pipeline();
-        $good = new FakeJobSource('linkedin', $store, [$this->weak('w1')]);
-        $bad = new FakeJobSource('linkedin', $store, throw: new SourceError('linkedin', 'IMAP refusé'));
+        $good = new FakeJobSource('linkedin', [$this->weak('w1')]);
+        $bad = new FakeJobSource('linkedin', throw: new SourceError('linkedin', 'IMAP refusé'));
 
         $pipeline->runOnce([$good], '2026-09-13T10:00:00Z');
         foreach (['10:15', '10:30', '10:45', '11:00'] as $t) {
@@ -110,8 +110,8 @@ final class JobPipelineTest extends TestCase
             $now = sprintf('2026-09-13T%02d:%02d:00Z', 10 + intdiv($minute, 60), $minute % 60);
             $pipeline->runOnce([$good], $now);
             $minute += 15;
-        } while ($good->health($now)->status !== SourceStatus::OK && $minute < 60 * 13);
-        self::assertSame(SourceStatus::OK, $good->health($now)->status, 'the window drained within the cap');
+        } while ($store->runs()->health('linkedin', $now)->status !== SourceStatus::OK && $minute < 60 * 13);
+        self::assertSame(SourceStatus::OK, $store->runs()->health('linkedin', $now)->status, 'the window drained within the cap');
 
         $alerts = $this->ofKind($channel, NotificationKind::SOURCE_HEALTH);
         self::assertGreaterThanOrEqual(1, count($alerts));
@@ -120,14 +120,33 @@ final class JobPipelineTest extends TestCase
         self::assertCount(1, $this->ofKind($channel, NotificationKind::SOURCE_RECOVERED));
     }
 
+    /** The car twin's rule (step 8e-2): the default reader escalates the source's OWN log; the counterweight stays quiet. */
+    public function testABlindPatternReachesTheDefaultHealthReader(): void
+    {
+        [$pipeline, $channel] = $this->pipeline();
+        $pipeline->runOnce([new FakeJobSource('linkedin', [$this->strong('b1'), $this->strong('b2'), $this->strong('b3')], blind: true)], self::NOW);
+
+        $alerts = $this->ofKind($channel, NotificationKind::SOURCE_HEALTH);
+        self::assertCount(1, $alerts);
+        self::assertStringEndsWith(' : ' . SourceStatus::WARN_DROP->value, $alerts[0]->title);
+    }
+
+    public function testCounterweightAnAllMatchingLogSendsNoHealthAlert(): void
+    {
+        [$pipeline, $channel] = $this->pipeline();
+        $pipeline->runOnce([new FakeJobSource('linkedin', [$this->strong('b1'), $this->strong('b2'), $this->strong('b3')], blind: false)], self::NOW);
+
+        self::assertSame([], $this->ofKind($channel, NotificationKind::SOURCE_HEALTH));
+    }
+
     public function testAnOfferIsRecordedAtItsOwnObservationTimeSoAnOlderReReadChangesNothing(): void
     {
         [$pipeline, , $store] = $this->pipeline();
         $newer = $this->offer('o1', 'Lead Developer PHP', observedAt: '2026-09-12T10:00:00Z');
         $older = $this->offer('o1', 'Ancien intitulé', observedAt: '2026-09-11T10:00:00Z');
 
-        $pipeline->runOnce([new FakeJobSource('linkedin', $store, [$newer])], self::NOW);
-        $pipeline->runOnce([new FakeJobSource('linkedin', $store, [$older])], '2026-09-13T10:15:00Z');
+        $pipeline->runOnce([new FakeJobSource('linkedin', [$newer])], self::NOW);
+        $pipeline->runOnce([new FakeJobSource('linkedin', [$older])], '2026-09-13T10:15:00Z');
 
         self::assertSame('Lead Developer PHP', $store->snapshot($this->key($store, 'o1'))?->title, 'a superseded sighting overwrites no verdict');
     }
@@ -136,7 +155,7 @@ final class JobPipelineTest extends TestCase
     {
         [$pipeline, $channel, $store] = $this->pipeline();
         $channel->refuses = [NotificationKind::MATCH];
-        $source = new FakeJobSource('linkedin', $store, [$this->strong('s1')]);
+        $source = new FakeJobSource('linkedin', [$this->strong('s1')]);
 
         $refused = $pipeline->runOnce([$source], self::NOW);
 
@@ -158,7 +177,7 @@ final class JobPipelineTest extends TestCase
     {
         [$pipeline, $channel, $store] = $this->pipeline();
 
-        $result = $pipeline->runOnce([new FakeJobSource('linkedin', $store, [$this->strong('s1'), $this->weak('w1')])], self::NOW);
+        $result = $pipeline->runOnce([new FakeJobSource('linkedin', [$this->strong('s1'), $this->weak('w1')])], self::NOW);
 
         self::assertCount(2, $this->ofKind($channel, NotificationKind::MATCH));
         self::assertSame(0, $result->queuedLowScore);
@@ -169,7 +188,7 @@ final class JobPipelineTest extends TestCase
     {
         [$pipeline, $channel, $store] = $this->gatedPipeline(50);
 
-        $result = $pipeline->runOnce([new FakeJobSource('linkedin', $store, [$this->strong('s1'), $this->weak('w1')])], self::NOW);
+        $result = $pipeline->runOnce([new FakeJobSource('linkedin', [$this->strong('s1'), $this->weak('w1')])], self::NOW);
 
         $pushes = $this->ofKind($channel, NotificationKind::MATCH);
         self::assertCount(1, $pushes);
@@ -186,7 +205,7 @@ final class JobPipelineTest extends TestCase
         $strong = $this->strong('s1');
         [$pipeline, $channel, $store] = $this->gatedPipeline($this->scoreOf($strong));
 
-        $result = $pipeline->runOnce([new FakeJobSource('linkedin', $store, [$strong])], self::NOW);
+        $result = $pipeline->runOnce([new FakeJobSource('linkedin', [$strong])], self::NOW);
 
         self::assertCount(1, $this->ofKind($channel, NotificationKind::MATCH));
         self::assertSame(0, $result->queuedLowScore);
@@ -195,7 +214,7 @@ final class JobPipelineTest extends TestCase
     public function testSeedingUnderAGateLeavesNothingForTheFirstRollup(): void
     {
         [$pipeline, , $store] = $this->gatedPipeline(50);
-        $source = new FakeJobSource('linkedin', $store, [$this->weak('w1')]);
+        $source = new FakeJobSource('linkedin', [$this->weak('w1')]);
 
         $pipeline->runOnce([$source], self::NOW, seedOnly: true);
         $after = $pipeline->runOnce([$source], '2026-09-13T10:15:00Z');
@@ -208,7 +227,7 @@ final class JobPipelineTest extends TestCase
     public function testARolledUpOfferIsNotCountedAsQueuedAgain(): void
     {
         [$pipeline, , $store] = $this->gatedPipeline(50);
-        $source = new FakeJobSource('linkedin', $store, [$this->weak('w1')]);
+        $source = new FakeJobSource('linkedin', [$this->weak('w1')]);
 
         self::assertSame(1, $pipeline->runOnce([$source], self::NOW)->queuedLowScore);
         $store->markNotified($this->key($store, 'w1'), '2026-09-13T10:05:00Z', JobStore::AS_ROLLUP);
@@ -223,7 +242,7 @@ final class JobPipelineTest extends TestCase
     {
         $store = JobStore::open(':memory:');
         [$closed, $closedChannel] = $this->gatedPipeline(100, $store);
-        $source = new FakeJobSource('linkedin', $store, [$this->strong('s1')]);
+        $source = new FakeJobSource('linkedin', [$this->strong('s1')]);
 
         $closed->runOnce([$source], self::NOW);
         $store->markNotified($this->key($store, 's1'), '2026-09-13T10:05:00Z', JobStore::AS_ROLLUP);
@@ -244,7 +263,7 @@ final class JobPipelineTest extends TestCase
         [$pipeline, , $store] = $this->pipeline();
         $offers = array_map(fn (string $id): JobListing => $this->offer($id, 'Développeur PHP', payText: 'Entre 40 k € et 45 k € par an'), ['p1', 'p2', 'p3']);
 
-        $result = $pipeline->runOnce([new FakeJobSource('linkedin', $store, $offers)], self::NOW);
+        $result = $pipeline->runOnce([new FakeJobSource('linkedin', $offers)], self::NOW);
 
         self::assertSame(3, $result->rejectedCount);
         self::assertCount(1, $result->warnings);
@@ -261,7 +280,7 @@ final class JobPipelineTest extends TestCase
             $this->strong('s1'),
         ];
 
-        $result = $pipeline->runOnce([new FakeJobSource('linkedin', $store, $offers)], self::NOW);
+        $result = $pipeline->runOnce([new FakeJobSource('linkedin', $offers)], self::NOW);
 
         self::assertSame([], $result->warnings);
     }

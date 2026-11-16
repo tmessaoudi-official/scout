@@ -85,7 +85,6 @@ final class FreelanceInformatiqueFixtureTest extends TestCase
     {
         return new JobDigestEmailSource(
             JobSourceLoader::load(self::ROOT . '/config/job/sources.json')['freelance_informatique'],
-            JobStore::open(':memory:'),
             new FileMailbox(self::ROOT . '/tests/fixtures/job/freelance-informatique'),
             $warn,
         );

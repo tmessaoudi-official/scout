@@ -43,7 +43,7 @@ final class PipelineTest extends TestCase
     {
         $criteria = ConfigLoader::loadCriteria(self::ROOT . '/tests/fixtures/rent/criteria/pipeline.json');
         $sources = ConfigLoader::loadSources(self::ROOT . '/config/rent/sources.json');
-        $source = new FixtureSource($sources['fixture_demo'], $this->store(), self::ROOT);
+        $source = new FixtureSource($sources['fixture_demo'], self::ROOT);
 
         $classifier = new TenureClassifier();
         $engine = new CriteriaEngine($criteria);
@@ -95,7 +95,7 @@ final class PipelineTest extends TestCase
     {
         $classifier = new TenureClassifier();
         $sources = ConfigLoader::loadSources(self::ROOT . '/config/rent/sources.json');
-        $source = new FixtureSource($sources['fixture_demo'], $this->store(), self::ROOT);
+        $source = new FixtureSource($sources['fixture_demo'], self::ROOT);
         $engine = new CriteriaEngine(ConfigLoader::loadCriteria(self::ROOT . '/tests/fixtures/rent/criteria/pipeline.json'));
 
         foreach ($source->fetch() as $listing) {
@@ -204,7 +204,7 @@ final class PipelineTest extends TestCase
         self::assertSame(1800, $criteria->maxRentCc);
 
         $sources = ConfigLoader::loadSources(self::ROOT . '/config/rent/sources.json');
-        $source = new FixtureSource($sources['fixture_demo'], $this->store(), self::ROOT);
+        $source = new FixtureSource($sources['fixture_demo'], self::ROOT);
         $engine = new CriteriaEngine($criteria);
         $classifier = new TenureClassifier();
 
@@ -296,7 +296,7 @@ final class PipelineTest extends TestCase
     public function testFrenchFormattedNumbersAndARelativeUrlSurvive(): void
     {
         $sources = ConfigLoader::loadSources(self::ROOT . '/config/rent/sources.json');
-        $source = new FixtureSource($sources['fixture_demo'], $this->store(), self::ROOT);
+        $source = new FixtureSource($sources['fixture_demo'], self::ROOT);
 
         $byId = [];
         foreach ($source->fetch() as $l) {
@@ -319,7 +319,7 @@ final class PipelineTest extends TestCase
         // classifier reads field NAMES as tier-1 evidence. A `financement` nobody thought to map
         // must still be found.
         $sources = ConfigLoader::loadSources(self::ROOT . '/config/rent/sources.json');
-        $source = new FixtureSource($sources['fixture_demo'], $this->store(), self::ROOT);
+        $source = new FixtureSource($sources['fixture_demo'], self::ROOT);
 
         $listing = $source->fetch()[0];
 
@@ -347,7 +347,7 @@ final class PipelineTest extends TestCase
         $this->expectException(SourceError::class);
         $this->expectExceptionMessageMatches('~items_path .* is absent from the payload~');
 
-        (new FixtureSource($definition, $this->store(), self::ROOT))->fetch();
+        (new FixtureSource($definition, self::ROOT))->fetch();
     }
 
     public function testAnItemWithNoStableIdThrowsRatherThanBeingSkipped(): void
@@ -369,7 +369,7 @@ final class PipelineTest extends TestCase
         $this->expectException(SourceError::class);
         $this->expectExceptionMessageMatches('~no value at any of the `ref` paths~');
 
-        (new FixtureSource($definition, $this->store(), self::ROOT))->fetch();
+        (new FixtureSource($definition, self::ROOT))->fetch();
     }
 
     public function testAMissingFixtureFileThrows(): void
@@ -386,7 +386,7 @@ final class PipelineTest extends TestCase
         $this->expectException(SourceError::class);
         $this->expectExceptionMessageMatches('~fixture file not found~');
 
-        (new FixtureSource($definition, $this->store(), self::ROOT))->fetch();
+        (new FixtureSource($definition, self::ROOT))->fetch();
     }
 
     public function testAFixturePathMayNotEscapeTheRepo(): void
@@ -403,7 +403,7 @@ final class PipelineTest extends TestCase
         $this->expectException(SourceError::class);
         $this->expectExceptionMessageMatches('~may not contain~');
 
-        (new FixtureSource($definition, $this->store(), self::ROOT))->fetch();
+        (new FixtureSource($definition, self::ROOT))->fetch();
     }
 
     public function testASourceErrorMasksCredentialsInItsMessage(): void

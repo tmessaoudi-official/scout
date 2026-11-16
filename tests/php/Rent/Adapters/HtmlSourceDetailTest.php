@@ -13,6 +13,8 @@ use Scout\Adapters\Http\Robots;
 use Scout\Rent\Adapters\DetailHydrator;
 use Scout\Rent\Adapters\HtmlSource;
 use Scout\Adapters\SourceError;
+use Scout\Core\RunStore;
+use Scout\Core\SourceHealthService;
 use Scout\Rent\Config\FieldMap;
 use Scout\Rent\Config\SourceDefinition;
 use Scout\Rent\Core\RawListing;
@@ -192,12 +194,13 @@ final class HtmlSourceDetailTest extends TestCase
     public function testADescriptionSelectorThatMissesEveryPageReachesSourceHealth(): void
     {
         $blank = '<html><body><div class="page-furniture">Site en maintenance</div></body></html>';
-        $source = $this->source(new DetailHttpClient($blank), $this->definition(), static fn (RawListing $l): bool => true);
+        $source = $this->source(new DetailHttpClient($blank), $this->definition(), static fn (RawListing $l): bool => true, store: $store = $this->store());
 
         iterator_to_array($source->fetch(), false);
 
         self::assertContains('detail.description', $source->patternMisses()->total());
-        self::assertStringContainsString('detail.description', $source->health()->detail, 'and the health verdict names it');
+        $health = (new SourceHealthService($store->runs()))->of($source, RunStore::instant('2026-08-23T10:00:00+02:00'));
+        self::assertStringContainsString('detail.description', $health->detail, 'and the health verdict names it');
     }
 
     /** The counterweight: the normal page IS an examination. */

@@ -159,7 +159,6 @@ final class CapCarFixtureTest extends TestCase
 
         return new VehicleEmailSource(
             $definitions['capcar'],
-            VehicleStore::open(':memory:'),
             new FileMailbox(self::ROOT . '/tests/fixtures/car/capcar'),
             $warn,
         );

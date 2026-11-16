@@ -456,7 +456,6 @@ final class JobDigestEmailSourceTest extends TestCase
                 'card_pattern' => '~Profil : (?<title>[^\n]+)\n(?<url>https://jobs\.example/mission-\S+)\nLieu : (?<place>[^\n]+)\n(?:Compétences : (?<description>[^\n]+)\n)?~u',
                 'id_pattern' => '~/mission-([a-z0-9]+)$~',
             ]),
-            JobStore::open(':memory:'),
             new RecordingMailbox([
                 self::message($card('a1', 'Angular,   TypeScript'), subject: 'Une nouvelle opportunité'),
                 self::message($card('b2', ''), subject: 'Une nouvelle opportunité'),
@@ -491,7 +490,6 @@ final class JobDigestEmailSourceTest extends TestCase
                 'id_pattern' => '~/opportunities/([a-z0-9]+)~',
                 'place_absent' => 'true',
             ]),
-            JobStore::open(':memory:'),
             $mailbox,
         );
     }
@@ -550,7 +548,6 @@ final class JobDigestEmailSourceTest extends TestCase
             new JobSourceDefinition('hellowork', true, 'portal', 'email_digest', [
                 'from' => 'alerte@emails.hellowork.com', 'card_pattern' => self::HW_CARD, 'id_token_pattern' => self::HW_TOKEN, 'id_pattern' => self::HW_ID,
             ]),
-            JobStore::open(':memory:'),
             $mailbox,
         );
     }
@@ -561,7 +558,6 @@ final class JobDigestEmailSourceTest extends TestCase
             new JobSourceDefinition('apec', true, 'portal', 'email_digest', [
                 'from' => 'offres@diffusion.apec.fr', 'card_pattern' => self::AP_CARD, 'id_token_pattern' => self::AP_TOKEN, 'id_pattern' => self::AP_ID,
             ]),
-            JobStore::open(':memory:'),
             $mailbox,
         );
     }
@@ -580,7 +576,6 @@ final class JobDigestEmailSourceTest extends TestCase
                 'salary_pattern' => '~^\\d+k(?:-\\d+k)? €$~u',
                 'tjm_pattern' => '~^\\d+(?:-\\d+)? €$~u',
             ]),
-            JobStore::open(':memory:'),
             $mailbox,
             $warn,
         );

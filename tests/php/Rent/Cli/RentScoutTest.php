@@ -413,7 +413,7 @@ final class RentScoutTest extends TestCase
      * however thoroughly the feature is disconnected. Trace the coverage without this test: the two
      * refusal tests above pin only that `feedSilentDays()` is CALLED, and every `Store` test passes
      * the threshold EXPLICITLY. So deleting `$feedSilentDays ??= $this->feedSilentDays;` from
-     * `Store::health()` left the whole suite green while making `FEED_SILENT` unreachable in
+     * `RunStore::health()` left the whole suite green while making `FEED_SILENT` unreachable in
      * production under default config — dead config for the third time, inside the change built to
      * kill exactly that shape.
      *
@@ -1087,9 +1087,10 @@ final class RentScoutTest extends TestCase
 
     public function testDoctorPassesTheClockSoStaleCanFire(): void
     {
-        // Without `$nowIso`, `Store::health()` has no clock and ONE verdict becomes underivable:
-        // STALE never fires at all. That is the clock's only job, and CLAUDE.md § Testing makes
-        // passing it a requirement of `scout doctor` in as many words.
+        // Without a clock the run log cannot derive STALE at all. Since step 8e-2 the clock is a
+        // REQUIRED argument of `RunStore::health()`, so forgetting it is a type error rather than a
+        // silently weaker verdict; the assertion that a clockless read could not say STALE was
+        // retired with the optional parameter it described.
         //
         // AND THIS TEST DOES NOT PROVE DOCTOR PASSES IT — stated plainly, because an earlier version
         // of this comment claimed it did. A sabotage run showed the claim was false: dropping the
@@ -1121,14 +1122,8 @@ final class RentScoutTest extends TestCase
 
         self::assertSame(
             \Scout\Core\SourceStatus::STALE,
-            $store->health('stale_demo', '2026-08-07T12:00:00+02:00')->status,
+            $store->runs()->health('stale_demo', '2026-08-07T12:00:00+02:00')->status,
             'with a clock, a source last seen in June is STALE in August',
-        );
-        self::assertNotSame(
-            \Scout\Core\SourceStatus::STALE,
-            $store->health('stale_demo')->status,
-            'and WITHOUT a clock the same rows cannot produce that verdict — which is exactly why '
-            . 'doctor must pass one, and why asserting on the store alone proves nothing about doctor',
         );
 
         unset($root);

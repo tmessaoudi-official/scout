@@ -192,7 +192,7 @@ final class NetworkAdaptersTest extends TestCase
             map: new FieldMap(ref: ['id'], title: ['title'], commune: ['city'], rent: ['rent'], chargesIncluded: true),
         );
 
-        return new HttpJsonSource($definition, $this->store(), $client, $robots ?? Robots::parse(''));
+        return new HttpJsonSource($definition, $client, $robots ?? Robots::parse(''));
     }
 
     public function testAWorkingEndpointMapsListingsThroughTheSameCodeTheFixtureAdapterUses(): void
@@ -578,7 +578,6 @@ final class NetworkAdaptersTest extends TestCase
 
         return new EmailAlertSource(
             $definition,
-            $this->store(),
             new FileMailbox(self::ROOT . '/tests/fixtures/rent/mailbox'),
             ConfigLoader::loadCriteria(self::ROOT . '/config/rent/criteria.json')->communeLabels,
         );
@@ -696,7 +695,7 @@ final class NetworkAdaptersTest extends TestCase
                 map: new FieldMap(ref: ['url'], chargesIncluded: true),
             );
 
-            $listings = (new EmailAlertSource($definition, $this->store(), new FileMailbox($dir)))->fetch();
+            $listings = (new EmailAlertSource($definition, new FileMailbox($dir)))->fetch();
             self::assertCount(2, $listings);
 
             foreach ($listings as $listing) {
@@ -770,7 +769,7 @@ final class NetworkAdaptersTest extends TestCase
                 map: new FieldMap(ref: ['url'], chargesIncluded: true),
             );
 
-            $listings = (new EmailAlertSource($definition, $this->store(), new FileMailbox($dir)))->fetch();
+            $listings = (new EmailAlertSource($definition, new FileMailbox($dir)))->fetch();
 
             self::assertCount(1, $listings);
             self::assertSame(980, $listings[0]->rentCc, 'the 1 on the line above is not part of the rent');
@@ -805,7 +804,7 @@ final class NetworkAdaptersTest extends TestCase
                 map: new FieldMap(ref: ['url'], chargesIncluded: true),
             );
 
-            $listings = (new EmailAlertSource($definition, $this->store(), new FileMailbox($dir)))->fetch();
+            $listings = (new EmailAlertSource($definition, new FileMailbox($dir)))->fetch();
 
             self::assertSame(1450, $listings[0]->rentCc);
         } finally {
@@ -835,7 +834,7 @@ final class NetworkAdaptersTest extends TestCase
 
         $this->expectException(SourceError::class);
 
-        (new EmailAlertSource($definition, $this->store(), new FileMailbox('/nonexistent')))->fetch();
+        (new EmailAlertSource($definition, new FileMailbox('/nonexistent')))->fetch();
     }
 
     /**

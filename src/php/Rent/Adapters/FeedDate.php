@@ -24,7 +24,7 @@ final class FeedDate
     /**
      * When this source's feed last delivered, or `null` when it does not report.
      *
-     * `null` is UNKNOWN and never "old" (hard rule 9): `Store::health()` declines to judge on it,
+     * `null` is UNKNOWN and never "old" (hard rule 9): `RunStore::health()` declines to judge on it,
      * which is what keeps every html/json source, every frozen-fixture run and the whole
      * pre-schema-v11 run log out of a permanent alert.
      *

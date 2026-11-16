@@ -42,7 +42,7 @@ interface FeedFreshness
      * When the feed last delivered, as an ISO-8601 instant, or `null` when unknown.
      *
      * Valid only after a {@see Source::fetch()} in the same pass — before one there is nothing to
-     * report. `null` is UNKNOWN and must never be read as old (hard rule 9): `Store::health()`
+     * report. `null` is UNKNOWN and must never be read as old (hard rule 9): `RunStore::health()`
      * declines to judge on it, which is what keeps the frozen-fixture workflow and the entire
      * pre-schema-v11 run log out of a permanent alert.
      */

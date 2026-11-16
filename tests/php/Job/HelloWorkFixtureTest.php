@@ -148,7 +148,6 @@ final class HelloWorkFixtureTest extends TestCase
     {
         return new JobDigestEmailSource(
             JobSourceLoader::load(self::ROOT . '/config/job/sources.json')['hellowork'],
-            JobStore::open(':memory:'),
             new FileMailbox(self::ROOT . '/tests/fixtures/job/hellowork'),
             $warn,
         );

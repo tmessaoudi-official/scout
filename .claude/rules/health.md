@@ -115,7 +115,7 @@ Moved verbatim from CLAUDE.md § "Gotchas & pitfalls" on 2026-09-28 (review-reme
   source that is fine); and `$emptyStreak` counted in `$observed` must be INDEXED in `$observed`,
   a mismatch that reported a 25-listing baseline as 12.5 and was caught by an existing test rather
   than by review. **Verify a health change against a copy of the live store** —
-  `sqlite3 state/<db> ".backup <copy>"`, then call `health()` on the copy; never `doctor`, which
+  `sqlite3 state/<db> ".backup <copy>"`, then call `RunStore::health(<source>, <now>)` on the copy (or `SourceHealthService::of()`); never `doctor`, which
   polls and writes a run into the baseline. Two costs are stated rather than left to be found:
   the five IMAP timeouts on capcar, bienici and agorastore (all isolated, under 1 % of runs) are now
   tolerated too, which is the intent; and because the strip refuses an empty remainder, a source
@@ -139,7 +139,8 @@ Moved verbatim from CLAUDE.md § "Gotchas & pitfalls" on 2026-09-28 (review-reme
   full day, while leboncoin has sent exactly one alert since creation. **Since 2026-08-29 the
   threshold is also settable PER SOURCE** — `feed_silent_days` on an `email_alert` block, refused
   at 0 and on any type that reports no feed date — and it reaches the store through exactly ONE
-  funnel, `EmailAlertSource::health()`, which `doctor`, the pipeline and the heartbeat all read
+  funnel — `EmailAlertSource::health()` until step 8e-2, now the port's `feedSilentDays()` read by
+  `SourceHealthService` — which `doctor`, the pipeline and the heartbeat all go through
   (the beat used to read `Store::health()` by name and would have counted a source healthy on the
   very pass `doctor` called it silent). `doctor` gives a per-source value the same window advice.
 - **EVERY CARD OF A SOURCE FAILING THE SAME HARD FILTER IS A WARNING (row 41, 2026-09-05), and

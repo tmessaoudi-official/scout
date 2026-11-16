@@ -93,14 +93,20 @@ final class PatternMissEscalationTest extends TestCase
     }
 
     /**
-     * EVERY `CountsPatternMisses` IMPLEMENTOR ROUTES `health()` THROUGH THE ONE ESCALATION.
+     * EVERY `CountsPatternMisses` IMPLEMENTOR HANDS THE ONE SERVICE ITS OWN LOG (step 8e-2).
      *
      * The set is discovered by reflection over the loaded classes, never listed here — a literal
      * list is a second place to forget, which is the defect this test exists to make impossible. An
      * adapter that learns to count and does not learn to report fails here instead of counting into
      * a void, which is exactly what three of the five did for a month.
+     *
+     * Since 8e-2 no source computes a verdict: `SourceHealthService::of()` reads `patternMisses()` and
+     * `feedSilentDays()` off the port. So the guarantee moved with it. `patternMisses()` must return
+     * the log the source COUNTS INTO — a fresh `new PatternMissLog()` would satisfy the interface and
+     * report nothing — and a source that dates its feed must not answer `null` for its own
+     * `feed_silent_days`, which would switch the per-source threshold off with `health` reading `ok`.
      */
-    public function testEveryCountingSourceEscalatesThroughHealth(): void
+    public function testEveryCountingSourceHandsTheServiceItsOwnLog(): void
     {
         $implementors = $this->countingSources();
 
@@ -121,69 +127,85 @@ final class PatternMissEscalationTest extends TestCase
         }
 
         foreach ($implementors as $class) {
-            $method = new \ReflectionMethod($class, 'health');
-            $file = $method->getFileName();
-            self::assertIsString($file);
+            // No source judges itself any more; a `health()` reappearing on one is a second funnel.
+            self::assertFalse(
+                method_exists($class, 'health'),
+                $class . ' declares health() again — the verdict is SourceHealthService\'s alone (step 8e-2)',
+            );
 
-            $lines = file($file);
-            self::assertIsArray($lines);
-            $body = implode('', array_slice($lines, $method->getStartLine() - 1, $method->getEndLine() - $method->getStartLine() + 1));
-
-            // A DECORATOR SATISFIES THIS BY DELEGATING, and inlining an escalation in one would be
-            // the defect rather than the fix: `PacedSource::health()` returns the inner's, and that
-            // inner is itself in this same implementor set and checked by this same loop. Adding
-            // `escalate()` here would escalate a second time on a verdict already escalated —
-            // precisely the "two verbatim inline copies" that extracting `escalate()` removed.
-            //
-            // The exemption is NARROW and cannot be used to opt a real adapter out: the class must
-            // ALSO forward `patternMisses()` to the same inner, which is what makes it a decorator
-            // rather than a counter that forgot to report. Both conditions are read from the source,
-            // not declared.
-            $misses = new \ReflectionMethod($class, 'patternMisses');
-            $missesFile = $misses->getFileName();
-            self::assertIsString($missesFile);
-            $missesLines = file($missesFile);
-            self::assertIsArray($missesLines);
-            $missesBody = implode('', array_slice(
-                $missesLines,
-                $misses->getStartLine() - 1,
-                $misses->getEndLine() - $misses->getStartLine() + 1,
-            ));
-
-            $delegates = str_contains($body, '$this->inner->health(')
-                && str_contains($missesBody, '$this->inner->patternMisses()');
-
-            if ($delegates) {
-                continue;
-            }
-
-            // ROUTED THROUGH THE ONE SERVICE, WITH ITS OWN LOG (step 8e-1, developer ruling 2026-11-15). Naming
-            // the service is not enough: a body that handed it a fresh `new PatternMissLog()` would route
-            // through it and still report nothing, so the source's OWN log must be what it passes.
-            self::assertStringContainsString(
-                'new SourceHealthService(',
-                $body,
-                $class . '::health() counts pattern misses and does not route them through SourceHealthService, '
-                    . 'the one place that escalates them — rather than inlining a copy',
+            // A DECORATOR forwards the inner source's log, which is itself in this implementor set and
+            // checked by this same loop; anything else returns the property it counts into.
+            $misses = self::body(new \ReflectionMethod($class, 'patternMisses'));
+            self::assertStringNotContainsString(
+                'new PatternMissLog',
+                $misses,
+                $class . '::patternMisses() hands the service a FRESH log, so the count it keeps is never read',
             );
             self::assertMatchesRegularExpression(
-                '/->of\(\s*\$this->name\(\),\s*\$this->patternMisses,/',
-                $body,
-                $class . '::health() must hand SourceHealthService its OWN pattern-miss log, or the count it keeps is never read',
+                '/return \$this->(patternMisses;|inner->patternMisses\(\);)/',
+                $misses,
+                $class . '::patternMisses() must return the log it counts into (or its inner source\'s)',
             );
+
+            if (is_subclass_of($class, \Scout\Adapters\FeedFreshness::class)) {
+                self::assertDoesNotMatchRegularExpression(
+                    '/return null;/',
+                    self::body(new \ReflectionMethod($class, 'feedSilentDays')),
+                    $class . ' dates its feed but drops its own feed_silent_days, so FEED_SILENT reads the global default',
+                );
+            }
         }
 
         // And the service escalates: without this, every adapter above routes into a pass-through.
-        $of = new \ReflectionMethod(SourceHealthService::class, 'of');
-        $ofFile = $of->getFileName();
-        self::assertIsString($ofFile);
-        $ofLines = file($ofFile);
-        self::assertIsArray($ofLines);
         self::assertStringContainsString(
             '->escalate(',
-            implode('', array_slice($ofLines, $of->getStartLine() - 1, $of->getEndLine() - $of->getStartLine() + 1)),
+            self::body(new \ReflectionMethod(SourceHealthService::class, 'of')),
             'SourceHealthService::of() must decorate the run log verdict through PatternMissLog::escalate()',
         );
+    }
+
+    /**
+     * THE RUN-LOG VERDICT HAS ONE CALLER IN `src/` — THE SERVICE (step 8e-2).
+     *
+     * Before 8e-2, `doctor`, the heartbeat and each pipeline could read `RunStore::health()` by name,
+     * and the beat once did: it counted a source healthy on the very pass `doctor` called it silent,
+     * because that read skipped the source's own `feed_silent_days` (2026-08-29). A caller that reads
+     * the run log directly skips the pattern-miss escalation the same way. So the funnel is pinned by
+     * where `->health(` appears at all under `src/php`: in the service, and nowhere else.
+     */
+    public function testTheRunLogVerdictHasOneCallerInSrc(): void
+    {
+        $root = \dirname(__DIR__, 3) . '/src/php';
+        $callers = [];
+        $files = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($root, \FilesystemIterator::SKIP_DOTS));
+        foreach ($files as $file) {
+            if (!$file instanceof \SplFileInfo || $file->getExtension() !== 'php') {
+                continue;
+            }
+            $code = file_get_contents($file->getPathname());
+            self::assertIsString($code);
+            // Comments name the method in prose; only code counts.
+            $tokens = array_filter(
+                \PhpToken::tokenize($code),
+                static fn (\PhpToken $t): bool => !$t->is([T_COMMENT, T_DOC_COMMENT]),
+            );
+            if (str_contains(implode('', array_map(static fn (\PhpToken $t): string => $t->text, $tokens)), '->health(')) {
+                $callers[] = substr($file->getPathname(), \strlen($root) + 1);
+            }
+        }
+        sort($callers);
+
+        self::assertSame(['Core/SourceHealthService.php'], $callers, 'every health read goes through SourceHealthService::of()');
+    }
+
+    private static function body(\ReflectionMethod $method): string
+    {
+        $file = $method->getFileName();
+        self::assertIsString($file);
+        $lines = file($file);
+        self::assertIsArray($lines);
+
+        return implode('', array_slice($lines, $method->getStartLine() - 1, $method->getEndLine() - $method->getStartLine() + 1));
     }
 
     /**
@@ -235,7 +257,10 @@ final class PatternMissEscalationTest extends TestCase
     }
 
     /**
-     * Every class under `$dir`, at any depth, whose CODE declares it implements the interface.
+     * Every class under `$dir`, at any depth, whose CODE declares it implements the interface — directly
+     * or, since step 8e-2, through a source port (`Source`, `VehicleSource`, `JobSource` all extend
+     * `ReportsHealth`, which extends it). `PacedSource` dropped its direct declaration that day and the
+     * scan lost it, which the floor above caught; `is_a()` then keeps only real implementors.
      *
      * The namespace and class name are read from the file itself, so no prefix list can go stale. A class
      * the autoloader cannot reach (a scratch file) is required directly; a `src/php` class is already
@@ -257,7 +282,7 @@ final class PatternMissEscalationTest extends TestCase
             }
             // CODE ONLY: a docblock saying "implements CountsPatternMisses" is prose, not a declaration.
             $code = implode("\n", array_filter($lines, static fn (string $l): bool => preg_match('/^\s*(\*|\/\/|\/\*)/', $l) !== 1));
-            if (preg_match('/\bclass\s+([A-Za-z_][A-Za-z0-9_]*)[^{]*\bimplements\b[^{]*\bCountsPatternMisses\b/', $code, $c) !== 1) {
+            if (preg_match('/\bclass\s+([A-Za-z_][A-Za-z0-9_]*)[^{]*\bimplements\b[^{]*\b(?:CountsPatternMisses|ReportsHealth|Source|VehicleSource|JobSource)\b/', $code, $c) !== 1) {
                 continue;
             }
             $namespace = preg_match('/^\s*namespace\s+([^;]+);/m', $code, $n) === 1 ? trim($n[1]) . '\\' : '';

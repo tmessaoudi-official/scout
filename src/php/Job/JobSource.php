@@ -4,10 +4,15 @@ declare(strict_types=1);
 
 namespace Scout\Job;
 
-use Scout\Core\SourceHealth;
+use Scout\Core\ReportsHealth;
 
-/** The job domain's adapter contract. `fetch()` throws, never returns `[]` on failure (hard rule 3). */
-interface JobSource
+/**
+ * The job domain's adapter contract. `fetch()` throws, never returns `[]` on failure (hard rule 3).
+ *
+ * A source does not judge its own health (step 8e-2): it reports through {@see ReportsHealth} and
+ * {@see \Scout\Core\SourceHealthService} judges it.
+ */
+interface JobSource extends ReportsHealth
 {
     public function name(): string;
 
@@ -23,6 +28,4 @@ interface JobSource
      * @throws \Scout\Adapters\SourceError
      */
     public function fetch(): array;
-
-    public function health(?string $nowIso = null): SourceHealth;
 }

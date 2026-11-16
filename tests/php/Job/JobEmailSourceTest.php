@@ -10,6 +10,8 @@ use Scout\Adapters\AcknowledgesMessages;
 use Scout\Adapters\Mail\Mailbox;
 use Scout\Adapters\Mail\MailboxError;
 use Scout\Adapters\SourceError;
+use Scout\Core\RunStore;
+use Scout\Core\SourceHealthService;
 use Scout\Core\SourceStatus;
 use Scout\Job\JobEmailSource;
 use Scout\Job\JobListing;
@@ -224,7 +226,7 @@ final class JobEmailSourceTest extends TestCase
         self::assertSame([], $source->fetch());
         // The synthetic footer is still there, so only the card links are blind.
         self::assertSame(['card_link_pattern'], $source->patternMisses()->total());
-        $health = $source->health(self::NOW);
+        $health = (new SourceHealthService($store->runs()))->of($source, RunStore::instant(self::NOW));
         self::assertSame(SourceStatus::WARN_DROP, $health->status);
         self::assertStringContainsString('card_link_pattern', $health->detail);
     }
@@ -249,7 +251,7 @@ final class JobEmailSourceTest extends TestCase
         self::assertSame(['calls' => 3, 'misses' => 1], $counts['card_link_pattern'] ?? null);
         self::assertSame(['calls' => 3, 'misses' => 1], $counts['footer_marker'] ?? null);
         self::assertSame([], $source->patternMisses()->total());
-        self::assertSame(SourceStatus::OK, $source->health(self::NOW)->status);
+        self::assertSame(SourceStatus::OK, (new SourceHealthService($store->runs()))->of($source, RunStore::instant(self::NOW))->status);
         self::assertSame(['linkedin : courrier du 2026-09-11T10:49:28Z sans partie HTML — aucune offre lue'], $warnings, 'said once, for that mail only');
     }
 
@@ -258,11 +260,11 @@ final class JobEmailSourceTest extends TestCase
     {
         $plain = self::plainOnly();
         $warnings = [];
-        $source = $this->source(new StubJobMailbox([$plain, $plain, $plain]), $warnings, self::storeWithHealthyRuns());
+        $source = $this->source(new StubJobMailbox([$plain, $plain, $plain]), $warnings, $store = self::storeWithHealthyRuns());
 
         self::assertSame([], $source->fetch());
         self::assertSame(['card_link_pattern', 'footer_marker'], $source->patternMisses()->total());
-        $health = $source->health(self::NOW);
+        $health = (new SourceHealthService($store->runs()))->of($source, RunStore::instant(self::NOW));
         self::assertSame(SourceStatus::WARN_DROP, $health->status);
         self::assertStringContainsString('card_link_pattern', $health->detail);
         self::assertStringContainsString('footer_marker', $health->detail);
@@ -281,7 +283,7 @@ final class JobEmailSourceTest extends TestCase
         $source = $this->source(new StubJobMailbox([$ok, $ok, $ok]), $warnings, $store);
         $source->fetch();
 
-        self::assertSame(SourceStatus::OK, $source->health(self::NOW)->status);
+        self::assertSame(SourceStatus::OK, (new SourceHealthService($store->runs()))->of($source, RunStore::instant(self::NOW))->status);
     }
 
     public function testTheCountNeverSpansTwoFetches(): void
@@ -331,7 +333,6 @@ final class JobEmailSourceTest extends TestCase
                     'pay_pattern' => '~€~u',
                 ],
             ),
-            $store ?? JobStore::open(':memory:'),
             $mailbox,
             static function (string $w) use (&$warnings): void {
                 $warnings[] = $w;

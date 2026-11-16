@@ -74,7 +74,7 @@ final class RunStoreFlakyWindowTest extends TestCase
         // Then today: 100 passes, 23 of them failed.
         $this->passes('inli', 100, 23, $now);
 
-        $health = $this->store->health('inli', gmdate('Y-m-d\TH:i:s\Z', $now));
+        $health = $this->store->runs()->health('inli', gmdate('Y-m-d\TH:i:s\Z', $now));
 
         self::assertSame(SourceStatus::WARN_FLAKY, $health->status);
         self::assertTrue($health->status->isAlerting());
@@ -97,7 +97,7 @@ final class RunStoreFlakyWindowTest extends TestCase
         $this->passes('inli', 600, 35, $now - 86400 - 900);
         $this->passes('inli', 100, 23, $now);
 
-        $detail = $this->store->health('inli', gmdate('Y-m-d\TH:i:s\Z', $now))->detail;
+        $detail = $this->store->runs()->health('inli', gmdate('Y-m-d\TH:i:s\Z', $now))->detail;
 
         self::assertStringContainsString('24 h', $detail, 'the short-window verdict must name its window');
         // And it must carry the SEVEN-DAY figure beside it. Without the contrast the reader cannot
@@ -119,7 +119,7 @@ final class RunStoreFlakyWindowTest extends TestCase
         $this->passes('cdc_habitat', 600, 12, $now - 86400 - 900);
         $this->passes('cdc_habitat', 100, 3, $now);   // 3.0 % — the real figure
 
-        self::assertSame(SourceStatus::OK, $this->store->health('cdc_habitat', gmdate('Y-m-d\TH:i:s\Z', $now))->status);
+        self::assertSame(SourceStatus::OK, $this->store->runs()->health('cdc_habitat', gmdate('Y-m-d\TH:i:s\Z', $now))->status);
     }
 
     /**
@@ -147,7 +147,7 @@ final class RunStoreFlakyWindowTest extends TestCase
             }
         }
 
-        $health = $this->store->health('pap', gmdate('Y-m-d\TH:i:s\Z', $now));
+        $health = $this->store->runs()->health('pap', gmdate('Y-m-d\TH:i:s\Z', $now));
 
         // Assert the PREMISE as well as the conclusion: a rate over the threshold, refused only
         // because the window is too thin to mean anything.
@@ -170,7 +170,7 @@ final class RunStoreFlakyWindowTest extends TestCase
             }
         }
 
-        $health = $this->store->health('pap', gmdate('Y-m-d\TH:i:s\Z', $now));
+        $health = $this->store->runs()->health('pap', gmdate('Y-m-d\TH:i:s\Z', $now));
 
         self::assertSame(SourceStatus::WARN_FLAKY, $health->status);
         self::assertStringContainsString('7 jours', $health->detail);
@@ -191,7 +191,7 @@ final class RunStoreFlakyWindowTest extends TestCase
 
         self::assertSame(
             SourceStatus::WARN_FLAKY,
-            $this->store->health('inli', gmdate('Y-m-d\TH:i:s\Z', $now))->status,
+            $this->store->runs()->health('inli', gmdate('Y-m-d\TH:i:s\Z', $now))->status,
         );
     }
 }

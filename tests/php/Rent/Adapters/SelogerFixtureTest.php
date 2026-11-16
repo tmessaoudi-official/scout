@@ -56,7 +56,6 @@ final class SelogerFixtureTest extends TestCase
 
         $source = new EmailAlertSource(
             $definition,
-            Store::open($this->dbPath),
             new FileMailbox(self::ROOT . '/tests/fixtures/rent/seloger'),
             $criteria->communeLabels,
         );

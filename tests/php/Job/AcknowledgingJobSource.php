@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Scout\Tests\Job;
 
 use Scout\Adapters\AcknowledgesMessages;
-use Scout\Core\SourceHealth;
+use Scout\Core\PatternMissLog;
 use Scout\Job\JobListing;
 use Scout\Job\JobSource;
 use Scout\Job\JobStore;
@@ -52,9 +52,14 @@ final class AcknowledgingJobSource implements JobSource, AcknowledgesMessages
         return $this->offers;
     }
 
-    public function health(?string $nowIso = null): SourceHealth
+    public function patternMisses(): PatternMissLog
     {
-        return $this->store->runs()->health($this->name, $nowIso);
+        return new PatternMissLog();
+    }
+
+    public function feedSilentDays(): ?int
+    {
+        return null;
     }
 
     public function acknowledge(): void

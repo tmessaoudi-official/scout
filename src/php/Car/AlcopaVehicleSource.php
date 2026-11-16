@@ -13,8 +13,6 @@ use Scout\Adapters\SourceError;
 use Scout\Core\Clock;
 use Scout\Core\CountsPatternMisses;
 use Scout\Core\PatternMissLog;
-use Scout\Core\SourceHealth;
-use Scout\Core\SourceHealthService;
 use Scout\Core\SystemClock;
 
 /**
@@ -98,9 +96,10 @@ final readonly class AlcopaVehicleSource implements CountsPatternMisses, Indexed
         return $this->definition->url === null ? null : (parse_url($this->definition->url, PHP_URL_HOST) ?: null);
     }
 
-    public function health(?string $nowIso = null): SourceHealth
+    /** No threshold of its own: an auction listing reports no feed date, so the store's global one applies. */
+    public function feedSilentDays(): ?int
     {
-        return (new SourceHealthService($this->store->runs()))->of($this->name(), $this->patternMisses, $nowIso);
+        return null;
     }
 
     public function patternMisses(): PatternMissLog

@@ -14,7 +14,6 @@ use Scout\Cli\ChannelFactory;
 use Scout\Cli\WatchLoop;
 use Scout\Config\ConfigError;
 use Scout\Core\Clock;
-use Scout\Core\CountsPatternMisses;
 use Scout\Core\FixedClock;
 use Scout\Core\Heartbeat;
 use Scout\Core\Notify\Notification;
@@ -23,6 +22,10 @@ use Scout\Core\Notify\Notifier;
 use Scout\Core\Notify\Priority;
 use Scout\Core\Pacer;
 use Scout\Core\Redact;
+use Scout\Core\ReportsHealth;
+use Scout\Core\RunStore;
+use Scout\Core\SourceHealth;
+use Scout\Core\SourceHealthService;
 use Scout\Core\SourceStatus;
 use Scout\Job\JobClassifier;
 use Scout\Job\JobCriteria;
@@ -192,26 +195,24 @@ final readonly class JobScout
                 ++$problems;
                 continue;
             }
-            $health = $source->health($now);
+            $health = $this->healthOf($source, $store->runs(), $now);
             if ($health->status !== SourceStatus::OK) {
                 ++$problems;
             }
             $this->line(sprintf('  %-12s %-13s %6d %6d ms  %s', $source->name(), $health->status->value, $items, $ms, $health->detail));
 
-            // Per-pattern misses (F27), printed only when something missed, gated on the INTERFACE.
-            if ($source instanceof CountsPatternMisses) {
-                foreach ($source->patternMisses()->counts() as $key => $c) {
-                    if ($c['misses'] === 0) {
-                        continue;
-                    }
-                    $this->line(sprintf(
-                        '                     %-18s %d/%d sans résultat%s',
-                        $key,
-                        $c['misses'],
-                        $c['calls'],
-                        $c['misses'] === $c['calls'] ? '  ← AUCUN : gabarit changé ?' : '',
-                    ));
+            // Per-pattern misses (F27), printed only when something missed; every source carries a log (8e-2).
+            foreach ($source->patternMisses()->counts() as $key => $c) {
+                if ($c['misses'] === 0) {
+                    continue;
                 }
+                $this->line(sprintf(
+                    '                     %-18s %d/%d sans résultat%s',
+                    $key,
+                    $c['misses'],
+                    $c['calls'],
+                    $c['misses'] === $c['calls'] ? '  ← AUCUN : gabarit changé ?' : '',
+                ));
             }
         }
 
@@ -294,7 +295,7 @@ final readonly class JobScout
             // deployment the note would otherwise be written by every refused run and read by nothing.
             // Delivering it clears it, so it cannot repeat; `--seed` notifies nothing by construction.
             if ($code === 0 && !$seed && $this->pendingRefusal() !== null) {
-                $health = array_map(fn (JobSource $s) => $s->health($this->now()), $sources);
+                $health = array_map(fn (JobSource $s) => $this->healthOf($s, $store->runs(), $this->now()), $sources);
                 $failures = $notifier->send((new JobFormatter())->heartbeat(1, $result->notified, $health, $this->now(), $this->pendingRefusal()));
                 foreach ($failures as $failure) {
                     $this->warn(Redact::text($failure->getMessage()));
@@ -339,8 +340,8 @@ final readonly class JobScout
 
         // The refusal note is read inside the beat and cleared only once the beat is DELIVERED: the
         // marker is not written on a failed delivery so the beat retries, and the retry must carry it.
-        $beat = function () use (&$passes, &$notified, &$failedPasses, $sources, $notifier, $formatter): void {
-            $health = array_map(fn (JobSource $s) => $s->health($this->now()), $sources);
+        $beat = function () use (&$passes, &$notified, &$failedPasses, $sources, $store, $notifier, $formatter): void {
+            $health = array_map(fn (JobSource $s) => $this->healthOf($s, $store->runs(), $this->now()), $sources);
             $n = $formatter->heartbeat($passes, $notified, $health, $this->now(), $this->pendingRefusal(), $failedPasses);
             if ($notifier->delivered($notifier->send($n))) {
                 @file_put_contents($this->stateFile('job-heartbeat.txt'), $this->now());
@@ -756,14 +757,12 @@ final readonly class JobScout
         return match ($definition->type) {
             'email_alert' => new JobEmailSource(
                 $definition,
-                $store,
                 $this->mailbox($definition),
                 fn (string $m) => $this->warn($m),
                 ImapMailbox::maxMessages(getenv('IMAP_MAX_MESSAGES') ?: null),
             ),
             'email_digest' => new JobDigestEmailSource(
                 $definition,
-                $store,
                 $this->mailbox($definition),
                 fn (string $m) => $this->warn($m),
                 ImapMailbox::maxMessages(getenv('IMAP_MAX_MESSAGES') ?: null),
@@ -884,6 +883,15 @@ final readonly class JobScout
         $dir = $db === ':memory:' ? $this->rootDir . '/state' : \dirname($db);
 
         return $dir . '/' . $name;
+    }
+
+    /**
+     * A source's health at `$nowIso`, judged by the one service (step 8e-2). The clock is the
+     * instant the caller recorded its run at, so the verdict and the run it judges agree.
+     */
+    private function healthOf(ReportsHealth $source, RunStore $runs, string $nowIso): SourceHealth
+    {
+        return (new SourceHealthService($runs))->of($source, RunStore::instant($nowIso));
     }
 
     private function now(): string

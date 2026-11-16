@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Scout\Rent\Adapters;
 
+use Scout\Core\ReportsHealth;
 use Scout\Rent\Core\RawListing;
-use Scout\Core\SourceHealth;
 use Scout\Rent\Core\SourceProfile;
 use Scout\Rent\Core\Tenure;
 
@@ -26,8 +26,12 @@ use Scout\Rent\Core\Tenure;
  *    different facts, and only the caller — which records the run — may decide what to do with each.
  * 2. **`defaultTenure()` is a hint, never a verdict.** It is signal priority 5, the lowest there is.
  *    The classifier always runs; a source cannot declare its listings eligible.
+ *
+ * **A source does not judge its own health** (step 8e-2). It REPORTS what the verdict needs —
+ * {@see ReportsHealth}: its name, its own pattern-miss log, its own `feed_silent_days` — and
+ * {@see \Scout\Core\SourceHealthService} judges it against the run log with a required clock.
  */
-interface Source
+interface Source extends ReportsHealth
 {
     /** Key in `config/rent/sources.json`. */
     public function name(): string;
@@ -56,16 +60,6 @@ interface Source
      *                     `items_path`. Never swallow and return `[]`.
      */
     public function fetch(): array;
-
-    /**
-     * The source's derived health, from the persisted run log.
-     *
-     * `$nowIso` is not optional in practice even though the store's signature allows it: without a
-     * clock, `STALE` can never fire at all, and `STALE` is the verdict that catches the schedule
-     * itself having stopped. `CLAUDE.md` § Testing makes passing it a requirement of `scout doctor`
-     * and the run loop.
-     */
-    public function health(?string $nowIso = null): SourceHealth;
 
     /**
      * The internet host {@see fetch()} will contact, or `null` if it contacts none.

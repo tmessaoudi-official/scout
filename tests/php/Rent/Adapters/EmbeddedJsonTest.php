@@ -258,7 +258,6 @@ final class EmbeddedJsonTest extends TestCase
 
         return new HttpJsonSource(
             $definition,
-            Store::open($this->dbPath),
             new class($html) implements HttpClient {
                 public function __construct(private readonly string $body) {}
 

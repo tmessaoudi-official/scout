@@ -186,7 +186,7 @@ final class ImapMailbox implements Mailbox, MutableByDesign
      *
      * Skipping degrades to `null`, which yields no verdict rather than a false one.
      *
-     * Normalised to UTC on the way in so the comparison in `Store::health()` is between instants
+     * Normalised to UTC on the way in so the comparison in `RunStore::health()` is between instants
      * rather than between strings: portals stamp their own offsets, and `+0200` sorts before `Z`
      * on the same instant.
      */
@@ -242,7 +242,7 @@ final class ImapMailbox implements Mailbox, MutableByDesign
         // which is exactly what `Pipeline` says must never happen ("the previous pass's freshness
         // would vouch for a pass that fetched nothing") while guarding only the exception path.
         //
-        // It was harmless only because `Store::health()` gates the verdict on `$lastCount > 0`, in
+        // It was harmless only because `RunStore::health()` gates the verdict on `$lastCount > 0`, in
         // a different file, individually deletable. One mechanism accidentally protected by another
         // is this repo's own named trap: never read "no harm occurred" as "the rule held".
         $this->newestMessageAt = null;

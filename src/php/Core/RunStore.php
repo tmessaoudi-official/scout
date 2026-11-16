@@ -445,7 +445,16 @@ final readonly class RunStore
         return $statement->rowCount() > 0;
     }
 
-    public function health(string $sourceName, ?string $nowIso = null, ?int $feedSilentDays = null): SourceHealth
+    /**
+     * A source's verdict from the run log, judged at `$nowIso`.
+     *
+     * The clock is REQUIRED (step 8e-2). It used to be optional, and without it `STALE` could never
+     * fire and the rolling window anchored on the last-inserted stamp instead of on now — so every
+     * caller had to remember to pass one, and CLAUDE.md said so in capitals. A required parameter
+     * makes forgetting a type error rather than a silently weaker verdict. Its one production caller
+     * is {@see SourceHealthService}, which takes a non-nullable instant.
+     */
+    public function health(string $sourceName, string $nowIso, ?int $feedSilentDays = null): SourceHealth
     {
         $feedSilentDays ??= $this->feedSilentDays;
 
@@ -498,8 +507,9 @@ final readonly class RunStore
         //     `windowCounts()` counts failures whatever their clock says. Both are alerting.
         //
         // Bounded-by-one-run beats bounded-by-the-skew beats unbounded. So the log's own order wins,
-        // and `$nowIso` is used for exactly one thing below: STALE, which genuinely cannot be
-        // derived without a clock. It never filters, reorders or discards a run.
+        // and `$nowIso` never filters, reorders or discards a run: it bounds the rolling windows above,
+        // and it judges STALE and FEED_SILENT, the verdicts that genuinely cannot be derived without
+        // a clock.
 
         // A TRAILING FAILED RUN BELOW THE THRESHOLD IS NOT AN OBSERVATION (2026-09-07).
         //
@@ -579,7 +589,7 @@ final readonly class RunStore
 
         $emptyStreak = self::trailingEmptyRuns($observed);
         $rollingMean = self::rollingMeanBefore($observed, \count($observed) - 1);
-        $edge = $nowIso === null ? null : self::epoch($nowIso);
+        $edge = self::epoch($nowIso);
         [$runsInWindow, $failedInWindow] = self::windowCounts($runs, $edge);
         // The SHORT window, computed from the same rows and bounded above by the same clock —
         // a future-stamped success must not dilute this one either (Track 6-A1).
@@ -659,26 +669,24 @@ final readonly class RunStore
             }
         }
 
-        if ($nowIso !== null) {
-            // The ONLY use of the clock, and the only verdict that needs one. Silence is measured
-            // from the newest run that is not stamped in the future, because a future-stamped row
-            // would otherwise make this negative and report a stopped schedule as healthy. Nothing
-            // is discarded from `$runs` — the other verdicts still see the whole log.
-            $now = self::epoch($nowIso);
-            $credible = array_filter($epochs, static fn (int $at): bool => $at <= $now);
+        // STALE, the verdict that needs the clock. Silence is measured from the newest run that is
+        // not stamped in the future, because a future-stamped row would otherwise make this negative
+        // and report a stopped schedule as healthy. Nothing is discarded from `$runs` — the other
+        // verdicts still see the whole log. Unconditional since step 8e-2 made the clock required.
+        $now = self::epoch($nowIso);
+        $credible = array_filter($epochs, static fn (int $at): bool => $at <= $now);
 
-            if ($credible === []) {
-                return $health(SourceStatus::STALE, 'tous les runs sont horodatés dans le futur — vérifiez l\'horloge de la machine');
-            }
+        if ($credible === []) {
+            return $health(SourceStatus::STALE, 'tous les runs sont horodatés dans le futur — vérifiez l\'horloge de la machine');
+        }
 
-            $silentFor = $now - max($credible);
+        $silentFor = $now - max($credible);
 
-            if ($silentFor > self::ROLLING_WINDOW_DAYS * 86400) {
-                return $health(SourceStatus::STALE, sprintf(
-                    'aucun run depuis %d jours — la planification a-t-elle cessé ?',
-                    intdiv($silentFor, 86400),
-                ));
-            }
+        if ($silentFor > self::ROLLING_WINDOW_DAYS * 86400) {
+            return $health(SourceStatus::STALE, sprintf(
+                'aucun run depuis %d jours — la planification a-t-elle cessé ?',
+                intdiv($silentFor, 86400),
+            ));
         }
 
         // max − min over the WHOLE log, not last − first. The rows are in insertion order and
@@ -731,7 +739,7 @@ final readonly class RunStore
             ));
         }
 
-        if ($nowIso !== null && $feedDates !== [] && $feedSilentDays !== null && $lastCount > 0) {
+        if ($feedDates !== [] && $feedSilentDays !== null && $lastCount > 0) {
             // Ahead of WARN_DROP deliberately. A source that is BOTH quieter than its mean and
             // reading an ageing message is described far better by "the portal stopped sending"
             // than by "fewer than average": the first names a cause, the second names a symptom.
@@ -938,7 +946,7 @@ final readonly class RunStore
      * @param  list<array{ok:int|string, at_epoch:int|string, ...}> $runs
      * @return array{int, int}
      */
-    private static function windowCounts(array $runs, ?int $now, int $windowDays = self::ROLLING_WINDOW_DAYS): array
+    private static function windowCounts(array $runs, int $now, int $windowDays = self::ROLLING_WINDOW_DAYS): array
     {
         // Anchored on the LAST-INSERTED row, deliberately, and NOT on `max(at_epoch)`.
         //
@@ -960,10 +968,9 @@ final readonly class RunStore
         //   bounded by `$now` — correct in both, because a row stamped after the current time has
         //     not happened yet. That is the whole reason `health()` takes a clock.
         //
-        // Without a clock we fall back to the last-inserted stamp: the first failure above, bounded
-        // and self-correcting, rather than the second, unbounded in both directions. `CLAUDE.md`
-        // requires `scout doctor` to pass one.
-        $edge = $now ?? (int) $runs[array_key_last($runs)]['at_epoch'];
+        // There is no clockless fallback any more (step 8e-2): `health()` requires the clock, so the
+        // first failure above — the last-inserted stamp standing in for now — cannot recur.
+        $edge = $now;
         $cutoff = $edge - $windowDays * 86400;
         $total = 0;
         $failed = 0;
@@ -1021,18 +1028,27 @@ final readonly class RunStore
      *
      * @param list<string> $dates
      */
-    private static function newestCredibleFeedDate(array $dates, ?string $nowIso): ?string
+    private static function newestCredibleFeedDate(array $dates, string $nowIso): ?string
     {
-        if ($nowIso === null) {
-            return self::newestFeedDate($dates);
-        }
-
         $cutoff = self::epoch($nowIso) + self::FEED_CLOCK_GRACE_SECONDS;
 
         return self::newestFeedDate(array_values(array_filter(
             $dates,
             static fn (string $at): bool => self::epoch($at) <= $cutoff,
         )));
+    }
+
+    /**
+     * The ISO pass clock as an instant, for {@see SourceHealthService} (step 8e-2).
+     *
+     * The pipelines carry the pass clock as a string and the service takes a `DateTimeImmutable`; this is
+     * the ONE conversion, through the same strict {@see epoch()} the time tests pin, so a stamp the run log
+     * would refuse is refused here too rather than read by a second, laxer parser. The offset is dropped
+     * (UTC), which is harmless: the run log only ever reads the clock back through `epoch()`.
+     */
+    public static function instant(string $iso): \DateTimeImmutable
+    {
+        return new \DateTimeImmutable('@' . self::epoch($iso));
     }
 
     public static function epoch(string $iso): int

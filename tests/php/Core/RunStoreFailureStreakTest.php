@@ -92,7 +92,7 @@ final class RunStoreFailureStreakTest extends TestCase
         $now = strtotime('2026-09-07T09:00:00Z');
         $this->seed('inli', [...self::healthy(20), [0, false]], $now);
 
-        $health = $this->store->health('inli', gmdate('Y-m-d\TH:i:s\Z', $now));
+        $health = $this->store->runs()->health('inli', gmdate('Y-m-d\TH:i:s\Z', $now));
 
         self::assertFalse(
             $health->status->isAlerting(),
@@ -110,7 +110,7 @@ final class RunStoreFailureStreakTest extends TestCase
         $now = strtotime('2026-09-07T09:00:00Z');
         $this->seed('inli', [...self::healthy(20), [0, false], [0, false], [0, false]], $now);
 
-        $health = $this->store->health('inli', gmdate('Y-m-d\TH:i:s\Z', $now));
+        $health = $this->store->runs()->health('inli', gmdate('Y-m-d\TH:i:s\Z', $now));
 
         self::assertSame(SourceStatus::BROKEN, $health->status);
     }
@@ -125,7 +125,7 @@ final class RunStoreFailureStreakTest extends TestCase
         $now = strtotime('2026-09-07T09:00:00Z');
         $this->seed('newcomer', [[0, false]], $now);
 
-        $health = $this->store->health('newcomer', gmdate('Y-m-d\TH:i:s\Z', $now));
+        $health = $this->store->runs()->health('newcomer', gmdate('Y-m-d\TH:i:s\Z', $now));
 
         self::assertSame(SourceStatus::BROKEN, $health->status);
     }
@@ -141,7 +141,7 @@ final class RunStoreFailureStreakTest extends TestCase
         $now = strtotime('2026-09-07T09:00:00Z');
         $this->seed('inli', [...self::healthy(20), [10, true], [0, false]], $now);
 
-        $health = $this->store->health('inli', gmdate('Y-m-d\TH:i:s\Z', $now));
+        $health = $this->store->runs()->health('inli', gmdate('Y-m-d\TH:i:s\Z', $now));
 
         self::assertSame(SourceStatus::WARN_DROP, $health->status, 'a real drop must not be announced as recovered by a later failure');
     }
@@ -156,7 +156,7 @@ final class RunStoreFailureStreakTest extends TestCase
         $now = strtotime('2026-09-07T09:00:00Z');
         $this->seed('inli', [...self::healthy(20), [10, true]], $now);
 
-        $health = $this->store->health('inli', gmdate('Y-m-d\TH:i:s\Z', $now));
+        $health = $this->store->runs()->health('inli', gmdate('Y-m-d\TH:i:s\Z', $now));
 
         self::assertSame(SourceStatus::WARN_DROP, $health->status);
     }
@@ -175,7 +175,7 @@ final class RunStoreFailureStreakTest extends TestCase
             [0, false],
         ], $now);
 
-        $health = $this->store->health('leboncoin', gmdate('Y-m-d\TH:i:s\Z', $now));
+        $health = $this->store->runs()->health('leboncoin', gmdate('Y-m-d\TH:i:s\Z', $now));
 
         self::assertSame(SourceStatus::BROKEN, $health->status);
         self::assertStringContainsString('runs consécutifs à vide', $health->detail);
@@ -202,7 +202,7 @@ final class RunStoreFailureStreakTest extends TestCase
             ...array_fill(0, 3, [0, true]),
         ], $now);
 
-        $health = $this->store->health('leboncoin', gmdate('Y-m-d\TH:i:s\Z', $now));
+        $health = $this->store->runs()->health('leboncoin', gmdate('Y-m-d\TH:i:s\Z', $now));
 
         self::assertSame(SourceStatus::BROKEN, $health->status);
         self::assertSame(15, $health->consecutiveEmptyRuns, 'the streak spans the tolerated failure rather than restarting after it');
@@ -223,7 +223,7 @@ final class RunStoreFailureStreakTest extends TestCase
             ...array_fill(0, 3, [0, true]),
         ], $now);
 
-        $health = $this->store->health('leboncoin', gmdate('Y-m-d\TH:i:s\Z', $now));
+        $health = $this->store->runs()->health('leboncoin', gmdate('Y-m-d\TH:i:s\Z', $now));
 
         self::assertSame(3, $health->consecutiveEmptyRuns, 'three consecutive failures are an outage, not a hiccup, and the streak restarts after them');
     }
@@ -247,7 +247,7 @@ final class RunStoreFailureStreakTest extends TestCase
         $now = strtotime('2026-09-07T09:00:00Z');
         $this->seed('inli', [[25, true], [30, true], [0, false], [0, true], [0, true], [0, true]], $now);
 
-        $health = $this->store->health('inli', gmdate('Y-m-d\TH:i:s\Z', $now));
+        $health = $this->store->runs()->health('inli', gmdate('Y-m-d\TH:i:s\Z', $now));
 
         self::assertSame(SourceStatus::BROKEN, $health->status);
         // 27.5 is the mean of the two PRODUCTIVE runs before the streak. One row late it is 18.3,
@@ -280,7 +280,7 @@ final class RunStoreFailureStreakTest extends TestCase
 
         $this->seed('inli', $spec, $now);
 
-        $health = $this->store->health('inli', gmdate('Y-m-d\TH:i:s\Z', $now));
+        $health = $this->store->runs()->health('inli', gmdate('Y-m-d\TH:i:s\Z', $now));
 
         self::assertSame(SourceStatus::WARN_FLAKY, $health->status, 'tolerating each failure must not tolerate the RATE');
         self::assertSame(25, $health->failedRunsInWindow, 'the flaky windows count attempts, so a tolerated failure is still a failure here');
@@ -306,7 +306,7 @@ final class RunStoreFailureStreakTest extends TestCase
             [0, false], [0, false], [0, false],
         ], $now);
 
-        $health = $this->store->health('inli', gmdate('Y-m-d\TH:i:s\Z', $now));
+        $health = $this->store->runs()->health('inli', gmdate('Y-m-d\TH:i:s\Z', $now));
 
         self::assertSame(SourceStatus::BROKEN, $health->status);
         self::assertStringContainsString('3 run(s) consécutif(s) en échec', $health->detail);
@@ -323,7 +323,7 @@ final class RunStoreFailureStreakTest extends TestCase
         $now = strtotime('2026-09-07T09:00:00Z');
         $this->seed('inli', [...self::healthy(20), [0, false]], $now);
 
-        $health = $this->store->health('inli', gmdate('Y-m-d\TH:i:s\Z', $now));
+        $health = $this->store->runs()->health('inli', gmdate('Y-m-d\TH:i:s\Z', $now));
 
         self::assertSame(SourceStatus::OK, $health->status);
         self::assertStringContainsString('échec', $health->detail);

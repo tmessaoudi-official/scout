@@ -16,7 +16,7 @@ use Scout\Core\Redact;
  *
  * **The message is redacted at construction**, not at the point it is displayed. An adapter's
  * exception naturally carries the request URL — and the IDFM key travels as a query parameter — or
- * the mailbox it failed to open. `Store::recordRun()` persists that text and `Store::health()`
+ * the mailbox it failed to open. `Store::recordRun()` persists that text and `RunStore::health()`
  * interpolates it into a user-facing detail, so masking late means masking in two places and
  * forgetting one. Masking here means a `SourceError` is safe to persist, log or notify by
  * construction, and there is no unmasked variant to reach for by mistake.

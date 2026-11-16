@@ -107,7 +107,6 @@ final class AdvertiserMissExemptionTest extends TestCase
 
         return new EmailAlertSource(
             $definition,
-            Store::open($this->dbPath),
             new FileMailbox(self::ROOT . '/tests/fixtures/rent/seloger'),
             $criteria->communeLabels,
         );

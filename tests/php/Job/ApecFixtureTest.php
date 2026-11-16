@@ -112,7 +112,6 @@ final class ApecFixtureTest extends TestCase
         ]);
         $source = new JobDigestEmailSource(
             JobSourceLoader::load(self::ROOT . '/config/job/sources.json')['apec'],
-            JobStore::open(':memory:'),
             $mailbox,
         );
 
@@ -125,7 +124,6 @@ final class ApecFixtureTest extends TestCase
     {
         return new JobDigestEmailSource(
             JobSourceLoader::load(self::ROOT . '/config/job/sources.json')['apec'],
-            JobStore::open(':memory:'),
             new FileMailbox(self::ROOT . '/tests/fixtures/job/apec'),
             $warn,
         );

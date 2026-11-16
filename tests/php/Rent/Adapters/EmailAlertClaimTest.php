@@ -77,7 +77,6 @@ final class EmailAlertClaimTest extends TestCase
                 mixedTenure: false,
                 params: ['from' => 'alertes@portal.test', 'subject_pattern' => '~annonce~i', 'link_host' => 'portal.test'],
             ),
-            Store::open(':memory:'),
             $mailbox,
         );
     }

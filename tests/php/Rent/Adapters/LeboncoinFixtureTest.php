@@ -241,7 +241,6 @@ final class LeboncoinFixtureTest extends TestCase
 
             $source = new EmailAlertSource(
                 $definition,
-                Store::open($db),
                 new FileMailbox($dir),
                 ConfigLoader::loadCriteria(self::ROOT . '/config/rent/criteria.json')->communeLabels,
             );
@@ -272,7 +271,6 @@ final class LeboncoinFixtureTest extends TestCase
 
         $source = new EmailAlertSource(
             $definition,
-            Store::open($this->dbPath),
             new FileMailbox(self::ROOT . '/tests/fixtures/rent/leboncoin'),
             $criteria->communeLabels,
         );

@@ -9,7 +9,10 @@ use Scout\Adapters\FeedFreshness;
 use Scout\Adapters\SourceError;
 use Scout\Core\Notify\Notifier;
 use Scout\Core\Redact;
+use Scout\Core\RunStore;
 use Scout\Core\SameFilterWarning;
+use Scout\Core\SourceHealthReader;
+use Scout\Core\SourceHealthService;
 
 /**
  * fetch → classify → judge → record → notify, for cars. The rent pipeline's shape with what the car
@@ -33,6 +36,8 @@ final readonly class VehiclePipeline
         private readonly VehicleScorer $scorer = new VehicleScorer(),
         private readonly VehicleFormatter $formatter = new VehicleFormatter(),
         private readonly \DateTimeZone $zone = new \DateTimeZone('Europe/Paris'),
+        /** Optional; `null` is the production default, `SourceHealthService` on the run log (step 8e-2). */
+        private readonly ?SourceHealthReader $healthReader = null,
     ) {}
 
     /** @param list<VehicleSource> $sources */
@@ -162,9 +167,11 @@ final readonly class VehiclePipeline
         $undelivered = 0;
         $cooldown = $this->criteria->notify->sourceAlertCooldownHours;
         $runs = $this->store->runs();
+        $reader = $this->healthReader ?? new SourceHealthService($runs);
+        $now = RunStore::instant($nowIso);
 
         foreach ($sources as $source) {
-            $health = $source->health($nowIso);
+            $health = $reader->of($source, $now);
             if (!$health->status->isAlerting()) {
                 if ($runs->clearAlerts($source->name())) {
                     if (!$this->notifier->delivered($this->notifier->send($this->formatter->sourceRecovered($health)))) {

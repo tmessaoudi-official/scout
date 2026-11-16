@@ -7,6 +7,8 @@ namespace Scout\Tests\Job;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Scout\Adapters\Mail\FileMailbox;
+use Scout\Core\RunStore;
+use Scout\Core\SourceHealthService;
 use Scout\Core\CountsPatternMisses;
 use Scout\Core\SourceStatus;
 use Scout\Job\JobEmailSource;
@@ -80,7 +82,7 @@ final class JobEmailPatternMissTest extends TestCase
         $source->fetch();
 
         self::assertSame(['place_pattern'], $source->patternMisses()->total());
-        $health = $source->health(self::NOW);
+        $health = (new SourceHealthService($store->runs()))->of($source, RunStore::instant(self::NOW));
         self::assertSame(SourceStatus::WARN_DROP, $health->status);
         self::assertStringContainsString('place_pattern', $health->detail);
     }
@@ -126,6 +128,6 @@ final class JobEmailPatternMissTest extends TestCase
             );
         }
 
-        return new JobEmailSource($d, $store ?? JobStore::open(':memory:'), new FileMailbox(self::ROOT . '/tests/fixtures/job/linkedin'));
+        return new JobEmailSource($d, new FileMailbox(self::ROOT . '/tests/fixtures/job/linkedin'));
     }
 }

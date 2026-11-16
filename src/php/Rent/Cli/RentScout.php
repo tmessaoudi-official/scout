@@ -29,7 +29,6 @@ use Scout\Rent\Config\SourceDefinition;
 use Scout\Rent\Core\CriteriaEngine;
 use Scout\Rent\Core\DigestSchedule;
 use Scout\Core\Clock;
-use Scout\Core\CountsPatternMisses;
 use Scout\Core\FixedClock;
 use Scout\Core\Heartbeat;
 use Scout\Rent\Core\ListingSnapshot;
@@ -48,6 +47,10 @@ use Scout\Rent\Core\Classification;
 use Scout\Rent\Core\Outcome;
 use Scout\Rent\Core\Tenure;
 use Scout\Core\Redact;
+use Scout\Core\ReportsHealth;
+use Scout\Core\RunStore;
+use Scout\Core\SourceHealth;
+use Scout\Core\SourceHealthService;
 use Scout\Core\SourceStatus;
 use Scout\Rent\Core\TenureClassifier;
 use Scout\Rent\Core\Verdict;
@@ -233,7 +236,7 @@ final readonly class RentScout
      *
      * Prints the store's **journal mode**, which `CLAUDE.md` § Testing requires: WAL can be silently
      * refused on a network mount, and a store in rollback-journal mode makes two processes contend
-     * instead of share. And it passes `$nowIso` to `Store::health()`, without which `STALE` — the
+     * instead of share. And it hands `SourceHealthService` the pass's instant, without which `STALE` — the
      * verdict that catches the schedule itself having stopped — can never fire at all.
      */
     private function doctor(array $flags = []): int
@@ -412,7 +415,7 @@ final readonly class RentScout
                 $error === null ? FeedDate::of($source) : null,
             );
 
-            $health = $source->health($now);
+            $health = $this->healthOf($source, $store->runs(), $now);
             if ($health->status->isAlerting()) {
                 ++$problems;
             }
@@ -424,7 +427,7 @@ final readonly class RentScout
             // rather than as a status because one dead page is noise: what means something is the
             // proportion, and the operator is the one who can see it against the item count.
             $detailFailures = $store->detailFailureCount($source->name(), DetailHydrator::DETAIL_ATTEMPT_CAP);
-            $note = $error ?? ($health->detail ?? '');
+            $note = $error ?? $health->detail;
 
             if ($detailFailures > 0) {
                 $note = rtrim($note . ' · ' . $detailFailures . ' page(s) de détail illisible(s), abandonnée(s)', ' ·');
@@ -442,22 +445,20 @@ final readonly class RentScout
             // THE PER-PATTERN MISS COUNTS (Track 1h). Printed only when something actually missed,
             // so a healthy source stays one line: a table that prints four zero rows per source is
             // a table nobody reads, and this exists to be noticed. A PARTIAL miss rate does not
-            // reach `health()` — which only speaks at 100% — but it is the early warning that a
+            // reach the health verdict — which only speaks at 100% — but it is the early warning that a
             // portal is drifting, and `doctor` is where an operator goes to look.
-            if ($source instanceof CountsPatternMisses) {
-                foreach ($source->patternMisses()->counts() as $key => $c) {
-                    if ($c['misses'] === 0) {
-                        continue;
-                    }
-
-                    $this->line(sprintf(
-                        '                     %-18s %d/%d carte(s) sans résultat%s',
-                        $key,
-                        $c['misses'],
-                        $c['calls'],
-                        $c['misses'] === $c['calls'] ? '  ← AUCUNE : gabarit changé ?' : '',
-                    ));
+            foreach ($source->patternMisses()->counts() as $key => $c) {
+                if ($c['misses'] === 0) {
+                    continue;
                 }
+
+                $this->line(sprintf(
+                    '                     %-18s %d/%d carte(s) sans résultat%s',
+                    $key,
+                    $c['misses'],
+                    $c['calls'],
+                    $c['misses'] === $c['calls'] ? '  ← AUCUNE : gabarit changé ?' : '',
+                ));
             }
         }
 
@@ -759,7 +760,7 @@ final readonly class RentScout
      *   process — which for a service running for weeks is simply a fixed order, and being polled
      *   first every fifteen minutes is itself a fingerprint.
      * - `$this->now()` is re-read per pass. Hoisting it would stamp every run in the log with the
-     *   moment the process started, and `Store::health()` derives `STALE` from those timestamps —
+     *   moment the process started, and `RunStore::health()` derives `STALE` from those timestamps —
      *   so the one verdict that catches "the schedule has stopped" would be computed against a clock
      *   that never moves. That is the failure mode of a monitor monitoring itself with a dead clock.
      * - The pacer is built ONCE and shared, because its whole job is remembering across passes.
@@ -828,7 +829,7 @@ final readonly class RentScout
         // because the built list is the thing the loop will iterate: any future reason a source is
         // dropped between config and loop is then reflected here for free, rather than silently
         // reintroducing the mismatch this replaced.
-        // Keyed by name, holding the SOURCE — the beat reads health through `$source->health()`,
+        // Keyed by name, holding the SOURCE — the beat reads health through `SourceHealthService`,
         // the same funnel `doctor` and the pipeline use, so a per-source `feed_silent_days` is
         // honoured in one place rather than re-derived at every call site (2026-08-29).
         $watched = [];
@@ -2634,7 +2635,7 @@ final readonly class RentScout
         // learns to skip.
         $ok = 0;
         foreach ($watched as $source) {
-            if ($source->health($now)->status === SourceStatus::OK) {
+            if ($this->healthOf($source, $store->runs(), $now)->status === SourceStatus::OK) {
                 ++$ok;
             }
         }
@@ -3098,12 +3099,12 @@ final readonly class RentScout
         }
 
         return match ($definition->type) {
-            'fixture' => new FixtureSource($definition, $store, $this->rootDir),
+            'fixture' => new FixtureSource($definition, $this->rootDir),
             // The ADAPTER exists and is tested; what waits on the developer is the URL in
             // `config/rent/sources.json`. Hard rule 1 forbids writing an endpoint from memory, and the
             // loader refuses `enabled: true` next to a REMPLACER placeholder — so this can never
             // poll something nobody verified, while still being ready the moment a capture lands.
-            'json' => new HttpJsonSource($definition, $store, $this->http, $this->robotsFor($definition, $robotsByOrigin)),
+            'json' => new HttpJsonSource($definition, $this->http, $this->robotsFor($definition, $robotsByOrigin)),
             // Same shape as `json`, one step different in the middle: the payload is parsed as
             // HTML5 by the language's own `Dom\HTMLDocument` and the field map is read as CSS
             // selectors. In'li is the first real source to use it — its search page is
@@ -3193,7 +3194,6 @@ final readonly class RentScout
 
         return new EmailAlertSource(
             $definition,
-            $store,
             $mailbox,
             $this->criteria()->communeLabels,
             // Measured 2026-08-26: SeLoger matched 107 messages in the seven-day window against the
@@ -3340,6 +3340,15 @@ final readonly class RentScout
     private function buildMailTransport(): MailTransport
     {
         return ChannelFactory::mailTransport($this->rootDir, 'rent-watch@localhost');
+    }
+
+    /**
+     * A source's health at `$nowIso`, judged by the one service (step 8e-2). The clock is the
+     * instant the caller recorded its run at, so the verdict and the run it judges agree.
+     */
+    private function healthOf(ReportsHealth $source, RunStore $runs, string $nowIso): SourceHealth
+    {
+        return (new SourceHealthService($runs))->of($source, RunStore::instant($nowIso));
     }
 
     private function now(): string

@@ -599,8 +599,8 @@ own snapshot alone is exactly the `⊂` this command forbids.
 `scout --domain=rent dump` is what makes onboarding a new source take five minutes instead of an hour, so it lands in
 milestone 1.
 
-Two obligations on `doctor`, both of which are silent when forgotten: it must pass the current time
-to `Store::health()` — without a clock the `STALE` verdict cannot fire at all — and it must print
+Two obligations on `doctor`, both of which are silent when forgotten: it must hand the current time
+to `SourceHealthService::of()` (a required argument since step 8e-2) — without a clock the `STALE` verdict cannot fire at all — and it must print
 `Store::journalMode()`, because WAL can be refused on a network mount and a store in rollback-journal
 mode makes two processes contend instead of share.
 

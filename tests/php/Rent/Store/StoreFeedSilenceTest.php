@@ -61,7 +61,7 @@ final class StoreFeedSilenceTest extends TestCase
             );
         }
 
-        $health = $this->store->health('leboncoin', '2026-08-29T09:00:00Z', 3);
+        $health = $this->store->runs()->health('leboncoin', '2026-08-29T09:00:00Z', 3);
 
         self::assertSame(SourceStatus::FEED_SILENT, $health->status);
         self::assertStringContainsString('26', $health->detail, 'the detail must name the last message');
@@ -73,7 +73,7 @@ final class StoreFeedSilenceTest extends TestCase
     {
         $this->store->recordRun('leboncoin', 3, true, null, '2026-08-28T09:00:00Z', feedNewestAt: '2026-08-27T07:33:06Z');
 
-        self::assertSame(SourceStatus::OK, $this->store->health('leboncoin', '2026-08-28T09:00:00Z', 3)->status);
+        self::assertSame(SourceStatus::OK, $this->store->runs()->health('leboncoin', '2026-08-28T09:00:00Z', 3)->status);
     }
 
     /**
@@ -90,7 +90,7 @@ final class StoreFeedSilenceTest extends TestCase
         // month, which tripped STALE and proved nothing about this branch.
         $this->store->recordRun('inli', 3, true, null, '2026-08-29T09:00:00Z', feedNewestAt: null);
 
-        self::assertSame(SourceStatus::OK, $this->store->health('inli', '2026-09-01T09:00:00Z', 3)->status);
+        self::assertSame(SourceStatus::OK, $this->store->runs()->health('inli', '2026-09-01T09:00:00Z', 3)->status);
     }
 
     /**
@@ -110,7 +110,7 @@ final class StoreFeedSilenceTest extends TestCase
         $this->store->recordRun('leboncoin', 3, true, null, '2026-08-27T09:00:00Z', feedNewestAt: '2026-08-26T07:33:06Z');
         $this->store->recordRun('leboncoin', 3, true, null, '2026-08-29T09:00:00Z', feedNewestAt: '2030-01-01T00:00:00Z');
 
-        $health = $this->store->health('leboncoin', '2026-08-29T09:00:00Z', 3);
+        $health = $this->store->runs()->health('leboncoin', '2026-08-29T09:00:00Z', 3);
 
         self::assertSame(SourceStatus::FEED_SILENT, $health->status);
         self::assertStringContainsString('26', $health->detail, 'the credible date decides, not the newest');
@@ -128,7 +128,7 @@ final class StoreFeedSilenceTest extends TestCase
     {
         $this->store->recordRun('leboncoin', 3, true, null, '2026-08-29T09:00:00Z', feedNewestAt: '2030-01-01T00:00:00Z');
 
-        $health = $this->store->health('leboncoin', '2026-08-29T09:00:00Z', 3);
+        $health = $this->store->runs()->health('leboncoin', '2026-08-29T09:00:00Z', 3);
 
         self::assertSame(SourceStatus::FEED_SILENT, $health->status);
         self::assertStringContainsString('horloge', $health->detail);
@@ -151,7 +151,7 @@ final class StoreFeedSilenceTest extends TestCase
             $this->store->recordRun('leboncoin', 0, false, 'IMAP connection timed out', $at, feedNewestAt: null);
         }
 
-        self::assertSame(SourceStatus::BROKEN, $this->store->health('leboncoin', '2026-08-29T09:00:00Z', 3)->status);
+        self::assertSame(SourceStatus::BROKEN, $this->store->runs()->health('leboncoin', '2026-08-29T09:00:00Z', 3)->status);
     }
 
     /**
@@ -164,7 +164,7 @@ final class StoreFeedSilenceTest extends TestCase
         $this->store->recordRun('leboncoin', 3, true, null, '2026-08-27T09:00:00Z', feedNewestAt: '2026-08-26T07:33:06Z');
         $this->store->recordRun('leboncoin', 0, false, 'IMAP connection timed out', '2026-08-29T09:00:00Z', feedNewestAt: null);
 
-        $health = $this->store->health('leboncoin', '2026-08-29T09:00:00Z', 3);
+        $health = $this->store->runs()->health('leboncoin', '2026-08-29T09:00:00Z', 3);
 
         self::assertSame(SourceStatus::FEED_SILENT, $health->status);
         self::assertStringContainsString('toléré', $health->detail, 'a tolerated failure must not vanish behind another verdict');
@@ -185,7 +185,7 @@ final class StoreFeedSilenceTest extends TestCase
             $this->store->recordRun('leboncoin', 0, true, null, sprintf('2026-09-0%dT09:00:00Z', 2 + $i), feedNewestAt: null);
         }
 
-        $health = $this->store->health('leboncoin', '2026-09-06T09:00:00Z', 3);
+        $health = $this->store->runs()->health('leboncoin', '2026-09-06T09:00:00Z', 3);
 
         self::assertSame(SourceStatus::BROKEN, $health->status);
         self::assertStringContainsString('26', $health->detail, 'BROKEN must name the last message, not just the empty streak');
@@ -206,7 +206,7 @@ final class StoreFeedSilenceTest extends TestCase
 
         self::assertNotSame(
             SourceStatus::FEED_SILENT,
-            $this->store->health('leboncoin', '2026-08-29T09:00:00Z', 3)->status,
+            $this->store->runs()->health('leboncoin', '2026-08-29T09:00:00Z', 3)->status,
             'at zero items the empty-streak rule owns the verdict',
         );
     }
@@ -245,7 +245,7 @@ final class StoreFeedSilenceTest extends TestCase
         $this->store->recordRun('portalX', 3, true, null, '2026-08-30T11:30:00Z', feedNewestAt: $newerInstant);
         $this->store->recordRun('portalX', 3, true, null, '2026-08-30T11:40:00Z', feedNewestAt: $olderInstant);
 
-        $health = $this->store->health('portalX', '2026-08-30T12:00:00Z', 1);
+        $health = $this->store->runs()->health('portalX', '2026-08-30T12:00:00Z', 1);
 
         self::assertSame(SourceStatus::OK, $health->status, 'the feed is one hour old, not 26 hours silent');
     }
@@ -263,7 +263,7 @@ final class StoreFeedSilenceTest extends TestCase
     {
         $this->store->recordRun('bienici', 5, true, null, '2026-08-29T09:00:00Z', feedNewestAt: '2026-08-29T09:00:30Z');
 
-        self::assertSame(SourceStatus::OK, $this->store->health('bienici', '2026-08-29T09:00:00Z', 3)->status);
+        self::assertSame(SourceStatus::OK, $this->store->runs()->health('bienici', '2026-08-29T09:00:00Z', 3)->status);
     }
 
     /** The grace is far below any threshold, so it can never mask real silence. */
@@ -271,7 +271,7 @@ final class StoreFeedSilenceTest extends TestCase
     {
         $this->store->recordRun('bienici', 5, true, null, '2026-08-29T09:00:00Z', feedNewestAt: '2030-01-01T00:00:00Z');
 
-        self::assertSame(SourceStatus::FEED_SILENT, $this->store->health('bienici', '2026-08-29T09:00:00Z', 3)->status);
+        self::assertSame(SourceStatus::FEED_SILENT, $this->store->runs()->health('bienici', '2026-08-29T09:00:00Z', 3)->status);
     }
 
     /**
@@ -291,7 +291,7 @@ final class StoreFeedSilenceTest extends TestCase
             $this->store->recordRun('leboncoin', 0, true, null, sprintf('2026-09-0%dT09:00:00Z', 2 + $i));
         }
 
-        $health = $this->store->health('leboncoin', '2026-09-06T09:00:00Z', 3);
+        $health = $this->store->runs()->health('leboncoin', '2026-09-06T09:00:00Z', 3);
 
         self::assertSame(SourceStatus::BROKEN, $health->status);
         self::assertStringContainsString('2026-08-26', $health->detail);
@@ -304,6 +304,6 @@ final class StoreFeedSilenceTest extends TestCase
         $this->store->recordRun('leboncoin', 3, true, null, '2026-08-29T09:00:00Z', feedNewestAt: '2026-08-26T07:33:06Z');
 
         $this->expectException(\InvalidArgumentException::class);
-        $this->store->health('leboncoin', '2026-08-29T09:00:00Z', 0);
+        $this->store->runs()->health('leboncoin', '2026-08-29T09:00:00Z', 0);
     }
 }

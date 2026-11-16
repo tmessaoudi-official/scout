@@ -13,11 +13,9 @@ use Scout\Core\CountsPatternMisses;
 use Scout\Core\PatternMissLog;
 use Scout\Core\SourceHealth;
 use Scout\Core\SourceHealthService;
-use Scout\Core\SourceStatus;
 use Scout\Rent\Core\SourceProfile;
 use Scout\Rent\Core\Tenure;
 use Scout\Core\Text;
-use Scout\Rent\Store\Store;
 use Scout\Adapters\AcknowledgesMessages;
 use Scout\Adapters\FeedFreshness;
 use Scout\Adapters\SourceError;
@@ -139,7 +137,6 @@ final readonly class EmailAlertSource implements AcknowledgesMessages, CountsPat
 
     public function __construct(
         private SourceDefinition $definition,
-        private Store $store,
         private Mailbox $mailbox,
         /**
          * Communes to look for in the message text, from `config/rent/criteria.json`.
@@ -284,26 +281,19 @@ final readonly class EmailAlertSource implements AcknowledgesMessages, CountsPat
         return $this->mailbox->newestMessageAt();
     }
 
-    public function health(?string $nowIso = null): SourceHealth
+    /**
+     * The source's OWN feed-silence threshold, read by `SourceHealthService` — the one funnel `doctor`,
+     * the pipeline and the heartbeat all go through — so a per-source `feed_silent_days` cannot be
+     * honoured by one caller and ignored by another. `null` leaves the store's global threshold in force.
+     *
+     * The miss log beside it matters as much: A PATTERN THAT MATCHED NOTHING AT ALL IS A TEMPLATE CHANGE,
+     * invisible to every other verdict (the cards still parsed, no run failed, the feed kept arriving).
+     * PAP ran four days like that — 23 rows with a null surface, 19 notified as MATCH — while `doctor`
+     * said `ok`. The service escalates it over the run log (steps 8e-1/8e-2).
+     */
+    public function feedSilentDays(): ?int
     {
-        // The source's OWN threshold rides through here — the one funnel `doctor`, the pipeline
-        // and the heartbeat all read — so a per-source `feed_silent_days` cannot be honoured by
-        // one caller and ignored by another. `null` leaves the store's global threshold in force.
-        // A PATTERN THAT MATCHED NOTHING AT ALL IS A TEMPLATE CHANGE, and it is invisible to every
-        // other verdict here: the cards still parsed, so `item_count` did not move, no run failed,
-        // and the feed kept arriving. PAP ran four days like that — 23 rows with a null surface, 19
-        // of them notified as MATCH — while `doctor` said `ok`.
-        //
-        // The decoration itself lives in `PatternMissLog::escalate()`, which used to be an inline
-        // copy here and another verbatim one in the car twin, while three counting adapters had none
-        // at all (C2 round-1 resilience lens). `SourceHealthService` applies it over the run log for
-        // every counting source (step 8e-1), and a reflection test fails when one does not route there.
-        return (new SourceHealthService($this->store->runs()))->of(
-            $this->name(),
-            $this->patternMisses,
-            $nowIso,
-            $this->definition->feedSilentDays,
-        );
+        return $this->definition->feedSilentDays;
     }
 
     /** The per-pattern miss counts of the last fetch — `doctor` prints them. */

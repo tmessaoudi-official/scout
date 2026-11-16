@@ -556,6 +556,23 @@ final class CarScoutTest extends TestCase
     }
 
     /**
+     * DOCTOR JUDGES HEALTH ON THE CLI'S OWN CLOCK, NOT THE HOST'S (step 8e-2).
+     *
+     * The clock is a required argument now, so it cannot be dropped, only replaced. `doctor` records
+     * its run at the injected instant and reads the verdict at that same instant, so a fresh run is
+     * `ok`; read on the wall clock instead, the run would be weeks old and `stale`. The car twin had
+     * no test asserting a HEALTHY verdict through the CLI at all, so that substitution left every
+     * car test green: only the stale side was pinned, and a wrong clock makes more things stale, not
+     * fewer.
+     */
+    public function testDoctorCallsAFreshRunHealthyOnItsOwnClock(): void
+    {
+        $r = $this->scout(['--domain=car', 'doctor', '--source=paruvendu']);
+
+        self::assertSame(1, preg_match('/^\s+paruvendu\s+ok\s/m', $r['out']), $r['out']);
+    }
+
+    /**
      * THE CAR DOCTOR WARNS WHEN A THRESHOLD SITS AT OR PAST THE IMAP WINDOW — which it never did.
      *
      * `IMAP_SINCE_DAYS` is SHARED between the two domains (`CarScout` says so in its own env

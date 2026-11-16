@@ -150,7 +150,6 @@ final class MakeSentinelTest extends TestCase
         try {
             $source = new VehicleEmailSource(
                 VehicleSourceLoader::load(self::ROOT . '/config/car/sources.json')['paruvendu'],
-                VehicleStore::open(':memory:'),
                 new FileMailbox($dir),
             );
             $listings = $source->fetch();

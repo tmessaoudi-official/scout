@@ -415,7 +415,6 @@ final class PapFixtureTest extends TestCase
 
         return new EmailAlertSource(
             $definition,
-            Store::open($this->dbPath),
             new FileMailbox(self::ROOT . '/tests/fixtures/rent/pap'),
             $criteria->communeLabels,
         );

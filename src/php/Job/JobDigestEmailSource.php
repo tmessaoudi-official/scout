@@ -12,7 +12,6 @@ use Scout\Adapters\Mail\MailboxError;
 use Scout\Adapters\SourceError;
 use Scout\Core\CountsPatternMisses;
 use Scout\Core\PatternMissLog;
-use Scout\Core\SourceHealth;
 use Scout\Core\SourceHealthService;
 
 /**
@@ -68,7 +67,6 @@ final readonly class JobDigestEmailSource implements AcknowledgesMessages, Count
     /** @param ?\Closure(string): void $warn */
     public function __construct(
         private JobSourceDefinition $definition,
-        private JobStore $store,
         private Mailbox $mailbox,
         private ?\Closure $warn = null,
         private int $limit = 50,
@@ -156,14 +154,10 @@ final readonly class JobDigestEmailSource implements AcknowledgesMessages, Count
         }
     }
 
-    public function health(?string $nowIso = null): SourceHealth
+    /** This source's own `feed_silent_days`, for `SourceHealthService`; `null` leaves the store's global one. */
+    public function feedSilentDays(): ?int
     {
-        return (new SourceHealthService($this->store->runs()))->of(
-            $this->name(),
-            $this->patternMisses,
-            $nowIso,
-            $this->definition->feedSilentDays,
-        );
+        return $this->definition->feedSilentDays;
     }
 
     public function patternMisses(): PatternMissLog

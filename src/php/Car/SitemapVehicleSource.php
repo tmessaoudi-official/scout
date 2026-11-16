@@ -11,7 +11,6 @@ use Scout\Adapters\Http\Robots;
 use Scout\Adapters\SourceError;
 use Scout\Core\CountsPatternMisses;
 use Scout\Core\PatternMissLog;
-use Scout\Core\SourceHealth;
 use Scout\Core\SourceHealthService;
 
 /**
@@ -65,11 +64,12 @@ final readonly class SitemapVehicleSource implements CountsPatternMisses, Indexe
      * this class was the last extraction surface with no instrumentation at all — autohero is
      * `enabled: true`, and a JSON-LD key the reseller renames would go null on every lot with
      * `item_count` unmoved, no run failed and `ok` reported. The gap was stated in no doc, plan or
-     * register until the C2 round-1 completeness lens found it.
+     * register until the C2 round-1 completeness lens found it. Its misses reach health through
+     * `SourceHealthService` (step 8e-2); no threshold of its own — a sitemap reports no feed date.
      */
-    public function health(?string $nowIso = null): SourceHealth
+    public function feedSilentDays(): ?int
     {
-        return (new SourceHealthService($this->store->runs()))->of($this->name(), $this->patternMisses, $nowIso);
+        return null;
     }
 
     /** The per-key miss counts of the last fetch — `scout --domain=car doctor` prints them. */

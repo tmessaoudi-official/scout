@@ -75,7 +75,6 @@ final class EmailObservedAtTest extends TestCase
                 params: ['from' => 'alerts@example-portal.test', 'link_host' => 'example-portal.test/annonce/'],
                 map: new FieldMap(ref: ['url'], chargesIncluded: true),
             ),
-            Store::open(':memory:'),
             new FileMailbox($this->dir),
             ['dourdan' => 'Dourdan'],
         );

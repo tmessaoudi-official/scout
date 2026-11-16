@@ -158,9 +158,9 @@ final class VehicleEmailContentIdentityTest extends TestCase
     public function testIdentityIsScopedToTheSource(): void
     {
         $raw = self::capcarMessage([self::clio()]);
-        $a = (new VehicleEmailSource($this->load(self::capcarParams()), VehicleStore::open(':memory:'), $this->mailbox($raw)))->fetch()[0];
+        $a = (new VehicleEmailSource($this->load(self::capcarParams()), $this->mailbox($raw)))->fetch()[0];
         $other = VehicleSourceLoader::fromArray(['sources' => ['elsewhere' => ['enabled' => true, 'family' => 'portal', 'type' => 'email_alert', 'params' => self::capcarParams()]]])['elsewhere'];
-        $b = (new VehicleEmailSource($other, VehicleStore::open(':memory:'), $this->mailbox($raw)))->fetch()[0];
+        $b = (new VehicleEmailSource($other, $this->mailbox($raw)))->fetch()[0];
 
         self::assertNotSame($a->externalId, $b->externalId);
     }
@@ -382,7 +382,7 @@ final class VehicleEmailContentIdentityTest extends TestCase
      */
     private function fetch(array $params, string $raw): array
     {
-        return (new VehicleEmailSource($this->load($params), VehicleStore::open(':memory:'), $this->mailbox($raw)))->fetch();
+        return (new VehicleEmailSource($this->load($params), $this->mailbox($raw)))->fetch();
     }
 
     private function mailbox(string $raw): Mailbox

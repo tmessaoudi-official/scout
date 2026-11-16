@@ -421,7 +421,7 @@ final class StoreTest extends TestCase
     /** A source that has never run is NEVER_RUN, not OK — absence of failure is not health. */
     public function testASourceThatHasNeverRunIsNotReportedHealthy(): void
     {
-        self::assertSame(SourceStatus::NEVER_RUN, $this->store->health('inli')->status);
+        self::assertSame(SourceStatus::NEVER_RUN, $this->store->runs()->health('inli', '2026-08-01T09:00:00+00:00')->status);
     }
 
     /** Three consecutive empty runs against a non-zero baseline is BROKEN (spec §8). */
@@ -435,7 +435,7 @@ final class StoreTest extends TestCase
             $this->store->recordRun('inli', 0, true, null, $day . 'T09:00:00+00:00');
         }
 
-        $health = $this->store->health('inli');
+        $health = $this->store->runs()->health('inli', '2026-08-06T09:00:00+00:00');
 
         self::assertSame(SourceStatus::BROKEN, $health->status);
         self::assertSame(3, $health->consecutiveEmptyRuns);
@@ -454,7 +454,7 @@ final class StoreTest extends TestCase
             $this->store->recordRun('quiet_source', 0, true, null, $day . 'T09:00:00+00:00');
         }
 
-        self::assertNotSame(SourceStatus::BROKEN, $this->store->health('quiet_source')->status);
+        self::assertNotSame(SourceStatus::BROKEN, $this->store->runs()->health('quiet_source', '2026-08-04T09:00:00+00:00')->status);
     }
 
     /** A >70% drop below the rolling mean warns (spec §8). */
@@ -466,7 +466,7 @@ final class StoreTest extends TestCase
 
         $this->store->recordRun('inli', 3, true, null, '2026-08-08T09:00:00+00:00');
 
-        self::assertSame(SourceStatus::WARN_DROP, $this->store->health('inli')->status);
+        self::assertSame(SourceStatus::WARN_DROP, $this->store->runs()->health('inli', '2026-08-08T09:00:00+00:00')->status);
     }
 
     /**
@@ -485,7 +485,7 @@ final class StoreTest extends TestCase
             $this->store->recordRun('inli', 0, false, 'HTTP 503', sprintf('2026-08-%02dT09:00:00+00:00', $day));
         }
 
-        $failed = $this->store->health('inli');
+        $failed = $this->store->runs()->health('inli', '2026-08-04T09:00:00+00:00');
 
         self::assertSame(SourceStatus::BROKEN, $failed->status);
         self::assertStringContainsString('HTTP 503', $failed->detail);
@@ -497,7 +497,7 @@ final class StoreTest extends TestCase
             $this->store->recordRun('quiet', 0, true, null, sprintf('2026-08-%02dT09:00:00+00:00', $day));
         }
 
-        $empty = $this->store->health('quiet');
+        $empty = $this->store->runs()->health('quiet', '2026-08-04T09:00:00+00:00');
 
         self::assertSame(SourceStatus::BROKEN, $empty->status);
         self::assertStringContainsString('à vide', $empty->detail);
@@ -589,7 +589,7 @@ final class StoreTest extends TestCase
         $this->store->recordRun('inli', 0, true, null, '2026-08-03T09:00:00+00:00');
         $this->store->recordRun('inli', 0, false, 'timeout', '2026-08-04T09:00:00+00:00');
 
-        $streak = $this->store->health('inli')->consecutiveEmptyRuns;
+        $streak = $this->store->runs()->health('inli', '2026-08-04T09:00:00+00:00')->consecutiveEmptyRuns;
 
         self::assertSame(2, $streak, 'the streak is the empty runs, and the failure is neither one of them nor a reset');
         self::assertNotSame(3, $streak, 'a failed run counted as an empty one is hard rule 3 at the health layer');
@@ -604,11 +604,11 @@ final class StoreTest extends TestCase
             $this->store->recordRun('inli', 0, true, null, $day . 'T09:00:00+00:00');
         }
 
-        self::assertSame(SourceStatus::BROKEN, $this->store->health('inli')->status);
+        self::assertSame(SourceStatus::BROKEN, $this->store->runs()->health('inli', '2026-08-04T09:00:00+00:00')->status);
 
         $this->store->recordRun('inli', 11, true, null, '2026-08-05T09:00:00+00:00');
 
-        self::assertSame(SourceStatus::OK, $this->store->health('inli')->status);
+        self::assertSame(SourceStatus::OK, $this->store->runs()->health('inli', '2026-08-05T09:00:00+00:00')->status);
     }
 
     // ── Identity: nothing may collapse onto a shared key ──────────────────────────────────────────
@@ -900,7 +900,7 @@ final class StoreTest extends TestCase
         try {
             $this->store->recordRun('inli', 4, true, null, '2026-03-29T02:30:00Z');
 
-            self::assertSame(4, $this->store->health('inli')->lastCount);
+            self::assertSame(4, $this->store->runs()->health('inli', '2026-03-29T02:30:00Z')->lastCount);
         } finally {
             date_default_timezone_set($original);
         }
@@ -940,7 +940,7 @@ final class StoreTest extends TestCase
         foreach ($accepted as $index => $iso) {
             $this->store->recordRun('src' . $index, 3, true, null, $iso);
 
-            self::assertSame(3, $this->store->health('src' . $index)->lastCount, $iso);
+            self::assertSame(3, $this->store->runs()->health('src' . $index, $iso)->lastCount, $iso);
         }
     }
 
@@ -1306,7 +1306,7 @@ final class StoreTest extends TestCase
             $this->store->recordRun('newsource', 0, true, null, sprintf('2026-08-%02dT09:00:00+00:00', $day));
         }
 
-        self::assertSame(SourceStatus::NEVER_PRODUCED, $this->store->health('newsource')->status);
+        self::assertSame(SourceStatus::NEVER_PRODUCED, $this->store->runs()->health('newsource', '2026-08-20T09:00:00+00:00')->status);
     }
 
     /**
@@ -1432,7 +1432,7 @@ final class StoreTest extends TestCase
             $this->store->recordRun('inli', 0, true, null, $day . 'T09:00:00+00:00');
         }
 
-        $health = $this->store->health('inli');
+        $health = $this->store->runs()->health('inli', '2026-08-25T09:00:00+00:00');
 
         self::assertSame(SourceStatus::BROKEN, $health->status);
         self::assertStringContainsString('25', $health->detail);
@@ -1462,7 +1462,7 @@ final class StoreTest extends TestCase
             $this->store->recordRun('inli', 0, false, 'HTTP 503', $day . 'T09:00:00+00:00');
         }
 
-        $health = $this->store->health('inli');
+        $health = $this->store->runs()->health('inli', '2026-08-07T09:00:00+00:00');
 
         self::assertSame(SourceStatus::BROKEN, $health->status);
         self::assertSame('2026-08-07T09:00:00+00:00', $health->lastFailureAt);
@@ -1478,12 +1478,13 @@ final class StoreTest extends TestCase
             $this->store->recordRun('inli', 10, true, null, sprintf('2026-08-%02dT09:00:00+00:00', $day));
         }
 
-        $health = $this->store->health('inli');
+        $health = $this->store->runs()->health('inli', '2026-08-05T09:00:00+00:00');
 
         self::assertSame(SourceStatus::OK, $health->status);
-        // Both the mean and the count exclude it. `health()` is called here WITHOUT a clock, so the
-        // window's upper edge falls back to the last-inserted stamp — bounded and self-correcting.
-        // Leaving the count unbounded instead made a future-stamped row alert forever.
+        // Both the mean and the count exclude it: the window's upper edge is the clock, and a row
+        // stamped after it has not happened yet. Leaving the count unbounded instead made a
+        // future-stamped row alert forever. (Until step 8e-2 this ran WITHOUT a clock, on the
+        // last-inserted-stamp fallback; the clock is now required and is that same stamp here.)
         self::assertSame(10.0, $health->rollingMean, 'the 2036 run inflated the mean of every later verdict');
         self::assertSame(5, $health->runsInWindow);
     }
@@ -1508,7 +1509,7 @@ final class StoreTest extends TestCase
             $this->store->recordRun('inli', 0, true, null, $day . 'T09:00:00+00:00');
         }
 
-        $health = $this->store->health('inli');
+        $health = $this->store->runs()->health('inli', '2026-09-12T09:00:00+00:00');
 
         self::assertSame(SourceStatus::BROKEN, $health->status);
         self::assertStringContainsString('25', $health->detail);
@@ -1525,7 +1526,7 @@ final class StoreTest extends TestCase
             $this->store->recordRun('inli', 0, true, null, $day . 'T09:00:00+00:00');
         }
 
-        self::assertSame(SourceStatus::BROKEN, $this->store->health('inli')->status);
+        self::assertSame(SourceStatus::BROKEN, $this->store->runs()->health('inli', '2026-09-22T09:00:00+00:00')->status);
     }
 
     /**
@@ -1566,7 +1567,7 @@ final class StoreTest extends TestCase
             $this->store->recordRun('inli', 0, true, null, $at($resume + $i));
         }
 
-        $health = $this->store->health('inli');
+        $health = $this->store->runs()->health('inli', $at($resume + RunStore::EMPTY_RUNS_BEFORE_BROKEN - 1));
 
         // THE PREMISE, asserted rather than assumed: the outage BROKE the streak, so the quiet run
         // is outside it. One more and this is the siblings' shape again, proving nothing.
@@ -1599,7 +1600,7 @@ final class StoreTest extends TestCase
             $this->store->recordRun('inli', 12, true, null, sprintf('2026-08-%02dT09:00:00+00:00', $day));
         }
 
-        $health = $this->store->health('inli');
+        $health = $this->store->runs()->health('inli', '2026-08-05T09:00:00+00:00');
 
         self::assertSame(5, $health->runsInWindow, 'the June failures are outside the seven-day window');
         self::assertSame(0, $health->failedRunsInWindow);
@@ -1624,7 +1625,7 @@ final class StoreTest extends TestCase
         $this->store->recordRun('inli', 10, true, null, '2026-08-04T09:00:00+00:00');
         $this->store->recordRun('inli', 10, true, null, '2026-08-05T09:00:00+00:00');
 
-        $health = $this->store->health('inli');
+        $health = $this->store->runs()->health('inli', '2026-08-05T09:00:00+00:00');
 
         // All four in-window predecessors, not just the two on the near side of the bad row.
         self::assertSame(55.0, $health->rollingMean);
@@ -1645,7 +1646,7 @@ final class StoreTest extends TestCase
             $this->store->recordRun('newsource', 0, true, null, sprintf('2026-08-%02dT09:00:00+00:00', $day));
         }
 
-        $health = $this->store->health('newsource');
+        $health = $this->store->runs()->health('newsource', '2026-08-30T09:00:00+00:00');
 
         self::assertSame(SourceStatus::NEVER_PRODUCED, $health->status);
         self::assertTrue($health->status->isAlerting());
@@ -1658,21 +1659,21 @@ final class StoreTest extends TestCase
      * entry removed, a systemd timer disabled. One successful run three hundred days ago reported
      * `OK`, non-alerting, forever — the same silent-absence class as `NEVER_PRODUCED`, reached from
      * the other end. `health()` takes the current time as an argument because this class never
-     * reads the clock; omit it and the check does not run.
+     * reads the clock, and since step 8e-2 the argument is required, so the check always runs.
+     * (An assertion that the clockless call read `OK` was retired with the fallback it described.)
      */
     public function testASourceWhoseScheduleHasStoppedIsStale(): void
     {
         $this->store->recordRun('inli', 25, true, null, '2026-01-01T09:00:00+00:00');
 
-        self::assertSame(SourceStatus::OK, $this->store->health('inli')->status);
         self::assertSame(
             SourceStatus::STALE,
-            $this->store->health('inli', '2026-11-01T09:00:00+00:00')->status,
+            $this->store->runs()->health('inli', '2026-11-01T09:00:00+00:00')->status,
         );
         // …and a source that ran this morning is not stale.
         self::assertSame(
             SourceStatus::OK,
-            $this->store->health('inli', '2026-01-02T09:00:00+00:00')->status,
+            $this->store->runs()->health('inli', '2026-01-02T09:00:00+00:00')->status,
         );
     }
 
@@ -1691,7 +1692,7 @@ final class StoreTest extends TestCase
 
         self::assertSame(
             SourceStatus::STALE,
-            $this->store->health('inli', '2026-11-01T09:00:00+00:00')->status,
+            $this->store->runs()->health('inli', '2026-11-01T09:00:00+00:00')->status,
         );
     }
 
@@ -1707,7 +1708,7 @@ final class StoreTest extends TestCase
             $this->store->recordRun('newsource', 0, true, null, '2026-08-07T' . $time . ':00+00:00');
         }
 
-        self::assertNotSame(SourceStatus::NEVER_PRODUCED, $this->store->health('newsource')->status);
+        self::assertNotSame(SourceStatus::NEVER_PRODUCED, $this->store->runs()->health('newsource', '2026-08-07T09:45:00+00:00')->status);
     }
 
     /**
@@ -1730,7 +1731,7 @@ final class StoreTest extends TestCase
             $this->store->recordRun('inli', 0, false, 'HTTP 502', sprintf('2026-08-%02dT09:00:00+00:00', $day));
         }
 
-        self::assertSame(SourceStatus::BROKEN, $this->store->health('inli', '2026-08-10T10:00:00+00:00')->status);
+        self::assertSame(SourceStatus::BROKEN, $this->store->runs()->health('inli', '2026-08-10T10:00:00+00:00')->status);
 
         // Committed last, but it happened BEFORE the final failure and says so. Two writers make
         // this reachable: `--watch` alongside a manual `doctor`.
@@ -1740,7 +1741,7 @@ final class StoreTest extends TestCase
         // source does NOT read healthy, because `windowCounts()` still sees three failures in the
         // window. That is the difference between the two rules, and it is why the counting window
         // is bounded on the old side only.
-        $quieted = $this->store->health('inli', '2026-08-10T10:00:00+00:00');
+        $quieted = $this->store->runs()->health('inli', '2026-08-10T10:00:00+00:00');
 
         self::assertSame(SourceStatus::WARN_FLAKY, $quieted->status);
         self::assertTrue($quieted->status->isAlerting(), 'a late-committed success silenced the alert');
@@ -1752,7 +1753,7 @@ final class StoreTest extends TestCase
             $this->store->recordRun('inli', 0, false, 'HTTP 502', '2026-08-10T' . $time . '+00:00');
         }
 
-        $health = $this->store->health('inli', '2026-08-10T10:00:00+00:00');
+        $health = $this->store->runs()->health('inli', '2026-08-10T10:00:00+00:00');
 
         self::assertSame(SourceStatus::BROKEN, $health->status);
         self::assertTrue($health->status->isAlerting());
@@ -1776,7 +1777,7 @@ final class StoreTest extends TestCase
         }
 
         // The clock is two hours behind every failure it is being asked about.
-        $health = $this->store->health('inli', '2026-08-10T08:00:00+00:00');
+        $health = $this->store->runs()->health('inli', '2026-08-10T08:00:00+00:00');
 
         self::assertSame(SourceStatus::BROKEN, $health->status);
         self::assertSame(4, $health->totalRuns, 'runs were discarded, and nothing said so');
@@ -1804,11 +1805,14 @@ final class StoreTest extends TestCase
             $this->store->recordRun('inli', 0, false, 'HTTP 502', sprintf('2026-08-%02dT09:00:00+00:00', $day));
         }
 
-        $withClock = $this->store->health('inli', '2026-08-10T10:00:00+00:00');
-        $without = $this->store->health('inli');
+        // Two clocks inside the window, an hour apart. This compared a clock against NO clock until
+        // step 8e-2 made the clock required; the property is the same — which instant judges the
+        // log changes no non-STALE verdict while the future-stamped row sits in it.
+        $withClock = $this->store->runs()->health('inli', '2026-08-10T10:00:00+00:00');
+        $atLastRun = $this->store->runs()->health('inli', '2026-08-10T09:00:00+00:00');
 
-        self::assertSame(SourceStatus::BROKEN, $without->status);
-        self::assertSame($without->status, $withClock->status, 'the clock changed a non-STALE verdict');
+        self::assertSame(SourceStatus::BROKEN, $atLastRun->status);
+        self::assertSame($atLastRun->status, $withClock->status, 'the clock changed a non-STALE verdict');
         self::assertSame('2026-08-10T09:00:00+00:00', $withClock->lastFailureAt);
     }
 
@@ -1817,7 +1821,7 @@ final class StoreTest extends TestCase
     {
         $this->store->recordRun('inli', 25, true, null, '2036-01-01T09:00:00+00:00');
 
-        $health = $this->store->health('inli', '2026-08-10T10:00:00+00:00');
+        $health = $this->store->runs()->health('inli', '2026-08-10T10:00:00+00:00');
 
         self::assertSame(SourceStatus::STALE, $health->status);
         self::assertStringContainsString('horloge', $health->detail);
@@ -1845,7 +1849,7 @@ final class StoreTest extends TestCase
             $this->store->recordRun('inli', 18, true, null, $day(1));      // stale-stamped success
         }
 
-        $health = $this->store->health('inli', $day(13));
+        $health = $this->store->runs()->health('inli', $day(13));
 
         self::assertTrue($health->status->isAlerting(), 'eleven real failures reported as healthy');
         self::assertSame(SourceStatus::WARN_FLAKY, $health->status);
@@ -1875,7 +1879,7 @@ final class StoreTest extends TestCase
             $this->store->recordRun('inli', 12, true, null, sprintf('2027-08-%02dT09:00:00+00:00', $i));
         }
 
-        $health = $this->store->health('inli', '2026-08-21T10:00:00+00:00');
+        $health = $this->store->runs()->health('inli', '2026-08-21T10:00:00+00:00');
 
         self::assertSame(SourceStatus::WARN_FLAKY, $health->status);
         self::assertTrue($health->status->isAlerting());
@@ -1899,7 +1903,7 @@ final class StoreTest extends TestCase
             $this->store->recordRun('inli', 12, true, null, sprintf('2026-09-%02dT09:00:00+00:00', $i));
         }
 
-        $health = $this->store->health('inli', '2026-09-28T10:00:00+00:00');
+        $health = $this->store->runs()->health('inli', '2026-09-28T10:00:00+00:00');
 
         self::assertSame(SourceStatus::OK, $health->status);
         self::assertSame(0, $health->failedRunsInWindow);
@@ -1923,7 +1927,7 @@ final class StoreTest extends TestCase
             );
         }
 
-        $health = $this->store->health('inli');
+        $health = $this->store->runs()->health('inli', '2026-08-07T09:00:00+00:00');
 
         self::assertSame(SourceStatus::WARN_FLAKY, $health->status);
         self::assertSame(3, $health->failedRunsInWindow);
@@ -1945,7 +1949,7 @@ final class StoreTest extends TestCase
         $this->store->recordRun('inli', 18, true, null, '2026-08-03T09:00:00+00:00');
         $this->store->recordRun('inli', 19, true, null, '2026-08-04T09:00:00+00:00');
 
-        $health = $this->store->health('inli');
+        $health = $this->store->runs()->health('inli', '2026-08-04T09:00:00+00:00');
 
         self::assertSame(SourceStatus::OK, $health->status);
         self::assertSame('inli', $health->sourceName);
@@ -1991,7 +1995,7 @@ final class StoreTest extends TestCase
             '2026-08-07T09:00:00+00:00',
         );
 
-        $detail = $this->store->health('transit')->detail;
+        $detail = $this->store->runs()->health('transit', '2026-08-07T09:00:00+00:00')->detail;
 
         self::assertStringNotContainsString('SECRET123456', $detail);
         self::assertStringNotContainsString('jean.dupont@example.com', $detail);

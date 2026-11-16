@@ -144,7 +144,6 @@ final class ParuVenduFactsShapesTest extends TestCase
         $definitions = VehicleSourceLoader::load(self::ROOT . '/config/car/sources.json');
         $cars = (new VehicleEmailSource(
             $definitions['paruvendu'],
-            VehicleStore::open(':memory:'),
             new FileMailbox($dir),
         ))->fetch();
 

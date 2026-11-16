@@ -125,7 +125,7 @@ final class RoomsFromUuidTest extends TestCase
         );
 
         try {
-            $source = new EmailAlertSource($bare, Store::open(':memory:'), new FileMailbox($dir));
+            $source = new EmailAlertSource($bare, new FileMailbox($dir));
             $listings = $source->fetch();
 
             self::assertCount(1, $listings, 'the probe message must yield exactly one listing');

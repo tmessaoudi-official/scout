@@ -239,7 +239,7 @@ impossible by design rather than by omission (`docs/PHORJ-REQUIREMENTS.md`).
 | Layer | Path | Responsibility |
 |---|---|---|
 | Entry point | `src/php/Cli/` | `Scout` — the `--domain=<slug>` dispatcher, which NEVER defaults — plus `Domains` (the registry: a new domain is one entry), `WatchLoop`, `ChannelFactory`. `bin/scout --domain=rent …` / `--domain=car …` / `--domain=job …` |
-| Core (generic) | `src/php/Core/` | What no domain owns: `Text`, `Whitespace` (a Unicode-aware `trim()`), `Redact` (masks secrets in adapter error text), `RecoverableForms` (the ONE decode cascade the fixture scrubber and its CI guard share), `Pacer`, `Heartbeat`, `health` (`SourceHealth` + `SourceStatus`), `SourceHealthService` (a source's health in one place: the run log's verdict escalated by its own `PatternMissLog`; every counting source's `health()` delegates to it, step 8e-1), **`RunStore`** (the run log, health verdicts, feed silence and alert cooldowns — see below), `Offline`, `SameFilterWarning` (every card of a source failing one filter), `MalformedText`, `MutableByDesign`, and the Notify channels/transports |
+| Core (generic) | `src/php/Core/` | What no domain owns: `Text`, `Whitespace` (a Unicode-aware `trim()`), `Redact` (masks secrets in adapter error text), `RecoverableForms` (the ONE decode cascade the fixture scrubber and its CI guard share), `Pacer`, `Heartbeat`, `health` (`SourceHealth` + `SourceStatus`), `SourceHealthService` (a source's health in one place: the run log's verdict escalated by its own `PatternMissLog`; the ONLY way to read a source's health since step 8e-2 — `of($source, $now)` takes a required clock; the ports carry `patternMisses()` and `feedSilentDays()`, behind the `SourceHealthReader` seam the pipelines accept), **`RunStore`** (the run log, health verdicts, feed silence and alert cooldowns — see below), `Offline`, `SameFilterWarning` (every card of a source failing one filter), `MalformedText`, `MutableByDesign`, and the Notify channels/transports |
 | Rent domain | `src/php/Rent/{Core,Config,Adapters,Store,Enrich,Notify,Cli}/` · later `src/phorj/core/` | Everything housing-bound: `models`, `tenure` (the classifier), `criteria` (score + hard disqualifiers), `dedup`, the SQLite store, the field maps and source contract, transit enrichment, the rent formatter and `Cli/RentScout` |
 | Car domain | `src/php/Car/` | The vehicle twin — `Vehicle*` listing, classifier, criteria, scorer, store, sources, pipeline, formatter — and `Cli/CarScout` |
 | Job domain | `src/php/Job/` | The job twin — `JobListing`/`JobSnapshot`, `JobClassifier`, `JobCriteria`(+`Loader`), `JobScorer`, `JobStore` (composes `Core/RunStore`), `JobEmailSource`, `JobDigestEmailSource`, `JobPipeline`, `JobFormatter` — and `Cli/JobScout`. Deployed as `job-scout` since 2026-09-14 |
@@ -261,8 +261,13 @@ name: string
 family: 'institutional' | 'private'
 defaultTenure: Tenure | null    # hint only, the classifier still runs
 fetch() -> RawListing[]
-health() -> SourceHealth
+patternMisses() -> PatternMissLog   # what the source counted; read by SourceHealthService
+feedSilentDays() -> int | null      # its own FEED_SILENT threshold, null = the store's global one
 ```
+
+A source no longer reports its own health (step 8e-2): `SourceHealthService::of($source, $now)`
+computes every source's verdict from the run log, the source's miss log and its threshold, with a
+clock the type system requires.
 
 **Adding a source must be config-only in the common case.** A bespoke adapter under
 `src/php/Adapters/sites/` is the fallback, not the default path — if you find yourself writing code there,
@@ -711,7 +716,7 @@ Required coverage, per spec §11 — non-negotiable once `src/` exists:
   the diagnostic). A new store behaviour without a category is a behaviour nobody decided to
   guarantee.
 
-  **`scout --domain=rent doctor` and the run loop MUST pass `$nowIso` to `Store::health()`.** Without it the store
+  **`scout --domain=rent doctor` and the run loop read health through `SourceHealthService::of()` with the pass's clock.** Since step 8e-2 the clock is a required argument; without it the run log
   has no clock, and ONE verdict becomes underivable: `STALE` never fires at all. That is the clock's
   only job — an earlier version also used it to filter the run log, and that discarded real failures
   whenever the clock itself was the wrong thing. **`doctor` must also print `Store::journalMode()`**: WAL can
@@ -747,7 +752,7 @@ a key added to `.env` and not to the template is invisible to the next deploymen
 
 **Adapter error text is a secrets channel, and the guard is already in place.** An exception from an
 HTTP or IMAP adapter naturally carries the request URL (the IDFM key is a query parameter) or the
-mailbox it failed on. `Store::recordRun()` persists that text and `Store::health()` interpolates it
+mailbox it failed on. `Store::recordRun()` persists that text and `RunStore::health()` interpolates it
 into a user-facing detail, so `Scout\Core\Redact` masks it at that single funnel. Do not bypass
 `Redact::text()` when adding an adapter, and do not add a second, per-adapter copy of it.
 

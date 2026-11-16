@@ -105,7 +105,6 @@ final class BieniciFixtureTest extends TestCase
             try {
                 return (new EmailAlertSource(
                     $definition,
-                    Store::open($db),
                     new FileMailbox($dir),
                     $criteria->communeLabels,
                 ))->fetch();
@@ -150,7 +149,6 @@ final class BieniciFixtureTest extends TestCase
 
         $source = new EmailAlertSource(
             $definition,
-            Store::open($this->dbPath),
             new FileMailbox(self::ROOT . '/tests/fixtures/rent/bienici'),
             $criteria->communeLabels,
         );
@@ -180,7 +178,6 @@ final class BieniciFixtureTest extends TestCase
 
         $source = new EmailAlertSource(
             $definition,
-            Store::open($this->dbPath),
             new FileMailbox(self::ROOT . '/tests/fixtures/rent/bienici'),
             $criteria->communeLabels,
         );
@@ -432,7 +429,6 @@ final class BieniciFixtureTest extends TestCase
 
             $source = new EmailAlertSource(
                 ConfigLoader::loadSources(self::ROOT . '/config/rent/sources.json')['bienici'],
-                Store::open($this->dbPath),
                 new FileMailbox($dir),
                 [],
             );

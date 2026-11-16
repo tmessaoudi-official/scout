@@ -8,7 +8,7 @@ namespace Scout\Core;
  * Masks credentials and personal identifiers in text that is about to be persisted or shown.
  *
  * This exists because of where an adapter's error message ends up. `Store::recordRun()` stores it
- * verbatim in `source_runs.error`; `Store::health()` interpolates it into `SourceHealth::$detail`;
+ * verbatim in `source_runs.error`; `RunStore::health()` interpolates it into `SourceHealth::$detail`;
  * `SourceStatus::isAlerting()` says that detail should reach the user. So an adapter exception —
  * a cURL error carrying the request URL, an IMAP failure carrying the mailbox — would put a token
  * or an address into a committed-adjacent database and into a push notification, through a channel

@@ -4,23 +4,25 @@ declare(strict_types=1);
 
 namespace Scout\Tests\Car;
 
-use Scout\Core\SourceHealth;
+use Scout\Core\PatternMissLog;
 use Scout\Car\VehicleListing;
 use Scout\Car\VehicleSource;
-use Scout\Car\VehicleStore;
 
-/** A car source the test drives: fixed listings or a fixed failure; health from the store it is given. */
+/** A car source the test drives: fixed listings or a fixed failure; health judged by the service from the run log. */
 final class FakeCarSource implements VehicleSource
 {
-    private static ?VehicleStore $fallback = null;
+    private readonly PatternMissLog $misses;
 
     /** @param list<VehicleListing> $listings */
     public function __construct(
         private readonly string $name,
         private readonly array $listings,
         private readonly ?\Throwable $throw = null,
-        private readonly ?VehicleStore $store = null,
-    ) {}
+        /** Set: every fetched item records one call on `facts_pattern`, a hit (false) or a miss (true), as a real adapter counts. */
+        private readonly ?bool $blind = null,
+    ) {
+        $this->misses = new PatternMissLog();
+    }
 
     public function name(): string
     {
@@ -43,13 +45,22 @@ final class FakeCarSource implements VehicleSource
             throw $this->throw;
         }
 
+        if ($this->blind !== null) {
+            foreach ($this->listings as $_) {
+                $this->misses->record('facts_pattern', !$this->blind);
+            }
+        }
+
         return $this->listings;
     }
 
-    public function health(?string $nowIso = null): SourceHealth
+    public function patternMisses(): PatternMissLog
     {
-        $store = $this->store ?? (self::$fallback ??= VehicleStore::open(':memory:'));
+        return $this->misses;
+    }
 
-        return $store->runs()->health($this->name, $nowIso);
+    public function feedSilentDays(): ?int
+    {
+        return null;
     }
 }

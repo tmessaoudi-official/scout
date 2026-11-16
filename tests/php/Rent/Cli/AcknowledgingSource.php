@@ -5,8 +5,7 @@ declare(strict_types=1);
 namespace Scout\Tests\Rent\Cli;
 
 use Scout\Adapters\AcknowledgesMessages;
-use Scout\Core\SourceHealth;
-use Scout\Core\SourceStatus;
+use Scout\Core\PatternMissLog;
 use Scout\Rent\Adapters\Source;
 use Scout\Rent\Core\RawListing;
 use Scout\Rent\Core\SourceProfile;
@@ -66,9 +65,14 @@ final class AcknowledgingSource implements Source, AcknowledgesMessages
         return $this->listings;
     }
 
-    public function health(?string $nowIso = null): SourceHealth
+    public function patternMisses(): PatternMissLog
     {
-        return new SourceHealth($this->name, SourceStatus::OK);
+        return new PatternMissLog();
+    }
+
+    public function feedSilentDays(): ?int
+    {
+        return null;
     }
 
     public function acknowledge(): void

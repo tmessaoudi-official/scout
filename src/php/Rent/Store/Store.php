@@ -10,7 +10,6 @@ use Scout\Rent\Core\ListingSnapshot;
 use Scout\Rent\Core\RawListing;
 use Scout\Core\Redact;
 use Scout\Core\RunStore;
-use Scout\Core\SourceHealth;
 use Scout\Core\SourceStatus;
 use Scout\Rent\Core\Tenure;
 use Scout\Core\Text;
@@ -122,8 +121,8 @@ final readonly class Store
         /**
          * How many days of portal silence make a still-producing source {@see SourceStatus::FEED_SILENT}.
          *
-         * Carried on the store rather than threaded through {@see Source::health()} because every
-         * adapter delegates health here and none of them has an opinion about the threshold — it is
+         * Carried on the store rather than threaded through each source because every
+         * adapter reaches health here and none of them has an opinion about the threshold — it is
          * an operator setting, not a property of a source. `null` disables the verdict entirely,
          * which is what keeps every existing caller and every non-email source unchanged.
          */
@@ -2231,18 +2230,6 @@ final readonly class Store
         }
 
         return $out;
-    }
-
-    /**
-     * Source health — DELEGATED to the generic run log.
-     *
-     * The verdicts live in {@see \Scout\Core\RunStore} because they are a property of a RUN, not of
-     * a housing listing: the car domain reached this exact method through this exact class, which is
-     * what a store composing another domain's store looks like from the inside.
-     */
-    public function health(string $sourceName, ?string $nowIso = null, ?int $feedSilentDays = null): SourceHealth
-    {
-        return $this->runs->health($sourceName, $nowIso, $feedSilentDays);
     }
 
     /**

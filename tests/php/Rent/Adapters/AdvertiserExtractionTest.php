@@ -230,7 +230,6 @@ final class AdvertiserExtractionTest extends TestCase
 
         return new EmailAlertSource(
             $definition,
-            Store::open($this->dbPath),
             new FileMailbox($this->dir),
             ['sartrouville' => 'Sartrouville', 'dourdan' => 'Dourdan', 'lardy' => 'Lardy'],
         );

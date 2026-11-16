@@ -951,9 +951,12 @@ run_sabotage "the changes-only guard reads the delta baseline again (duplicate r
   src/php/Rent/Store/Store.php \
   's%$rentCc !== $chronoBefore%$rentCc !== $previousRentCc%'
 
-run_sabotage "recency ignores the clock (a late-committed run erases BROKEN)" \
-  src/php/Core/RunStore.php \
-  's%if ($nowIso !== null) {%if (false) {%'
+# RETIRED 2026-11-15 (step 8e-2): "recency ignores the clock (a late-committed run erases BROKEN)".
+# Its target was the `if ($nowIso !== null)` guard around the STALE block, which existed only
+# because the clock was optional; the clock is now required and the block unconditional, so there
+# is no guard left to switch off. What the guard protected is still pinned twice: the STALE
+# threshold ("if ($silentFor > …)" → false, above) and the newest CREDIBLE run ("STALE measured from
+# the last-inserted row", below).
 
 run_sabotage "a future-stamped run is trusted even when a clock is available" \
   src/php/Core/RunStore.php \
@@ -1089,7 +1092,7 @@ run_sabotage "the ntfy topic drops back to the ambiguous list (a JSON body leaks
 
 run_sabotage "the counting window has no upper edge at all" \
   src/php/Core/RunStore.php \
-  's%$edge = $now ?? (int) $runs\[array_key_last($runs)\]\[.at_epoch.\];%$edge = PHP_INT_MAX;%'
+  's%$edge = $now;%$edge = PHP_INT_MAX;%'
 
 # ── The store, round seven ────────────────────────────────────────────────────────────────────────
 #
@@ -1150,9 +1153,11 @@ run_sabotage "the counting window loses its upper edge (a future-stamped row ale
   src/php/Core/RunStore.php \
   's%if ($at < $cutoff || $at > $edge) {%if ($at < $cutoff) {%'
 
+# RE-DERIVED 2026-11-15 (step 8e-2): the clock is required, so the `?? <last run>` fallback this case
+# forced is gone; the mutation now writes that fallback back in as the ONLY edge.
 run_sabotage "the counting window ignores the clock (a stale writer hides failures)" \
   src/php/Core/RunStore.php \
-  "s%\$edge = \$now ?? (int)%\$edge = (int)%"
+  "s%\$edge = \$now;%\$edge = (int) \$runs[array_key_last(\$runs)]['at_epoch'];%"
 
 # ── The config, adapter and criteria layers, added 2026-08-07 ─────────────────────
 # Every failure mode below is SILENT in the same way the classifier's are: a listing that is
@@ -2131,9 +2136,19 @@ run_sabotage "wrapAll stops sharing one pacer (each source gets a private window
   src/php/Rent/Adapters/PacedSource.php \
   's%static fn (Source \$s): Source => new self(\$s, \$pacer),%static fn (Source $s): Source => new self($s, clone $pacer),%'
 
-run_sabotage "PacedSource::health drops the clock, so STALE can never fire" \
+# RETIRED 2026-11-15 (step 8e-2): "PacedSource::health drops the clock, so STALE can never fire".
+# The decorator no longer has a `health()` and no clock passes through ANY source: the clock is the
+# required, non-nullable argument of `SourceHealthService::of()`, so dropping it is a type error
+# rather than a silent verdict, and STALE through the beat that reads it is pinned behaviourally by
+# RentScoutHeartbeatTest::testTheStartupBeatCountsASourceStaleAfterEightDarkDays. What the decorator
+# still must forward is what the service reads off the port, and those are the two cases below.
+run_sabotage "PacedSource hands the service a fresh log (a paced source's blind pattern is never reported)" \
   src/php/Rent/Adapters/PacedSource.php \
-  's%return \$this->inner->health(\$nowIso);%return \$this->inner->health();%'
+  's%return \$this->inner->patternMisses();%return new PatternMissLog();%'
+
+run_sabotage "PacedSource drops the inner source's feed_silent_days (FEED_SILENT reads the global default)" \
+  src/php/Rent/Adapters/PacedSource.php \
+  's%return \$this->inner->feedSilentDays();%return null;%'
 
 # ── Row 36 (2026-09-04): processed alert emails are marked \Seen — after the store recorded them ──
 #
@@ -4205,26 +4220,34 @@ run_sabotage "the miss escalation goes deaf (counted on every adapter, reported 
 # RE-DERIVED 2026-11-15 (step 8e-1): the escalation now lives in `Core/SourceHealthService`, and the
 # deaf one-liner is the body that BYPASSES the service. Measured before the move and after it: the
 # same behavioural test reddens (HtmlSourceDetailTest, a description selector missing every page).
-run_sabotage "an html source stops routing health() through the miss escalation" \
+#
+# RE-DERIVED 2026-11-15 (step 8e-2): the source no longer has a `health()` at all; the service reads
+# `patternMisses()` off the port, so the deaf shape is that accessor handing back a FRESH log instead
+# of the one the source counts into. Same behavioural test before and after.
+run_sabotage "an html source hands the service a fresh log (its miss count never reaches health)" \
   src/php/Rent/Adapters/HtmlSource.php \
-  's%        return (new SourceHealthService(\$this->store->runs()))->of(\$this->name(), \$this->patternMisses, \$nowIso);%        return \$this->store->health(\$this->name(), \$nowIso);%'
+  's%        return \$this->patternMisses;%        return new PatternMissLog();%'
 
 # THE SERVICE ITSELF GOES DEAF, and every counting source in all three domains with it: the one place
 # that escalates returns the run log's verdict untouched.
 run_sabotage "the health service stops escalating (every counting source goes deaf at once)" \
   src/php/Core/SourceHealthService.php \
-  's%        return \$misses->escalate(\$this->runs->health(\$sourceName, \$nowIso, \$feedSilentDays));%        return \$this->runs->health(\$sourceName, \$nowIso, \$feedSilentDays);%'
+  's%return \$source->patternMisses()->escalate(%return (static fn (SourceHealth $h): SourceHealth => $h)(%'
 
 # THE SERVICE DROPS THE SOURCE'S OWN THRESHOLD: every email source falls back to the global one.
 run_sabotage "the health service drops a source's own feed_silent_days" \
   src/php/Core/SourceHealthService.php \
-  's%\$this->runs->health(\$sourceName, \$nowIso, \$feedSilentDays)%$this->runs->health($sourceName, $nowIso)%'
+  's%, \$source->feedSilentDays()),%),%'
 
-# THE SERVICE DROPS THE CLOCK: without it STALE never fires, and STALE is the verdict for a stopped
-# schedule.
-run_sabotage "the health service drops the clock, so STALE can never fire" \
+# THE SERVICE READS THE WALL CLOCK INSTEAD OF THE CALLER'S INSTANT.
+#
+# RE-DERIVED 2026-11-15 (step 8e-2): this case was "the service drops the clock", and the clock is now
+# a required, non-nullable `\DateTimeImmutable`, so dropping it no longer parses into a running
+# verdict. The defect that remains is the realistic one: judging at `new \DateTimeImmutable()` rather
+# than at the instant the caller recorded its run at, so a verdict and the run it judges disagree.
+run_sabotage "the health service reads the wall clock instead of the caller's instant" \
   src/php/Core/SourceHealthService.php \
-  's%\$this->runs->health(\$sourceName, \$nowIso, \$feedSilentDays)%$this->runs->health($sourceName, null, $feedSilentDays)%'
+  's%\$now->format(\\DateTimeInterface::ATOM)%(new \\DateTimeImmutable())->format(\\DateTimeInterface::ATOM)%'
 
 # THE SITEMAP SOURCE STOPS COUNTING. autohero is enabled, and a renamed JSON-LD key would go null on
 # every lot with item_count unmoved, no run failed and `ok` reported.
@@ -4741,9 +4764,12 @@ run_sabotage "ImapMailbox keeps a stale feed date across a fetch that returned n
 # RE-DERIVED 2026-11-15 (step 8e-1): the call is now `SourceHealthService::of(...)`, one argument per
 # line, and the threshold is its fourth. Replaced with `null` rather than deleted, so the call keeps its
 # shape; the same behavioural test reddens before and after the move (FeedFreshnessTest).
-run_sabotage "a per-source feed_silent_days is ignored by the source's own health()" \
+#
+# RE-DERIVED 2026-11-15 (step 8e-2): the threshold now reaches the service through the port's
+# `feedSilentDays()`, so the shape is that accessor answering `null`. Same behavioural test.
+run_sabotage "a rent email source drops its own feed_silent_days (FEED_SILENT reads the global default)" \
   src/php/Rent/Adapters/EmailAlertSource.php \
-  's%^            \$this->definition->feedSilentDays,$%            null,%'
+  's%return \$this->definition->feedSilentDays;%return null;%'
 
 # Both load-time refusals share one guard: a threshold on a source that cannot act on it (html/json
 # report no feed date), and a threshold of 0, which disables the verdict. Disabling the guard accepts
@@ -5079,9 +5105,44 @@ run_sabotage "an excluded or undetermined twin on the other track no longer veto
 
 # The car heartbeat read health WITHOUT the clock, so FEED_SILENT and STALE could never reach the
 # beat — the rent side's 2026-08-29 defect, on the twin.
-run_sabotage "the car heartbeat reads health without the clock (a silent feed counts as healthy)" \
+#
+# RETIRED 2026-11-15 (step 8e-2): "the car heartbeat reads health without the clock". The beat now
+# reads through `CarScout::healthOf()`, whose clock is a required, non-nullable string, and the
+# service's is a required `\DateTimeImmutable`: dropping it is a type error, not a silent verdict.
+# The behaviour stays pinned by CarScoutTest::testTheHeartbeatSeesAVerdictOnlyTheClockCanDerive
+# (STALE at the startup beat), and the defect class it named — a read that skips what the source
+# reports — is the three default-reader cases below plus the one-caller guard.
+# What CAN still go wrong with a required clock is the WRONG one. A fixed PAST instant is not it:
+# every run then reads as future-stamped and RunStore says STALE (clock skew) by design, so the car
+# beat test stays green. The live wrong clock is the HOST's, read instead of the injected one in each
+# CLI's one health helper (doctor and every beat go through it).
+run_sabotage "rent: the CLI reads health on the wall clock, not its injected one (verdicts follow the host, not the pass)" \
+  src/php/Rent/Cli/RentScout.php \
+  "s%->of(\$source, RunStore::instant(\$nowIso));%->of(\$source, new \\\\DateTimeImmutable());%"
+
+run_sabotage "car: the CLI reads health on the wall clock, not its injected one (verdicts follow the host, not the pass)" \
   src/php/Car/Cli/CarScout.php \
-  's%\$s->health(\$this->now())%$s->health()%'
+  "s%->of(\$source, RunStore::instant(\$nowIso));%->of(\$source, new \\\\DateTimeImmutable());%"
+
+run_sabotage "job: the CLI reads health on the wall clock, not its injected one (verdicts follow the host, not the pass)" \
+  src/php/Job/Cli/JobScout.php \
+  "s%->of(\$source, RunStore::instant(\$nowIso));%->of(\$source, new \\\\DateTimeImmutable());%"
+
+# THE PRODUCTION DEFAULT READER BYPASSES THE SERVICE (step 8e-2). Each pipeline is built without a
+# health reader in production, so the default decides what reaches the alert loop. Reading the run
+# log by name — the 2026-08-29 beat defect, moved into the pipeline — keeps the clock and drops both
+# facts the SOURCE reports: its pattern-miss log and its own feed_silent_days.
+run_sabotage "rent: the pipeline's default health reader bypasses the service (the source's own facts are dropped)" \
+  src/php/Rent/Cli/Pipeline.php \
+  's%\$health = \$reader->of(\$source, \$now);%$health = $this->store->runs()->health($source->name(), $nowIso);%'
+
+run_sabotage "car: the pipeline's default health reader bypasses the service (the source's own facts are dropped)" \
+  src/php/Car/VehiclePipeline.php \
+  's%\$health = \$reader->of(\$source, \$now);%$health = $runs->health($source->name(), $nowIso);%'
+
+run_sabotage "job: the pipeline's default health reader bypasses the service (the source's own facts are dropped)" \
+  src/php/Job/JobPipeline.php \
+  's%\$health = \$reader->of(\$source, \$now);%$health = $runs->health($source->name(), $nowIso);%'
 
 # The fixture-secrets guard decodes quoted-printable before it looks; without that, a JWT in any real
 # .eml fixture reads `=3DeyJ…` and `\beyJ` never matches.
@@ -5355,9 +5416,12 @@ run_sabotage "the car facts_pattern stops being counted (four fields go dark and
 # RE-DERIVED 2026-11-15 (step 8e-1): routing now means handing `SourceHealthService` this source's OWN
 # log, so the counted-never-reported shape is a fresh, empty log in its place — the service still runs,
 # and reads a count nobody kept. Same behavioural test before and after (VehicleEmailPatternMissTest).
+#
+# RE-DERIVED 2026-11-15 (step 8e-2): the fresh log now sits in the port's `patternMisses()` accessor,
+# which is where the service reads it. Same behavioural test.
 run_sabotage "a car pattern that matched nothing never reaches health() (counted, never reported)" \
   src/php/Car/VehicleEmailSource.php \
-  's%^            \$this->patternMisses,$%            new PatternMissLog(),%'
+  's%        return \$this->patternMisses;%        return new PatternMissLog();%'
 
 # Per-pass, never cumulative. Without the reset a template already fixed keeps warning, which sends
 # an operator to read a capture that is fine and teaches them to ignore the signal — a failure worse
@@ -6176,9 +6240,10 @@ run_sabotage "job: a mailbox failure becomes an empty list (step 5 S13)" \
 run_sabotage "job: an acknowledge refusal is swallowed (step 5 S14)" \
   src/php/Job/JobEmailSource.php \
   's%throw new SourceError(\$this->name(), '\''marquage des courriers traités refusé — '\'' \. \$e->getMessage(), \$e);%return;%'
+# RE-DERIVED 2026-11-15 (step 8e-2): the source has no `health()`; it hands the service a fresh log.
 run_sabotage "job: health is not escalated (behaviour) (step 5 S15)" \
   src/php/Job/JobEmailSource.php \
-  's%return (new SourceHealthService(\$this->store->runs()))->of($%return (fn (string $n, $m, ?string $t, ?int $d): SourceHealth => $this->store->runs()->health($n, $t, $d))(%'
+  's%        return \$this->patternMisses;%        return new PatternMissLog();%'
 run_sabotage "job: the count spans fetches (step 5 S17)" \
   src/php/Job/JobEmailSource.php \
   's%\$this->patternMisses->reset();%%'

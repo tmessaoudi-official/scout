@@ -96,7 +96,6 @@ final class AgorastoreFixtureTest extends TestCase
 
         return new VehicleEmailSource(
             $definitions['agorastore'],
-            VehicleStore::open(':memory:'),
             new FileMailbox(self::ROOT . '/tests/fixtures/car/agorastore'),
             $warn,
         );

@@ -12,7 +12,6 @@ use Scout\Adapters\Mail\ImapMailbox;
 use Scout\Adapters\SourceError;
 use Scout\Config\ConfigError;
 use Scout\Core\Clock;
-use Scout\Core\CountsPatternMisses;
 use Scout\Core\FixedClock;
 use Scout\Car\VehicleSnapshot;
 use Scout\Car\VehicleListing;
@@ -24,6 +23,10 @@ use Scout\Core\Notify\Notifier;
 use Scout\Core\Notify\Priority;
 use Scout\Core\Pacer;
 use Scout\Core\Redact;
+use Scout\Core\ReportsHealth;
+use Scout\Core\RunStore;
+use Scout\Core\SourceHealth;
+use Scout\Core\SourceHealthService;
 use Scout\Core\SourceStatus;
 use Scout\Car\IndexedVehicleSource;
 use Scout\Car\AlcopaVehicleSource;
@@ -202,7 +205,7 @@ final readonly class CarScout
                 ++$problems;
                 continue;
             }
-            $health = $source->health($now);
+            $health = $this->healthOf($source, $store->runs(), $now);
             if ($health->status !== SourceStatus::OK) {
                 ++$problems;
             }
@@ -211,26 +214,24 @@ final readonly class CarScout
             // THE PER-PATTERN MISS COUNTS (F27). Printed only when something actually missed, so a
             // healthy source stays one line — a table printing four zero rows per source is a table
             // nobody reads, and this exists to be noticed. A PARTIAL miss rate never reaches
-            // `health()`, which speaks only at 100 %, but it is the early warning that a portal is
+            // the health verdict, which speaks only at 100 %, but it is the early warning that a portal is
             // drifting and `doctor` is where an operator looks.
             //
-            // Gated on the INTERFACE, not on a class name: the rent twin gated on
-            // `instanceof EmailAlertSource` and that is precisely why this report existed on one
-            // adapter — the next adapter to learn counting has to be remembered here too.
-            if ($source instanceof CountsPatternMisses) {
-                foreach ($source->patternMisses()->counts() as $key => $c) {
-                    if ($c['misses'] === 0) {
-                        continue;
-                    }
-
-                    $this->line(sprintf(
-                        '                     %-18s %d/%d carte(s) sans résultat%s',
-                        $key,
-                        $c['misses'],
-                        $c['calls'],
-                        $c['misses'] === $c['calls'] ? '  ← AUCUNE : gabarit changé ?' : '',
-                    ));
+            // Ungated since step 8e-2: every source reports its own pattern-miss log through the port
+            // (`ReportsHealth`), so no adapter has to be remembered here. The rent twin once gated on
+            // `instanceof EmailAlertSource`, which is why this report first existed on one adapter.
+            foreach ($source->patternMisses()->counts() as $key => $c) {
+                if ($c['misses'] === 0) {
+                    continue;
                 }
+
+                $this->line(sprintf(
+                    '                     %-18s %d/%d carte(s) sans résultat%s',
+                    $key,
+                    $c['misses'],
+                    $c['calls'],
+                    $c['misses'] === $c['calls'] ? '  ← AUCUNE : gabarit changé ?' : '',
+                ));
             }
         }
 
@@ -312,7 +313,7 @@ final readonly class CarScout
             // sit there for ever. Fires only when a note is pending, and delivering it clears it, so
             // it cannot repeat. `--seed` notifies nothing by construction and is excluded.
             if ($code === 0 && !$seed && $this->pendingRefusal() !== null) {
-                $health = array_map(fn (VehicleSource $s) => $s->health($this->now()), $sources);
+                $health = array_map(fn (VehicleSource $s) => $this->healthOf($s, $store->runs(), $this->now()), $sources);
                 // The pass's REAL count, not a literal 0 — the rent twin's own ledger case pins that
                 // mistake on the watch path and the `--once` path re-introduced it (round-6 panel).
                 $n = (new VehicleFormatter())->heartbeat(1, $result->notified, $health, $this->now(), $this->pendingRefusal());
@@ -386,8 +387,8 @@ final readonly class CarScout
         // fails so the beat retries, and the retry then carried nothing. It is read here and cleared
         // in the delivered branch, on the same all-or-nothing footing as the marker.
         $failedPasses = 0;
-        $beat = function () use (&$passes, &$notified, &$failedPasses, $sources, $notifier, $formatter): void {
-            $health = array_map(fn (VehicleSource $s) => $s->health($this->now()), $sources);
+        $beat = function () use (&$passes, &$notified, &$failedPasses, $sources, $store, $notifier, $formatter): void {
+            $health = array_map(fn (VehicleSource $s) => $this->healthOf($s, $store->runs(), $this->now()), $sources);
             $n = $formatter->heartbeat($passes, $notified, $health, $this->now(), $this->pendingRefusal(), $failedPasses);
             if ($notifier->delivered($notifier->send($n))) {
                 @file_put_contents($this->stateFile('car-heartbeat.txt'), $this->now());
@@ -595,7 +596,7 @@ final readonly class CarScout
         $warn = fn (string $m) => $this->warn($m);
 
         return match ($definition->type) {
-            'email_alert' => new VehicleEmailSource($definition, $store, $this->mailbox($definition), $warn, (int) (getenv('IMAP_MAX_MESSAGES') ?: 50)),
+            'email_alert' => new VehicleEmailSource($definition, $this->mailbox($definition), $warn, (int) (getenv('IMAP_MAX_MESSAGES') ?: 50)),
             'sitemap_jsonld' => new SitemapVehicleSource($definition, $store, $this->http, $this->robotsResolver->forUrl((string) $definition->url), $warn),
             'alcopa' => new AlcopaVehicleSource($definition, $store, $this->http, $this->robotsResolver->forUrl((string) $definition->url), $warn, null, $this->clock),
             default => null,
@@ -997,6 +998,15 @@ final readonly class CarScout
         $dir = $db === ':memory:' ? $this->rootDir . '/state' : \dirname($db);
 
         return $dir . '/' . $name;
+    }
+
+    /**
+     * A source's health at `$nowIso`, judged by the one service (step 8e-2). The clock is the
+     * instant the caller recorded its run at, so the verdict and the run it judges agree.
+     */
+    private function healthOf(ReportsHealth $source, RunStore $runs, string $nowIso): SourceHealth
+    {
+        return (new SourceHealthService($runs))->of($source, RunStore::instant($nowIso));
     }
 
     private function now(): string

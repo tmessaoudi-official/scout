@@ -645,6 +645,30 @@ final class RentScoutHeartbeatTest extends TestCase
         self::assertStringNotContainsString('1/2 source(s)', $r['out'], 'an excluded source is not a fault');
     }
 
+    /**
+     * THE STARTUP BEAT IS THE ONE HEALTH READ NO PASS PRECEDES (step 8e-2).
+     *
+     * Every other read of a source's health happens after a pass has recorded a run at the same
+     * instant, so a reader that judged "now" as the last run's time would still look right there. The
+     * startup beat fires BEFORE the first pass ("no pass has run yet in this process"), so it is the
+     * one read where a missing or wrong clock shows: a watcher restarted after eight dark days must
+     * say its source is STALE, not count it healthy on the strength of a week-old run. That is the
+     * case `STALE` exists for — the schedule itself having stopped — and since 8e-2 the clock is
+     * required by `SourceHealthService::of()` rather than optional on each source.
+     *
+     * The counterweight is `testAnUnscopedWatcherSaysNothingAboutScope`: seeded at the same instant
+     * the watch starts, the same beat reads `1/1`.
+     */
+    public function testTheStartupBeatCountsASourceStaleAfterEightDarkDays(): void
+    {
+        $root = $this->tempRoot();
+
+        $this->scoutIn($root, ['run', '--once', '--seed'], now: '2026-08-14T12:00:00+02:00');
+        $r = $this->scoutIn($root, ['run', '--watch']);
+
+        self::assertStringContainsString('0/1 source(s) en bon état', $r['out']);
+    }
+
     public function testAScopedWatcherSaysThatItIsScoped(): void
     {
         // The other half, and the reason the fix above is not simply "count fewer sources". If the
@@ -854,7 +878,7 @@ final class RentScoutHeartbeatTest extends TestCase
      * `testTheBeatIsEmittedFromAFinallySoAThrowingPassCannotSkipIt`, for the same reason. A
      * behavioural test needs the pass AND the beat to fail with DISTINGUISHABLE causes in one
      * process, and every clean trigger collides: the beat's two throwing surfaces are
-     * `Store::health()` (reads `source_runs`, which `Pipeline::recordRun()` writes, so breaking it
+     * `RunStore::health()` (reads `source_runs`, which `Pipeline::recordRun()` writes, so breaking it
      * fails the pass first with the same message) and `sourceNames()` (re-reads
      * `config/rent/sources.json`, which startup already read, so a test cannot corrupt it after the loop
      * begins). Asserting the structure keeps the guarantee from being silently undone.
@@ -942,7 +966,7 @@ final class RentScoutHeartbeatTest extends TestCase
      *
      * @return array{code: int, out: string, err: string}
      */
-    private function scoutIn(string $root, array $argv, ?string $db = null, ?DeliveringChannel $delivering = null): array
+    private function scoutIn(string $root, array $argv, ?string $db = null, ?DeliveringChannel $delivering = null, ?string $now = null): array
     {
         $out = fopen('php://memory', 'r+');
         $err = fopen('php://memory', 'r+');
@@ -954,7 +978,7 @@ final class RentScoutHeartbeatTest extends TestCase
         // exercised a perfectly good database and failed for a reason unrelated to its subject.
         putenv('RENT_SCOUT_DB=' . ($db ?? $root . '/state/rent-watch.sqlite3'));
 
-        $code = (new RentScout($root, $out, $err, self::NOW, null, self::compose($out, $delivering)))->run($argv);
+        $code = (new RentScout($root, $out, $err, $now ?? self::NOW, null, self::compose($out, $delivering)))->run($argv);
         rewind($out);
         rewind($err);
 

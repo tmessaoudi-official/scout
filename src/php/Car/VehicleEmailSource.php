@@ -13,9 +13,7 @@ use Scout\Adapters\SourceError;
 use Scout\Core\CountsPatternMisses;
 use Scout\Core\MalformedText;
 use Scout\Core\PatternMissLog;
-use Scout\Core\SourceHealth;
 use Scout\Core\SourceHealthService;
-use Scout\Core\SourceStatus;
 use Scout\Core\Text;
 
 /**
@@ -41,7 +39,6 @@ final readonly class VehicleEmailSource implements AcknowledgesMessages, CountsP
     /** @param ?\Closure(string): void $warn */
     public function __construct(
         private readonly VehicleSourceDefinition $definition,
-        private readonly VehicleStore $store,
         private readonly Mailbox $mailbox,
         private readonly ?\Closure $warn = null,
         private readonly int $limit = 50,
@@ -155,19 +152,16 @@ final readonly class VehicleEmailSource implements AcknowledgesMessages, CountsP
         }
     }
 
-    public function health(?string $nowIso = null): SourceHealth
+    /**
+     * This source's own `feed_silent_days`, for `SourceHealthService`; `null` leaves the store's global one.
+     *
+     * Its miss log matters as much: A PATTERN THAT MATCHED NOTHING AT ALL IS A TEMPLATE CHANGE, and every
+     * other verdict is blind to it — the state PAP ran in for four days on the rent side. The service
+     * escalates it over the run log, one place for all three domains (steps 8e-1/8e-2).
+     */
+    public function feedSilentDays(): ?int
     {
-        // A PATTERN THAT MATCHED NOTHING AT ALL IS A TEMPLATE CHANGE, and every other verdict here
-        // is blind to it: the cards still parsed, so `item_count` did not move, no run failed, and
-        // the feed kept arriving. That is the state PAP ran in for four days on the rent side.
-        // The decoration is `PatternMissLog::escalate()`, applied over the run log by
-        // `SourceHealthService` — one place for all three domains (step 8e-1).
-        return (new SourceHealthService($this->store->runs()))->of(
-            $this->name(),
-            $this->patternMisses,
-            $nowIso,
-            $this->definition->feedSilentDays,
-        );
+        return $this->definition->feedSilentDays;
     }
 
     /** The per-pattern miss counts of the last fetch — `scout --domain=car doctor` prints them. */

@@ -63,7 +63,6 @@ final class VehicleEmailClaimTest extends TestCase
                 type: 'email_alert',
                 params: ['from' => 'info@cars.test', 'subject_pattern' => "~Voiture d'occasion~u", 'link_host' => 'cars.test/a/'],
             ),
-            VehicleStore::open(':memory:'),
             $mailbox,
         );
     }

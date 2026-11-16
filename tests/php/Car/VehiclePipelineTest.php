@@ -50,7 +50,7 @@ final class VehiclePipelineTest extends TestCase
     public function testSeedingMarksEverythingSeenAndPushesNothing(): void
     {
         [$pipeline, $channel, $store] = $this->pipeline();
-        $source = new FakeCarSource('paruvendu', [$this->car('a1', 21000), $this->car('a2', 15000)], store: $store);
+        $source = new FakeCarSource('paruvendu', [$this->car('a1', 21000), $this->car('a2', 15000)]);
 
         $pipeline->runOnce([$source], '2026-08-29T10:00:00Z', seedOnly: true);
         $pipeline->runOnce([$source], '2026-08-29T10:15:00Z');
@@ -108,8 +108,8 @@ final class VehiclePipelineTest extends TestCase
     public function testASourceGoneBrokenAlertsOnceAndRecoversOnce(): void
     {
         [$pipeline, $channel, $store] = $this->pipeline();
-        $good = new FakeCarSource('paruvendu', [$this->car('a1', 21000)], store: $store);
-        $bad = new FakeCarSource('paruvendu', [], throw: new SourceError('paruvendu', 'HTTP 500'), store: $store);
+        $good = new FakeCarSource('paruvendu', [$this->car('a1', 21000)]);
+        $bad = new FakeCarSource('paruvendu', [], throw: new SourceError('paruvendu', 'HTTP 500'));
 
         $pipeline->runOnce([$good], '2026-08-29T10:00:00Z');
         foreach (['10:15', '10:30', '10:45', '11:00'] as $t) {
@@ -122,8 +122,8 @@ final class VehiclePipelineTest extends TestCase
             $now = sprintf('2026-08-29T%02d:%02d:00Z', 10 + intdiv($minute, 60), $minute % 60);
             $pipeline->runOnce([$good], $now);
             $minute += 15;
-        } while ($good->health($now)->status !== \Scout\Core\SourceStatus::OK && $minute < 60 * 13);
-        self::assertSame(\Scout\Core\SourceStatus::OK, $good->health($now)->status, 'the window drained within the cap');
+        } while ($store->runs()->health('paruvendu', $now)->status !== \Scout\Core\SourceStatus::OK && $minute < 60 * 13);
+        self::assertSame(\Scout\Core\SourceStatus::OK, $store->runs()->health('paruvendu', $now)->status, 'the window drained within the cap');
 
         // An ESCALATION is not swallowed by the earlier, quieter alert (the rent side's Q29 rule):
         // `warn_flaky` first, then `broken` — each once per cooldown, never one per pass.
@@ -133,6 +133,30 @@ final class VehiclePipelineTest extends TestCase
         self::assertLessThanOrEqual(2, count($alerts), 'never one alert per failing pass');
         self::assertStringContainsString('paruvendu', $alerts[0]->title);
         self::assertCount(1, $this->ofKind($channel, NotificationKind::SOURCE_RECOVERED));
+    }
+
+    /**
+     * THE DEFAULT READER SEES THE SOURCE'S OWN LOG (step 8e-2). This pipeline is built with no health
+     * reader, as `CarScout` builds it, so `SourceHealthService` reads `patternMisses()` off the port: a
+     * pattern that missed on every card must alert, and the counterweight pass with every card a hit
+     * must not, or a reader alerting on everything would pass too.
+     */
+    public function testABlindPatternReachesTheDefaultHealthReader(): void
+    {
+        [$pipeline, $channel] = $this->pipeline();
+        $pipeline->runOnce([new FakeCarSource('paruvendu', [$this->car('b1', 21000), $this->car('b2', 21000), $this->car('b3', 21000)], blind: true)], '2026-08-29T10:00:00Z');
+
+        $alerts = $this->ofKind($channel, NotificationKind::SOURCE_HEALTH);
+        self::assertCount(1, $alerts);
+        self::assertStringEndsWith(' : warn_drop', $alerts[0]->title);
+    }
+
+    public function testCounterweightAnAllMatchingLogSendsNoHealthAlert(): void
+    {
+        [$pipeline, $channel] = $this->pipeline();
+        $pipeline->runOnce([new FakeCarSource('paruvendu', [$this->car('b1', 21000), $this->car('b2', 21000), $this->car('b3', 21000)], blind: false)], '2026-08-29T10:00:00Z');
+
+        self::assertSame([], $this->ofKind($channel, NotificationKind::SOURCE_HEALTH));
     }
 
     public function testSeedingASitemapSourceRecordsItsIndexWithoutFetchingLots(): void
@@ -172,7 +196,7 @@ final class VehiclePipelineTest extends TestCase
     public function testAMatchBelowTheGateIsQueuedNotPushedAndOneAboveItIsPushed(): void
     {
         [$pipeline, $channel, $store] = $this->gatedPipeline(60);
-        $source = new FakeCarSource('paruvendu', [$this->weakCar('weak'), $this->car('strong', 15000)], null, $store);
+        $source = new FakeCarSource('paruvendu', [$this->weakCar('weak'), $this->car('strong', 15000)]);
 
         $result = $pipeline->runOnce([$source], '2026-09-05T10:00:00Z');
 
@@ -189,7 +213,7 @@ final class VehiclePipelineTest extends TestCase
     {
         [$pipeline, , $store] = $this->gatedPipeline(60);
 
-        $pipeline->runOnce([new FakeCarSource('paruvendu', [$this->weakCar('weak-2')], null, $store)], '2026-09-05T10:00:00Z', true);
+        $pipeline->runOnce([new FakeCarSource('paruvendu', [$this->weakCar('weak-2')])], '2026-09-05T10:00:00Z', true);
 
         self::assertTrue($store->wasNotified($store->dedupKey($this->weakCar('weak-2'))));
         self::assertSame(0, $store->pendingRollupCount());
@@ -199,7 +223,7 @@ final class VehiclePipelineTest extends TestCase
     {
         [$pipeline, $channel, $store] = $this->pipeline();
 
-        $pipeline->runOnce([new FakeCarSource('paruvendu', [$this->weakCar('weak-3'), $this->car('strong-3', 15000)], null, $store)], '2026-09-05T10:00:00Z');
+        $pipeline->runOnce([new FakeCarSource('paruvendu', [$this->weakCar('weak-3'), $this->car('strong-3', 15000)])], '2026-09-05T10:00:00Z');
 
         self::assertCount(2, $this->ofKind($channel, NotificationKind::MATCH));
         self::assertSame(0, $store->pendingRollupCount());
@@ -235,7 +259,7 @@ final class VehiclePipelineTest extends TestCase
         [$pipeline, $channel, $store] = $this->auctionPipeline();
 
         // 10:00 Paris; the lot closes at 15:00 today, the next rollup is tomorrow 08:00.
-        $result = $pipeline->runOnce([new FakeCarSource('alcopa', [$this->weakLot('today', '2026-09-25T13:00:00Z')], null, $store)], '2026-09-25T08:00:00Z');
+        $result = $pipeline->runOnce([new FakeCarSource('alcopa', [$this->weakLot('today', '2026-09-25T13:00:00Z')])], '2026-09-25T08:00:00Z');
 
         $pushed = $this->ofKind($channel, NotificationKind::MATCH);
         self::assertCount(1, $pushed, 'it would otherwise be announced only after it had closed');
@@ -250,7 +274,7 @@ final class VehiclePipelineTest extends TestCase
     {
         [$pipeline, $channel, $store] = $this->auctionPipeline();
 
-        $result = $pipeline->runOnce([new FakeCarSource('alcopa', [$this->weakLot('later', '2026-09-26T13:00:00Z'), $this->weakLot('none', null)], null, $store)], '2026-09-25T08:00:00Z');
+        $result = $pipeline->runOnce([new FakeCarSource('alcopa', [$this->weakLot('later', '2026-09-26T13:00:00Z'), $this->weakLot('none', null)])], '2026-09-25T08:00:00Z');
 
         self::assertSame([], $this->ofKind($channel, NotificationKind::MATCH));
         self::assertSame(2, $result->queuedLowScore);
@@ -261,7 +285,7 @@ final class VehiclePipelineTest extends TestCase
     public function testASourceWhoseEveryCarFailsTheSameFilterIsWarnedAbout(): void
     {
         [$pipeline, , $store] = $this->pipeline();
-        $source = new FakeCarSource('drifted', [$this->car('d1', 95240), $this->car('d2', 95241), $this->car('d3', 95242)], null, $store);
+        $source = new FakeCarSource('drifted', [$this->car('d1', 95240), $this->car('d2', 95241), $this->car('d3', 95242)]);
 
         $result = $pipeline->runOnce([$source], '2026-09-05T10:00:00Z');
 
@@ -274,8 +298,8 @@ final class VehiclePipelineTest extends TestCase
     public function testASurvivorOrFewerThanThreeCarsRaisesNoSameFilterWarning(): void
     {
         [$pipeline, , $store] = $this->pipeline();
-        $alive = new FakeCarSource('alive', [$this->car('a1', 95240), $this->car('a2', 95241), $this->car('a3', 15000)], null, $store);
-        $tiny = new FakeCarSource('tiny', [$this->car('t1', 95240), $this->car('t2', 95241)], null, $store);
+        $alive = new FakeCarSource('alive', [$this->car('a1', 95240), $this->car('a2', 95241), $this->car('a3', 15000)]);
+        $tiny = new FakeCarSource('tiny', [$this->car('t1', 95240), $this->car('t2', 95241)]);
 
         $result = $pipeline->runOnce([$alive, $tiny], '2026-09-05T10:00:00Z');
 
@@ -290,7 +314,7 @@ final class VehiclePipelineTest extends TestCase
             $this->car('w1', 9000, 'Vendu pour pièces, accidenté'),
             $this->car('w2', 9000, 'Véhicule gagé, vendu pour pièces'),
             $this->car('w3', 9000, 'Epave pour pièces'),
-        ], null, $store);
+        ]);
 
         $result = $pipeline->runOnce([$wrecks], '2026-09-05T10:00:00Z');
 

@@ -6,7 +6,10 @@ namespace Scout\Rent\Cli;
 
 use Scout\Adapters\AcknowledgesMessages;
 use Scout\Core\Redact;
+use Scout\Core\RunStore;
 use Scout\Core\SameFilterWarning;
+use Scout\Core\SourceHealthReader;
+use Scout\Core\SourceHealthService;
 use Scout\Rent\Adapters\FeedDate;
 use Scout\Rent\Adapters\Source;
 use Scout\Adapters\SourceError;
@@ -59,6 +62,12 @@ final readonly class Pipeline
          * tree therefore runs enrichment OFF unless it says otherwise.
          */
         private ?CommutePlanner $commute = null,
+        /**
+         * Optional, and `null` is the production default: the run log judged by `SourceHealthService`.
+         * Only the alert-ROUTING tests inject one, to script a verdict (step 8e-2); a pipeline built by
+         * a CLI never does, and `PipelineHealthReaderTest` pins what the default reads.
+         */
+        private ?SourceHealthReader $healthReader = null,
     ) {}
 
     /**
@@ -952,10 +961,12 @@ final readonly class Pipeline
     private function alertOnHealth(array $sources, string $nowIso): int
     {
         $undelivered = 0;
+        $reader = $this->healthReader ?? new SourceHealthService($this->store->runs());
+        $now = RunStore::instant($nowIso);
         $cooldown = $this->criteria->notify->sourceBrokenCooldownHours;
 
         foreach ($sources as $source) {
-            $health = $source->health($nowIso);
+            $health = $reader->of($source, $now);
 
             if (!$health->status->isAlerting()) {
                 // A source that WAS alerting and is now OK gets exactly one recovery notice, and

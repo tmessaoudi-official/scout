@@ -21,7 +21,12 @@ use Scout\Core\Notify\Notification;
 use Scout\Core\Notify\NotificationKind;
 use Scout\Core\Notify\Notifier;
 use Scout\Rent\Core\RawListing;
+use Scout\Core\PatternMissLog;
+use Scout\Core\ReportsHealth;
+use Scout\Core\RunStore;
 use Scout\Core\SourceHealth;
+use Scout\Core\SourceHealthReader;
+use Scout\Core\SourceHealthService;
 use Scout\Rent\Core\SourceProfile;
 use Scout\Core\SourceStatus;
 use Scout\Rent\Core\Tenure;
@@ -1524,7 +1529,7 @@ final class PipelineRunTest extends TestCase
         }
 
         $this->pipeline($store, new Notifier([$channel]))->runOnce(
-            [new StoreBackedSource('fake', $store, [], new \RuntimeException('HTTP 302 depuis www.inli.fr'))],
+            [new StoreBackedSource('fake', [], new \RuntimeException('HTTP 302 depuis www.inli.fr'))],
             self::NOW,
         );
 
@@ -1552,7 +1557,7 @@ final class PipelineRunTest extends TestCase
         }
 
         $this->pipeline($store, new Notifier([$channel]))->runOnce(
-            [new StoreBackedSource('fake', $store, [], new \RuntimeException('HTTP 503'))],
+            [new StoreBackedSource('fake', [], new \RuntimeException('HTTP 503'))],
             self::NOW,
         );
 
@@ -3225,7 +3230,7 @@ final class PipelineRunTest extends TestCase
     {
         $store = Store::open(':memory:');
         $channel = new RecordingChannel();
-        $pipeline = new Pipeline($this->gatedCriteria(55), $store, new Notifier([$channel]));
+        $pipeline = new Pipeline($this->gatedCriteria(55), $store, new Notifier([$channel]), healthReader: new ScriptedHealthReader($store->runs()));
         $low = $this->lowScoreListing('low-1');
         $high = $this->listing('high-1');
 
@@ -3245,7 +3250,7 @@ final class PipelineRunTest extends TestCase
     public function testSeedingMarksAQueuedMatchTooSoNoBacklogDrainsIntoTheFirstRollup(): void
     {
         $store = Store::open(':memory:');
-        $pipeline = new Pipeline($this->gatedCriteria(55), $store, new Notifier([new RecordingChannel()]));
+        $pipeline = new Pipeline($this->gatedCriteria(55), $store, new Notifier([new RecordingChannel()]), healthReader: new ScriptedHealthReader($store->runs()));
 
         $pipeline->runOnce([new FakeSource('fake', [$this->lowScoreListing('low-2')])], '2026-09-05T10:00:00Z', true);
 
@@ -3402,6 +3407,7 @@ final class PipelineRunTest extends TestCase
             $store,
             $notifier ?? new Notifier([new RecordingChannel()]),
             commute: $commute,
+            healthReader: new ScriptedHealthReader($store->runs()),
         );
     }
 }
@@ -3472,7 +3478,7 @@ final readonly class ThrowingPlanner implements CommutePlanner
 }
 
 /** A `FakeSource` that also reports feed freshness, so the pipeline's WRITE of it is observable. */
-final readonly class FreshFakeSource implements \Scout\Adapters\FeedFreshness, Source
+final readonly class FreshFakeSource implements \Scout\Adapters\FeedFreshness, Source, ScriptsHealth
 {
     /** @param list<RawListing> $listings */
     public function __construct(
@@ -3516,14 +3522,25 @@ final readonly class FreshFakeSource implements \Scout\Adapters\FeedFreshness, S
         return $this->listings;
     }
 
-    public function health(?string $nowIso = null): SourceHealth
+    public function scriptedHealth(): SourceHealth
     {
         return new SourceHealth(sourceName: $this->name, status: SourceStatus::OK);
+    }
+
+    public function patternMisses(): PatternMissLog
+    {
+        return new PatternMissLog();
+    }
+
+    public function feedSilentDays(): ?int
+    {
+        return null;
     }
 }
 
 /**
- * A source whose health is the STORE's real verdict, not an injected one.
+ * A source whose health is the REAL verdict, not an injected one: it scripts nothing, so the
+ * reader hands it to `SourceHealthService`, which judges the run log.
  *
  * Every other health test here hands `FakeSource` a `SourceHealth` it made up, which exercises the
  * alert loop and nothing that feeds it. The flap this milestone fixed lived in the SEAM: the verdict
@@ -3534,7 +3551,6 @@ final readonly class StoreBackedSource implements Source
     /** @param list<RawListing> $listings */
     public function __construct(
         private string $name,
-        private Store $store,
         private array $listings = [],
         private ?\Throwable $throw = null,
     ) {}
@@ -3579,13 +3595,18 @@ final readonly class StoreBackedSource implements Source
         return $this->listings;
     }
 
-    public function health(?string $nowIso = null): SourceHealth
+    public function patternMisses(): PatternMissLog
     {
-        return $this->store->health($this->name, $nowIso);
+        return new PatternMissLog();
+    }
+
+    public function feedSilentDays(): ?int
+    {
+        return null;
     }
 }
 
-final readonly class FakeSource implements Source
+final readonly class FakeSource implements Source, ScriptsHealth
 {
     /** @param list<RawListing> $listings */
     public function __construct(
@@ -3632,9 +3653,19 @@ final readonly class FakeSource implements Source
         return $this->listings;
     }
 
-    public function health(?string $nowIso = null): SourceHealth
+    public function scriptedHealth(): SourceHealth
     {
         return $this->health ?? new SourceHealth($this->name, SourceStatus::OK);
+    }
+
+    public function patternMisses(): PatternMissLog
+    {
+        return new PatternMissLog();
+    }
+
+    public function feedSilentDays(): ?int
+    {
+        return null;
     }
 }
 
@@ -3710,5 +3741,29 @@ final class FailingChannel implements Channel
     public function send(Notification $notification): void
     {
         throw new ChannelError($this->name(), 'the network went away');
+    }
+}
+
+/** A double whose health verdict the test SCRIPTS rather than derives from a run log. */
+interface ScriptsHealth
+{
+    public function scriptedHealth(): SourceHealth;
+}
+
+/**
+ * The health reader this file's pipelines use (step 8e-2). A source that scripts its verdict gets
+ * the script — exactly what `FakeSource::health()` returned before the port lost `health()` — and
+ * every other source gets the REAL service, so `StoreBackedSource` still crosses the seam it exists
+ * for. The production default, the service with no script at all, is `PipelineHealthReaderTest`'s.
+ */
+final readonly class ScriptedHealthReader implements SourceHealthReader
+{
+    public function __construct(private RunStore $runs) {}
+
+    public function of(ReportsHealth $source, \DateTimeImmutable $now): SourceHealth
+    {
+        return $source instanceof ScriptsHealth
+            ? $source->scriptedHealth()
+            : (new SourceHealthService($this->runs))->of($source, $now);
     }
 }

@@ -8,6 +8,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Scout\Adapters\Http\HttpClient;
+use Scout\Core\RunStore;
+use Scout\Core\SourceHealthService;
 use Scout\Core\SourceStatus;
 use Scout\Adapters\Http\HttpError;
 use Scout\Adapters\Http\HttpRequest;
@@ -368,7 +370,7 @@ final class AutoheroFixtureTest extends TestCase
 
         self::assertSame(['make'], $source->patternMisses()->total());
 
-        $health = $source->health('2026-09-01T12:00:00+00:00');
+        $health = (new SourceHealthService($store->runs()))->of($source, RunStore::instant('2026-09-01T12:00:00+00:00'));
         self::assertSame(SourceStatus::WARN_DROP, $health->status);
         self::assertStringContainsString('make', $health->detail);
     }

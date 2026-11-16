@@ -99,7 +99,6 @@ final class ParuVenduFixtureTest extends TestCase
 
         return new VehicleEmailSource(
             $definitions['paruvendu'],
-            VehicleStore::open(':memory:'),
             new FileMailbox(self::ROOT . '/tests/fixtures/car/paruvendu'),
             $warn,
         );

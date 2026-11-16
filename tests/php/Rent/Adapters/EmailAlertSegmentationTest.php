@@ -744,7 +744,6 @@ final class EmailAlertSegmentationTest extends TestCase
 
         return new EmailAlertSource(
             $definition,
-            Store::open($this->dbPath),
             new FileMailbox($this->dir),
             ['conflans-sainte-honorine' => 'Conflans-Sainte-Honorine', 'dourdan' => 'Dourdan'],
             warn: $warn,

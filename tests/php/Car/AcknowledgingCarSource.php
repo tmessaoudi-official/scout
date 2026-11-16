@@ -8,7 +8,7 @@ use Scout\Adapters\AcknowledgesMessages;
 use Scout\Car\VehicleListing;
 use Scout\Car\VehicleSource;
 use Scout\Car\VehicleStore;
-use Scout\Core\SourceHealth;
+use Scout\Core\PatternMissLog;
 
 /**
  * The car twin of the rent `AcknowledgingSource`: records the ORDER of the acknowledgement
@@ -52,9 +52,14 @@ final class AcknowledgingCarSource implements VehicleSource, AcknowledgesMessage
         return $this->listings;
     }
 
-    public function health(?string $nowIso = null): SourceHealth
+    public function patternMisses(): PatternMissLog
     {
-        return $this->store->runs()->health($this->name, $nowIso);
+        return new PatternMissLog();
+    }
+
+    public function feedSilentDays(): ?int
+    {
+        return null;
     }
 
     public function acknowledge(): void

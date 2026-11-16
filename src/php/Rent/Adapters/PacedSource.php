@@ -6,12 +6,10 @@ namespace Scout\Rent\Adapters;
 
 use Scout\Core\Pacer;
 use Scout\Rent\Core\RawListing;
-use Scout\Core\SourceHealth;
 use Scout\Rent\Core\SourceProfile;
 use Scout\Rent\Core\Tenure;
 use Scout\Adapters\AcknowledgesMessages;
 use Scout\Adapters\FeedFreshness;
-use Scout\Core\CountsPatternMisses;
 use Scout\Core\PatternMissLog;
 
 /**
@@ -34,7 +32,7 @@ use Scout\Core\PatternMissLog;
  * all of them. A decorator handed its own private pacer would pace nothing useful, which is why
  * `PacedSource::wrapAll()` exists and is the only intended way to build these.
  */
-final readonly class PacedSource implements AcknowledgesMessages, CountsPatternMisses, FeedFreshness, Source
+final readonly class PacedSource implements AcknowledgesMessages, FeedFreshness, Source
 {
     public function __construct(
         private Source $inner,
@@ -98,25 +96,32 @@ final readonly class PacedSource implements AcknowledgesMessages, CountsPatternM
     }
 
     /**
-     * Forwarded for the same reason, and it was NOT (C2 round 2, 2026-09-04).
+     * Forwarded for the same reason, and it was NOT (C2 round 2, 2026-09-04): the decorator dropped
+     * this capability once, and a paced source would then have reported an empty miss log — every
+     * source going quiet at once, F27's shape exactly.
      *
-     * The docblock above states the principle and this class then dropped the other capability
-     * gated the same way — `RentScout` and `CarScout` both test `instanceof CountsPatternMisses`
-     * before printing the extraction-miss report. No live consequence today, because both gates sit
-     * in `doctor()`, which builds its sources UNWRAPPED; the moment either read a paced source the
-     * report would have gone silent on every source at once, which is F27's shape exactly.
-     *
-     * **An inner that does not count yields an EMPTY log, not a refusal**, and that is deliberate:
-     * the consumers skip zero-miss entries, so an empty log prints precisely what a non-counting
-     * source prints today. Forwarding therefore cannot make anything noisier — it can only stop a
-     * counting source from going quiet behind the decorator.
+     * Since step 8e-2 every `Source` reports a miss log ({@see \Scout\Core\ReportsHealth}), so the
+     * inner's OWN log is forwarded unconditionally — the old fresh-log fallback for an inner that did
+     * not count is gone, because there is no such inner any more. Under `--watch` this log is what
+     * `SourceHealthService` escalates, so a decorator handing over a fresh log here would report every
+     * blind pattern as healthy; `PatternMissEscalationTest` pins the forwarding.
      *
      * The interface's promise — that `reset()` runs at the start of every fetch — is the inner's to
      * keep, and {@see fetch()} delegates to it unchanged.
      */
     public function patternMisses(): PatternMissLog
     {
-        return $this->inner instanceof CountsPatternMisses ? $this->inner->patternMisses() : new PatternMissLog();
+        return $this->inner->patternMisses();
+    }
+
+    /**
+     * The inner's own threshold, forwarded for the same reason: under `--watch` every rent source is
+     * wrapped, so a decorator answering `null` here would silently swap a per-source `feed_silent_days`
+     * for the global one on the deployed path alone.
+     */
+    public function feedSilentDays(): ?int
+    {
+        return $this->inner->feedSilentDays();
     }
 
     /**
@@ -155,16 +160,5 @@ final readonly class PacedSource implements AcknowledgesMessages, CountsPatternM
     public function profile(): SourceProfile
     {
         return $this->inner->profile();
-    }
-
-    /**
-     * `$nowIso` is forwarded, never defaulted away. Without the clock the store cannot derive
-     * `STALE`, and `STALE` is the verdict that catches the schedule itself having stopped — the
-     * failure a long-running `--watch` is most likely to suffer, and one that would otherwise be
-     * invisible precisely because the process is still alive.
-     */
-    public function health(?string $nowIso = null): SourceHealth
-    {
-        return $this->inner->health($nowIso);
     }
 }

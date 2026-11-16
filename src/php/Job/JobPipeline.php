@@ -9,7 +9,10 @@ use Scout\Adapters\FeedFreshness;
 use Scout\Adapters\SourceError;
 use Scout\Core\Notify\Notifier;
 use Scout\Core\Redact;
+use Scout\Core\RunStore;
 use Scout\Core\SameFilterWarning;
+use Scout\Core\SourceHealthReader;
+use Scout\Core\SourceHealthService;
 
 /**
  * fetch → read → judge → record → notify, for job offers. The car pipeline's shape with what this
@@ -35,6 +38,8 @@ final readonly class JobPipeline
         private JobClassifier $classifier = new JobClassifier(),
         private JobScorer $scorer = new JobScorer(),
         private JobFormatter $formatter = new JobFormatter(),
+        /** Optional; `null` is the production default, `SourceHealthService` on the run log (step 8e-2). */
+        private ?SourceHealthReader $healthReader = null,
     ) {}
 
     /** @param list<JobSource> $sources */
@@ -143,9 +148,11 @@ final readonly class JobPipeline
         $undelivered = 0;
         $cooldown = $this->criteria->notify->sourceAlertCooldownHours;
         $runs = $this->store->runs();
+        $reader = $this->healthReader ?? new SourceHealthService($runs);
+        $now = RunStore::instant($nowIso);
 
         foreach ($sources as $source) {
-            $health = $source->health($nowIso);
+            $health = $reader->of($source, $now);
             if (!$health->status->isAlerting()) {
                 if ($runs->clearAlerts($source->name())) {
                     if (!$this->notifier->delivered($this->notifier->send($this->formatter->sourceRecovered($health)))) {

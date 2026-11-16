@@ -11,9 +11,8 @@ use Scout\Rent\Adapters\PacedSource;
 use Scout\Rent\Adapters\Source;
 use Scout\Adapters\SourceError;
 use Scout\Core\Pacer;
-use Scout\Core\SourceHealth;
+use Scout\Core\PatternMissLog;
 use Scout\Rent\Core\SourceProfile;
-use Scout\Core\SourceStatus;
 use Scout\Rent\Core\Tenure;
 
 /**
@@ -162,23 +161,23 @@ final class PacedSourceTest extends TestCase
         self::assertSame(Tenure::LLI, $paced->defaultTenure());
         self::assertSame('example.test', $paced->host());
         self::assertSame('deleg', $paced->profile()->name);
-        self::assertSame(SourceStatus::OK, $paced->health('2026-08-19T00:00:00Z')->status);
     }
 
     /**
-     * `health()`'s clock is the one argument that must not be dropped. Without `$nowIso` the store
-     * cannot derive `STALE`, and `STALE` is the verdict that catches the schedule itself having
-     * stopped — the failure `--watch` is most likely to suffer. A decorator that quietly failed to
-     * forward it would disable that verdict for every paced source with the suite still green.
+     * What the health verdict needs must survive the wrapper (step 8e-2). The clock this decorator
+     * used to forward is now the SERVICE's argument and never passes through a source; what still
+     * passes through is the inner source's OWN pattern-miss log and its OWN `feed_silent_days`. A
+     * fresh log here would hide a blind pattern behind every paced source, and a dropped threshold
+     * would switch `FEED_SILENT` off for it, both with `health` reading `ok`.
      */
-    public function testHealthForwardsTheClockRatherThanDroppingIt(): void
+    public function testTheWrapperForwardsTheInnerMissLogAndSilenceThreshold(): void
     {
         $log = new CallLog();
-        $inner = new SpySource('clock', 'example.test', $log);
+        $inner = new SpySource('fwd', 'example.test', $log, silentDays: 9);
+        $paced = new PacedSource($inner, self::pacer($log));
 
-        (new PacedSource($inner, self::pacer($log)))->health('2026-08-19T12:00:00Z');
-
-        self::assertSame('2026-08-19T12:00:00Z', $inner->healthCalledWith);
+        self::assertSame($inner->misses, $paced->patternMisses(), 'the inner log itself, not a copy or a fresh one');
+        self::assertSame(9, $paced->feedSilentDays());
     }
 
     /**
@@ -293,14 +292,17 @@ final class CallLog
 /** Records WHEN it was fetched, because "before or after the wait" is the property under test. */
 final class SpySource implements Source
 {
-    public ?string $healthCalledWith = null;
+    public readonly PatternMissLog $misses;
 
     public function __construct(
         private readonly string $sourceName,
         private readonly ?string $sourceHost,
         private readonly CallLog $log,
         private readonly ?\Throwable $throw = null,
-    ) {}
+        private readonly ?int $silentDays = null,
+    ) {
+        $this->misses = new PatternMissLog();
+    }
 
     public function name(): string
     {
@@ -338,11 +340,14 @@ final class SpySource implements Source
         return [];
     }
 
-    public function health(?string $nowIso = null): SourceHealth
+    public function patternMisses(): PatternMissLog
     {
-        $this->healthCalledWith = $nowIso;
+        return $this->misses;
+    }
 
-        return new SourceHealth($this->sourceName, SourceStatus::OK);
+    public function feedSilentDays(): ?int
+    {
+        return $this->silentDays;
     }
 }
 
@@ -389,8 +394,13 @@ final class SpyFreshSource implements FeedFreshness, Source
         return [];
     }
 
-    public function health(?string $nowIso = null): SourceHealth
+    public function patternMisses(): PatternMissLog
     {
-        return new SourceHealth(sourceName: $this->sourceName, status: SourceStatus::OK);
+        return new PatternMissLog();
+    }
+
+    public function feedSilentDays(): ?int
+    {
+        return null;
     }
 }

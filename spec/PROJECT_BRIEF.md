@@ -110,7 +110,7 @@ interface Source {
   family: 'institutional' | 'private'
   defaultTenure: Tenure | null   // hint only, classifier still runs
   fetch(): Promise<RawListing[]>
-  health(): SourceHealth
+  health(): SourceHealth   // computed FOR the source by SourceHealthService (step 8e-2)
 }
 ```
 

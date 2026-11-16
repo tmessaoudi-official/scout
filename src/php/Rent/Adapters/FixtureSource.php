@@ -7,11 +7,9 @@ namespace Scout\Rent\Adapters;
 use Scout\Core\CountsPatternMisses;
 use Scout\Core\PatternMissLog;
 use Scout\Rent\Config\SourceDefinition;
-use Scout\Core\SourceHealth;
 use Scout\Core\SourceHealthService;
 use Scout\Rent\Core\SourceProfile;
 use Scout\Rent\Core\Tenure;
-use Scout\Rent\Store\Store;
 use Scout\Adapters\SourceError;
 
 /**
@@ -30,7 +28,6 @@ final readonly class FixtureSource implements CountsPatternMisses, Source
 {
     public function __construct(
         private readonly SourceDefinition $definition,
-        private readonly Store $store,
         /** Repo root, so a config path stays relative and portable. */
         private readonly string $rootDir,
         /**
@@ -122,11 +119,12 @@ final readonly class FixtureSource implements CountsPatternMisses, Source
      * card `cp` went 171/171 dead on the deployed image exactly like that, and a human found it.
      *
      * `SourceHealthService` is the one place that escalates them (`PatternMissLog::escalate()` over
-     * the run log), shared with the email adapters and all three domains.
+     * the run log), shared with the email adapters and all three domains; this source only reports
+     * (step 8e-2). No threshold of its own: it reports no feed date, so `null` (the store's global one).
      */
-    public function health(?string $nowIso = null): SourceHealth
+    public function feedSilentDays(): ?int
     {
-        return (new SourceHealthService($this->store->runs()))->of($this->name(), $this->patternMisses, $nowIso);
+        return null;
     }
 
     /**

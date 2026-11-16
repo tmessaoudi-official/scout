@@ -292,8 +292,8 @@ defaultTenure(): ?Tenure               // a hint; the classifier still runs
 profile(): SourceProfile               // the default + mixed_tenure, what LandlordRegistry may tighten
 host(): ?string                        // null = issues no outbound request, so it is never paced
 fetch(): RawListing[]
-health(?string $nowIso = null): SourceHealth   // the clock is what makes STALE derivable;
-                                       // every counting source delegates to Core\SourceHealthService (8e-1)
+patternMisses(): PatternMissLog        // what the source counted; feedSilentDays(): ?int, its own threshold
+                                       // health is not on the port: Core\SourceHealthService::of($source, $now) (8e-2)
 ```
 
 | Type | Class | How it reads a listing |
@@ -603,8 +603,12 @@ src/php/Core/SystemClock.php  the ONE class that reads the wall clock — pinned
 src/php/Core/FixedClock.php   the test seam; `orSystem($nowIso)` turns the CLIs' existing `nowIso`
                             string into a Clock once per process
 src/php/Core/SourceHealthService.php  a source's health in ONE place: the run log's verdict, escalated by
-                            the source's own PatternMissLog (step 8e-1, B-11); every counting source's
-                            health() delegates here, pinned by PatternMissEscalationTest
+                            the source's own PatternMissLog (step 8e-1, B-11); since 8e-2 the ONLY
+                            health reader, the clock required, pinned by PatternMissEscalationTest
+src/php/Core/ReportsHealth.php      the port the service reads (8e-2): `name()`, `patternMisses()`,
+                            `feedSilentDays()`; Source, VehicleSource and JobSource extend it
+src/php/Core/SourceHealthReader.php the seam a pipeline takes (`of(ReportsHealth, DateTimeImmutable)`);
+                            production passes nothing and gets SourceHealthService on its run log
 src/php/Cli/WatchLoop.php   the `--watch` loop; survives a failing pass, stops after the one in flight
 src/php/Rent/Adapters/PacedSource.php   decorator applying Pacer, so Pipeline never learns time exists
 src/php/Rent/Store/              SQLite seen-set, price history, cross-portal group (v4); run log

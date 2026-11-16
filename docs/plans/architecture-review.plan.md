@@ -67,6 +67,10 @@ This file is the durable record; the scratch area is not.
 - [2026-11-15 18:35] AGREED: 8e-2: the three pipelines take an optional Core/SourceHealthReader collaborator (default: SourceHealthService on the store's RunStore); only the 9 scripted rent routing tests inject one, and a new default-reader pipeline test plus a ledger case pin the default (developer ruling).
 - [2026-11-15 18:35] AGREED: 8e-2 removes rent Store::health() (about 55 test calls move to runs()->health()) rather than keeping or deferring it (developer ruling).
 - [2026-11-15 18:35] AGREED: 8e-2 may update .claude/agents/completeness-reviewer.md's health() wording, but only after the exact diff is shown to the developer and approved (developer ruling).
+- [2026-11-15 22:42] AGREED: 8e-2 waiting rule relaxed (developer ruling): the ledger is dispatched now on e0e4f4c and 8e-2 step 1 starts locally, but no 8e-2 commit lands until that ledger's result is recorded on the 8e-1 row.
+- [2026-11-16 00:08] ASSUMED (review): 8e-2: the store parameter is removed from six source constructors (VehicleEmailSource, JobDigestEmailSource, JobEmailSource, EmailAlertSource, FixtureSource, HttpJsonSource) rather than suppressing PHPStan property.onlyWritten - because health() was its only reader, so it became dead weight in ~66 call sites. Alternatives: keep it with a baseline entry (rejected: the baseline only shrinks).
+- [2026-11-16 00:08] ASSUMED (review): 8e-2: three ledger cases are retired with their reasons recorded in place (recency ignores the clock, PacedSource::health drops the clock, the car heartbeat reads health without the clock) - because the clock is now a required non-nullable argument, so the mutations no longer have a target; they are replaced by 2 PacedSource forwarder cases and 3 default-reader cases, all measured changed=1 and reddening a behavioural test. Alternatives: re-derive them against a type the language enforces (rejected: a mutation PHP refuses to parse proves nothing).
+- [2026-11-16 04:22] ASSUMED (review): 8e-2: ledger 5084 (car beat clock) is retired, not re-derived as a fixed past instant as planned, because a past clock reads every run as future-stamped and RunStore answers STALE by design (measured: CarScoutTest stays green). Replaced by three per-CLI wall-clock cases on healthOf(), plus a new car doctor test that asserts a HEALTHY verdict, since none existed and the car case reddened nothing without it. Alternatives: a lagging clock (rejected: whether it is caught depends on each test's seed-to-watch gap).
 
 ## Formal Plan
 
@@ -221,8 +225,10 @@ move, one `advisor()` per gate):
     behaviour tests. The test and docs clauses on the 8e-1 bullet above are superseded by the 15:33 ruling and this
     plan. Rent `Store::health()` has no caller left in `src/` (a pure pass-through, kept until 8e-2 removes it from
     the ports). The seven cases were first judged by a scratch measure script, then by `run_sabotage` itself: a filtered run in the image
-    on 2026-11-15 gave `7 sabotage(s) detected, 0 undetected`, both baselines green (a PARTIAL RUN, not the ledger). **Open:
-    the next nightly's result, to be recorded here before 8e-2.**
+    on 2026-11-15 gave `7 sabotage(s) detected, 0 undetected`, both baselines green (a PARTIAL RUN, not the ledger). **Full
+    ledger RECORDED 2026-11-16:** run 43765202169 (dispatched, ruling 2026-11-15 22:42) on `e0e4f4c`, which carries
+    8e-1: all six shards and the fast job `success`, `1087 sabotage(s) detected, 0 undetected` (181 ×5 + 182),
+    21:42Z → 23:28Z. 8e-1 is certified by the ledger; the 8e-2 commit may land.
   - **8e-2 — off the ports.** `health()` leaves `Source`, `VehicleSource` and `JobSource`; the CLIs and pipelines
     call the service with a NON-NULLABLE `DateTimeImmutable $now`; the 106 test call sites migrate; 2136
     (`PacedSource`, with `PatternMissEscalationTest`'s carve-out re-aimed) and 5059 are re-derived; `RunStore`'s
@@ -303,6 +309,25 @@ move, one `advisor()` per gate):
       from the Store-tests bullet (`StoreEvidenceTest` cites "CLAUDE.md § Store tests").
     - **Verify:** suite + PHPStan in the image, `test-sabotage-applies`, drift-scan, `test-ci-workflow`, the filtered
       ledger run; `advisor()` at 6C (ruling 2026-11-15 17:32).
+    **8e-2 built 2026-11-16** (`git log -1 -- src/php/Core/ReportsHealth.php`): suite `OK (5861 tests, 17352
+    assertions)` in the image, PHPStan clean, all 1111 expressions apply, drift-scan 0/0/0, `test-ci-workflow` 71/0.
+    Deviations from the plan above, each logged in the Decisions Log: the store parameter left six source
+    constructors (it had no reader once `health()` went); 5084 is RETIRED rather than re-derived as a fixed past
+    instant, because a past clock makes every run future-stamped and `RunStore` answers `STALE` (clock skew) by
+    design, so the car beat test stays green under it (measured). In its place, three cases replace each CLI's
+    clock with the WALL clock in its one `healthOf()` helper. The car one reddened nothing, because no car CLI
+    test asserted a HEALTHY verdict, so `CarScoutTest::testDoctorCallsAFreshRunHealthyOnItsOwnClock` was added and
+    reddens under it. Every new or re-derived case (18) was measured on a scratch copy: each changes 1 line,
+    parses, and reddens a behavioural test, not only `PatternMissEscalationTest`. A filtered `run_sabotage` run in
+    the image gave `18 sabotage(s) detected, 0 undetected`, with both baselines green. That is a PARTIAL RUN, so the
+    nightly after the commit certifies it. The rent startup-beat test (`testTheStartupBeatCountsASourceStaleAfterEightDarkDays`)
+    is reddened by the existing consequence case "STALE never fires", measured on 2026-11-16, and NOT by the
+    clock twins measured: a far-past clock answers STALE, and the wall clock makes the run staler. A clock lagging
+    about the test's seed-to-watch gap (8 days) would redden it; its detection depends on that gap, as the 04:22
+    entry says. **Not certified by execution here:** the remaining ledger cases on `RunStore.php`, `PacedSource.php`
+    and the three pipelines were only shown to still APPLY. Their detecting tests moved under them (about 55 calls
+    to `runs()->health()`, 33 clockless calls given a stamp, three no-clock tests retired), so which test each one
+    reddens is for the next nightly on the 8e-2 sha to say. Record it here before 8f.
 - **8f** Store role interfaces (B-2, A-5, C-5 option 2): `SectionOneReadings`, `SeenSet`, `DigestQueue`,
   `DetailCache`, `CommuteCache`; `Store` implements them, consumers are typed to the role they use. No table moves.
 - **Ledger for 8e and 8f.** `PacedSource.php` and `Rent/Store/` are on CLAUDE.md's "run `sabotage-check.sh` after
