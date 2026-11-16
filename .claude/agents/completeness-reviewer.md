@@ -64,7 +64,8 @@ the fixture. Your job is to check whether they did.
    exactly the class of bug the fail-closed rule exists to catch — and it will read as "no match"
    rather than crashing.
 4. **The adapter contract, across every source.** A change to the `Source` interface (`name`,
-   `family`, `defaultTenure`, `fetch()`, `health()`) or to a `config/rent/sources.json` key name has
+   `family`, `defaultTenure`, `fetch()`, and the `ReportsHealth` half `SourceHealthService` reads:
+   `patternMisses()`, `feedSilentDays()`) or to a `config/rent/sources.json` key name has
    **every existing source block as its consumer**. Enumerate them and account for each, or show the
    change is purely additive and old blocks still parse. A renamed `map:` field that no fixture
    exercises fails at runtime, not in a test.
