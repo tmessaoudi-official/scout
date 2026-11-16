@@ -39,9 +39,9 @@ services:
       GIT_CONFIG_KEY_0: safe.directory
       GIT_CONFIG_VALUE_0: /stack/projects/scout
     # The home must EXIST and belong to the mapped uid, or gpg dies creating ~/.gnupg
-    # (`can't create directory '/tmp/home/.gnupg'` — measured) and tools/fetch-phpunit.sh quietly
-    # degrades to "signature UNVERIFIED". A tmpfs: nothing is cached between runs, so every run
-    # verifies the PHPUnit signature from a clean keyring.
+    # (`can't create directory '/tmp/home/.gnupg'` — measured; it once made tools/fetch-phpunit.sh
+    # degrade to "signature UNVERIFIED", a branch that script has refused since 2026-11-16, when it
+    # moved to its own throwaway keyring). A tmpfs: nothing is cached between runs.
     tmpfs:
       - /tmp/home:mode=0700,uid=${SCOUT_UID:-1000},gid=${SCOUT_GID:-1000}
     # Deliberately NO env_file: nothing from `.env` is injected into the environment. The repo mount

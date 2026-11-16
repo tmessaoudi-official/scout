@@ -50,7 +50,7 @@ run() { SCOUT_UID="$(id -u)" SCOUT_GID="$(id -g)" tools/in-docker.sh "$@"; }
 tools_missing="$(run bash -c 'for t in php composer dirmngr git sqlite3 jq python3 gpg shellcheck yamllint curl sha256sum; do command -v $t >/dev/null || printf "%s " $t; done' 2>/dev/null)"
 [[ -z "$tools_missing" ]] && ok "every tool a gate calls is present" || no "missing tools: $tools_missing"
 check "PyYAML importable (test-ci-workflow skips its checks without it)" run python3 -c 'import yaml'
-check "gpg can create its keyring (else fetch-phpunit silently degrades to \"signature UNVERIFIED\")" run gpg --batch --list-keys
+check "gpg can create its keyring in the mapped home" run gpg --batch --list-keys
 check "pcntl is loaded (the watcher's clean shutdown)" run php -r 'exit(extension_loaded("pcntl") ? 0 : 1);'
 
 host_uid="$(id -u)"

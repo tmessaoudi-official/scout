@@ -154,6 +154,72 @@ printf 'artefact contents\n' > "$work/art"
 verify "$work/art.asc" "$work/art" "0000000000000000000000000000000000000000" && r=accept || r=refuse
 check "a good signature from an UNPINNED key is refused" refuse "$r"
 
+# ── The committed signing keys (cloud-readiness B, 2026-11-16) ───────────────────────────────────
+# The verifier used to fetch the pinned key from a public keyserver and, when none answered, install
+# on the sha256 alone with a printed « UNVERIFIED ». A claude.ai cloud session reaches the network
+# through a proxy that re-terminates TLS, and dirmngr ignores SSL_CERT_FILE (measured: a bogus CA file
+# left `--recv-keys` working), so that session could only ever take the UNVERIFIED branch. The keys
+# now live in tools/keys/<fingerprint>.asc and a signature that cannot be checked is a refusal.
+printf '\n== fetch-phar: the committed keys, and a signature that cannot be checked refuses ==\n\n'
+
+for t in "${tools[@]}"; do
+  arm="$(awk -v t="  $t)" '$0 == t {on=1; next} on && /^    ;;$/ {exit} on' "$script")"
+  fpr="$(sed -n 's/^    EXPECTED_KEY="\([0-9A-F]\{40\}\)"$/\1/p' <<<"$arm")"
+  keyfile="$repo/tools/keys/$fpr.asc"
+  [[ -n "$fpr" && -s "$keyfile" ]] && r=yes || r=no
+  check "the $t key is committed as tools/keys/<fingerprint>.asc" yes "$r"
+  got="$(gpg --batch --with-colons --show-keys "$keyfile" 2>/dev/null | awk -F: '/^fpr:/ {print $10; exit}')"
+  check "the $t key file IS the pinned primary key" "$fpr" "${got:-none}"
+done
+
+grep -vE '^\s*#' "$script" | grep -qE 'recv-keys|keyserver' && r=present || r=absent
+check "no keyserver path: the committed key is the only source" absent "$r"
+
+# A synthetic pin row, so every case runs offline against a real signature: the script is copied
+# beside a stub `curl` and its own keys/ directory (SCRIPT_DIR isolation), its phpunit row rewritten
+# to this run's test key and artefact. DEST is the copy's tools/, never the repo's runner.
+iso="$work/iso"
+mkdir -p "$iso/tools/keys" "$iso/bin"
+printf 'artefact contents\n' > "$work/syn.phar"
+gpg --batch --quiet --yes --detach-sign --armor -o "$work/syn.phar.asc" "$work/syn.phar" 2>/dev/null
+syn_sha="$(sha256sum "$work/syn.phar" | cut -d' ' -f1)"
+awk -v sha="$syn_sha" -v k="$key" '
+  $0 == "  phpunit)" {on=1}
+  on && /^    EXPECTED_SHA256=/ {$0 = "    EXPECTED_SHA256=\"" sha "\""}
+  on && /^    EXPECTED_KEY=/ {$0 = "    EXPECTED_KEY=\"" k "\""}
+  on && /^    ;;$/ {on=0}
+  {print}' "$script" > "$iso/tools/fetch-phar.sh"
+cat > "$iso/bin/curl" <<'STUB'
+#!/usr/bin/env bash
+out='' url=''
+while (($#)); do case "$1" in -o) out="$2"; shift 2 ;; -*) shift ;; *) url="$1"; shift ;; esac; done
+case "$url" in
+  *.asc) [[ -n "${FAKE_ASC:-}" ]] || exit 22; cp "$FAKE_ASC" "$out" ;;
+  *) cp "$FAKE_PHAR" "$out" ;;
+esac
+STUB
+chmod +x "$iso/bin/curl"
+fetch_iso() { rm -f "$iso/tools/phpunit.phar"; FAKE_PHAR="$work/syn.phar" PATH="$iso/bin:$PATH" bash "$iso/tools/fetch-phar.sh" phpunit 2>&1; }
+installed() { [[ -s "$iso/tools/phpunit.phar" ]] && printf installed || printf refused; }
+
+gpg --batch --armor --export "$key" > "$iso/tools/keys/$key.asc" 2>/dev/null
+out="$(FAKE_ASC="$work/syn.phar.asc" fetch_iso)"
+grep -q 'signature VERIFIED' <<<"$out" && r="$(installed)" || r=refused
+check "control: committed key + good signature installs (VERIFIED)" installed "$r"
+
+out="$(FAKE_ASC='' fetch_iso)" || true
+check "a missing .asc is REFUSED, not installed on the sha alone" refused "$(installed)"
+
+mv "$iso/tools/keys/$key.asc" "$work/held.asc"
+out="$(FAKE_ASC="$work/syn.phar.asc" fetch_iso)" || true
+check "a missing key file is REFUSED, not « UNVERIFIED »" refused "$(installed)"
+
+cp "$repo/tools/keys/CA7C2C7A30C8E8E1274A847651C67305FFC2E5C0.asc" "$iso/tools/keys/$key.asc" 2>/dev/null \
+  || printf 'not a key\n' > "$iso/tools/keys/$key.asc"
+out="$(FAKE_ASC="$work/syn.phar.asc" fetch_iso)" || true
+check "a key file holding ANOTHER key is REFUSED" refused "$(installed)"
+mv "$work/held.asc" "$iso/tools/keys/$key.asc"
+
 printf '\n  %d passed, %d failed\n\n' "$pass" "$fail"
 
 [[ $fail -eq 0 ]]

@@ -160,9 +160,9 @@ PHAR, `vendor/` is 56 KB of generated autoloader and the runner is one 6 MB file
 **zero Composer dependencies** by design.
 
 `fetch-phpunit.sh` pins the SHA-256 and refuses to install on a mismatch. It ALSO pins the signing
-key and verifies the published PGP signature — **but only where a keyserver is reachable, which it is
-not from this container**, so in practice the SHA-256 pin is what runs and the script says so on
-stdout. Read its header before trusting it: the pin was established trust-on-first-use, making it a
+key and verifies the published PGP signature against the key committed at `tools/keys/`, in a
+throwaway keyring, with no keyserver involved (2026-11-16); a missing or uncheckable signature is a
+refusal. Read its header before trusting it: the pin was established trust-on-first-use, making it a
 continuity check rather than a root of trust.
 
 Two checks that are not the test suite, and matter more than it does here:

@@ -39,8 +39,9 @@ RUN composer dump-autoload --no-dev --optimize --classmap-authoritative --no-int
 # `php:8.5-cli` ships none of what the gates call, measured: no git (test-backup-state, the deploy
 # verifier's tests), sqlite3 (backup-state.sh), gpg (fetch-phpunit.sh verifies a signature with it),
 # jq, python3 + PyYAML (test-ci-workflow and drift-scan skip or die without them), shellcheck or
-# yamllint. `dirmngr` is NOT optional: without it gpg cannot fetch the PHPUnit signing key and
-# fetch-phpunit.sh silently falls back to "signature UNVERIFIED" (measured on a fresh clone). A gate whose tool is missing SKIPS rather than failing, so each one is installed here —
+# yamllint. `dirmngr` was needed to fetch the PHPUnit signing key from a keyserver; since 2026-11-16
+# the keys are committed at tools/keys/ and fetch-phar.sh asks no keyserver (it refuses a signature it
+# cannot check), so dirmngr is kept only as gpg's own companion. A gate whose tool is missing SKIPS rather than failing, so each one is installed here —
 # an image without them would report green for checks that never ran.
 FROM php:${PHP_VERSION}-cli AS dev
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer

@@ -18,8 +18,20 @@
 #
 # WHAT THIS CHECKS, AND WHAT IT HONESTLY CANNOT
 #   1. SHA-256 against a pin recorded below. Works offline, always runs.
-#   2. The detached PGP signature PHPUnit publishes alongside the PHAR, against a pinned
-#      fingerprint. Runs only when the public key can be fetched.
+#   2. The detached PGP signature published alongside the PHAR, against a pinned fingerprint and the
+#      key COMMITTED at tools/keys/<fingerprint>.asc, in a throwaway keyring. Always runs: a missing
+#      signature, a key file that will not import or a signature that does not verify is a refusal.
+#
+# THE KEYS ARE IN THE REPO, AND NO KEYSERVER IS ASKED (cloud-readiness B, 2026-11-16). This used to
+# fetch the key from keys.openpgp.org or keyserver.ubuntu.com and, when neither answered, install on
+# the sha256 alone after printing « signature present but UNVERIFIED ». A claude.ai cloud session
+# reaches the network through a proxy that re-terminates TLS, and dirmngr ignores SSL_CERT_FILE
+# (measured in the dev image: a bogus CA file left `--recv-keys` working), so it cannot be taught that
+# proxy's CA and every cloud fetch would have taken the UNVERIFIED branch, quietly. Trust is unchanged:
+# the key files were exported on 2026-11-16 from keys.openpgp.org (the same server the history below
+# names) and the VALIDSIG fingerprint check, not the file, decides. A throwaway GNUPGHOME means the
+# caller's keyring cannot vouch for anything either. Stated cost: when upstream signs with a new key,
+# the fetch refuses until that key is committed here beside its pin — a reviewed change, as a pin is.
 #
 # The pin was established by trust-on-first-use on 2026-08-06 in this container: the PHAR and its
 # .asc were downloaded, and the signature named RSA key D8406D0D82947747293778314AA394086372C20A,
@@ -85,7 +97,7 @@ trap 'rm -rf "$tmp"' EXIT
 
 printf 'fetching %s\n' "$URL"
 curl -sSLf -o "$tmp/artefact.phar" "$URL"
-curl -sSLf -o "$tmp/artefact.phar.asc" "${URL}.asc" || printf '  note: no detached signature published for this URL\n'
+curl -sSLf -o "$tmp/artefact.phar.asc" "${URL}.asc" || printf '  note: no detached signature could be fetched for this URL\n'
 
 actual="$(sha256sum "$tmp/artefact.phar" | cut -d' ' -f1)"
 
@@ -118,43 +130,50 @@ fi
 # `--status-fd=1` emits the machine-readable protocol instead: `VALIDSIG <fingerprint>` appears only
 # for a signature that actually verified. gpg's own exit status is checked separately.
 sig_state='absent'
+keyfile="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/keys/${EXPECTED_KEY}.asc"
+export GNUPGHOME="$tmp/gnupg"
+mkdir -m 700 "$GNUPGHOME"
 
-if [[ -s "$tmp/artefact.phar.asc" ]]; then
-  if gpg --list-keys "$EXPECTED_KEY" >/dev/null 2>&1 \
-    || gpg --batch --quiet --keyserver hkps://keys.openpgp.org --recv-keys "$EXPECTED_KEY" >/dev/null 2>&1 \
-    || gpg --batch --quiet --keyserver hkps://keyserver.ubuntu.com --recv-keys "$EXPECTED_KEY" >/dev/null 2>&1; then
-    # `gpg_rc=$?` on the NEXT line would never run: `set -e` is on, and a bad signature makes gpg
-    # exit non-zero, which aborts the script at the assignment — taking the REFUSING message below
-    # with it. The outcome was still fail-closed (exit 1, nothing installed), but silently, with
-    # gpg's own stderr discarded by `2>/dev/null`. A security tool that refuses without saying why
-    # teaches its user to distrust the tool rather than the artefact. `|| gpg_rc=$?` keeps the
-    # assignment from tripping `set -e` so the diagnostic path actually executes.
-    gpg_rc=0
-    gpg_out="$(gpg --batch --status-fd=1 --verify "$tmp/artefact.phar.asc" "$tmp/artefact.phar" 2>/dev/null)" || gpg_rc=$?
+if [[ ! -s "$tmp/artefact.phar.asc" ]]; then
+  # The sha pin alone used to suffice here. It still identifies the artefact, but a signature that
+  # was not checked is the « UNVERIFIED » outcome this file no longer accepts in any form.
+  printf '  REFUSING: no detached signature (%s.asc) to check against the pinned key.\n' "$URL"
+  exit 1
+elif [[ ! -s "$keyfile" ]] || ! gpg --batch --quiet --import "$keyfile" >/dev/null 2>&1; then
+  sig_state='unverifiable'
+  printf '  REFUSING: the pinned key %s could not be read from %s.\n' "$EXPECTED_KEY" "$keyfile"
+  printf '  A signature that cannot be checked is not accepted (the old « UNVERIFIED » branch is gone).\n'
+  exit 1
+else
+  # `gpg_rc=$?` on the NEXT line would never run: `set -e` is on, and a bad signature makes gpg
+  # exit non-zero, which aborts the script at the assignment — taking the REFUSING message below
+  # with it. The outcome was still fail-closed (exit 1, nothing installed), but silently, with
+  # gpg's own stderr discarded by `2>/dev/null`. A security tool that refuses without saying why
+  # teaches its user to distrust the tool rather than the artefact. `|| gpg_rc=$?` keeps the
+  # assignment from tripping `set -e` so the diagnostic path actually executes.
+  gpg_rc=0
+  gpg_out="$(gpg --batch --status-fd=1 --verify "$tmp/artefact.phar.asc" "$tmp/artefact.phar" 2>/dev/null)" || gpg_rc=$?
 
-    # VALIDSIG's FIRST field is the signing key, which for a real release key is usually a SUBKEY;
-    # its LAST field is the primary. The pin was taken from gpg's `using RSA key` line, i.e. the
-    # signing key — but this file invites a maintainer to verify the fingerprint out of band, and
-    # phpunit.de publishes the PRIMARY. Accepting either stops that correction from breaking every
-    # future fetch, and neither can be forged without the private key.
-    if [[ $gpg_rc -eq 0 ]] \
-      && grep -q '^\[GNUPG:\] GOODSIG' <<<"$gpg_out" \
-      && grep -qE "^\[GNUPG:\] VALIDSIG ($EXPECTED_KEY |.* $EXPECTED_KEY\$)" <<<"$gpg_out"; then
-      sig_state='good'
-      printf '  signature VERIFIED against the pinned key\n'
-    else
-      sig_state='bad'
-      printf '  REFUSING: the signature did not verify against the pinned key %s\n' "$EXPECTED_KEY"
+  # VALIDSIG's FIRST field is the signing key, which for a real release key is usually a SUBKEY;
+  # its LAST field is the primary. The pin was taken from gpg's `using RSA key` line, i.e. the
+  # signing key — but this file invites a maintainer to verify the fingerprint out of band, and
+  # phpunit.de publishes the PRIMARY. Accepting either stops that correction from breaking every
+  # future fetch, and neither can be forged without the private key.
+  if [[ $gpg_rc -eq 0 ]] \
+    && grep -q '^\[GNUPG:\] GOODSIG' <<<"$gpg_out" \
+    && grep -qE "^\[GNUPG:\] VALIDSIG ($EXPECTED_KEY |.* $EXPECTED_KEY\$)" <<<"$gpg_out"; then
+    sig_state='good'
+    printf '  signature VERIFIED against the pinned key\n'
+  else
+    sig_state='bad'
+    printf '  REFUSING: the signature did not verify against the pinned key %s\n' "$EXPECTED_KEY"
       exit 1
     fi
-  else
-    sig_state='unverifiable'
-    printf '  signature present but UNVERIFIED: no public keyserver is reachable from this host.\n'
-  fi
 fi
 
-# What may be installed:
-#   sha pin matches                     -> yes (signature good, or unverifiable, or absent)
+# What may be installed (only a GOOD signature reaches this point since 2026-11-16; an absent or
+# unverifiable one has already refused above):
+#   sha pin matches                     -> yes
 #   sha pin differs + signature GOOD    -> INTERACTIVE ONLY, and say so loudly. NEVER in CI.
 #   sha pin differs, anything else      -> no
 #

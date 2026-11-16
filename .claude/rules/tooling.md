@@ -61,6 +61,10 @@ Moved verbatim from CLAUDE.md § "Gotchas & pitfalls" on 2026-09-28 (review-reme
   `tools/phpunit.phar`. `compose.dev.yaml` now mounts a per-container tmpfs home owned by the mapped uid, and
   `tests/test-in-docker.sh` asserts gpg can create its keyring. The same fresh clone showed Docker creating a missing `state/`
   mountpoint ON THE HOST as root, so `tools/in-docker.sh` runs `mkdir -p state` first.
+  **Superseded 2026-11-16 (`docs/plans/cloud-readiness.plan.md` B):** `tools/fetch-phar.sh` now verifies in its own
+  throwaway `GNUPGHOME` against the key committed at `tools/keys/`, asks no keyserver, and REFUSES a missing or uncheckable
+  signature, so the UNVERIFIED fallback this entry describes no longer exists. Why: dirmngr ignores `SSL_CERT_FILE`, so a
+  cloud session behind a TLS-re-terminating proxy could only ever have taken that fallback.
 - **`docker build` on this box uses the docker-container driver: pass `--load` or the image never reaches the daemon (2026-10-03).**
   Without it the build exits 0 and the next `docker run` reports `pull access denied`, which reads as a registry problem.
   `docker compose build` of the dev image needs no flag.

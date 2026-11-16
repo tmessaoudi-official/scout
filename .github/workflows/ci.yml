@@ -40,8 +40,9 @@ name: CI
 #   - PHP is 8.5, no Composer runtime deps. `composer dump-autoload --dev` generates the PSR-4
 #     autoloader (the `--dev` is load-bearing: without it the corpus suite errors "Class not found").
 #   - The runner is PHPUnit's official PHAR, fetched by tools/fetch-phpunit.sh against a pinned
-#     SHA-256 (and a PGP signature when a keyserver is reachable — which it is on a GitHub runner,
-#     so CI gets full signature verification). vendor/ and the PHAR are both gitignored.
+#     SHA-256 AND a PGP signature checked against the key committed at tools/keys/ (no keyserver
+#     since 2026-11-16; a signature that cannot be checked refuses). vendor/ and the PHAR are both
+#     gitignored.
 
 on:
   push:
