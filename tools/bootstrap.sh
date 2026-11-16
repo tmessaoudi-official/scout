@@ -6,7 +6,7 @@
 #
 #   bash tools/bootstrap.sh
 #
-# A script a session RUNS, not a `.claude/cloud-setup.sh` hook (kit row 33, 2026-11-16): the kit runs
+# A script a session RUNS, not the kit's `cloud-setup.sh` hook under `.claude` (kit row 33, 2026-11-16): the kit runs
 # every workspace's hook inside ONE shared 120 s budget, which an image build does not fit, and the
 # agent proxy's CA is written only after that setup, so a PHAR fetched there could not be verified.
 # Run from the session, the CA exists and tools/in-docker.sh hands it to the container.

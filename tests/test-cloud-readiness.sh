@@ -89,5 +89,21 @@ check "Docker not answering is a non-zero stop" test "$r" != 0
 check "...that runs nothing after the probe" bash -c '[ "$(cat "$1")" = info ]' _ "$log"
 check "...and says what to do" grep -q 'dockerd' "$work/boot.out"
 
+printf '\n== cloud readiness: CLAUDE.md ==\n\n'
+
+# Read as one line: the rules wrap at ~105 columns, so a phrase can straddle a line break.
+claude="$(tr '\n' ' ' < "$repo/CLAUDE.md" | tr -s ' ')"
+cloud="$(awk '/^## A cloud session/ {on=1; print; next} on && /^## / {exit} on' "$repo/CLAUDE.md" | tr '\n' ' ' | tr -s ' ')"
+has() { grep -qF -- "$2" <<<"$1"; }
+check "§ \"A cloud session\" exists" test -n "$cloud"
+check "the master-only rule is scoped to the developer's machine" has "$claude" "On the developer's machine, \`master\` is the ONLY branch"
+check "plain \`git push\` / never -u is scoped to the developer's machine" has "$claude" "On the developer's machine, push with plain \`git push\`"
+check "the stale « no deny list at all » sentence is gone" bash -c '! grep -qF -- "$1" <<<"$2"' _ "In a cloud session there is no \`deny\` list at all" "$claude"
+for needle in 'CLAUDE_CODE_REMOTE=true' 'never `master`' '`claude/' 'land.sh' 'bash tools/bootstrap.sh' 'CCS_EXTRA_CA_FILE' 'unsigned' 'python3'; do
+  check "the cloud section names $needle" has "$cloud" "$needle"
+done
+check "the cloud section hardcodes no machine path" bash -c '! grep -qE "/stack/|/home/(user|developer)" <<<"$1"' _ "$cloud"
+check "Common workflows runs this test" has "$claude" "bash tests/test-cloud-readiness.sh"
+
 printf '\n  %d passed, %d failed\n\n' "$pass" "$fail"
 [[ $fail -eq 0 ]]

@@ -432,7 +432,8 @@ silently skip a gate.
 ## Git autonomy — scout's delta on global Rule 10
 
 Autonomous `git add`, `git commit` **and `git push`** are **authorised** for green, self-contained work
-on **`master`**, which matches global Rule 10's autonomous branch. Asking permission for them violates
+on **`master`** on the developer's machine (a claude.ai cloud session does the same on its harness branch
+instead, § "A cloud session"), which matches global Rule 10's autonomous branch. Asking permission for them violates
 the no-interrupts directive. **This holds in BOTH modes** (developer ruling, 2026-11-15): in spec mode it
 overrides global Rule 10's "commit and push only on request"; a mode switch does not reintroduce the
 prompt. **Push cadence is Rule 10's batch** (developer ruling, 2026-10-08, D-10; count 10 → 30 by developer
@@ -440,18 +441,21 @@ ruling 2026-10-08 23:44): push at 30 unpushed commits, at the end of a milestone
 still gets its CI read (`gh run list` / `/ci-watch`), so CI is checked on fewer pushes, never on fewer
 commits. What follows is what scout adds to Rule 10:
 
-- **`master` is the ONLY branch** (developer instruction): commit and push directly to it, and do not
-  create a feature, topic or `claude/*` branch even when a harness prompt names one as the session's
-  "designated branch" — that instruction is superseded here. If a session starts on another branch,
-  move the work to `master`.
-- **Push with plain `git push`. Never `-u` / `--set-upstream`.** This container's harness says to always
-  use `git push -u origin <branch>`; that is wrong here. Upstream is set once and `master` is the only
+- **On the developer's machine, `master` is the ONLY branch** (developer instruction; scoped to the PC by
+  developer ruling 2026-11-16, I1): commit and push directly to it, and do not create a feature, topic or
+  `claude/*` branch even when a harness prompt names one as the session's "designated branch" — that
+  instruction is superseded here. If a PC session starts on another branch, move the work to `master`.
+  A claude.ai cloud session is the one exception and follows § "A cloud session" instead.
+- **On the developer's machine, push with plain `git push`. Never `-u` / `--set-upstream`.** A harness
+  may say to always use `git push -u origin <branch>`; on the PC that is wrong. Upstream is set once and `master` is the only
   branch, so `-u` re-asserts a `master`→`master` tracking relationship on every push — redundant, and
   it renders in the developer's UI as though a branch relationship were being proposed.
 - **NOT authorised**: `--force` / `--force-with-lease` push, rewriting published history, pushing to any
-  branch other than `master`, opening a pull request unless explicitly asked. **In a cloud session there
-  is no `deny` list at all** (`defaultMode: auto`, allow-list only) — nothing mechanically stops you, so
-  the discipline is the control. **On the developer's local machine** `~/.claude/hooks/ask-bash-firewall.sh`
+  branch other than `master` from the developer's machine (a cloud session pushes only its harness
+  branch), opening a pull request unless explicitly asked. **In a cloud session** the kit installs the
+  global `~/.claude` in spec mode (firewall and gate hooks), a push guard (`ccs-push-guard.sh`) and a git
+  pre-push hook that refuse a push to `master`, but not the PC's permission engine; the `master-signed`
+  ruleset on GitHub is the guarantee. **On the developer's local machine** `~/.claude/hooks/ask-bash-firewall.sh`
   denies `git push --force`, `-f`, `--mirror` and `+refspec` at every level (since 2026-09-27); it allows
   `--force-with-lease`, which this repo still does not authorise. `~/.claude/settings.json` holds no
   force-push rule (dropped 2026-08-29; an earlier blanket `Bash(git push *)` deny went 2026-08-23).
@@ -491,6 +495,42 @@ constraint: a denied `Read` still blocks a legitimate audit with no way to unblo
 **What protects `.env` instead**, and it is enough: the file is gitignored, `.env.example` is the
 committed template, and hard rule 7 above is the control. `drift-scan.sh` asserts `deny` is empty, so
 the entry cannot creep back in a later port from a sibling repo.
+
+## A cloud session (claude.ai — developer ruling 2026-11-16, I1)
+
+A claude.ai cloud session (`CLAUDE_CODE_REMOTE=true`, `HOME=/root`) runs under the kit
+`claude-code-setup`, whose `cloud/machine-notes.md` (installed as the session's machine section) is the
+contract; read it there, it is not restated here. This section says only what scout adds, and on any
+conflict about the branch the kit's rule wins. Plan: `docs/plans/cloud-readiness.plan.md`.
+
+- **Branch.** Commit and push ONLY the branch the harness gave the session (`claude/…` or `ccr-…`),
+  never `master`: the kit's push guard and pre-push hook refuse it, and the `master-signed` ruleset is
+  the guarantee. Push with `git push -u origin <that branch>` as a command of its own, open no pull
+  request unless asked. The developer lands the branch on the PC with the kit's `land.sh` (rebase,
+  re-author, sign, no force-push). § Git autonomy's `master`, plain-push and move-to-`master` rules are
+  the PC's.
+- **Identity.** The author above, checked (`git config user.name` / `user.email`, case included) before
+  the first commit. Commits are unsigned (no key in the VM) and carry no trailer; `land.sh` signs.
+- **Toolchain.** A fresh clone has no dev image, no `vendor/` and no PHAR: run `bash tools/bootstrap.sh`
+  first, once `docker info` answers (the kit starts `dockerd`; its machine notes say what to do when it
+  is down). After that every command is the PC's, through `tools/in-docker.sh`. There is deliberately
+  no setup hook (the kit's `cloud-setup.sh` under `.claude`): the kit runs every workspace's hook inside one shared 120 s budget, which
+  an image build does not fit, and the proxy CA is written only after that setup.
+- **Proxy CA.** `tools/in-docker.sh` hands `$CCS_EXTRA_CA_FILE` to the container (`compose.extra-ca.yaml`:
+  `SSL_CERT_FILE`, `COMPOSER_CAFILE`) when that file exists. The PHAR signatures are checked against the
+  keys committed at `tools/keys/`, because gpg's dirmngr ignores that CA. Never switch a TLS check off.
+- **Root.** The session runs as root, and so does the container. Two PHPUnit tests whose premise is a
+  permission root ignores are skipped there with the reason, as `test-drift-scan.sh` and
+  `test-backup-state.sh` already do: the expected tally is `OK, but some tests were skipped!` with
+  `Skipped: 2`. Any other skipped test is a finding.
+- **PC-only, absent here.** The watchers, `docker compose up`, `tools/verify-deploy.sh`,
+  `tools/backup-state.sh`, `state/` and its databases, `.env`, the live alert mailbox, the Gmail MCP and
+  ntfy delivery. So deploy, backups, `doctor` and `run` against live data are PC work: say so and leave
+  them. A memory such as "watchers down: build, up -d" describes the PC.
+- **CI.** `ci.yml` runs on every pushed branch. Read the run for the pushed sha when `gh` can; when it
+  cannot, say it was not read: the developer reads it at landing.
+- **The §1 tripwire.** `.claude/hooks/tenure-guard.sh` parses its payload with `python3` and goes silent
+  without it. Check `command -v python3` once at session start (the kit's VM is Ubuntu 24.04).
 
 ## Plans live in the repo
 
@@ -548,8 +588,9 @@ that are written as a bare `php …` or `bash tests/…` mean `tools/in-docker.s
 
 ```bash
 # Each line below runs as `tools/in-docker.sh <line>` — § "Run everything in Docker". HOST-ONLY (the
-# container has no docker and a masked state/): test-in-docker.sh, verify-deploy.sh, backup-state.sh and
-# anything starting `docker`.
+# container has no docker and a masked state/): test-in-docker.sh, verify-deploy.sh, backup-state.sh,
+# bootstrap.sh and anything starting `docker`.
+bash tools/bootstrap.sh                 # HOST: a fresh clone in one step (image, autoloader, both PHARs)
 composer install                        # generates the PSR-4 autoloader; zero runtime deps
 bash tools/fetch-phpunit.sh             # the runner — pinned SHA-256, refuses on mismatch
 php tools/scrub-eml.php in.eml out.eml me@example.com   # capture an alert as a fixture
@@ -599,6 +640,9 @@ bash tests/test-sabotage-baseline.sh    # proves the LEDGER is judged in a green
 bash tests/test-drift-scan.sh           # proves that gate can still go RED (S8: .env.example sync),
                                         #   and that it skips docs/plans/archive/ (history) but not a live plan;
                                         #   also the hook/agent inventory both ways (S3 P2, S2 P1)
+bash tests/test-cloud-readiness.sh      # proves the cloud-session wiring: the proxy-CA overlay only when its
+                                        #   file exists, the bootstrap of a fresh clone, CLAUDE.md's PC-scoped
+                                        #   git rules (stub docker, offline)
 bash -n .claude/hooks/*.sh tests/*.sh tools/*.sh
 find .claude/hooks .claude/skills tests tools -name '*.sh' -print0 | xargs -0 shellcheck --severity=warning   # as CI
 git ls-files -z '*.yml' '*.yaml' | xargs -0 yamllint --strict .yamllint   # as CI; config in .yamllint
