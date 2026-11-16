@@ -44,4 +44,6 @@ correct. Rent detail hydration (`listing_detail`) has a similar shape and is NOT
 ### Fragile
 ### Known issues
 - Rent detail hydration is not covered by this rule (see Formal Plan, stated costs).
+- The three ledger cases are certified by a filtered run only (3/3, 2026-11-16); the 2026-11-16 nightly started on `d82ee70`, before `076ede8`, so the next nightly is their first full run.
+- Not deployed: the rule has neither fired nor stayed silent on a live watcher.
 - `.claude/skills/domain-scraping-sources-health/SKILL.md` (zero-result table) and EXPERTISE-REFERENCE §8 do not yet name the starvation signal; add it at their next curated refresh (intake rule: no hand-append; the lesson is in `.claude/rules/health.md`).

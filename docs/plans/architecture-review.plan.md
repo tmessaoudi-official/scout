@@ -344,7 +344,8 @@ move, one `advisor()` per gate):
     listings) and five by +57 min. In EACH pass all 50 of Autohero's budget slots went to the same 50 lots answering
     HTTP 302 (250 lines, 50 distinct ids), so Autohero read no new lot at all; its run log said `ok` with 4022 items
     throughout, because that count is the sitemap index, not lots read. Fixed by the same-lot redirect commit below.
-    The 8c deployed first pass this row owed is now done.
+    The 8c deployed first pass this row owed is now done. **Nightly:** scheduled run 2026-11-16 10:41Z on `d82ee70`
+    (contains `1136ca0` and `be34bde`), in progress at 11:09Z; its result is still to be recorded here.
 - **8f** Store role interfaces (B-2, A-5, C-5 option 2): `SectionOneReadings`, `SeenSet`, `DigestQueue`,
   `DetailCache`, `CommuteCache`; `Store` implements them, consumers are typed to the role they use. No table moves.
 - **Ledger for 8e and 8f.** `PacedSource.php` and `Rent/Store/` are on CLAUDE.md's "run `sabotage-check.sh` after
@@ -361,7 +362,7 @@ move, one `advisor()` per gate):
 ### Fragile
 - Every code move re-derives sabotage-ledger cases: run `tools/in-docker.sh bash tests/test-sabotage-applies.sh` after each migration step.
 ### Known issues
-- **A sitemap source's health counts its INDEX, not the lots it read** (found 2026-11-16): Autohero read no new lot for five passes (every budget slot a skipped 302) while `source_runs` said `ok`, 4022 items. The per-lot warnings reach the console only. Hard rule 2's silent-zero shape, one layer down. Being fixed in `docs/plans/lot-budget-starvation.plan.md` (2026-11-16).
+- **A sitemap source's health counts its INDEX, not the lots it read** (found 2026-11-16): Autohero read no new lot for five passes (every budget slot a skipped 302) while `source_runs` said `ok`, 4022 items. The per-lot warnings reach the console only. Hard rule 2's silent-zero shape, one layer down. Built in `076ede8` (`docs/plans/lot-budget-starvation.plan.md`), not yet deployed.
 - **Autohero same-lot redirect: deployed 2026-11-16 11:02 +01:00 on `be34bde`** (rollback tag `scout:pre-autohero`, `backup-state` first, `verify-deploy` passes). Measured from `vehicle_listings.first_seen_at`: 0 new Autohero lots between the 08:32 restart and the redeploy, 46 in the first fixed pass (budget 50). The 302 skips fell from 50 to 4 a pass, with no `aucun bloc JSON-LD`. **The 4 left are a SECOND hop**: under experiment variant `.1` the query URL itself answers 301/302 again (variant `.0` answered 200), and the source follows one hop only, by design. Each costs a budget slot every pass until it leaves the sitemap. Open: whether to follow a second same-lot hop.
 - EXPERTISE-REFERENCE.md §6 (Car portal quirks, autohero) names only the renamed-slug 301; add the A/B self-redirect (`?utm_expid`, 2026-11-16) at its next curated refresh (intake rule: no hand-append).
 - Step 17 waits for the ~/.claude framework-health §D "expertise entry point" plan (peer session, 2026-10-07); restructuring now risks redoing it.
