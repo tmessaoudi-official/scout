@@ -31,4 +31,9 @@ tty_flag=()
 args=("$@")
 [[ ${#args[@]} -gt 0 ]] || args=(bash)
 
-exec docker compose -f compose.dev.yaml run --rm "${tty_flag[@]}" dev "${args[@]}"
+# A claude.ai cloud session's proxy CA (compose.extra-ca.yaml), added only when the file it names
+# exists: on the developer's machine and in CI the variable is unset and the command is unchanged.
+compose_files=(-f compose.dev.yaml)
+[[ -n "${CCS_EXTRA_CA_FILE:-}" && -f "$CCS_EXTRA_CA_FILE" ]] && compose_files+=(-f compose.extra-ca.yaml)
+
+exec docker compose "${compose_files[@]}" run --rm "${tty_flag[@]}" dev "${args[@]}"

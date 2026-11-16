@@ -125,6 +125,7 @@ check "and the LEDGER still prints the heading ci.yml harvests" \
 check "and reads them from every shard's collected log" has 'ledger-${n}/ledger.log'
 check "and SUMS the shard tallies, so the issue speaks for the whole night" has 'shards reported)'
 check "runs the drift-scan self-test"        has "tests/test-drift-scan.sh"
+check "runs the cloud-readiness pins"        has "tests/test-cloud-readiness.sh"
 check "runs the sabotage ledger"             has "tests/sabotage-check.sh"
 
 # The sabotage ledger must NOT be on the per-push fast path — it re-runs the whole suite once per

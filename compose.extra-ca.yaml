@@ -1,0 +1,18 @@
+# The agent proxy's CA, for a claude.ai cloud session (kit claude-code-setup, row 33). That session
+# reaches the network through a proxy that re-terminates TLS with its own CA, in the file
+# CCS_EXTRA_CA_FILE names. tools/in-docker.sh adds this file to the dev service ONLY when that variable
+# names a file that exists, so the developer's machine and CI run exactly as before.
+#
+# What reads it inside the container: curl (tools/fetch-phar.sh fetching the PHARs) through
+# SSL_CERT_FILE, and composer through COMPOSER_CAFILE (with zero dependencies `composer install` needs no
+# network, measured under `--network none`; it still asks packagist for advisories and ignores the
+# failure). Every connection there is the proxy's, so its CA is all they need. Not gpg: dirmngr ignores
+# SSL_CERT_FILE (measured), which is why the PHAR signing keys are committed at tools/keys/ instead.
+# Not the image build: the dev stage's apt reads http://deb.debian.org (measured). TLS checks stay on.
+services:
+  dev:
+    volumes:
+      - ${CCS_EXTRA_CA_FILE:?the agent proxy's CA file}:/etc/ccs-ca.crt:ro
+    environment:
+      SSL_CERT_FILE: /etc/ccs-ca.crt
+      COMPOSER_CAFILE: /etc/ccs-ca.crt

@@ -153,6 +153,13 @@ tools/in-docker.sh php tools/phpunit.phar          # the core suite
 tools/in-docker.sh bash tools/fetch-phpunit.sh    # downloads and checks a pinned SHA-256; refuses to install on a mismatch
 ```
 
+Or all of the above on a fresh clone in one idempotent step (image, autoloader, PHPUnit and PHPStan
+PHARs) — what a claude.ai cloud session runs first, see `CLAUDE.md` § "A cloud session":
+
+```bash
+bash tools/bootstrap.sh
+```
+
 **Why a PHAR rather than a Composer dev dependency.** This project runs in a container whose egress
 policy blocks GitHub dist downloads (`codeload.github.com` → 403), so Composer falls back to full
 `git clone`s. Installing PHPUnit that way produced a **2.6 GB `vendor/`** for a test runner. With the

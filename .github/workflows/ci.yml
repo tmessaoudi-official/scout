@@ -213,6 +213,11 @@ jobs:
       - name: Drift-scan self-test (proves the gate can still go red)
         run: bash tests/test-drift-scan.sh
 
+      # What a claude.ai cloud session needs (the proxy-CA overlay added only when its file exists,
+      # the bootstrap of a fresh clone, CLAUDE.md's PC-scoped git rules). Offline, stub docker.
+      - name: Cloud readiness pins
+        run: bash tests/test-cloud-readiness.sh
+
       - name: Config/doc drift scan (fails on P0/P1)
         run: bash .claude/skills/scout-repair/drift-scan.sh
 
