@@ -36,7 +36,7 @@ correct. Rent detail hydration (`listing_detail`) has a similar shape and is NOT
 <!-- progress-block v1 -->
 | # | Step | Size | State | Evidence | Files |
 |---|------|------|-------|----------|-------|
-| 1 | Starvation alert for lot-budget sources (TDD, two ledger cases) | M | doing | - | src/php/Core/PatternMissLog.php, src/php/Car/SitemapVehicleSource.php, src/php/Car/AlcopaVehicleSource.php |
+| 1 | Starvation alert for lot-budget sources (TDD, three ledger cases) | M | done | 076ede8 | src/php/Core/PatternMissLog.php, src/php/Car/SitemapVehicleSource.php, src/php/Car/AlcopaVehicleSource.php |
 <!-- /progress-block -->
 ### Blocked
 ### Needs input
