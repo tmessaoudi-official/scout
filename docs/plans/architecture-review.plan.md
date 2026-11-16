@@ -73,6 +73,8 @@ This file is the durable record; the scratch area is not.
 - [2026-11-16 04:22] ASSUMED (review): 8e-2: ledger 5084 (car beat clock) is retired, not re-derived as a fixed past instant as planned, because a past clock reads every run as future-stamped and RunStore answers STALE by design (measured: CarScoutTest stays green). Replaced by three per-CLI wall-clock cases on healthOf(), plus a new car doctor test that asserts a HEALTHY verdict, since none existed and the car case reddened nothing without it. Alternatives: a lagging clock (rejected: whether it is caught depends on each test's seed-to-watch gap).
 - [2026-11-16 07:22] AGREED: 8e-2: completeness-reviewer.md item 4 names the ReportsHealth half (patternMisses, feedSilentDays) in place of health(), applied as the diff shown (developer ruling).
 - [2026-11-16 08:51] AGREED: Watchers restarted on 8e-2 (1136ca0) after the 2026-10-08 stop (developer ruling: build and start, chosen with the stop and the notification backlog stated).
+- [2026-11-16 09:04] AGREED: Autohero same-lot redirect: follow a redirect whose target is the same lot plus a query string (an A/B ?utm_expid), as a renamed slug already is; TDD fix in SitemapVehicleSource::sameLotTarget() with a counterweight (developer ruling).
+- [2026-11-16 09:04] AGREED: freelance_informatique stays enabled; its opportunity alerts stopped at the portal after 2026-09-30 and the developer checks the subscription on the site (developer ruling).
 
 ## Formal Plan
 
@@ -336,9 +338,13 @@ move, one `advisor()` per gate):
     (3 running on the current image). Rent first pass: the STARTUP beat said `0/8 source(s) en bon état` (5 weeks
     dark, the STALE path 8e-2 pins), then 1594 listings, 498 matches (439 queued under the push line), 9 individual
     pushes plus price drops, 4 `SOURCE_RECOVERED`, and the 8h floor drained 50 of 785 « à vérifier ». Job: one pass,
-    `freelance_informatique` BROKEN (80 empty runs, last portal message 2026-09-30, predates the stop). Car: first
-    pass still running at +16 min, `alcopa` BROKEN at the startup beat, Autohero detail pages answering HTTP 302
-    (71 lots skipped). The 8c deployed first pass this row owed is now done.
+    `freelance_informatique` BROKEN (80 empty runs, last portal message 2026-09-30, predates the stop). Car:
+    `alcopa` BROKEN at the startup beat. **Corrected 2026-11-16 (this sentence first said "first pass still running at
+    +16 min, 71 Autohero lots skipped"; both were wrong):** car finished its first pass at +5 min (07:37:51Z, 188
+    listings) and five by +57 min. In EACH pass all 50 of Autohero's budget slots went to the same 50 lots answering
+    HTTP 302 (250 lines, 50 distinct ids), so Autohero read no new lot at all; its run log said `ok` with 4022 items
+    throughout, because that count is the sitemap index, not lots read. Fixed by the same-lot redirect commit below.
+    The 8c deployed first pass this row owed is now done.
 - **8f** Store role interfaces (B-2, A-5, C-5 option 2): `SectionOneReadings`, `SeenSet`, `DigestQueue`,
   `DetailCache`, `CommuteCache`; `Store` implements them, consumers are typed to the role they use. No table moves.
 - **Ledger for 8e and 8f.** `PacedSource.php` and `Rent/Store/` are on CLAUDE.md's "run `sabotage-check.sh` after
@@ -347,12 +353,15 @@ move, one `advisor()` per gate):
 
 ### Blocked
 ### Needs input
+- **freelance_informatique (job) is BROKEN because its opportunity alerts stopped AT THE PORTAL after 2026-09-30** (Gmail, 2026-11-16: the only mails since are an account-confirmation request on 2026-10-09, "Confirmez votre adresse email pour valider votre compte freelance", and a newsletter on 2026-10-21). Developer to check the alert subscription and that confirmation on freelance-informatique.fr (ruling 2026-11-16 09:04). Default if unanswered: the source stays enabled and keeps alerting BROKEN; it recovers by itself on the next alert.
 ### Needs research
 - PHPStan and Infection PHAR reachability from this box (GitHub release hosts; the egress has blocked codeload before) — probe before steps 7 and 15.
-- Old watchers lost DNS for four polled hosts (inli, cityloger, logirep, cdc_habitat) from 2026-10-04 14:37 to 2026-10-08 (every run failed; `broken` alerts recorded in `source_alerts`), while IMAP through the same resolver worked. The containers replaced on 2026-10-08 00:40Z had started inside the outage, so the recreate is NOT shown to be the fix; the hosts resolve in the new ones. Default if unexamined: watch `source_runs` for those four; a recurrence re-fires `broken`. First check if pursued: host `/etc/resolv.conf` against the container's.
+- Old watchers lost DNS for four polled hosts (inli, cityloger, logirep, cdc_habitat) from 2026-10-04 14:37 to 2026-10-08 (every run failed; `broken` alerts recorded in `source_alerts`), while IMAP through the same resolver worked. The containers replaced on 2026-10-08 00:40Z had started inside the outage, so the recreate is NOT shown to be the fix; the hosts resolve in the new ones. Default if unexamined: watch `source_runs` for those four; a recurrence re-fires `broken`. First check if pursued: host `/etc/resolv.conf` against the container's. **Car `alcopa` in the same window** (2026-11-16): 283 runs from 2026-10-04 14:53 to the stop, each refused with "robots.txt — this source must not be polled" — an unreadable robots file fails closed — [Inferred: same start time, same window]. All four rent hosts and alcopa polled normally on the 2026-11-16 restart (4 `SOURCE_RECOVERED`, alcopa 169 lots twice).
 - `scout --domain=rent doctor` run with `docker compose exec` inside the live rent-scout hung 13+ min during its first pass (stopped by PID; read-only). Default: reproduce against a backup copy, not the live store.
 ### Fragile
 - Every code move re-derives sabotage-ledger cases: run `tools/in-docker.sh bash tests/test-sabotage-applies.sh` after each migration step.
 ### Known issues
+- **A sitemap source's health counts its INDEX, not the lots it read** (found 2026-11-16): Autohero read no new lot for five passes (every budget slot a skipped 302) while `source_runs` said `ok`, 4022 items. The per-lot warnings reach the console only. Hard rule 2's silent-zero shape, one layer down. Not fixed; needs its own plan (a lots-read count, or escalating when every fetched lot page fails). Default if unexamined: the warnings in the log are the only signal.
+- EXPERTISE-REFERENCE.md §6 (Car portal quirks, autohero) names only the renamed-slug 301; add the A/B self-redirect (`?utm_expid`, 2026-11-16) at its next curated refresh (intake rule: no hand-append).
 - Step 17 waits for the ~/.claude framework-health §D "expertise entry point" plan (peer session, 2026-10-07); restructuring now risks redoing it.
 - RESOLVED 2026-10-08 (bc785be): the C-10 warning's real cause was PRIM's 1000-a-day quota (measured from its 429 headers), not 404s. Fix: out-of-area listings cost no request (shared `Criteria::matchesLocation()`), destination resolved once per planner, the first 429 ends the pass's lookups with its own warning line carrying the 429's figures, a `no_origin`-family 404 is an answer remembered for the pass. Open: whether in-area no-route communes still drain the quota (read `x-ratelimit-remaining-day` the day after a reset).

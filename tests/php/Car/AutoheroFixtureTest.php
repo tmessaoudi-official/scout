@@ -235,10 +235,42 @@ final class AutoheroFixtureTest extends TestCase
         self::assertCount(6, $slept, 'the followed hop is paced like any lot page');
     }
 
+    /**
+     * AN A/B EXPERIMENT REDIRECTS A LOT TO ITSELF WITH A QUERY STRING (2026-11-16). Measured live after
+     * the restart: in each of the first five passes, all 50 budget slots went to the SAME 50 lots, each
+     * answering `302`; six sampled all pointed to their OWN path plus `?utm_expid=…&_abe=1`, and the
+     * followed hop answered 200 with a Vehicle block that parses in full. `item_url_pattern` is
+     * anchored on the path (`/?$`), so the target read as another page and the lot was skipped. A
+     * skipped lot is not recorded, so the same fifty filled the budget every pass and the source read
+     * NO new lot at all. The id is read off the target's PATH; the query is the experiment's, never
+     * the lot's identity.
+     */
+    public function testALotRedirectedToItselfWithAnExperimentQueryIsFollowedOnce(): void
+    {
+        $moved = self::NISSAN . '?utm_expid=.KHurREEuQvNJ3NEKMujDoE.0&_abe=1';
+        $table = $this->table();
+        $lot = $table[self::NISSAN];
+        $table[self::NISSAN] = new HttpResponse(302, '', ['location' => '/fr/nissan-note/id/61bd7f63-e508-43a3-8ba0-a2908629f24d/?utm_expid=.KHurREEuQvNJ3NEKMujDoE.0&_abe=1']);
+        $table[$moved] = $lot;
+        $client = new TableHttpClient($table);
+        $warnings = [];
+        $source = $this->source($client, budget: 5, warn: static function (string $w) use (&$warnings): void { $warnings[] = $w; });
+
+        $lots = $source->fetch();
+
+        self::assertCount(5, $lots, 'the redirected lot is read, not skipped');
+        self::assertSame([], $warnings);
+        self::assertContains($moved, $client->urls, 'the target is fetched as the site gave it, query included');
+        $nissan = array_values(array_filter($lots, static fn ($l): bool => $l->externalId === '61bd7f63-e508-43a3-8ba0-a2908629f24d'));
+        self::assertCount(1, $nissan);
+        self::assertSame(self::NISSAN, $nissan[0]->url, 'the listing keeps the page\'s own offers.url, not the experiment URL');
+    }
+
     /** @return iterable<string, array{string}> */
     public static function redirectsThatAreNotTheSameLot(): iterable
     {
         yield 'another id' => ['/fr/nissan-note/id/00000000-0000-4000-8000-000000000000/'];
+        yield 'another id behind an experiment query' => ['/fr/nissan-note/id/00000000-0000-4000-8000-000000000000/?utm_expid=.x.0&_abe=1'];
         yield 'another host' => ['https://evil.example/fr/nissan-note/id/61bd7f63-e508-43a3-8ba0-a2908629f24d/'];
         yield 'not a lot page' => ['/fr/voitures-occasion/'];
         yield 'no location' => [''];

@@ -25,7 +25,7 @@ use Scout\Core\SourceHealthService;
  *
  * A lot page that fails (non-2xx, no `Vehicle` block) is warned and skipped; it is not recorded,
  * so it is retried next pass within the budget. The one exception is a 3xx to the SAME lot under a
- * renamed model slug, which is followed once (see `sameLotTarget()`). Stated cost: a permanently-broken lot page costs
+ * renamed model slug or with an A/B experiment query added, which is followed once (see `sameLotTarget()`). Stated cost: a permanently-broken lot page costs
  * one budget slot per pass until it leaves the sitemap.
  */
 final readonly class SitemapVehicleSource implements CountsPatternMisses, IndexedVehicleSource
@@ -209,7 +209,13 @@ final readonly class SitemapVehicleSource implements CountsPatternMisses, Indexe
             return null;
         }
 
-        return preg_match((string) $this->definition->itemUrlPattern, $target, $g) === 1 && ($g[1] ?? '') === $id
+        // The id is read off the target's PATH. An A/B experiment redirects a lot to itself plus
+        // `?utm_expid=…&_abe=1` (measured 2026-11-16: all 50 budget slots of every pass, six sampled), and the pattern is anchored on
+        // the path, so the query made the same lot read as another page. The target is still fetched
+        // as given: that URL is the one that answered 200.
+        $lotUrl = (string) preg_replace('~[?#].*$~s', '', $target);
+
+        return preg_match((string) $this->definition->itemUrlPattern, $lotUrl, $g) === 1 && ($g[1] ?? '') === $id
             ? $target
             : null;
     }

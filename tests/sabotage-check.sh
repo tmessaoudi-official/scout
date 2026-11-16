@@ -5031,6 +5031,10 @@ run_sabotage "car: Autohero skips a lot moved to a renamed slug again (2026-09-2
   src/php/Car/SitemapVehicleSource.php \
   's%if (\$moved !== null) {%if (false) {%'
 
+run_sabotage "car: Autohero reads the id off the redirect's query too, so an A/B self-redirect is skipped (2026-11-16)" \
+  src/php/Car/SitemapVehicleSource.php \
+  's%itemUrlPattern, \$lotUrl, \$g)%itemUrlPattern, $target, $g)%'
+
 run_sabotage "car: Autohero follows a redirect to another lot id (2026-09-26)" \
   src/php/Car/SitemapVehicleSource.php \
   "s%=== 1 \&\& (\$g\[1\] ?? '') === \$id%=== 1%"
