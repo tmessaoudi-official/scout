@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Proves what a claude.ai cloud session needs from this repo (kit claude-code-setup, row 33;
-# docs/plans/cloud-readiness.plan.md), and that none of it changes anything on the developer's machine:
+# docs/plans/archive/cloud-readiness.plan.md), and that none of it changes anything on the developer's machine:
 #
 #   - tools/in-docker.sh hands the agent proxy's CA to the dev container ONLY when $CCS_EXTRA_CA_FILE
 #     names a file that exists. Unset, empty or pointing at nothing, the command is the one it was;

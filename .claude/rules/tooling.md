@@ -61,7 +61,7 @@ Moved verbatim from CLAUDE.md § "Gotchas & pitfalls" on 2026-09-28 (review-reme
   `tools/phpunit.phar`. `compose.dev.yaml` now mounts a per-container tmpfs home owned by the mapped uid, and
   `tests/test-in-docker.sh` asserts gpg can create its keyring. The same fresh clone showed Docker creating a missing `state/`
   mountpoint ON THE HOST as root, so `tools/in-docker.sh` runs `mkdir -p state` first.
-  **Superseded 2026-11-16 (`docs/plans/cloud-readiness.plan.md` B):** `tools/fetch-phar.sh` now verifies in its own
+  **Superseded 2026-11-16 (`docs/plans/archive/cloud-readiness.plan.md` B):** `tools/fetch-phar.sh` now verifies in its own
   throwaway `GNUPGHOME` against the key committed at `tools/keys/`, asks no keyserver, and REFUSES a missing or uncheckable
   signature, so the UNVERIFIED fallback this entry describes no longer exists. Why: dirmngr ignores `SSL_CERT_FILE`, so a
   cloud session behind a TLS-re-terminating proxy could only ever have taken that fallback.
@@ -78,7 +78,7 @@ Moved verbatim from CLAUDE.md § "Gotchas & pitfalls" on 2026-09-28 (review-reme
   UNRELATED CA in `SSL_CERT_FILE`" answers rc 0 and proves nothing. Prove an extra-CA wiring against a local TLS server
   whose certificate is signed ONLY by a throwaway CA (`openssl s_server`): rc 0 with the overlay, rc 60 without. And a
   bogus `SSL_CERT_FILE` left `gpg --recv-keys` working, so dirmngr cannot be taught a proxy CA; that is why
-  `tools/fetch-phar.sh` verifies against the keys committed at `tools/keys/` (`docs/plans/cloud-readiness.plan.md` B).
+  `tools/fetch-phar.sh` verifies against the keys committed at `tools/keys/` (`docs/plans/archive/cloud-readiness.plan.md` B).
 - **drift-scan reads a never-created `.claude/…` path as a missing local file (2026-11-16).** Writing "no" plus
   the hook's `.claude`-prefixed path to record a hook deliberately NOT created turned the gate P1 in three files. Name such a
   path without the `.claude/` prefix (the kit's `cloud-setup.sh` under `.claude`), or on a line matching its `CITE`

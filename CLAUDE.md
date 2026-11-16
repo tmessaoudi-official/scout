@@ -501,7 +501,7 @@ the entry cannot creep back in a later port from a sibling repo.
 A claude.ai cloud session (`CLAUDE_CODE_REMOTE=true`, `HOME=/root`) runs under the kit
 `claude-code-setup`, whose `cloud/machine-notes.md` (installed as the session's machine section) is the
 contract; read it there, it is not restated here. This section says only what scout adds, and on any
-conflict about the branch the kit's rule wins. Plan: `docs/plans/cloud-readiness.plan.md`.
+conflict about the branch the kit's rule wins. Plan: `docs/plans/archive/cloud-readiness.plan.md`.
 
 - **Branch.** Commit and push ONLY the branch the harness gave the session (`claude/…` or `ccr-…`),
   never `master`: the kit's push guard and pre-push hook refuse it, and the `master-signed` ruleset is
