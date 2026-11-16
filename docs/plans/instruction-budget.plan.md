@@ -51,9 +51,18 @@ entered by reading a file of it. Ties stay.
   `format-on-write.sh`, `lint-on-write.sh` appear ONLY in § "Claude config in this repo" → a one-line
   inventory naming all six basenames stays in `CLAUDE.md`. S1b reads the `*-reviewer` names (the
   certification table stays). S6 reads §1's excluded set (stays).
-- S2/S7 scan every `*.md`/`*.sh` in the tree (`rglob`), so moved text and its counts stay covered. S2
-  flags a bare `.claude/…` or `docs/…*.md` path that does not exist: name not-yet-created files as
-  `rules/<name>.md` in this plan and in commit-time text.
+- S2, S2b and S7 scan every `*.md`/`*.sh` in the tree (`rglob`; S7 skips `var/`, `vendor/`,
+  `docs/plans/archive/`), so moved text and its counts — the corpus "146 synthetic + 8 captured"
+  breakdown included — stay covered wherever they land outside the archive. S2 flags a bare `.claude/…`
+  or `docs/…*.md` path that does not exist: name not-yet-created files as `rules/<name>.md` in this plan
+  and in commit-time text. The second S6 (dev toolchain) reads `.claude/agents/*.md`,
+  `.claude/progress.json` and `README.md`, not `CLAUDE.md`. S1 and S4/S4b read no `CLAUDE.md` text.
+- **Inbound citations** (`git grep`, archive excluded, 2026-11-16): files citing `CLAUDE.md` § Testing 6,
+  hard rule 7 7, hard rule 5 10, § Git autonomy 5, § Claude config 3, § Architecture 2, § Common
+  workflows 1 (`ci.yml` issue text). Every heading they name STAYS, and every block moved out of it leaves
+  a one-line index entry under that heading naming its new home (the /rules-split "same-name one-line
+  index"), so no citation dangles. Each new rules file also needs its line in § "Gotchas & pitfalls"'s
+  rules index. Both add characters back: count them in the `wc -m` after each move.
 - `tests/test-cloud-readiness.sh` reads `CLAUDE.md`: § "A cloud session" stays whole, the two
   *"On the developer's machine, …"* sentences stay, and the literal `bash tests/test-cloud-readiness.sh`
   stays in Common workflows.
@@ -76,8 +85,10 @@ entered by reading a file of it. Ties stay.
      `rules/store.md` (`paths: src/php/Rent/Store/**, src/php/Core/RunStore.php,
      src/php/Core/SourceHealthService.php, tests/php/Rent/Store/**, tests/php/Core/**`). The surface-matrix
      "do not narrow" rule stays (never-do). Est. ~5.5k.
-   - Status-narrative bullets and the Domain glossary's `LandlordRegistry` four bullets → existing
-     `rules/rent.md` (`src/php/Rent/**`, `config/rent/**`). Est. ~4.5k.
+   - Status-narrative bullets, ROUTED PER BULLET by the code each describes (rent behaviour →
+     `rules/rent.md`; the CI/nightly bullet → `rules/tests.md`; `Core/DigestSchedule`, `Core/Pacer`
+     → `rules/health.md`, whose paths cover `src/php/Core/**`), and the Domain glossary's
+     `LandlordRegistry` four bullets → `rules/rent.md` (`src/php/Rent/**`, `config/rent/**`). Est. ~4.5k.
    - CI-runtime rationale in § "Run everything in Docker" (PCRE2 10.42 vs 10.44) → existing
      `rules/tests.md`. Est. ~0.6k.
 3. **`CLAUDE.md` → `docs/ENGINEERING-NOTES.md`, verbatim** (history and rationale, rule sentence stays):
