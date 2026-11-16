@@ -154,3 +154,11 @@ Moved verbatim from CLAUDE.md § "Gotchas & pitfalls" on 2026-09-28 (review-reme
   on purpose**: a source whose every card is social housing is the classifier working, and
   counting it would fire the one honest signal on exactly the sources the rules exist to refuse.
   It says nothing about a PARTIAL drift, and it reaches the run output, not `SourceHealth`.
+- **A LOT-BUDGET SOURCE'S `item_count` IS ITS INDEX, SO A SOURCE THAT READS NOTHING STILL SAYS `ok` (2026-11-16).**
+  Autohero spent 50 of 50 lot slots, five passes running, on the same 50 lots answering a self-redirect, read none, and
+  logged `ok, 4022 items`; a skipped lot is not recorded, so the same lots refill the budget every pass. The signal is a
+  pass that used its WHOLE `lot_budget_per_pass` and read no lot (`PatternMissLog::starved()`, read by `escalate()`).
+  **"Every attempt failed" is the tempting rule and it flaps**: measured, 497 of 520 passes (09-27..10-08) attempted no
+  new lot, and dead lots are retried on every one, so it warns on each quiet pass and `clearAlerts()` sends a recovery
+  at the next burst. Stated cost: a template change in a quiet period warns only once unread lots reach the budget.
+  Rent detail hydration has a similar shape and is not covered (`docs/plans/lot-budget-starvation.plan.md`).

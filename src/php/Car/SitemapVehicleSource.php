@@ -182,6 +182,9 @@ final readonly class SitemapVehicleSource implements CountsPatternMisses, Indexe
             }
             $out[] = $this->map($id, $url, $vehicle);
         }
+        if ($fetched >= $budget && $out === []) { // the loader refuses a budget under 1
+            $this->patternMisses->starved($fetched); // budget used up, nothing read: health says so
+        }
 
         return $out;
     }

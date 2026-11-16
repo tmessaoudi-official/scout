@@ -20,6 +20,9 @@ use Scout\Car\VehicleSourceLoader;
 use Scout\Car\VehicleStore;
 use Scout\Car\VehicleVerdict;
 use Scout\Core\FixedClock;
+use Scout\Core\RunStore;
+use Scout\Core\SourceHealthService;
+use Scout\Core\SourceStatus;
 
 /**
  * ALCOPA THROUGH THE ADAPTER, AGAINST PAGES CAPTURED ON 2026-09-24 — THE VALUES HAND-READ.
@@ -278,12 +281,52 @@ final class AlcopaFixtureTest extends TestCase
         return new AlcopaTableClient(self::DIR, self::SEARCH, $edits);
     }
 
+    /**
+     * A PASS THAT SPENDS ITS WHOLE LOT BUDGET AND READS NO LOT IS STARVED — the Autohero rule
+     * (docs/plans/lot-budget-starvation.plan.md), on the other lot-budget source. Lot pages that answer
+     * 404 are warned and retried next pass; when they fill the budget, health must say so.
+     */
+    public function testAPassThatSpendsItsWholeBudgetAndReadsNoLotWarnsThroughHealth(): void
+    {
+        $client = $this->client();
+        $client->goneLots = self::CAPTURED;
+        $source = $this->source($client, warn: static function (string $w): void {}, budget: 3);
+        $runs = $this->healthyRuns();
+
+        self::assertSame([], $source->fetch());
+
+        $health = (new SourceHealthService($runs))->of($source, RunStore::instant(self::NOW));
+        self::assertSame(SourceStatus::WARN_DROP, $health->status);
+        self::assertStringContainsString("les 3 lots tentés sur cette passe n'ont donné aucune annonce (budget épuisé, aucun lot lu)", $health->detail);
+    }
+
+    /** COUNTERWEIGHT: the same dead lots with budget left over are a quiet pass. */
+    public function testDeadLotsThatLeaveBudgetUnusedDoNotWarn(): void
+    {
+        $client = $this->client();
+        $client->goneLots = self::CAPTURED;
+        $source = $this->source($client, warn: static function (string $w): void {});
+        $source->fetch();
+
+        self::assertSame(SourceStatus::OK, (new SourceHealthService($this->healthyRuns()))->of($source, RunStore::instant(self::NOW))->status);
+    }
+
+    private function healthyRuns(): RunStore
+    {
+        $runs = VehicleStore::open(':memory:')->runs();
+        foreach (['2026-09-22T20:00:00Z', '2026-09-23T20:00:00Z', '2026-09-24T20:00:00Z'] as $at) {
+            $runs->recordRun('alcopa', 100, true, null, $at, 20);
+        }
+
+        return $runs;
+    }
+
     /** @param ?\Closure(string): void $warn */
-    private function source(?AlcopaTableClient $client = null, bool $seeded = true, string $now = self::NOW, ?\Closure $warn = null, ?Robots $robots = null): AlcopaVehicleSource
+    private function source(?AlcopaTableClient $client = null, bool $seeded = true, string $now = self::NOW, ?\Closure $warn = null, ?Robots $robots = null, int $budget = 25): AlcopaVehicleSource
     {
         $client ??= $this->client();
         $store = VehicleStore::open(':memory:');
-        $definition = new VehicleSourceDefinition(name: 'alcopa', enabled: true, family: 'auction', type: 'alcopa', url: self::SEARCH, lotBudgetPerPass: 25, rateLimitMs: 0);
+        $definition = new VehicleSourceDefinition(name: 'alcopa', enabled: true, family: 'auction', type: 'alcopa', url: self::SEARCH, lotBudgetPerPass: $budget, rateLimitMs: 0);
         if ($seeded) {
             $bare = new AlcopaVehicleSource($definition, VehicleStore::open(':memory:'), $client, $this->robots());
             foreach ($bare->seedIndex() as $lot) {
@@ -309,12 +352,18 @@ final class AlcopaTableClient implements HttpClient
     /** @var list<string> */
     public array $urls = [];
 
+    /** @var list<string> lot ids whose page answers 404, as a lot gone from the sale */
+    public array $goneLots = [];
+
     /** @param array<string, \Closure(string): string> $edits */
     public function __construct(private readonly string $dir, private readonly string $search, private readonly array $edits) {}
 
     public function send(HttpRequest $request): HttpResponse
     {
         $this->urls[] = $u = $request->url;
+        if (preg_match('~-occasion/.+-(\d+)$~', $u, $m) === 1 && in_array($m[1], $this->goneLots, true)) {
+            return new HttpResponse(404, '');
+        }
         $file = match (true) {
             $u === $this->search => 'search-1.html',
             $u === $this->search . '&page=2' => 'search-2.html',

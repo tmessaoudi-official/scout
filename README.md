@@ -682,7 +682,9 @@ Six sources, each built against a real payload:
   subscriber's search criteria above the cards — the PAP trap.
 - **Autohero** (`sitemap_jsonld`) — a reseller whose sitemap indexes ~3 400 lot pages carrying a
   schema.org `Vehicle` block. The sitemap is the index; a lot page is fetched only for an id not
-  yet in the seen-set, behind `lot_budget_per_pass`. **Seed before watching**: the seed records the
+  yet in the seen-set, behind `lot_budget_per_pass`; a pass that uses the whole budget and reads no
+  lot warns (`warn_drop`, « budget épuisé »), because the run log counts the index, not the lots read.
+  **Seed before watching**: the seed records the
   whole index without fetching a lot, and an unseeded run refuses (Q36's car analog).
 - **leboncoin** (`email_alert`, source #3, 2026-08-31) — one vehicle per message, no
   `card_separator`: the portal sends a mail per hit rather than a digest. **Everything that matters

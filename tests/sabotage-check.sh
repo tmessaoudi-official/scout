@@ -5051,6 +5051,22 @@ run_sabotage "car: Autohero does not pace a followed redirect (2026-09-26)" \
   src/php/Car/SitemapVehicleSource.php \
   '/refuseUnlessAllowed(\$moved)/,/\$url = \$moved;/ s%\$this->pace();%/* unpaced */%'
 
+# A STARVED LOT BUDGET IS COUNTED, AND THE COUNT REACHES HEALTH (2026-11-16,
+# docs/plans/lot-budget-starvation.plan.md). Autohero spent 50 of 50 slots on unreadable lots for five
+# passes while its run log said `ok, 4022 items` -- the index's size. Each source records the fact,
+# and `escalate()` reads it; each is silent when gone.
+run_sabotage "car: Autohero does not count a starved lot budget (health stays ok, 2026-11-16)" \
+  src/php/Car/SitemapVehicleSource.php \
+  's%\$this->patternMisses->starved(\$fetched);%/* not counted */;%'
+
+run_sabotage "car: Alcopa does not count a starved lot budget (health stays ok, 2026-11-16)" \
+  src/php/Car/AlcopaVehicleSource.php \
+  's%\$this->patternMisses->starved(\$fetched);%/* not counted */;%'
+
+run_sabotage "the starvation escalation goes deaf (counted, reported by none, 2026-11-16)" \
+  src/php/Core/PatternMissLog.php \
+  's%if (\$this->starvedAttempts !== null) {%if (false) {%'
+
 # THE TRANSPORT NEVER FOLLOWS A REDIRECT (2026-09-26). A hop inside libcurl passes below the offline
 # switch and every per-URL robots check. The wire test's target is a dead loopback port, so this
 # case can never reach a third-party host even when it lands.

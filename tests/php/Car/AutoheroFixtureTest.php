@@ -436,6 +436,89 @@ final class AutoheroFixtureTest extends TestCase
         self::assertSame([], $source->patternMisses()->total());
     }
 
+    /**
+     * A PASS THAT SPENDS ITS WHOLE LOT BUDGET AND READS NO LOT IS STARVED, AND HEALTH SAYS SO
+     * (docs/plans/lot-budget-starvation.plan.md). On 2026-11-16 Autohero spent all 50 slots, five passes
+     * running, on the same 50 lots answering 302, read nothing, and its run log said `ok` with 4022
+     * items: `item_count` is the INDEX's size. A skipped lot is not recorded, so the same lots refill
+     * the budget every pass — nothing else would ever have changed.
+     */
+    public function testAPassThatSpendsItsWholeBudgetAndReadsNoLotWarnsThroughHealth(): void
+    {
+        $store = $this->healthyHistory();
+        $source = $this->source($this->deadLots(), budget: 5, store: $store, warn: static function (string $w): void {});
+
+        self::assertSame([], $source->fetch());
+
+        $health = (new SourceHealthService($store->runs()))->of($source, RunStore::instant('2026-09-01T12:00:00+00:00'));
+        self::assertSame(SourceStatus::WARN_DROP, $health->status);
+        self::assertStringContainsString("les 5 lots tentés sur cette passe n'ont donné aucune annonce (budget épuisé, aucun lot lu)", $health->detail);
+        self::assertStringNotContainsString('gabarit', $health->detail, 'a starved budget is not a template change');
+    }
+
+    /**
+     * COUNTERWEIGHT: DEAD LOTS WITH BUDGET LEFT OVER ARE A QUIET PASS, NOT STARVATION. After the fix,
+     * four lots still fail on every pass, and most passes attempt no new lot at all (497 of 520 from
+     * 2026-09-27 to 10-08). "Every attempt failed" would warn on each of those and recover at the next
+     * burst; only a budget actually used up says the source cannot reach new lots.
+     */
+    public function testDeadLotsThatLeaveBudgetUnusedDoNotWarn(): void
+    {
+        $store = $this->healthyHistory();
+        $source = $this->source($this->deadLots(), budget: 50, store: $store, warn: static function (string $w): void {});
+        $source->fetch();
+
+        self::assertSame(SourceStatus::OK, (new SourceHealthService($store->runs()))->of($source, RunStore::instant('2026-09-01T12:00:00+00:00'))->status);
+    }
+
+    /** COUNTERWEIGHT: one lot read out of a full budget means the source still reaches new lots. */
+    public function testOneLotReadOutOfAFullBudgetIsNotStarvation(): void
+    {
+        $store = $this->healthyHistory();
+        $source = $this->source($this->deadLots(alive: self::NISSAN), budget: 5, store: $store, warn: static function (string $w): void {});
+
+        self::assertCount(1, $source->fetch());
+        self::assertSame(SourceStatus::OK, (new SourceHealthService($store->runs()))->of($source, RunStore::instant('2026-09-01T12:00:00+00:00'))->status);
+    }
+
+    /** COUNTERWEIGHT: every lot already known — no attempt, nothing to judge. */
+    public function testAPassWithNoNewLotIsNotStarvation(): void
+    {
+        $store = $this->healthyHistory();
+        $seeder = $this->source($this->client(), budget: 5, store: $store);
+        foreach ($seeder->seedIndex() as $lot) {
+            $store->record($lot, '2026-09-01T09:00:00+00:00');
+        }
+        $source = $this->source($this->deadLots(), budget: 5, store: $store);
+
+        self::assertSame([], $source->fetch());
+        self::assertSame(SourceStatus::OK, (new SourceHealthService($store->runs()))->of($source, RunStore::instant('2026-09-01T12:00:00+00:00'))->status);
+    }
+
+    /** Three `ok` runs, so the run log alone reads OK and any escalation is the source's. */
+    private function healthyHistory(): VehicleStore
+    {
+        $store = VehicleStore::open(':memory:');
+        foreach (['2026-08-30T09:00:00+00:00', '2026-08-31T09:00:00+00:00', '2026-09-01T09:00:00+00:00'] as $at) {
+            $store->runs()->recordRun('autohero', 5, true, null, $at, 20);
+        }
+
+        return $store;
+    }
+
+    /** The sitemap as shipped, every lot page answering 404 except `$alive`. */
+    private function deadLots(?string $alive = null): TableHttpClient
+    {
+        $table = $this->table();
+        foreach (array_keys($table) as $url) {
+            if ($url !== self::SITEMAP && $url !== $alive) {
+                $table[$url] = new HttpResponse(404, '');
+            }
+        }
+
+        return new TableHttpClient($table);
+    }
+
     /** @param array<string, string> $mapOverrides */
     private function source(
         HttpClient $client,

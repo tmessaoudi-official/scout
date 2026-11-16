@@ -151,6 +151,45 @@ final class VehiclePipelineTest extends TestCase
         self::assertStringEndsWith(' : warn_drop', $alerts[0]->title);
     }
 
+    /**
+     * A STARVED LOT BUDGET REACHES THE CHANNEL, NOT ONLY THE VERDICT (docs/plans/lot-budget-starvation.plan.md).
+     * A real sitemap source, every lot page 404, the whole budget spent and nothing read: the pass must
+     * push one source-health alert, as the 2026-11-16 Autohero passes did not (`ok, 4022 items` five times).
+     */
+    public function testAStarvedLotBudgetPushesASourceHealthAlert(): void
+    {
+        [$pipeline, $channel, $store] = $this->pipeline();
+        $sitemap = 'https://example.test/sitemap.xml';
+        $client = new class ($sitemap) implements \Scout\Adapters\Http\HttpClient {
+            public function __construct(private string $sitemap) {}
+
+            public function send(\Scout\Adapters\Http\HttpRequest $request): \Scout\Adapters\Http\HttpResponse
+            {
+                if ($request->url !== $this->sitemap) {
+                    return new \Scout\Adapters\Http\HttpResponse(404, '');
+                }
+                $locs = '';
+                foreach (range(1, 4) as $i) {
+                    $locs .= sprintf('<url><loc>https://example.test/fr/x/id/0000000%d-0000-4000-8000-000000000000/</loc></url>', $i);
+                }
+
+                return new \Scout\Adapters\Http\HttpResponse(200, '<?xml version="1.0"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . $locs . '</urlset>', ['content-type' => 'text/xml']);
+            }
+        };
+        $definition = new \Scout\Car\VehicleSourceDefinition(
+            name: 'autohero', enabled: true, family: 'dealer', type: 'sitemap_jsonld', url: $sitemap,
+            itemUrlPattern: '~^https://example\.test/fr/[^/]+/id/([0-9a-f-]{36})/?$~', map: [],
+            lotBudgetPerPass: 3, rateLimitMs: 0,
+        );
+        $source = new SitemapVehicleSource($definition, $store, $client, \Scout\Adapters\Http\Robots::parse(''), static function (string $w): void {});
+
+        $pipeline->runOnce([$source], '2026-08-29T10:00:00Z');
+
+        $alerts = $this->ofKind($channel, NotificationKind::SOURCE_HEALTH);
+        self::assertCount(1, $alerts, 'one alert for the starved pass');
+        self::assertStringEndsWith(' : warn_drop', $alerts[0]->title);
+    }
+
     public function testCounterweightAnAllMatchingLogSendsNoHealthAlert(): void
     {
         [$pipeline, $channel] = $this->pipeline();

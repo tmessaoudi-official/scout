@@ -413,7 +413,11 @@ sqlite3 state/rent-watch.sqlite3 ".backup /tmp/probe.sqlite3"
 often a **configured** extraction key came back null, and speaks at 100 %. It reports through
 `Core\CountsPatternMisses`, and `tests/php/Core/PatternMissEscalationTest.php` discovers every
 implementor by reflection — the class check it replaced is exactly why the signal existed on one adapter of five.
-Its blind spot is stated: a **partial** miss rate is silent by design.
+Its blind spot is stated: a **partial** miss rate is silent by design. It carries one more fact for the two
+lot-budget car sources (2026-11-16): a pass that used its WHOLE `lot_budget_per_pass` and read no lot is
+**starved**, and `escalate()` names it in its own sentence, since a run log that counts the INDEX said `ok`
+while Autohero read nothing for five passes. A few dead lots on a quiet pass are not starvation
+(`docs/plans/lot-budget-starvation.plan.md`).
 
 ---
 

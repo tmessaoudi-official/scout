@@ -95,11 +95,30 @@ final class PatternMissLog implements MutableByDesign
         }
     }
 
+    /**
+     * Lot pages attempted on a pass that used its WHOLE lot budget and read none, or `null`.
+     *
+     * A lot-budget source's `item_count` is its INDEX's size, so a source that can no longer read a
+     * single lot page still records `ok` (Autohero, 2026-11-16: 50 of 50 slots on the same 50
+     * self-redirecting lots, five passes, `ok, 4022 items`). A skipped lot is not recorded, so the same
+     * lots refill the budget every pass. "Every attempt failed" is the wrong test: four dead lots are
+     * retried on every quiet pass, so it flaps; a budget used up with nothing read does not
+     * (docs/plans/lot-budget-starvation.plan.md).
+     */
+    private ?int $starvedAttempts = null;
+
+    /** The pass spent its whole lot budget, `$attempts` pages, and read no lot. */
+    public function starved(int $attempts): void
+    {
+        $this->starvedAttempts = $attempts;
+    }
+
     /** Starts a pass clean, so a count never spans two fetches — staged attempts included. */
     public function reset(): void
     {
         $this->counts = [];
         $this->pending = null;
+        $this->starvedAttempts = null;
     }
 
     private function tally(string $key, bool $found): void
@@ -167,16 +186,27 @@ final class PatternMissLog implements MutableByDesign
     public function escalate(SourceHealth $health): SourceHealth
     {
         $blind = $this->total();
+        $why = [];
 
-        if ($blind === []) {
+        if ($this->starvedAttempts !== null) {
+            // Not the template sentence: a starved budget is lots that yielded nothing (a redirect, a
+            // 404, a missing block, a sale window), and the per-lot warnings in the log say which.
+            $why[] = sprintf('les %d lots tentés sur cette passe n\'ont donné aucune annonce (budget épuisé, aucun lot lu) : '
+                . 'la source ne lit plus aucun nouveau lot, voir les avertissements par lot dans le journal', $this->starvedAttempts);
+        }
+        if ($blind !== []) {
+            $why[] = 'aucun résultat pour ' . implode(', ', $blind)
+                . ' sur cette passe : le gabarit du portail a probablement changé, les champs concernés sont null';
+        }
+
+        if ($why === []) {
             return $health;
         }
 
         return new SourceHealth(
             sourceName: $health->sourceName,
             status: $health->status === SourceStatus::OK ? SourceStatus::WARN_DROP : $health->status,
-            detail: rtrim($health->detail, ' .') . ' — MAIS aucun résultat pour ' . implode(', ', $blind)
-                . ' sur cette passe : le gabarit du portail a probablement changé, les champs concernés sont null',
+            detail: rtrim($health->detail, ' .') . ' — MAIS ' . implode(' ; ', $why),
             consecutiveEmptyRuns: $health->consecutiveEmptyRuns,
             lastSuccessAt: $health->lastSuccessAt,
             lastFailureAt: $health->lastFailureAt,
