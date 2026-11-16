@@ -72,6 +72,7 @@ This file is the durable record; the scratch area is not.
 - [2026-11-16 00:08] ASSUMED (review): 8e-2: three ledger cases are retired with their reasons recorded in place (recency ignores the clock, PacedSource::health drops the clock, the car heartbeat reads health without the clock) - because the clock is now a required non-nullable argument, so the mutations no longer have a target; they are replaced by 2 PacedSource forwarder cases and 3 default-reader cases, all measured changed=1 and reddening a behavioural test. Alternatives: re-derive them against a type the language enforces (rejected: a mutation PHP refuses to parse proves nothing).
 - [2026-11-16 04:22] ASSUMED (review): 8e-2: ledger 5084 (car beat clock) is retired, not re-derived as a fixed past instant as planned, because a past clock reads every run as future-stamped and RunStore answers STALE by design (measured: CarScoutTest stays green). Replaced by three per-CLI wall-clock cases on healthOf(), plus a new car doctor test that asserts a HEALTHY verdict, since none existed and the car case reddened nothing without it. Alternatives: a lagging clock (rejected: whether it is caught depends on each test's seed-to-watch gap).
 - [2026-11-16 07:22] AGREED: 8e-2: completeness-reviewer.md item 4 names the ReportsHealth half (patternMisses, feedSilentDays) in place of health(), applied as the diff shown (developer ruling).
+- [2026-11-16 08:51] AGREED: Watchers restarted on 8e-2 (1136ca0) after the 2026-10-08 stop (developer ruling: build and start, chosen with the stop and the notification backlog stated).
 
 ## Formal Plan
 
@@ -329,6 +330,15 @@ move, one `advisor()` per gate):
     and the three pipelines were only shown to still APPLY. Their detecting tests moved under them (about 55 calls
     to `runs()->health()`, 33 clockless calls given a stamp, three no-clock tests retired), so which test each one
     reddens is for the next nightly on the 8e-2 sha to say. Record it here before 8f.
+    **Deployed 2026-11-16 08:32 +01:00 (developer ruling: build and start)**, after the watchers had been stopped
+    since 2026-10-08 ~19:47 at the developer's request. `scout:local` was absent (no rollback tag possible);
+    `tools/backup-state.sh` copies first (rent 7409, car 7710, job 2196 rows, integrity ok); `verify-deploy` passes
+    (3 running on the current image). Rent first pass: the STARTUP beat said `0/8 source(s) en bon état` (5 weeks
+    dark, the STALE path 8e-2 pins), then 1594 listings, 498 matches (439 queued under the push line), 9 individual
+    pushes plus price drops, 4 `SOURCE_RECOVERED`, and the 8h floor drained 50 of 785 « à vérifier ». Job: one pass,
+    `freelance_informatique` BROKEN (80 empty runs, last portal message 2026-09-30, predates the stop). Car: first
+    pass still running at +16 min, `alcopa` BROKEN at the startup beat, Autohero detail pages answering HTTP 302
+    (71 lots skipped). The 8c deployed first pass this row owed is now done.
 - **8f** Store role interfaces (B-2, A-5, C-5 option 2): `SectionOneReadings`, `SeenSet`, `DigestQueue`,
   `DetailCache`, `CommuteCache`; `Store` implements them, consumers are typed to the role they use. No table moves.
 - **Ledger for 8e and 8f.** `PacedSource.php` and `Rent/Store/` are on CLAUDE.md's "run `sabotage-check.sh` after
