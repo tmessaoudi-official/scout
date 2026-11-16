@@ -8,6 +8,7 @@ DEGRADED report-only, CR2/CR8/CR9 OK.
 ## Decisions Log
 - [2026-11-16 15:08] AGREED: I1: on the developer's machine master stays the only branch (plain git push, never -u); a cloud session (CLAUDE_CODE_REMOTE=true) commits and pushes only its harness branch (claude/*, ccr-*), never master, opens no PR unless asked, and the developer lands it with land.sh — pdfturbo's ruling of the same day is the precedent
 - [2026-11-16 15:08] AGREED: Plan A-D approved as presented: no cloud-setup.sh hook under .claude (tools/bootstrap.sh instead), both PHAR signing keys committed and the keyserver path removed on every machine, CA overlay added by tools/in-docker.sh only when CCS_EXTRA_CA_FILE names a file, CR5 report-only
+  - Reworded 2026-11-16 after stamping, same meaning: the entry first spelled the hook with its `.claude/` path prefix, which drift-scan reads as a missing local path (P1); it now names the hook without the `.claude/` prefix. Nothing else in the ruling changed.
 
 ## Formal Plan
 
@@ -38,7 +39,7 @@ D. **CLAUDE.md (CR1, CR7).** § Git autonomy scoped to the developer's machine, 
 | 1 | A. Root skips for the two permission tests (CR6) | S | done | be50793 | tests/php/Car/Cli/CarScoutTest.php, tests/php/Rent/Cli/RentScoutHeartbeatTest.php |
 | 2 | B. Signing keys committed, keyserver path removed (CR3) | M | done | b91aad0 | tools/fetch-phar.sh, tools/keys, tests/test-fetch-phpunit.sh |
 | 3 | C. Proxy CA overlay and bootstrap (CR4, CR3) | M | done | b1e75cb | compose.extra-ca.yaml, tools/in-docker.sh, tools/bootstrap.sh, tests/test-cloud-readiness.sh |
-| 4 | D. CLAUDE.md cloud paragraph and scoped git rules (CR1, CR7) | M | doing | - | CLAUDE.md |
+| 4 | D. CLAUDE.md cloud paragraph and scoped git rules (CR1, CR7) | M | done | 6b9d3ff | CLAUDE.md |
 <!-- /progress-block -->
 ### Blocked
 ### Needs input

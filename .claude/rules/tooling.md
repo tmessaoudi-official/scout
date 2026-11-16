@@ -73,3 +73,13 @@ Moved verbatim from CLAUDE.md § "Gotchas & pitfalls" on 2026-09-28 (review-reme
   which the dockerised suite (~3 min) brushes against; written after the wrapper, `tools/in-docker.sh SABOTAGE_FILTER=… bash …`
   makes `docker` try to execute the assignment. Put `env` INSIDE: `tools/in-docker.sh env SABOTAGE_FILTER='…'
   SABOTAGE_SUITE_TIMEOUT=1500 bash tests/sabotage-check.sh`. The same holds for every variable a test or tool reads.
+- **`SSL_CERT_FILE` ADDS a CA for curl, it does not replace the system store; gpg's dirmngr ignores it (2026-11-16).**
+  In the dev image curl keeps `/etc/ssl/certs` as its capath, so a probe "does curl still reach a public host with an
+  UNRELATED CA in `SSL_CERT_FILE`" answers rc 0 and proves nothing. Prove an extra-CA wiring against a local TLS server
+  whose certificate is signed ONLY by a throwaway CA (`openssl s_server`): rc 0 with the overlay, rc 60 without. And a
+  bogus `SSL_CERT_FILE` left `gpg --recv-keys` working, so dirmngr cannot be taught a proxy CA; that is why
+  `tools/fetch-phar.sh` verifies against the keys committed at `tools/keys/` (`docs/plans/cloud-readiness.plan.md` B).
+- **drift-scan reads a never-created `.claude/…` path as a missing local file (2026-11-16).** Writing "no" plus
+  the hook's `.claude`-prefixed path to record a hook deliberately NOT created turned the gate P1 in three files. Name such a
+  path without the `.claude/` prefix (the kit's `cloud-setup.sh` under `.claude`), or on a line matching its `CITE`
+  words. Run drift-scan before the commit: CI checks the pushed tip only, so a commit red on its own hides in a batch.
