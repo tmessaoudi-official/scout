@@ -683,6 +683,12 @@ final class CarScoutTest extends TestCase
      */
     public function testAPassThatThrowsStillEmitsTheHeartbeat(): void
     {
+        // Root writes a 0444 file, so the pass cannot be made to throw: a claude.ai cloud session runs
+        // everything as root (measured 2026-11-16, uid 0: no "passe échouée" was printed).
+        if (\function_exists('posix_geteuid') && posix_geteuid() === 0) {
+            self::markTestSkipped('running as root: a 0444 store does not refuse root, so the pass cannot be made to throw');
+        }
+
         putenv('SCOUT_MAX_PASSES=1');
         $marker = \dirname($this->db) . '/car-heartbeat.txt';
         try {

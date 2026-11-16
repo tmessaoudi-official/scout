@@ -593,6 +593,12 @@ final class RentScoutHeartbeatTest extends TestCase
 
     public function testAnUnwritableDatabaseIsARefusalRatherThanAStackTrace(): void
     {
+        // Root ignores a 0500 directory, so the premise cannot be built: a claude.ai cloud session runs
+        // everything as root (measured 2026-11-16, uid 0: the store opened and this test read "base vide").
+        if (\function_exists('posix_geteuid') && posix_geteuid() === 0) {
+            self::markTestSkipped('running as root: a 0500 directory does not refuse root, so the store cannot be made unwritable');
+        }
+
         // The first thing a new deployment hits, and it was a fatal PDOException with a stack trace:
         // Q8 bind-mounts `state/` from the host, the image runs as a non-root uid, and a host
         // directory owned by somebody else is not writable — measured, running the real container.
